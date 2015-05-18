@@ -1,0 +1,609 @@
+#!/bin/bash
+
+# script: oms-update-module
+# Обновляет файлы OMS, входящие в состав модуля.
+# Обновляются файлы в каталоге DB/OmsModule, а также make-файлы модуля
+# ( Makefile, DB/Makefile) и map-файл. Файлы обновляются до текущей
+# установленной версии OMS.
+#
+#
+# Использование:
+#   oms-update-module [options]
+#
+# Опции:
+#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+#   -d, --directory DIR         - путь к корневому каталогу модуля ( по
+#                                 умолчанию текущий каталог)
+#   -n, --dry-run               - не выполнять команды, а только выводить их
+#       --from-revision REV     - текущая ревизия OMS-Файлов модуля
+#   -h, --help                  - вывести справку по использованию
+#       --version               - вывести информацию по версии
+#
+# Замечания:
+#   - скрипт предназначен для вызова с помощью "make update-oms-version" для
+#     модулей, созданных на основе OMS версии 1.3.0 и старше. Для обновления
+#     модулей, основанных на более ранних версиях OMS, скрипт необходимо
+#     запустить вручную ( например, в корневом каталоге модуля, соответствующем
+#     каталогу Trunk в SVN, без указания параметров).
+#   - в случае невозможности автоматически обновить файл выводится сообщение
+#     об ошибке и в каталоге, в котором находится обновляемый файл, создаются
+#     файлы с расширением .rej, содержащие изменений, которые не удалось внести
+#     ( в формате diff); В этом случае нужно внести требуемые изменения вручную.
+#
+
+
+
+# group: Переменные
+
+
+
+# group: Информация о версии
+
+# var: OMS_VERSION
+# Версия программы
+OMS_VERSION=1.7.3
+
+# var: fileRevisionValue
+# Строка с номером последней правки, в которой был изменен файл ( автоматически
+# обновляется Subversion).
+fileRevisionValue='$Revision:: 2132                     $'
+
+# var: fileChangeDateValue
+# Строка с последней датой изменения файла ( автоматически обновляется
+# Subversion).
+fileChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+
+
+
+# Подключение общих констант и функций
+. oms-common.sh || exit 11
+
+
+
+# group: Параметры вызова
+
+# var: rootDir
+# Корневой каталог модуля
+rootDir=""
+
+# var: fromRevision
+# Текущая правка OMS-Файлов модуля ( соответствует правке файла common.mk)
+fromRevision=""
+
+
+
+# group: Параметры выполнения
+
+# var: isUseSubversion
+# Флаг возможности использования Subversion
+isUseSubversion=0
+
+# var: isNeedGendoc
+# Флаг необходимости обновления автодокументации модуля после выполнения
+# обновления.
+isNeedGendoc=0
+
+
+
+
+# group: Функции
+
+
+
+# func: usage
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+Update OMS-files in module.
+
+Usage:
+  oms-update-module [options]
+
+Options:
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -n, --dry-run               don't actually run any commands; just print them
+      --from-revision REV     current revision of module OMS-files
+  -h, --help                  show this help
+      --version               print version
+END
+}
+
+
+
+# func: parseOption
+# Разбор аргументов командной строки.
+#
+parseOption()
+{
+  while [ $# != 0 ]; do
+    case $1 in
+      --debug-level)
+        setDebugLevel "$2"
+        shift;
+        ;;
+      -d | --directory)
+        rootDir="$2"; shift;
+        logDebug3 "Set rootDir: '$rootDir'"
+        ;;
+      -n | --dry-run)
+        setDryRun
+        ;;
+      --from-revision)
+        fromRevision="$2"; shift;
+        logDebug3 "Set fromRevision: $fromRevision"
+        ;;
+      --help)
+        usage
+        exitScript
+        ;;
+      --version)
+        showVersion
+        exitScript
+        ;;
+      -* | --*)
+        exitArgError "Illegal option: \"$1\"."
+        ;;
+      *)
+        exitArgError "Illegal argument: \"$1\"."
+        ;;
+    esac
+    shift
+  done
+                                        # Устанавливаем значения по умолчанию
+  if [[ -z $rootDir ]]; then
+    rootDir="."
+    logDebug3 "Set rootDir: '$rootDir'"
+  fi
+                                        # Проверяем параметры выполнения
+  if [[ ! -d "$templateDir" ]]; then
+    exitError "Template dir \"$templateDir\" does not exist."
+  fi
+  if [[ ! -d "$rootDir/$moduleOmsDir" ]]; then
+    exitError "OMS dir \"$rootDir/$moduleOmsDir\" does not exist."
+  fi
+                                        # Определяем текущую ревизию
+  if [[ -z "$fromRevision" ]]; then
+    getRevision fromRevision "$rootDir"
+    logDebug3 "Set fromRevision by module files: $fromRevision"
+  fi
+}
+
+
+
+# func: getRevision
+# Определяет номер ревизии OMS-файлов модуля.
+# Ревизия определяется по OMS-файлу common.mk.
+#
+# Параметры:
+# revisionVar                 - номер ревизии ( возврат, имя переменной)
+# rootPath                    - путь к корневому каталогу модуля
+getRevision()
+{
+  local revisionVar="$1"
+  local rootPath="$2"
+  local revision=""
+  if [[ -f "$rootPath/$moduleOmsDir/common.mk" ]]; then
+    revision=`\
+      grep \
+        --max-count=1 \
+        -e '^# $Revision: [[:digit:]]\+ \$[[:space:]]*$' \
+        "$rootPath/$moduleOmsDir/common.mk"
+      `
+    if [[ "$?" == 0 ]]; then
+      revision="${revision:13}"
+      revision="${revision%% *}"
+    else
+      revision=""
+    fi
+  fi
+                                        # Возврат значения
+  eval ${revisionVar}="$revision"
+}
+
+
+
+# func: doBeforeAction
+# Выполняет дополнительные действия до основной обработки.
+#
+# Параметры:
+# processFile                 - путь к обрабатываемому файлу относительно корня
+# dstFile                     - полный путь к обновляемому файлу
+# fromRevision                - исходный номер ревизии
+#
+doBeforeAction()
+{
+  local processFile="$1"
+  local dstFile="$2"
+  local fromRevision="$3"
+  case "$processFile" in
+    Doc/map.xml \
+      )
+      local oldMapFile="$(dirname "$dstFile")/Map.txt"
+                                        # Изменение формата Map-файла на XML
+      if (( isUseSubversion)) && (( fromRevision <= 341 )) \
+          && [[ ! -e "$dstFile" ]] && [[ -e "$oldMapFile" ]]
+          then
+        $runCmd $svnCmd move --quiet "$oldMapFile" "$dstFile" \
+          && $runCmd rm "$dstFile" \
+          || exitError "Cannot svn move Map.txt to \"$dstFile\"."
+      fi
+      ;;
+  esac
+}
+
+
+
+# func: expandFile
+# Создает файл назначения на основе исходного файла выполняя подстановку
+# макросов.
+#
+# Параметры:
+# baseFile                    - базовое имя обновляемого файла
+#                               ( путь относительно корня модуля)
+# dstFile                     - полный путь к файлу назначения
+# srcFile                     - путь к исходному файлу
+# isUnixFormat                - флаг использования Unix-конца строки для файла
+#
+expandFile()
+{
+  local baseFile="$1"
+  local dstFile="$2"
+  local srcFile="$3"
+  local isUnixFormat="$4"
+  local moduleName="$(basename "$svnModuleRoot")"
+  local moduleVersion=""
+  local -a sedOption=()
+  if [[ "$baseFile" == "DB/OmsModule/NaturalDocs/Menu.txt" ]]; then
+    moduleVersion="???"
+    isNeedGendoc=1
+  elif [[ "$baseFile" == "Doc/map.xml" ]]; then
+                                        # Получаем список тэгов пакетов
+    local packageList=$(find $rootDir/DB -maxdepth 1 -name "*.pks" \
+      -printf "      <package>%f</package>\\\r\\\n" \
+      | sort
+      )
+    if [[ -n "$packageList" ]]; then
+      packageList=${packageList//.pks/}
+      packageList=${packageList:0:${#packageList}-4}
+      sedOption=( "${sedOption[@]}" \
+        -e "s|      <package>\$(packageName)</package>|$packageList|g" \
+      )
+    fi
+                                        # Получаем список тэгов таблиц
+    local tableList=""
+    if [[ -d "$rootDir/DB/Install/Schema/Last" ]]; then
+      tableList=$(find $rootDir/DB/Install/Schema/Last \
+        -maxdepth 1 -name "*.tab" \
+        -exec grep --quiet "^--[[:blank:]]*table[[:blank:]]*:" {} \; \
+        -printf "      <table>%f</table>\\\r\\\n" \
+        | tr [:upper:] [:lower:] \
+        | sort
+        )
+      if [[ -n "$tableList" ]]; then
+        tableList=${tableList//.tab/}
+        tableList=${tableList:0:${#tableList}-4}
+        sedOption=( "${sedOption[@]}" \
+          -e "s|      <table></table>|$tableList|g" \
+        )
+      fi
+    fi
+  fi
+                                        # Определяем первоначальный путь
+  if (( isUseSubversion )) && [[ -z $svnInitialPath ]]; then
+    getSvnInitialPath "$svnModuleRootUrl"
+  fi
+                                        # Сохраняем DOS-конец строки
+  if ! (( isUnixFormat)); then
+    sedOption=( "${sedOption[@]}" -e "s/$/\x0D/" )
+  fi
+                                        # Создаем файл
+  if ((isDryRun)); then
+    echo "sed MACROS: \"$srcPath\" -> \"$dstPath\""
+    echo "  \$(moduleName)    : $moduleName"
+    echo "  \$(moduleVersion) : $moduleVersion"
+    echo "  \$(svnModuleRoot) : $svnModuleRoot"
+    echo "  \$(svnInitialPath): $svnInitialPath"
+    echo "  \$sedOption[${#sedOption[@]}]    :" "${sedOption[@]}"
+  else
+    sed \
+      -e "s/\$(moduleName)/$moduleName/g" \
+      -e "s/\$(moduleVersion)/$moduleVersion/g" \
+      -e "s|\$(svnModuleRoot)|$svnModuleRoot|g" \
+      -e "s|\$(svnInitialPath)|$svnInitialPath|g" \
+      "${sedOption[@]}"  \
+      "$srcPath" > "$dstPath"
+  fi
+}
+
+
+
+# func: updateMapVersion
+# Обновляет формат файла map.xml до указанной версии.
+#
+# Параметры:
+# baseFile                    - базовое имя обновляемого файла
+#                               ( путь относительно корня модуля)
+# dstFile                     - полный путь к обновляемому файлу
+# mapVersion                  - номер версии формата файла, до которой
+#                               выполняется обновление
+#
+updateMapVersion()
+{
+  local baseFile="$1"
+  local dstFile="$2"
+  local mapVersion="$3"
+  logDebug2 "mapVersion=$mapVersion, baseFile=$baseFile"
+  if [[ "$mapVersion" == "1.3" ]]; then
+    if [[ "$baseFile" == "Doc/map.xml" ]]; then
+                                        # Определяем первоначальный путь
+      if (( isUseSubversion )) && [[ -z $svnInitialPath ]]; then
+        getSvnInitialPath "$svnModuleRootUrl"
+      fi
+      $runCmd sed --in-place \
+        -e "s|<map_version>1.2</map_version>|<map_version>1.3</map_version>|g" \
+        -e "s|</description>|</description>\r\n  <version></version>|g" \
+        -e "s|</path>|</path>\r\n  <initialPath>$svnInitialPath</initialPath>|g" \
+        -e 's/$/\x0D/' \
+        "$dstFile" \
+        || logError "error on change file $dstFile by update map version: " \
+          "mapVersion=$mapVersion, baseFile=$baseFile"
+    elif [[ "$baseFile" == "DB/OmsModule/NaturalDocs/Menu.txt" ]]; then
+      if ! grep --quiet '^SubTitle:' "$dstFile"; then
+        $runCmd sed --in-place \
+          -e "s|^Title:.*|\0\nSubTitle: Версия ???|" \
+          "$dstFile" \
+          || logError \
+            "error on add SubTitle to file '$dstFile' by update map version:" \
+            "mapVersion=$mapVersion, baseFile=$baseFile"
+      else
+        $runCmd sed --in-place \
+          -e "s|^SubTitle:.*|SubTitle: Версия ???|" \
+          "$dstFile" \
+          || logError \
+            "error on change SubTitle to file '$dstFile' by update" \
+            "map version: mapVersion=$mapVersion, baseFile=$baseFile"
+      fi
+      isNeedGendoc=1
+    fi
+  fi
+}
+
+
+
+# func: patchFile
+# Выполняет обновление файла.
+#
+# Параметры:
+# baseFile                    - базовое имя обновляемого файла
+#                               ( путь относительно корня модуля)
+# dstFile                     - полный путь к обновляемому файлу
+# patchDir                    - каталог, содержащий патчи для файла
+# fromRevision                - номер ревизии, с которой начинаются патчи
+# isUnixFormat                - флаг использования Unix-конца строки для файла
+#
+# Замечания:
+# - имена файлов с патчами имеют вид "p[-]*<revision>.diff", при этом длина
+#   имени файла без расширения 8 символов, revision - номер ревизии, на которой
+#   основан патч;
+#
+patchFile()
+{
+  local baseFile="$1"
+  local dstFile="$2"
+  local patchDir="$3"
+  local fromRevision="$4"
+  local isUnixFormat="$5"
+  local patchFile=""
+  local patchRevision=""
+  if ! ((isUnixFormat)) && (( fromRevision < 273 )); then
+    $runCmd unix2dos "$dstFile" 2>/dev/null
+  fi
+  local patchOption="--forward --batch --silent"
+  if (( isUseSubversion)) ; then
+    patchOption="$patchOption --no-backup-if-mismatch"
+  fi
+  for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff`
+  do
+    patchRevision="${patchFile:1:7}"
+    patchRevision="${patchRevision##*-}"
+    if (( patchRevision >= fromRevision )); then
+      # Спец-патч по замене табуляции на # пробелы в make-файлах
+      if (( patchRevision == 410 )); then
+        $runCmd sed --in-place \
+          -e 's/\t/  /g' -e 's/ *$//' -e 's/$/\x0D/' \
+          "$dstFile" \
+        || logError "error patch ( remove tabs): $dstFile"
+      elif (( patchRevision == 718 )); then
+        updateMapVersion "$baseFile" "$dstFile" "1.3"
+      else
+        if (( patchRevision == 1733 )) || (( patchRevision == 2129 )); then
+          # Игнорируем этот патч в случае неудачи
+          $runCmd patch                     \
+            $patchOption                    \
+            -i "$patchDir/$patchFile"       \
+            -r "$tmpFile"                   \
+            "$dstFile"                      \
+            | gawk '{ if ( index( $0, "FAILED") == 0) print; }'
+        else
+          $runCmd patch                     \
+            $patchOption                    \
+            -i "$patchDir/$patchFile"       \
+            -r "$dstFile.$patchRevision.rej" \
+            "$dstFile"                      \
+          || logError "error patch: $dstFile, $patchFile"
+        fi
+        if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
+          $runCmd unix2dos "$dstFile" 2>/dev/null
+        fi
+      fi
+    fi
+  done
+}
+
+
+
+# func: doAfterAction
+# Выполняет дополнительные действия после основной обработки.
+#
+# Параметры:
+# processFile                 - путь к обрабатываемому файлу относительно корня
+# dstFile                     - полный путь к обновляемому файлу
+# fromRevision                - исходный номер ревизии
+#
+doAfterAction()
+{
+  local processFile="$1"
+  local dstFile="$2"
+  local fromRevision="$3"
+  case "$processFile" in
+    DB/OmsModule/Load \
+      )
+                                        # Перенос файлов, созданных при
+                                        # загрузке, в подкаталог State
+      if (( fromRevision < 272 )) && [[ ! -e "$dstFile/State" ]]; then
+        $runCmd mkdir "$dstFile/State" \
+        && ( cd "$dstFile" \
+          && $runCmd find . -maxdepth 1 \
+            ! -name State -a ! -name .svn -a ! -name . \
+            -exec mv {} State \; \
+        )
+      fi
+      ;;
+    DB/OmsModule/NaturalDocs/Languages.txt \
+       )
+                                        # Очистка временных
+                                        # данных NaturalDocs
+                                        # в связи с обновлением версии
+      if (( fromRevision < 638 )); then
+         $runCmd rm -rf $rootDir/DB/OmsModule/NaturalDocs/Data/*
+      fi
+      ;;
+  esac
+}
+
+
+
+# func: printUpdateResult
+# Выводит результат обновления.
+#
+printUpdateResult()
+{
+  local toRevision=""
+  getRevision toRevision "$rootDir"
+  printMessage "updated OMS revision: $fromRevision -> $toRevision"
+  if (( isNeedGendoc )); then
+    logWarning "Warning: need refresh module documentation by run 'make gendoc'"
+  fi
+}
+
+
+
+# func: updateModule
+# Обновляет OMS-файлы модуля
+#
+updateModule()
+{
+                                        # Определяем использование Subversion
+  getSvnModuleRoot "$rootDir"
+  if [[ -n "$svnModuleRoot" ]]; then
+    isUseSubversion=1
+  fi
+                                        # Ветки .svn игнорируются для удобства
+                                        # тестирования ( запуск на текущей
+                                        # версии шаблона без выполнения
+                                        # установки)
+  for file in $( cd "$templateDir" && find * -name ".svn" -prune -o -print ); do
+    srcPath="$templateDir/$file"        # Путь к исходному файлу
+    dstFile="$file"                     # Файл назначения ( с путем от корня)
+    ! [[ -d "$srcPath" ]]
+    isDirectory=$?                      # обрабатывается каталог?
+    isIgnore=0                          # игнорировать файл?
+    isCopyFile=0                        # можно копировать файл ( иначе патчить)
+    isExpand=0                          # производить подстановку переменных?
+    isSetSvnIgnore=0                    # установить svn:ignore на все файлы?
+    isUnixFormat=0                      # использовать Unix-конец строки
+                                        # Определяем параметры обработки
+    case "$file" in
+      DB/pkg_NewModule.pk[b,s] \
+        )
+        isIgnore=1
+        ;;
+      DB/OmsModule/Load \
+        | DB/OmsModule/NaturalDocs/Data )
+        isSetSvnIgnore=1
+        ;;
+      DB/OmsModule/NaturalDocs/Menu.txt \
+        )
+        isExpand=1
+        isUnixFormat=1
+        ;;
+      DB/OmsModule/* \
+        )
+        isCopyFile=1
+        ;;
+      Doc/map.xml \
+        )
+        isExpand=1
+        ;;
+    esac
+    dstPath="$rootDir/$dstFile"         # Путь к файлу назначения
+    if ! ((isIgnore)); then
+                                        # Дополнительные действия до обработки
+      doBeforeAction "$file" "$dstPath" "$fromRevision"
+                                        # Обрабатываем файл/каталог
+      if ((isDirectory)); then
+        if [[ ! -d "$dstPath" ]] ; then
+          $runCmd mkdir "$dstPath"
+        fi
+      elif ((isExpand)) && ! [[ -f "$dstPath" ]] ; then
+        expandFile "$file" "$dstPath" "$srcPath" "$isUnixFormat"
+      elif ((isCopyFile)) || ! [[ -f "$dstPath" ]] ; then
+        $runCmd cp "$srcPath" "$dstPath"
+      else
+        if [[ -n "$fromRevision" ]] && [[ -d "$patchConfigDir/$dstFile" ]]; then
+          patchFile "$file" "$dstPath" "$patchConfigDir/$dstFile" \
+            "$fromRevision" "$isUnixFormat"
+        fi
+      fi || exitError "Cannot process file \"$dstPath\"."
+                                        # Действия с Subversion
+      if (( isUseSubversion)) ; then
+        cd "$rootDir" \
+          && $runCmd $svnCmd add --non-recursive --quiet --force "$dstFile" \
+          || exitError "Cannot add to Subversion file \"$dstFile\"."
+        if ((isSetSvnIgnore)) ; then
+          if (( isDryRun )); then
+            $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
+          else
+            trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
+            echo "*" > "$tmpFile" \
+              && $runCmd $svnCmd propset svn:ignore \
+                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+              || exitError "Cannot set snv:ignore on file \"$dstFile\"."
+            rm -f "$tmpFile"
+          fi
+        fi
+        cd "$OLDPWD"
+      fi
+                                        # Дополнительные действия после
+      doAfterAction "$file" "$dstPath" "$fromRevision"
+    fi
+  done
+                                        # Выводит результат обновления
+  printUpdateResult
+}
+
+
+                                        # Разбор параметров
+parseOption "$@"
+                                        # Выполняем обновление
+updateModule
+                                        # Завершаем выполнение
+exitScript

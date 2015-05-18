@@ -1,0 +1,61 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 381)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -13,6 +13,8 @@
+ 	gendoc-clean					\
+ 	load									\
+ 	load-clean						\
++	install								\
++	install-schema				\
+ 	
+ 
+ 
+@@ -206,5 +208,47 @@
+ 
+ 
+ 
++#
++# group: Установка модуля в БД
++#
++
++# build var: SCHEMA_VERSION
++# Версия схемы для устновки в БД.
++# Для выполнения установки выполняются скрипты из каталога
++# Install/Schema/$(SCHEMA_VERSION).
++SCHEMA_VERSION	= 
++
++# Скрипты для выполнения установки
++installSchemaTarget = 									\
++	$(addsuffix .$(lu),										\
++		$(wildcard Install/Schema/$(SCHEMA_VERSION)/run.sql)			\
++	)																			\
++	$(addsuffix .$(lu2),									\
++	)																			\
++	$(addsuffix .$(lu3),									\
++	)																			\
++
++
++
++# target: install-schema
++# Устанавливает объекты схемы в БД.
++# Должна быть указана версия схемы ( в <SCHEMA_VERSION>) и параметры подключения
++# к БД ( в LOAD_USERID*).
++
++install-schema: install-schema.oms
++
++
++# target: install
++# Устанавливает модуль в БД.
++# Сначала выполняется установка схемы ( <install-schema>), затем загружаются
++# остальные файлы модуля ( <load>).
++
++install: 																\
++	install-schema												\
++	load																	\
++	
++
++
++
+ # Включаем стандартные настройки сборки проекта
+ include $(omsModuleDir)/common.mk

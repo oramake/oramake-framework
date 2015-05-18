@@ -1,0 +1,13 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 465)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -375,7 +375,7 @@
+ # ( INSTALL_VERSION=Last) загружаются данные из всех каталогов обновлений
+ # ( Install/Data/[0-9.]*) в порядке нумерации версий.
+ #
+-installDataDir := \
++installDataDir = \
+   $(wildcard Install/Data/Last) \
+   $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST), \
+     $(wildcard Install/Data/$(INSTALL_VERSION)) \

@@ -1,0 +1,77 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 423)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -4,17 +4,18 @@
+ omsModuleDir = OmsModule
+ 
+ # Абстрактные цели
+-.PHONY:                  \
++.PHONY:                 \
+   all                   \
+-  clean                  \
++  clean                 \
+   show-oms-version      \
+   update-oms-version    \
+   gendoc                \
+   gendoc-clean          \
++  grant                 \
+   load                  \
+   load-clean            \
+-  install                \
+-  install-after          \
++  install               \
++  install-after         \
+   install-before        \
+   install-schema        \
+ 
+@@ -344,5 +345,49 @@
+ 
+ 
+ 
++#
++# group: Выдача прав пользователям БД
++#
++
++# build var: TO_USERNAME
++# Имя пользователя БД, которому выдаются права.
++TO_USERNAME =
++
++# build var: GRANT_SCRIPT
++# Имя скрипта для выдачи прав.
++GRANT_SCRIPT = run.sql
++
++# Полное имя скрипта для выдачи прав ( вместе с расширением).
++# При отсутствии расширения добавляется используемое по умолчанию ( ".sql").
++ifneq ($(GRANT_SCRIPT),)
++grantScript = \
++  $(if $(suffix $(GRANT_SCRIPT)),$(GRANT_SCRIPT),$(GRANT_SCRIPT).sql)
++else
++grantScript = ""
++endif
++
++# Версия скриптов, используемых для выдачи прав.
++# По умолчанию используется Last.
++grantVersion = $(if $(INSTALL_VERSION),$(INSTALL_VERSION),Last)
++
++# Действия, выполняемые для выдачи прав.
++grantTarget =                           \
++  $(addsuffix .$(ru),                   \
++    $(wildcard Install/Grant/$(grantVersion)/$(grantScript)) \
++  )                                     \
++  $(addsuffix .$(ru2),                  \
++  )                                     \
++  $(addsuffix .$(ru3),                  \
++  )                                     \
++
++
++
++# target: grant
++# Выдает права пользователю БД.
++
++grant: grant.oms
++
++
++
+ # Включаем стандартные настройки сборки проекта
+ include $(omsModuleDir)/common.mk

@@ -1,0 +1,380 @@
+#!/bin/bash
+
+# script: oms-connect-info
+# Возвращает параметры подключения к Oracle.
+#
+# Использование:
+#   oms-connect-info [options]
+#
+# Опции:
+#       --default-db NAME     - задает имя БД для подключения ( игнорируется в
+#                               в случае противоречия с --userid)
+#   -h, --help                - вывести справку по использованию
+#   --ignore-absent-password  - игнорировать отсутствие пароля для подключения
+#                               ( по умолчанию)
+#       --operatorid STR      - задает оператора для регистрации при подключении
+#                               ( формат: operatorName[/passwd])
+#       --out-operatorid      - вывод в формате: operatorName[/passwd]
+#       --out-userid          - вывод в формате: userName[/passwd]@db
+#       --userid STR          - задает пользователя для подключения
+#                               ( формат: userName[/passwd][@db])
+#       --version             - вывести информацию по версии
+#
+# Замечания:
+# - при отсутствии имени пользователя для подключения используется пользователь
+#   по умолчанию для БД;
+# - при отсутствия переданного в параметрах пароля, для его получения
+#   будет вызвана программа "get-password" ( "get-password.bat") в случае ее
+#   доступности в системе. При этом в качестве параметра ей передается URL
+#   подключения ( в виде "oracle://userName@dbName" либо
+#   "http://$operatorName@info" для получения пароля оператора), а она #
+#   должна вернуть пароль ( через stdout) либо завершиться с ошибкой ( с #
+#   ненулевым кодом завершения).
+
+# Версия программы
+OMS_VERSION=1.7.3
+                                        # Информация о версии файла из SVN
+omsSvnRoot='Oracle/Module/OraMakeSystem'
+fileRevisionValue='$Revision:: 2132                     $'
+fileChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+fileRevision=${fileRevisionValue:12:25}
+fileChangeDate=${fileChangeDateValue:8:26}
+
+# Имя программы ( скрипта) для получения пароля
+GET_PASSWORD="get-password"
+
+# Алиас программы получения пароля
+GET_PASSWORD_ALIAS="get-password.bat"
+
+# Полный путь к программе получения пароля
+getPasswordCmd=""
+
+# Имя БД по умолчанию
+defaultDbName=""
+
+# Игнорировать отсутствие пароля
+ignoreAbsentPassword=1
+
+# Вывод параметров подклчюения в формате userName[/passwd]@db
+isOutUserId=0
+
+# Вывод параметров оператора формате operatorId[/passwd]
+isOutOperatorId=0
+
+# Пользователь для подключения
+userId=""
+
+# Имя пользователя
+userName=""
+
+# Пароль пользователя для подключения
+userPassword=""
+
+# Имя БД
+dbName=""
+
+# Оператор для подключения
+operatorId=""
+
+# Имя оператора
+operatorName=""
+
+# Пароль оператора для подключения
+operatorPassword=""
+
+
+
+
+# Код ошибки из-за неверных агрументов.
+E_ARG_ERROR=10
+
+# Код ошибки обработки
+E_PROCESS_ERROR=11
+
+
+#
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+Print Oracle connection parameters.
+
+Usage:
+  oms-connect-info [options]
+
+Options:
+      --default-db NAME       set database name ( ignore if not like --userid)
+  -h, --help                  show this help
+      --ignore-absent-password
+                              ignore absent password ( default)
+      --operatorid STR        set operator ( operatorName[/passwd])
+      --out-operatorid        output in format: operatorName[/passwd]
+      --out-userid            output in format: userName[/passwd]@db ( default)
+      --userid STR            set connection user ( userName[/passwd][@db])
+      --version               print version
+END
+}
+
+
+
+#
+# Выводит информацию о версии.
+#
+show_version()
+{
+  cat <<END
+oms-connect-info (OMS) $OMS_VERSION
+SVN Version Information:
+  Module root     : $omsSvnRoot
+  File revision   : $fileRevision
+  File change date: $fileChangeDate
+END
+}
+
+
+
+#
+# Выводит сообщение об ошибке в вызове, описание аргументов и завершает
+# выполнение.
+#
+arg_error()
+{
+  echo "`basename $0`: $1" >&2
+  exit $E_ARG_ERROR;
+}
+
+
+
+#
+# Выводит сообщение об ошибке и завершает выполнение.
+#
+exitError()
+{
+  echo "`basename $0`: $1" >&2
+  exit $E_PROCESS_ERROR
+}
+
+
+# Разбирает строку соединения.
+#
+# Параметры:
+# $1                    - строка соединения
+# $2                    - код формата строки соединения
+#                         "db":   [userName[/userPassword]@]dbName
+#                         "user": userName[[/userPassword]@dbName]
+# Возврат:
+# userName              - имя пользователя
+# userPassword          - пароль пользователя
+# dbName                - имя БД
+parseConnectString()
+{
+  local str="$1"
+  local user=""
+  local password=""
+  local db=""
+  if [[ -n "$str" ]] ; then
+    user="${str%@*}"
+    if [[ "$str" == "$user" && "$2" == "db" ]]; then
+      db="$user"
+      user=""
+    else
+      db="${str##$user}"
+      if [[ -n "$db" ]]; then
+        db="${db:1}"
+      fi
+      password="${user#*/}"
+      if [[ "$password" == "$user" ]] ; then
+        password=""
+      else
+        user="${user%%/*}"
+      fi
+    fi
+    userName="$user"
+    userPassword="$password"
+    dbName="$db"
+  fi
+}
+
+
+
+# Определяет имя пользователя по умолчанию для БД.
+#
+# Параметры:
+# $1                    - имя БД ( в нижнем регистре)
+#
+# Возврат:
+# userName              - имя пользователя
+getDefaultUserName()
+{
+  local user=""
+  case "$1" in
+    testdb?                 ) user="main";;
+    *                       ) user="operation";;
+  esac
+  userName="$user"
+}
+
+
+
+# Пытается получить пароль для URL с помощью вызова внешней программы.
+#
+# Параметры:
+# $1                    - URL для которого нужен пароль.
+#
+# Возврат:
+# password              - пароль ( если неудача, то пустой)
+getPassword()
+{
+  password=""
+                                        # Определяем программу получения пароля
+  if [[ -z "$getPasswordCmd" ]]; then
+    getPasswordCmd=`which $GET_PASSWORD 2>/dev/null`
+    if (( $? )); then
+      getPasswordCmd=`which $GET_PASSWORD_ALIAS 2>/dev/null`
+      if (( $? )); then
+        getPasswordCmd=" "
+      fi
+    fi
+  fi
+  if [[ -x "$getPasswordCmd" ]]; then
+                                        # Запрашиваем пароль
+    password=`$getPasswordCmd "$1"`
+    if (( $? )); then
+      password=""
+    fi
+  fi
+}
+
+
+
+#
+# Определяет и выводит параметры подключения к Oracle.
+#
+outUserId()
+{
+  if [[ -z "$defaultDbName" && -z "$userId" ]]; then
+    arg_error "Not set connection userid or db."
+  fi
+                                        # Разбираем параметры пользователя
+  parseConnectString "$userId" "user"
+  if [[ -z "$dbName" ]]; then
+    dbName="$defaultDbName"
+  fi
+                                        # Обрабатываем имя БД
+  if [[ -z "$dbName" ]]; then
+    arg_error "Not set connection database."
+  fi
+                                        # Переводим в нижний регистр
+  dbName="`echo "$dbName" | tr "[:upper:]" "[:lower:]"`"
+
+                                        # Обрабатываем имя пользователя
+  if [[ -z "$userName" ]]; then
+    getDefaultUserName "$dbName"
+  fi
+  if [[ -z "$userName" ]]; then
+    arg_error "Not set connection user."
+  fi
+                                        # Переводим в нижний регистр
+  userName="`echo "$userName" | tr "[:upper:]" "[:lower:]"`"
+                                        # Пытаемся получить пароль
+  if [[ -z "$userPassword" ]]; then
+    getPassword "oracle://$userName@$dbName"
+    userPassword=$password
+  fi
+                                        # Вывод результата
+  if [[ -n "$userPassword" ]]; then
+    echo "$userName/$userPassword@$dbName"
+  else
+    echo "$userName@$dbName"
+  fi
+}
+
+
+
+#
+# Определяет и выводит параметры регистрации оператора в Oracle.
+#
+outOperatorId()
+{
+  if [[ -z "$operatorId" ]]; then
+    arg_error "Not set operatorid."
+  fi
+                                        # Выделение имени и пароля
+  operatorName=${operatorId%%/*};
+  if [[ "$operatorName" == "$operatorId" ]]; then
+    operatorPassword=""
+  else
+    operatorPassword=${operatorId#*/}
+  fi
+                                        # Пытаемся получить пароль
+  if [[ -z "$operatorPassword" ]]; then
+    getPassword "http://$operatorName@info"
+    operatorPassword=$password
+  fi
+                                        # Вывод результата
+  if [[ -n "$operatorPassword" ]]; then
+    echo "$operatorName/$operatorPassword"
+  else
+    echo "$operatorName"
+  fi
+}
+
+
+
+#
+# Разбор агрументов командной строки.
+#
+while [ $# != 0 ]
+do
+  case $1 in
+    --default-db)
+      defaultDbName="$2"; shift;
+      ;;
+    -h | --help)
+      usage; exit 0;
+      ;;
+    --ignore-absent-password)
+      ignoreAbsentPassword=1;
+      ;;
+    --operatorid)
+      operatorId="$2"; shift;
+      ;;
+    --out-operatorid)
+      isOutOperatorId=1;
+      ;;
+    --out-userid)
+      isOutUserId=1;
+      ;;
+    --userid)
+      userId="$2"; shift;
+      ;;
+    --version)
+      show_version; exit 0;
+      ;;
+    -* | --*)
+      arg_error "Illegal option: \"$1\"."
+      ;;
+    *)
+      arg_error "Illegal argument: \"$1\"."
+      ;;
+  esac
+  shift
+done
+
+if (( ! $isOutUserId && ! $isOutOperatorId )); then
+  if [[ -n "$operatorId" && -z "$userId" && -z "$defaultDbName" ]]; then
+    isOutOperatorId=1;
+  fi
+fi
+                                        # Обработка и вывод результата
+if (( $isOutUserId || ! $isOutOperatorId )); then
+  outUserId
+fi
+if (( $isOutOperatorId )); then
+  outOperatorId
+fi
+                                        # Возвращаем результат выполнения
+if [[ $? != 0 ]] ; then
+  exit $E_PROCESS_ERROR
+fi

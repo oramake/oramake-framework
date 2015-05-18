@@ -1,0 +1,635 @@
+Title: Комментарии
+
+Group: Общие положения
+
+Комментарии, используемые при документировании, должны иметь вид
+
+(start code)
+
+itemType: itemName
+Comment text ...
+
+(end)
+
+где
+- itemType          - ключевое слово, определяющее тип комментария
+- itemName          - имя документируемого элемента
+
+Имя документируемого элемента должно быть уникально в пределах своей
+области видимости ( например, в пределах специкации PL/SQL пакета), иначе
+будут проблемы со ссылкой на этот элемент ( из индексов и из других
+комментариев). В случае присутствия одноименных элементов ( например,
+при перегрузке функций в пакете), добиться уникальности можно добавлением к
+имени дополнительной уточняющей информации в скобках ( типа списка параметров)
+
+(start code)
+
+/* pfunc: getMessage
+...
+*/
+...
+
+/* pfunc: getMessage( out DATA)
+...
+*/
+...
+
+(end)
+
+Для формирования ссылки на документированный элемент из текста комментария,
+достаточно указать его имя в угловых скобках
+
+(start code)
+
+Это ссылка на <itemName>.
+
+(end)
+
+Для ручной группировки элементов в Summary используется тэг "Group", который
+указывается в тексте файла перед первым элементом группы ( в случае его
+отсутствия элементы группируются автоматически).
+
+Group: Спецификация PL/SQL-пакета
+
+Типы используемых элементов:
+package             - пакет
+const               - константа
+type                - тип
+var                 - переменная
+pproc, pfunc        - публичная процедура или функция
+
+Пример документирования пакета pkg_Test ( файл должен иметь имя pkg_Test.pks):
+
+(start code)
+
+create or replace package pkg_Test is
+/* package: pkg_Test
+  Интерфейсный пакет модуля Test.
+
+  SVN root: SvnRepName/Module/Test
+*/
+
+/* const: Module_Name
+  Название модуля, к которому относится пакет.
+*/
+Module_Name constant varchar2(30) := 'Test';
+
+
+
+/* group: Коды состояния сообщения */
+
+/* const: Received_MessageStateCode
+  Код состояния сообщения "Получено".
+*/
+Received_MessageStateCode constant varchar2(10) := 'R';
+
+/* const: Processed_MessageStateCode
+  Код состояния сообщения "Обработано".
+*/
+Processed_MessageStateCode constant varchar2(10) := 'P';
+
+/* Group: MIME-типы данных */
+
+/* const: PlainText_MimeType
+  Название MIME-типа для текстовых данных.
+*/
+PlainText_MimeType constant varchar2(40) := 'text/plain';
+
+/* const: BinaryData_MimeType
+  Название MIME-типа для бинарных данных.
+*/
+BinaryData_MimeType constant varchar2(40) := 'application/octet-stream';
+
+
+
+/* group: Функции */
+
+/* pfunc: getMessage
+  Возвращает Id сообщения для обработки
+  ( <body::getMessage>).
+*/
+function getMessage(
+  url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , expireDate date := null
+)
+return integer;
+
+/* pfunc: getMessage( out DATA)
+  Возвращает сообщение для обработки
+  ( <body::getMessage( out DATA)>).
+*/
+function getMessage(
+  senderAddress out nocopy varchar2
+  , sendDate out nocopy timestamp with time zone
+  , subject out nocopy varchar2
+  , messageText out nocopy clob
+  , url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , expireDate date := null
+)
+return integer;
+
+/* pproc: setProcessError
+  Устанавливает ошибку обработки сообщения
+  ( <body::setProcessError>).
+*/
+procedure setProcessError(
+  messageId integer
+  , errorCode integer
+  , errorMessage varchar2
+  , expireDate date := null
+);
+
+end pkg_Test;
+/
+
+(end)
+
+Замечания:
+- элемент package открывает область видимости пакета ( с именем pkg_Test),
+  к которой относятся остальные элементы;
+- чтобы в документацию попал прототип элемента ( например,
+  "Module_Name constant varchar2(30) := 'Test'"), комментарий должен быть
+  расположен выше определения элемента и имя документируемого элемента должно
+  встречаться в прототипе ( с учетом регистра);
+- ручная группировка с помощью "group" опциональна ( можно убрать);
+- т.к. функция getMessage перегружена в этом пакете, то для обеспечения
+  уникальности имени для второго варианта указывается дополнительный текст в
+  скобках ( "getMessage( out DATA)");
+- в спецификации процедуры и функции могут быть прокомментированы кратко (
+  подробный комментарий должен присутствовать в теле пакета);
+- для облегчения перехода к подробному комментарию процедуры или функции
+  присутствуют соответствующие ссылки на реализацию ( "<body::getMessage>");
+- для переноса прототипов функций и процедур из тела пакета можно использовать
+  <oms-gen-spec>;
+
+
+
+Group: Тело PL/SQL-пакета
+
+Типы используемых элементов:
+package body        - тело пакета
+iconst              - константа ( внутренняя)
+itype               - тип ( внутренний)
+ivar                - переменная ( внутренняя)
+proc, func          - процедура или функция
+iproc, ifunc        - внутренняя процедура или функция ( не объявляемая в спецификации)
+
+
+Пример документирования тела пакета pkg_Test ( файл с именем pkg_Test.pkb):
+
+
+(start code)
+
+create or replace package body pkg_Test is
+/* package body: pkg_Test::body */
+
+/* itype: TUrlString
+  Тип для строки с URL.
+*/
+subtype TUrlString is varchar2(1000);
+
+/* iconst: Attachment_DefaultFileName
+  Имя файла вложения по умолчанию.
+*/
+Attachment_DefaultFileName constant varchar2(30) := 'filename.dat';
+
+/* iconst: Attachment_DefaultType
+  Тип файла вложения по умолчанию.
+*/
+Attachment_DefaultType constant varchar2(50) := BinaryData_MimeType;
+
+
+
+/* group: Функции */
+
+/* ifunc: getMessage( INTERNAL)
+  Ищет незаблокированное сообщение в статусе "Получено" и, если оно найдено,
+  блокирует его, переводит в статус "Обработано" и возвращает Id сообщения для
+  выполнения обработки.
+  В случае, если в БД нет сообщений для обработки и был передан URL почтового
+  ящика, будет выполнено получение писем из почтового ящика ( с помощью вызова
+  FetchMessage).
+
+  Параметры:
+  senderAddress               - адрес отправителя ( возврат)
+  sendDate                    - дата отправки ( возврат)
+  subject                     - тема сообщения ( возврат)
+  messageText                 - текст сообщнеия ( возврат)
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  password                    - пароль для подключения к почтовому ящику
+                                ( если null, то используется пароль из url)
+  recipientAddress            - адрес получателя, по которому выбираются
+                                полученные сообщения ( при отсутствии выделяется
+                                из URL как user@domen)
+  expireDate                  - дата истечения срока жизни, которая
+                                устанавливается при изменении статуса сообщения
+                                ( если null, то не изменяется)
+  isgetMessageData            - определяет необходимость возврата данных
+                                сообщения
+*/
+function getMessage(
+  senderAddress out nocopy varchar2
+  , sendDate out nocopy timestamp with time zone
+  , subject out nocopy varchar2
+  , messageText out nocopy clob
+  , url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , expireDate date := null
+  , isgetMessageData boolean := true
+)
+return integer
+is
+
+-- getMessage
+begin
+  return null;
+end getMessage;
+
+/* func: getMessage
+  Ищет незаблокированное сообщение в статусе "Получено" и, если оно найдено,
+  блокирует его, переводит в статус "Обработано" и возвращает Id сообщения для
+  выполнения обработки ( если ничего не найдено - возвращается null).
+  В случае, если в БД нет сообщений для обработки и был передан URL почтового
+  ящика, будет выполнено получение писем из почтового ящика ( с помощью вызова
+  FetchMessage).
+
+  Параметры:
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  password                    - пароль для подключения к почтовому ящику
+                                ( если null, то используется пароль из url)
+  recipientAddress            - адрес получателя, по которому выбираются
+                                полученные сообщения ( при отсутствии выделяется
+                                из URL как user@domen)
+  expireDate                  - дата истечения срока жизни, которая
+                                устанавливается при изменении статуса сообщения
+                                ( если null, то не изменяется)
+*/
+function getMessage(
+  url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , expireDate date := null
+)
+return integer
+is
+-- getMessage
+begin
+  return null;
+end getMessage;
+
+/* func: getMessage( out DATA)
+  Ищет незаблокированное сообщение в статусе "Получено" и, если оно найдено,
+  блокирует его, переводит в статус "Обработано" и возвращает Id и данные
+  сообщение для выполнения обработки ( если ничего не найдено - возвращается
+  null).
+  В случае, если в БД нет сообщений для обработки и был передан URL почтового
+  ящика, будет выполнено получение писем из почтового ящика ( с помощью вызова
+  FetchMessage).
+
+  Параметры:
+  senderAddress               - адрес отправителя ( возврат)
+  sendDate                    - дата отправки ( возврат)
+  subject                     - тема сообщения ( возврат)
+  messageText                 - текст сообщнеия ( возврат)
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  password                    - пароль для подключения к почтовому ящику
+                                ( если null, то используется пароль из url)
+  recipientAddress            - адрес получателя, по которому выбираются
+                                полученные сообщения ( при отсутствии выделяется
+                                из URL как user@domen)
+  expireDate                  - дата истечения срока жизни, которая
+                                устанавливается при изменении статуса сообщения
+                                ( если null, то не изменяется)
+*/
+function getMessage(
+  senderAddress out nocopy varchar2
+  , sendDate out nocopy timestamp with time zone
+  , subject out nocopy varchar2
+  , messageText out nocopy clob
+  , url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , expireDate date := null
+)
+return integer
+is
+
+--getMessage
+begin
+  return null;
+end getMessage;
+
+/* proc: setProcessError
+  Устанавливает ошибку обработки сообщения.
+
+  Параметры:
+  messageId                   - Id сообщения
+  errorCode                   - код ошибки
+  errorMessage                - сообщение об ошибке
+  expireDate                  - дата истечения срока жизни ( если null, то
+                                не изменяется)
+*/
+procedure setProcessError(
+  messageId integer
+  , errorCode integer
+  , errorMessage varchar2
+  , expireDate date := null
+)
+is
+
+-- setProcessError
+begin
+  null;
+end setProcessError;
+
+end pkg_Test;
+/
+
+(end)
+
+Замечания:
+- при документирования тела пакета к имени пакета добавлен суффикс "::body",
+  который вводит область видимости "body" внутри "pkg_Test" чтобы обеспечить
+  уникальность имен процедур и функций, которые присутствуют как в спецификации,
+  так и в теле пакета;
+- для внутренних элементов тела пакета ( констант, типов, переменных, функций)
+  используются специальные типы с префиксом "i" ( "iconst", "itype", "ivar",
+  "ifunc"), чтобы разделять открытые и закрытые объявления в индексах
+  документации;
+
+
+
+Group: Объектный тип
+
+Типы используемых элементов:
+db object type      - объявление объектного типа
+db object type body - тело объектного типа
+...                 - аналогично элементам спецификации/тела пакета
+
+Пример ( файл tpr_csv_iterator_t.typ):
+
+(start code)
+create or replace type tpr_csv_iterator_t
+as object
+(
+/* db object type: tpr_csv_iterator_t
+  Итератор для текстовых данных в формате CSV.
+
+  SVN root: Oracle/Module/TextParser
+*/
+
+...
+
+/* pfunc: tpr_csv_iterator_t
+  Создает итератор
+  ( <body::tpr_csv_iterator_t>).
+*/
+constructor function tpr_csv_iterator_t(
+  textData clob
+  , headerRecordNumber integer := null
+  , skipRecordCount integer := null
+)
+return self as result,
+
+...
+)
+/
+
+(end)
+
+Пример ( файл tpr_csv_iterator_t.tyb):
+
+(start code)
+create or replace type body tpr_csv_iterator_t is
+/* db object type body: tpr_csv_iterator_t::body */
+
+/* func: tpr_csv_iterator_t
+  Создает итератор.
+
+  Параметры:
+  textData                    - текстовые данные
+  headerRecordNumber          - номер записи, содержащей названия полей ( 0
+                                отсутствует, по умолчанию 0)
+  skipRecordCount             - число пропускаемых записей от начала текстовых
+                                данных ( по умолчанию headerRecordNumber)
+*/
+constructor function tpr_csv_iterator_t(
+  textData clob
+  , headerRecordNumber integer := null
+  , skipRecordCount integer := null
+)
+return self as result
+is
+...
+
+end;
+/
+(end)
+
+Замечания:
+- в случае, если объектный тип используется как запись для хранения данных
+  ( т.е. в нем отсутствуют функции и тело), он должен документироваться как
+  обычный SQL-тип ( c помощью элемента "dbtype", см. <SQL-скрипт>);
+- чтобы в документации по объявлению объектного типа отображались прототипы
+  элементов необходимо разделитель элементов (символ ",") ставить сразу после
+  элемента, а не перед новым элементом;
+
+Пример:
+
+(code)
+create or replace type cnt_contract_t force (
+/* db object type: cnt_contract_t
+  Тип для работы с кредитным договором в анкете.
+
+  SVN root: Scoring/Module/Contract
+*/
+
+/* group: Атрибуты */
+
+/* var: contract_number
+  Номер кредитного договора
+*/
+contract_number integer,
+...
+
+/* group: Конструкторы */
+
+/* pfunc: cnt_contract_t
+   Создает объект типа <cnt_contract_t>
+   (<body::cnt_contract_t>)
+*/
+constructor function cnt_contract_t(
+    applicationId in integer
+  , operatorId    in integer
+  , cityId        in integer
+  )
+return self as result,
+...
+);
+/
+(end)
+
+
+Group: Java-исходник
+
+Типы используемых элементов:
+class               - класс
+const               - константа
+func                - функция
+iconst              - константа ( внутренняя)
+itype               - тип ( внутренний)
+ivar                - переменная ( внутренняя)
+title               - название Java-исходника и общий комментарий
+type                - тип
+var                 - переменная
+
+Пример ( файл Mail.jav):
+(start code)
+create or replace and compile java source named "Mail" as
+// title: Mail
+// Реализация процедур для работы с e-mail модуля Mail.
+//
+
+import java.io.*;
+...
+
+
+/** class: Mail
+ *  Реализация процедур для работы с e-mail модуля Mail.
+ **/
+public class Mail
+{
+
+  // const: SMTP_SERVER
+  // SMTP-сервер по умолчанию.
+  static final String SMTP_SERVER = "mail.server.ru";
+
+  ...
+
+
+/** func: initProperties
+ * Инициализирует и возвращает используемые свойства.
+ **/
+static private Properties
+initProperties()
+{
+  ...
+}
+
+
+...
+}
+/
+(end)
+
+
+Group: SQL-скрипт
+
+Типы используемых элементов:
+dbtype              - SQL-тип
+index               - индекс
+mview               - материализованное представление
+script              - скрипт
+sequence            - последовательность
+table               - таблица
+trigger             - триггер
+view                - представление
+
+Пример ( файл DB/Install/Schema/Last/run.sql):
+
+(start code)
+--script: Install/Schema/Last/run.sql
+--Выполняет установку последней версии объектов схемы.
+--
+
+...
+
+(end)
+
+Замечания:
+- использование "script" обеспечивает включение скрипта в файловый индекс;
+
+
+Group: Shell-скрипт
+
+Типы используемых элементов:
+
+var                 - переменная
+proc, func          - процедура или функция
+
+Пример:
+
+(code)
+
+# var: rootDir
+# Корневой каталог модуля
+rootDir=""
+
+# func: logMessage
+# Выводит отладочное сообщение
+#
+logMessage()
+{
+  if [[ $debugLevel -gt 0 ]]; then
+    echo "$1" >&2;
+  fi;
+}
+
+(end)
+
+Group: Make-файл
+
+Типы используемых элементов:
+title               - заголовок
+build var           - переменная
+target              - цель
+
+Пример ( DB/Makefile):
+
+(start code)
+
+# title: Сборка
+
+...
+
+# build var: GENDOC_DIR
+# Каталог для генерируемой документации.
+GENDOC_DIR = Doc/AutoGen
+
+# build var: GENDOC_FLAGS
+# Дополнительные параметры генерации документации
+GENDOC_FLAGS 	=
+
+# target: gendoc
+# Генерация документации.
+
+...
+
+(end)
+
+
+
+Group: Текстовый файл
+
+Пример ( DB/Doc/readme.txt):
+
+(start code)
+Title: Описание
+
+...
+
+(end)
+
+
+Замечания:
+- текстовые файлы ( с расширением "txt") отличаются отсутствием специального
+  символа для комметариев ( все строки считаются комментариями);
+

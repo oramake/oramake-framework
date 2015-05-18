@@ -1,0 +1,39 @@
+-- script: oms-activate-batch.sql
+-- јктивирует пакетные задани€, реализованные с помощью модул€ Scheduler.
+--
+-- ѕараметры:
+-- patternList                - список масок пакетных заданий ( формат:
+--                              список через зап€тую масок дл€ like имени
+--                              пакетного задани€ с опциональной маской
+--                              имени типа пакетного задани€ вида
+--                              [<batchTypePattern>/]<batchPattern>)
+--
+-- «амечани€:
+--  - прикладной скрипт, предназначен дл€ вызова из пользовательских скриптов;
+--  - в случае, если пакет уже активирован, врем€ очередного запуска будет
+--    перерасчитано по расписанию и текущий номер повтора ( если есть) будет
+--    сброшен;
+--  - дл€ выполнени€ операции используетс€ скрипт
+--    <OmsInternal/exec-batch-operation.sql>
+--
+-- ѕримеры:
+--
+--  - активаци€ батчей ClearOldLog и CheckBatchExecution:
+--
+-- (code)
+--
+-- @oms-activate-batch.sql ClearOldLog,CheckBatchExecution
+--
+-- (end)
+--
+--  - активаци€ батчей типа RequestProcessing с именами, соответствующими
+--    маске %Handler%:
+--
+-- (code)
+--
+-- @oms-activate-batch.sql RequestProcessing/%Handler%
+--
+-- (end)
+--
+
+@&OMS_SCRIPT_DIR/OmsInternal/exec-batch-operation.sql ACT "&1" ""

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>$(moduleName)</name>
+  <description></description>
+  <version>$(moduleVersion)</version>
+  <prefix></prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>$(svnModuleRoot)</path>
+  <initialPath>$(svnInitialPath)</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <package>$(packageName)</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

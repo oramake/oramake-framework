@@ -1,0 +1,21 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 466)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -377,10 +377,12 @@
+ #
+ installDataDir = \
+   $(wildcard Install/Data/Last) \
+-  $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST), \
+-    $(wildcard Install/Data/$(INSTALL_VERSION)) \
+-    , $(call getVersionDir,Install/Data) \
+-  )
++  $(if $(INSTALL_VERSION), \
++    $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST), \
++      $(wildcard Install/Data/$(INSTALL_VERSION)) \
++      , $(call getVersionDir,Install/Data) \
++    ) \
++  ) 
+ 
+ 
+ 

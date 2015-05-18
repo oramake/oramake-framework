@@ -1,0 +1,13 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 117)
++++ Config/NewModule/DB/Makefile	(revision 118)
+@@ -53,7 +53,7 @@
+ 
+ 
+ # target: gendoc-clean
+-# Удаляет сгенерированные файлы документации ( если они не зафиксированы в SVN).
++# Удаляет временные файлы ( кэш) системы документирования.
+ 
+ gendoc-clean: gendoc-clean.oms
+ 

@@ -1,0 +1,111 @@
+-- script: oms-init-var.sql
+-- Создает макро- и bind-переменные, используемые в SQL-скриптах, входящих в
+-- состав OMS, со значениями по умолчанию.
+--
+-- Выполняется автоматически при загрузке файла через <oms-load> с помощью
+-- SQL*Plus. В случае необходимости выполнения SQL-скриптов, входящих в состав
+-- OMS, без использования <oms-load> ( например, в интерактивной сессии
+-- SQL*Plus), предварительно должен быть выполнен данный скрипт ( один раз
+-- после запуска SQL*Plus, не требует наличия соединения с БД).
+--
+-- Создаваемые макропеременные:
+-- 1 ... 10                   - параметры вызова скриптов ( требуется для
+--                              <oms-run.sql>)
+-- OMS_RESUME_BATCH_SECOND    - параметр скрипта <oms-resume-batch.sql>
+-- OMS_STOP_BATCH_SECOND      - параметр скрипта <oms-stop-batch.sql>
+--
+-- Создаваемые bind-переменные:
+-- oms_*                      - различные bind-переменные OMS
+--
+-- Замечания:
+--  - скрипт используется внутри OMS;
+--  - значения большинства переменных переустанавливается в скрите <oms-load>;
+--  - скрипт <oms-run.sql> при вызове в интерактивной сессии SQL*Plus может
+--    работать некорректно в связи с отсутствием правильного значения у
+--    bind-переменной oms_run_file_stack ( в ней должен быть путь к скрипту
+--    верхнего уровня, в котором используется <oms-run.sql>); Для решения этой
+--    проблемы нужно запускать скрипт верхнего уровня с помощью <oms-run.sql>
+--    вместо использования стандартных команд "@" или "@@".
+--  - т.к. данным скриптом не обеспечивается уникальность значения
+--    OMS_TEMP_FILE_PREFIX для различных интерактивных сессиях SQL*Plus, то
+--    возможны проблемы при одновременном выполнении скриптов; Для исключения
+--    проблем нужно обеспечить уникальность значений ( например, с помощью
+--    добавления ID процесса операционной системы и т.д.).
+--  - для вызова SQL-скриптов, входящих в состав OMS, из интерактивной сессии
+--    SQL*Plus без указания пути, нужно добавить путь к каталогу с
+--    OMS-скриптами ( "C:\cygwin\usr\local\share\oms\SqlScript" при
+--    стандартной установке Cygwin) в переменную окружения SQLPATH;
+--
+
+-- Путь к собственным скриптам в случае установки по-умолчанию Cygwin и OMS
+define OMS_SCRIPT_DIR = "C:/cygwin/usr/local/share/oms/SqlScript"
+
+-- В качестве временного каталога используется /tmp из Cygwin, однако не
+-- добавляется уникальный для каждой сессии элемент
+define OMS_TEMP_FILE_PREFIX = "C:/cygwin/tmp/oms.sqltmp"
+
+-- Определяем и очищаем значения аргументов запуска скриптов ( используется в
+-- oms-run.sql)
+define 1 = ""
+define 2 = ""
+define 3 = ""
+define 4 = ""
+define 5 = ""
+define 6 = ""
+define 7 = ""
+define 8 = ""
+define 9 = ""
+define 10 = ""
+
+
+-- Макропеременные с параметрами прикладных скриптов
+define OMS_RESUME_BATCH_SECOND = ""
+define OMS_STOP_BATCH_SECOND = ""
+
+
+-- Общие параметры
+var oms_debug_level number
+
+-- Список значений элементов массива fileExtensionList с разделителем элементов
+-- запятая
+var oms_file_extension_list varchar2(1000)
+
+var oms_initial_svn_path varchar2(1000)
+
+-- Путь к каталогу с собственными SQL-скриптами OMS ( идентично
+-- макропеременной OMS_SCRIPT_DIR)
+var oms_script_dir varchar2(1000)
+
+var oms_svn_root varchar2(1000)
+
+
+
+-- Параметры установки
+var oms_action_goal_list varchar2(1000)
+var oms_action_option_list varchar2(4000)
+var oms_file_module_initial_svn_pa varchar2(1000)
+var oms_file_module_part_number number
+var oms_file_module_svn_root varchar2(1000)
+var oms_file_object_name varchar2(128)
+var oms_file_object_type varchar2(30)
+var oms_is_full_module_install number
+var oms_is_save_install_info number
+var oms_module_initial_svn_path varchar2(1000)
+var oms_module_install_version varchar2(50)
+var oms_module_svn_root varchar2(1000)
+var oms_module_version varchar2(50)
+var oms_process_id number
+var oms_process_start_time varchar2(50)
+var oms_svn_file_path varchar2(255)
+var oms_svn_version_info varchar2(50)
+
+-- Исходный файл для установки ( путь относительно каталога DB либо SqlScript
+-- для SQL-скриптов OMS)
+var oms_source_file varchar2(1000)
+
+
+-- Переменные скрипта oms-run.sql
+var oms_file_mask varchar2(4000)
+var oms_run_file_stack varchar2(4000)
+var oms_skip_file_mask varchar2(3999)
+

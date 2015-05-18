@@ -1,0 +1,70 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 1409)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -625,6 +625,24 @@
+ 
+ 
+ 
++# target: install-save-info
++# Сохраняет в БД информацию об установке модуля.
++
++install-save-info: install-save-info.oms
++
++
++
++# target: install
++# Устанавливает модуль в БД.
++
++install: install.oms
++
++
++
++#
++# group: Тестирование модуля
++#
++
+ # Скрипты для загрузки в БД объектов для тестирования
+ installTestTarget = \
+   $(addsuffix .$(lu), \
+@@ -647,17 +665,34 @@
+ 
+ 
+ 
+-# target: install-save-info
+-# Сохраняет в БД информацию об установке модуля.
++# build var: TEST_SCRIPT
++# Имя скрипта для запуска тестирования.
++TEST_SCRIPT = run.sql
+ 
+-install-save-info: install-save-info.oms
++# Полное имя скрипта для запуска тестирования ( вместе с расширением).
++# При отсутствии расширения добавляется используемое по умолчанию ( ".sql").
++ifneq ($(TEST_SCRIPT),)
++  testScript = \
++    $(if $(suffix $(TEST_SCRIPT)),$(TEST_SCRIPT),$(TEST_SCRIPT).sql)
++else
++  testScript = ""
++endif
+ 
++# Скрипты для запуска тестирования
++testTarget = \
++  $(addsuffix .$(lu), \
++    $(wildcard Test/$(testScript)) \
++  ) \
++  $(addsuffix .$(lu2), \
++  ) \
++  $(addsuffix .$(lu3), \
++  ) \
+ 
+ 
+-# target: install
+-# Устанавливает модуль в БД.
+ 
+-install: install.oms
++# target: test
++# Запускает тестирование модуля.
++test: test.oms
+ 
+ 
+ 

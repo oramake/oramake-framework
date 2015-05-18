@@ -1,0 +1,16 @@
+Index: Config/NewModule/DB/OmsModule/NaturalDocs/Menu.txt
+===================================================================
+--- Config/NewModule/DB/OmsModule/NaturalDocs/Menu.txt	(revision 719)
++++ Config/NewModule/DB/OmsModule/NaturalDocs/Menu.txt	(working copy)
+@@ -2,10 +2,8 @@
+ 
+ 
+ Title: $(moduleName)
++SubTitle: Версия $(moduleVersion)
+ 
+-# You can also add a sub-title to your menu like this:
+-# SubTitle: [subtitle]
+-
+ # You can add a footer to your documentation like this:
+ # Footer: [text]
+ # If you want to add a copyright notice, this would be the place to do it.

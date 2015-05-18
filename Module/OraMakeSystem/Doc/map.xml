@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>OraMakeSystem</name>
+  <description>Обеспечивает стандартизацию структуры и автоматизацию операций программных модулей для БД Oracle</description>
+  <version>1.5.3</version>
+  <prefix>oms</prefix>
+  <team>
+    <programmerDB>Лысенок Е.</programmerDB>
+    <programmerDB>Мартьянов А.</programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst>Епифанов Д.</analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/OraMakeSystem</path>
+  <initialPath>Oracle/Module/OraMakeSystem@633</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <package></package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

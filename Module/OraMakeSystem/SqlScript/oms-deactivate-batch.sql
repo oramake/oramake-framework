@@ -1,0 +1,38 @@
+-- script: oms-deactivate-batch.sql
+-- Деактивирует пакетные задания, реализованные с помощью модуля Scheduler.
+-- Деактивация выполняется только для активированных пакетных заданий,
+-- неактивированные пакетные задания игнорируются.
+--
+-- Параметры:
+-- patternList                - список масок пакетных заданий ( формат:
+--                              список через запятую масок для like имени
+--                              пакетного задания с опциональной маской
+--                              имени типа пакетного задания вида
+--                              [<batchTypePattern>/]<batchPattern>)
+--
+-- Замечания:
+--  - прикладной скрипт, предназначен для вызова из пользовательских скриптов;
+--  - для выполнения операции используется скрипт
+--    <OmsInternal/exec-batch-operation.sql>
+--
+-- Примеры:
+--
+--  - деактивация батчей ClearOldLog и CheckBatchExecution:
+--
+-- (code)
+--
+-- @oms-deactivate-batch.sql ClearOldLog,CheckBatchExecution
+--
+-- (end)
+--
+--  - деактивация батчей типа RequestProcessing с именами, соответствующими
+--    маске %Handler%:
+--
+-- (code)
+--
+-- @oms-deactivate-batch.sql RequestProcessing/%Handler%
+--
+-- (end)
+--
+
+@&OMS_SCRIPT_DIR/OmsInternal/exec-batch-operation.sql DEACT "&1" ""

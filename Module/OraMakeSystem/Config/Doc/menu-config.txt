@@ -1,0 +1,11 @@
+ Makefile                      "О модуле"
+ Doc/*/*.txt                   $(asterisk)
+ Doc/*.txt                     "О модуле"
+ *.typ                         "Объектные типы/$(directoryPath)/$(baseFileName)" Спецификация
+ *.tyb                         "Объектные типы/$(directoryPath)/$(baseFileName)" Реализация
+ *.pks                         Пакеты/$(directoryPath)/$(baseFileName)           Спецификация
+ *.pkb                         Пакеты/$(directoryPath)/$(baseFileName)           Реализация
+ *.jav                         "Java-исходники/$(directoryPath)"                 $(baseFileName)
+ Java/UsedLib/*/readme.txt     Java/Библиотеки/$(asterisk)
+ *.txt                         $(directoryPath)
+ *                             Скрипты/$(directoryPath)                          $(baseFileName)

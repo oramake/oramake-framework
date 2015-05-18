@@ -1,0 +1,133 @@
+Title: Установка
+
+
+
+group: Требования
+
+- установленный Cygwin
+
+  Стандартный набор пакетов Cygwin и описание установки находится в
+  SVN по пути Common/External/Cygwin ( нужно использовать тэг 1.7.9-1-2 либо
+  более поздний).
+
+  Проверка
+(start code)
+
+$ bash --version
+GNU bash, version 4.1.10(4)-release (i686-pc-cygwin)
+Copyright (C) 2009 Free Software Foundation, Inc.
+...
+
+$ make --version
+GNU Make 3.81
+Copyright (C) 2006  Free Software Foundation, Inc.
+...
+
+$ svn --version
+svn, version 1.7.1 (r1186859)
+   compiled Oct 20 2011, 17:36:22
+
+Copyright (C) 2011 The Apache Software Foundation.
+...
+
+(end)
+
+- использование последних пропатченных версий клиента Oracle ( поддерживаются
+  версии 11.2.0.2 ( рекомендуемая), а также 11.1.0.7 и 9.2.0.8)
+
+  В более ранних версиях встречаются ошибки, позднее устраненные Oracle
+  ( например, ошибки при загрузке файлов с помощью SQL*Loader).
+
+  Дистрибутив для установки
+  версии 11.2.0.2:
+  - \\smskexb3\install\!DT\Oracle 11.2.0.2 Client_x32\p10098816_112020_WINNT_3of6.zip
+
+  Дистрибутивы для установки
+  версии 11.1.0.7:
+  - \\smskexb3\Install\!DT\Oracle 11g 32-bit\win32_11gR1_client.zip
+  - \\smskexb3\Install\!DT\Oracle 11g 32-bit\p6890831_111070_Win32.zip
+
+  Дистрибутивы для установки
+  версии 9.2.0.8:
+  - \\smskexb3\Install\!DT\Oracle 9.2 NT\Disk[1-3]
+  - \\smskexb3\Install\!DT\Oracle 9.2 NT\p4547809_92080_WINNT.zip
+
+  Проверка ( из консоли Cygwin)
+
+(code)
+
+$ sqlplus /nolog
+
+SQL*Plus: Release 11.2.0.2.0 Production on Mon Oct 1 12:32:10 2012
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+SQL>
+
+(end)
+
+  Также необходимо проверить наличие и версию утилиты Import
+
+(code)
+
+$ imp
+
+Import: Release 11.2.0.2.0 - Production on Mon Oct 1 13:56:59 2012
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Username:
+
+(end)
+
+- для работы с сетевыми папками следует воспользоваться обходными решениями
+  ( см. <Ошибки::Используемые обходные решения>);
+
+
+
+group: Установка
+
+- получить последний релиз из SVN
+  ( Oracle/Module/OraMakeSystem/Tag/x.x.x или
+    по устаревшему расположению
+    Common/Oracle/OraMakeSystem/Tag/x.x.x для
+    тегов до 1.5.2 включительно
+  );
+
+- в bash ( Cygwin Terminal) в корневом каталоге проекта выполнить
+
+  $ make install
+
+Пример ( установка версии 1.3.0):
+
+(start code)
+
+$ cd /tmp
+
+$ svn co -q svn://srvbl08/Common/Oracle/OraMakeSystem/Tag/1.3.0 oms
+
+$ cd oms
+
+$ make install
+
+$ oms-create-module --version
+oms-create-module (OMS) 1.3.0
+SVN Version Information:
+  Module root     : Common/Oracle/OracleMakeSystem
+  File revision   : 347
+  File change date: 2008-09-25 14:31:50 +0400
+
+$ cd ..
+
+$ rm -rf /tmp/oms
+
+(end)
+
+
+
+Требования к БД при использовании:
+- в БД должен быть установлен модуль ModuleInfo
+  ( SVN Root: Oracle/Module/ModuleInfo) для сохранения информации об установке
+  модулей;
+- в БД должен быть установлен модуль Scheduler
+  ( SVN Root: Oracle/Module/Scheduler) для возможности загрузки батчей;

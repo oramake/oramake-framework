@@ -1,0 +1,20 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 2127)
++++ Config/NewModule/DB/Makefile	(revision 2128)
+@@ -752,12 +752,12 @@
+ 
+ # Скрипты для запуска тестирования
+ testTarget = \
+-  $(addsuffix .$(lu), \
++  $(addsuffix .$(ru), \
+     $(wildcard Test/$(testScript)) \
+   ) \
+-  $(addsuffix .$(lu2), \
++  $(addsuffix .$(ru2), \
+   ) \
+-  $(addsuffix .$(lu3), \
++  $(addsuffix .$(ru3), \
+   ) \
+ 
+ 

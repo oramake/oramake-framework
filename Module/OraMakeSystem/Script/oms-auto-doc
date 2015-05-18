@@ -1,0 +1,521 @@
+#!/bin/bash
+
+# script: oms-auto-doc
+# Генерирует автодокументацию модуля.
+#
+# Использование:
+#   oms-auto-doc [options]
+#
+# Параметры:
+#
+# Опции:
+#   -с, --clean               - удаляет временные файлы ( кэш) системы документирования.
+#                               Не может быть использовано с другими опциями.
+#   -d, --directory DIR       - путь к корневому каталогу модуля ( по умолчанию
+#                               им считается текущий каталог).
+#   --debug-level DEBUGLEVEL  - устанавливает уровень отладки.
+#   -h, --help                - вывести справку по использованию.
+#   --skip-nd                 - не вызывать генерацию с помощью Natural Docs.
+#   -m, --menu                - генерировать меню.
+#                               При задании ключа и при отсутствии --skip-nd
+#                               вызывается Natural Docs до и после генерации меню.
+#   --menu-file-first         - в начале в меню отображаются
+#                               пункты ( файлы), а затем директории
+#                               ( в рамках одного правила).
+#                               По-умолчанию в начале идут группы.
+#                               Ключ -m при этом можно опустить.
+#   --menu-replace-index      - подменяет меню индексов автодокументации.
+#                               Не может быть использован с другими опциями.
+#   --menu-take-config        - копирует или заменяет файл правил составления меню
+#                               в модуль для возможного локального
+#                               переопределения правил. Не может быть использован
+#                               с другими опциями.
+#   --menu-output MENUPATH    - переопределение пути к результирующему файлу меню.
+#                               Ключ -m при этом можно опустить.
+#   --nd-flags FLAGS          - параметры, передаваемые Natural Docs.
+#                               При ключе -m ( см.) применяются только
+#                               ко второму вызову. Опция может быть
+#                               использована несколько раз.
+#   -o, --output OUTPUTPATH   - каталог, в котором создаётся автодокументация.
+#   --version                 - вывести информацию о версии.
+#
+#
+# Скрипт просматривает файл меню Natural Docs и подменяет
+# его, распределяя по группам меню участвующие в меню файлы
+# согласно настроечному файлу menu-config.txt.
+# Генерация части меню по файлам реализована в скрипте <oms-file-menu.awk>
+# утилиты gawk ( <http://www.gnu.org/software/gawk>).
+# Также подменяет меню индексов, используя шаблон модуля oms.
+#
+# Если настроечный файл для генерации меню не найден в модуле по пути
+# OmsModule/Menu/menu-config.txt, то используется настроечный файл
+# oms по умолчанию ( находится по пути <installDataDir>/Config/Doc/menu-config.txt,
+# где <installDataDir> - директория, в которую установлен модуль).
+# Дописывает меню индексов из данных oms-файлов в конец файла меню.
+# Все используемые пути файлов можно посмотреть с помощью опции --debug-level 1.
+# С помощью опции --menu-take-config ( см.) можно скопировать общий настроечный файл
+# в модуль.
+#
+# Группы и файлы сортирует сначала по порядковым номерам найденных
+# правил для распределения, затем по некоторым внутренним правилам, определённым в
+# <oms-file-menu.awk::initSortRules>, затем в алфавитном порядке с учётом номеров
+# версий.
+#
+# Формат файла menu-config.txt:
+#
+# Файл состоит из строк
+# вида:
+#   <маска пути к файлу> <расположение в меню> <наименование пункта меню>
+#
+#   <маска пути к файлу>               - маска для пути файла, которая может
+#                                        содержать *, соответствующую любой последовательности
+#                                        символов.
+#   <расположение в меню>              - полное имя группы в меню( путь) с разделителем "/".
+#                                        Может содержать содержать макропеременные.
+#                                        $(fileName)-имя исходного файла;
+#                                        $(baseFileName)-имя исходного файла без расширения;
+#                                        $(directoryPath)-путь к директории исходного файла через "/";
+#                                        $(asterisk)-строка, соотвествующая первому символу
+#                                        "*" в <маска пути к файлу>.
+#                                        Например, "$(directoryPath)/Спефицикация".
+#                                        Поле не является обязательным. Если поле не задано,
+#                                        правило используется только для упорядочивания меню,
+#                                        а расположение в меню определяется из других правил.
+#   <наименование пункта меню>         - Поле для названия пункта меню.
+#                                        Может содерджать макропеременные,
+#                                        аналогичные макропеременным <шаблон для имени группы>.
+#                                        Пример "$(baseFileName)". Поле не является обязательным.
+#                                        По-умолчанию Natural Docs заполнит имя пункта согласно
+#                                        документации к файлу.
+#
+# В случае, если поле содержим пробел или табуляцию, которые является разделителями
+# menu-config.txt, стоит заключать значения полей в двойные кавычки.
+#
+
+# Group: Общее
+
+# var: OMS_VERSION
+# Версия программы
+#
+OMS_VERSION=1.7.3
+
+#
+# Информация о версии файла из SVN
+#
+omsSvnRoot='Oracle/Module/OraMakeSystem'
+fileRevisionValue='$Revision:: 2132                     $'
+fileChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+fileRevision=${fileRevisionValue:12:25}
+fileChangeDate=${fileChangeDateValue:8:26}
+
+#
+# Режимы запуска скрипта
+#
+RUN_MODE_NATURAL_DOCS=0
+RUN_MODE_HELP=1
+RUN_MODE_VERSION=2
+RUN_MODE_MENU=3
+RUN_MODE_TAKE_MENU_CONFIG=4
+RUN_MODE_REPLACE_INDEX=5
+RUN_MODE_CLEAN=6
+
+
+# Путь к каталогу с данными OMS
+#
+installDataDir="${OMS_INSTALL_DATA_DIR:-/usr/local/share/oms}"
+
+# Путь к gawk-скрипту для генерации меню
+#
+processFilesAwkPath="$(dirname $0)/oms-file-menu.awk";
+
+# var: rootDir
+# Корневой каталог модуля
+rootDir=""
+
+# func: logMessage
+# Выводит отладочное сообщение
+#
+logMessage()
+{
+  if [[ $debugLevel -gt 0 ]]; then
+    echo "$1" >&2;
+  fi;
+}
+
+# func: usage
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+Generates auto-documentation for module.
+
+Usage:
+  $(baseName $0) [options]
+
+    -с, --clean               - delete temporary files,
+                                used by generation process
+    -d, --directory DIR       - use module root directory DIR
+    --debug-level DEBUGLEVEL  - set debug level ( 0-3)
+    -h, --help                - show this help
+    --skip-nd                 - do not run Natural Docs.
+    -m, --menu                - generate menu
+    --menu-file-first         - put files before groups in menu
+    --menu-replace-index      - replace index menu only
+    --menu-take-config        - copies the common menu config file to
+                                module for furhter editing
+    --menu-output MENUPATH    - override menu output file
+    --nd-flags FLAGS          - add FLAGS to Natural Docs command
+                                line options
+    -o, --output OUTPUTPATH   - documentation output directory
+    --version                 - show version information
+END
+}
+
+# func: show_version
+# Выводит информацию о версии.
+#
+show_version()
+{
+  cat <<END
+$(basename $0) (OMS) $OMS_VERSION
+SVN Version Information:
+  Module root     : $omsSvnRoot
+  File revision   : $fileRevision
+  File change date: $fileChangeDate
+END
+}
+
+# Group: Генерация меню
+
+# func: getMenuPart
+# Делит меню на три части: заголовок, файлы и нижний колонтитул
+# и выводит часть c заданным номером
+#
+getMenuPart()
+{
+  cat $1 | \
+    gawk \
+      -v neededPart=$2 \
+      -v commentLabel=$(baseName "$processFilesAwkPath" .awk) \
+'
+BEGIN { partNumber = 1 }
+{
+  if( \
+    partNumber == 1 \
+    && ( \
+      match( $0, /[ \t]*Group:/) == 1 \
+      || match( $0, /[ \t]*[Ii]ndex:/) == 1 \
+      || match( $0, /[ \t]*File:/) == 1 \
+      || index( $0, "# " commentLabel ":") == 1 \
+    ) \
+    || partNumber == 2 \
+    && ( \
+      match( $0, /[ \t]*Group: Индекс/) == 1 \
+    ) \
+  )
+    partNumber++;
+  if( partNumber == neededPart)
+    print
+}'
+}
+
+# func: processFiles
+# Формирует группы с файлами на основе
+# правил для распределения
+# и записывает в стандартный выходной поток
+processFiles()
+{
+  logMessage "processFiles( see log messages in menu file) ...";
+  (
+  cat $configPath; \
+  echo; \
+  getMenuPart "$1" 2 | grep "File:";
+  ) \
+  | gawk -f $processFilesAwkPath \
+      -v debugLevel=$debugLevel \
+      -v isItemFirst=$isItemFirst \
+      -v commentLabel=$(baseName "$processFilesAwkPath" .awk) \
+      --re-interval
+  if ! [[ $? -eq 0 ]]; then
+    exit 3;
+  fi;
+  logMessage "processFiles: finish";
+}
+
+# func: initMenuGenerator
+# Инициализирует параметры для генерации меню
+#
+function initMenuGenerator()
+{
+  menuPath=${menuPath:-${rootDir}/Db/OmsModule/NaturalDocs/Menu.txt}
+  if ! [[ -f $menuPath ]]; then
+    echo "Could not find menu file \"$menuPath\"">&2;
+    exit 1;
+  fi;
+
+                                        # Путь к файлу меню шаблона
+                                        # нового модуля
+  moduleConfigMenuPath=\
+"$installDataDir/Config/NewModule/DB/OmsModule/NaturalDocs/Menu.txt";
+  if ! [[ -f $moduleConfigMenuPath ]]; then
+    echo "Could not find new module menu file \"$moduleConfigMenuPath\"">&2;
+    exit 1;
+  fi;
+                                        # Путь к временному файлу
+  menuTempPath=${menuOutputFile:-${rootDir}/Db/OmsModule/Load/MenuTemp.txt};
+  if ! [[ -d $(dirname menuTempPath) ]]; then
+    menuTempPath="/tmp/oms-menu.MenuCopy.$$";
+  fi;
+                                       # Пути к настроечным файлам
+  commonConfigPath=$installDataDir/Config/Doc/menu-config.txt;
+  moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
+  logMessage "menuPath = "$menuPath
+  logMessage "menuOutputFile = "$menuOutputFile
+  logMessage "menuTempPath = "$menuTempPath
+  logMessage "processFilesAwkPath = "$processFilesAwkPath
+}
+
+# func: generateMenu
+# Генерирует меню документации
+#
+function generateMenu()
+{
+  initMenuGenerator;
+                                       # Если есть локальный файл
+                                       # конфигурации
+  if [[ -f $moduleConfigPath ]]; then
+    configPath=${configPath:-"$moduleConfigPath"};
+    echo "Using menu config path: \"$configPath\"";
+  else
+    if [[ -f  $commonConfigPath ]]; then
+      configPath=$commonConfigPath;
+    else
+      echo "Could not find config file \"$commonConfigPath\"">&2;
+      exit 1;
+    fi;
+  fi;
+  logMessage "configPath = "$configPath
+                                       # Генерируем меню
+  ( getMenuPart "$menuPath" 1 \
+    && processFiles $menuPath \
+    && getMenuPart "$moduleConfigMenuPath" 3 \
+  ) > ${menuTempPath};
+  menuResult=$?
+  logMessage "menuResult = $menuResult"
+  if [[ -z $menuOutputFile ]] && [[ $menuResult -eq 0 ]]; then
+    logMessage "copying result menu ..."
+    cp $menuTempPath $menuPath
+    rm -f $menuTempPath;
+  fi;
+}
+
+# func: replaceMenuIndex
+# Заменяет меню индексов
+#
+function replaceMenuIndex()
+{
+  initMenuGenerator;
+  ( getMenuPart "$menuPath" 1 \
+    && getMenuPart "$menuPath" 2 \
+    && getMenuPart "$moduleConfigMenuPath" 3 \
+  ) > ${menuTempPath};
+  if [[ -z $menuOutputFile ]] && [[ $? -eq 0 ]]; then
+    cp $menuTempPath $menuPath
+    rm -f $menuTempPath;
+  fi;
+}
+
+# Group: Natural Docs
+
+# func: initNaturalDocs
+# Инициализирует параметры для запуска Natural Docs
+#
+function initNaturalDocs()
+{
+  # Строка запуска утилиты генерации
+  gendocRun="$installDataDir"/UsedLib/NaturalDocs/NaturalDocs/NaturalDocs
+  # Путь для автодокументации
+  gendocDir="${gendocDir:-${rootDir}/Doc/DB/AutoGen}"
+  # Каталог с настройками утилиты генерации
+  gendocConfigDir="${rootDir}/Db/OmsModule/NaturalDocs"
+  # Каталог с временными файлами утилиты генерации
+  gendocCacheDir="${gendocConfigDir}/Data"
+  # Каталог с файлами - источниками для документации
+  sourceDir=${rootDir}/Db
+}
+
+# func: clean
+# Удаляет временные файлы ( кэш) системы документирования
+#
+function clean()
+{
+  initNaturalDocs;
+  if [[ -n $gendocCacheDir ]]; then
+    if ! [[ -d "${gendocCacheDir}" ]]; then
+      echo "Directory \"${gendocCacheDir}\" not found";
+      exit 3;
+    fi;
+    logMessage "remove ${gendocCacheDir}/*"
+    rm -rf ${gendocCacheDir}/*;
+  fi;
+}
+
+# func: runNaturalDocs
+# Генерирует документацию с помощью Natural Docs
+#
+# Параметры:
+#   $1                       - опции для Natural Docs
+#   $2                       - формат вывода Natural Docs.
+#                              По умолчанию HTML.
+function runNaturalDocs()
+{
+  initNaturalDocs;
+  excludeRevert="";
+  if [[ -d "${rootDir}/Db/Install/Schema" ]]; then
+    excludeRevert=$( \
+      find "${rootDir}"/Db/Install/Schema \
+        -name Revert      \
+        -type d           \
+        -printf " -xi %p" \
+      );
+  fi;
+  outputFormat=$2;
+  naturalDocsCommand="\
+    ${gendocRun} \
+    -i ${sourceDir} \
+    -o ${outputFormat} ${outputDir} \
+    -p ${gendocConfigDir} \
+    --charset Windows-1251 \
+    --style small \
+    -xi "${rootDir}/Db/OmsModule" \
+    "${excludeRevert}" \
+    -hl off \
+    $1";
+  logMessage "$naturalDocsCommand";
+  $naturalDocsCommand;
+}
+
+# Group: Разбор опций
+
+# func: changeRunMode
+# Изменение режима запуска скрипта
+#
+changeRunMode() {
+  logMessage "changeRunMode $1"
+  if [[ -n $runMode ]] && ! [[ $runMode -eq $1 ]]; then
+    echo "Option set is illegal" 1>&2;
+    echo "Use $(basename $0) --help"
+    exit 1;
+  else
+    runMode=$1;
+  fi;
+}
+
+# func: parseArgument
+# Разбор агрументов командной строки
+parseArgument()
+{
+  while [ $# != 0 ]
+  do
+    case $1 in
+      -c | --clean)
+        changeRunMode $RUN_MODE_CLEAN;
+        ;;
+      -d | --directory)
+        rootDir="$2"; shift;
+        ;;
+      --debug-level )
+        debugLevel=$2; shift;
+        ;;
+      -h | --help)
+        changeRunMode $RUN_MODE_HELP;
+        ;;
+      --skip-nd)
+        isNaturalDocsSkipped=1;
+        changeRunMode $RUN_MODE_MENU;
+        ;;
+      -m | --menu)
+        changeRunMode $RUN_MODE_MENU;
+        ;;
+      --menu-file-first )
+        isFileFirst=1;
+        changeRunMode $RUN_MODE_MENU;
+        ;;
+      --menu-replace-index )
+        changeRunMode $RUN_MODE_REPLACE_INDEX;
+        ;;
+      --menu-take-config )
+        changeRunMode $RUN_MODE_TAKE_MENU_CONFIG;
+        ;;
+      --menu-output )
+        changeRunMode $RUN_MODE_MENU;
+        menuOutputFile=$2; shift;
+        ;;
+      --nd-flags )
+        naturalDocsFlags="${naturalDocsFlags} $2"; shift;
+        ;;
+      -o | --output )
+        outputDir=$2; shift;
+        ;;
+      --version )
+        changeRunMode $RUN_MODE_VERSION;
+        ;;
+      *)
+      echo "Illegal option: \"$1\"" >&2;
+      echo "Use $(baseName $0) --help"
+      exit 1
+      ;;
+    esac
+    shift
+  done
+}
+
+#
+# Устанавливаем значения по умолчанию.
+#
+rootDir=${rootDir:-.}
+outputDir=${outputDir:-"${rootDir}/Doc/Db/Autogen"}
+
+                                       # Инициализация
+parseArgument "$@";
+logMessage "runMode=$runMode";
+                                       # Различные варианты выполнения
+case $runMode in
+  $RUN_MODE_CLEAN )
+    clean;
+    ;;
+  $RUN_MODE_HELP )
+    usage;
+    ;;
+  $RUN_MODE_VERSION )
+    show_version;
+    ;;
+  $RUN_MODE_MENU )
+    set -o pipefail;
+    if ! [[ isNaturalDocsSkipped -eq 1 ]]; then
+      echo "* Generating docs in \"$outputDir\" ( step 1) ...";
+      runNaturalDocs "" "HTML";
+    fi;
+    echo "* Generating menu ...";
+    generateMenu;
+    if ! [[ isNaturalDocsSkipped -eq 1 ]]; then
+      echo "* Generating docs in \"$outputDir\" ( step 2) ...";
+      runNaturalDocs "$naturalDocsFlags" "HTML"
+    fi;
+    ;;
+  $RUN_MODE_TAKE_MENU_CONFIG )
+    initMenuGenerator;
+    cp "$commonConfigPath" "$moduleConfigPath"
+    echo "Config file copied from \"$commonConfigPath\""
+    echo "to"
+    echo "\"$moduleConfigPath\"";
+    ;;
+  $RUN_MODE_REPLACE_INDEX )
+    replaceMenuIndex;
+    ;;
+  $RUN_MODE_NATURAL_DOCS | ""  )
+    echo "* Generating docs in \"$outputDir\" ...";
+    runNaturalDocs "$naturalDocsFlags" "HTML"
+    ;;
+esac;

@@ -1,0 +1,353 @@
+#!/bin/bash
+
+# script: create-patch
+# Создает файлы для обновления модуля.
+# Файлы для обновления создаются в каталоге Config/UpdateModule с помощью
+# svn diff на основе внесенных изменений в базовые файлы, находящиеся в
+# Config/NewModule ( при этом игнорируются файлы, которые просто копируются
+# при обновлении модуля скриптом <oms-update-module>).
+#
+#
+# Использование:
+#   create-patch [options] [targetPath]
+#
+# Параметры:
+#   targetPath                - путь к файлу ( каталогу) относительтельно
+#                               Config/NewModule, для которого требуется создать
+#                               обновления ( по умолчанию для всех обновляемых
+#                               изменений)
+#
+# Опции:
+#   --from-revision REV       - ревизия, начиная с которой формируются файлы
+#                               для обновления ( по умолчанию на основе
+#                               незафиксированных в SVN изменений)
+#   -h, --help                - вывести справку по использованию
+#   -n, --dry-run             - не выполнять команды, а только выводить их
+#   --overwrite               - перезаписывать существующие файлы
+#   --version                 - вывести информацию по версии
+#
+
+# Версия программы
+OMS_VERSION=1.7.3
+                                        # Информация о версии файла из SVN
+omsSvnRoot='Oracle/Module/OraMakeSystem'
+fileRevisionValue='$Revision:: 306                      $'
+fileChangeDateValue='$Date:: 2008-07-02 14:39:12 +0400 #$'
+fileRevision=${fileRevisionValue:12:25}
+fileChangeDate=${fileChangeDateValue:8:26}
+
+# Исполняемый файл Subversion
+SVN_CMD="svn"
+
+# Путь к файлу ( каталогу) по изменениям которого нужно сформировать патчи
+targetPath=""
+
+# Ревизия, начиная с которой формируются патчи
+fromRevision=""
+
+# Признак тестового запуска ( только печать команд без выполнения)
+isDryRun=0
+
+# Выполнение команды ( в случае isDryRun указывается "echo").
+runCmd=""
+
+# Признак перезаписи файлов
+isOverwrite=0
+
+# Используемый временный файл
+tmpFile="/tmp/create-patch.$$"
+
+# Шаблон модуля
+templateDir="Config/NewModule"
+
+# Данные для обновления файлов модуля
+updateDir="Config/UpdateModule"
+
+# Каталог с файлами OMS
+omsDir="DB/OmsModule"
+
+
+# Код ошибки из-за неверных агрументов.
+E_ARG_ERROR=10
+
+# Код ошибки обработки
+E_PROCESS_ERROR=11
+
+
+#
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+Update OMS-files in module.
+
+Usage:
+  create-patch [options] [targetPath]
+
+Parameters:
+  targetPath                  path from Config/NewModule for used changes
+
+Options:
+      --from-revision REV     start revision for used changes
+  -h, --help                  show this help
+  -n, --dry-run               don't actually run any commands; just print them
+      --overwrite             overwrite existing files
+      --version               print version
+END
+}
+
+
+
+#
+# Выводит информацию о версии.
+#
+show_version()
+{
+  cat <<END
+create-patch (OMS) $OMS_VERSION
+SVN Version Information:
+  Module root     : $omsSvnRoot
+  File revision   : $fileRevision
+  File change date: $fileChangeDate
+END
+}
+
+
+
+#
+# Выводит сообщение об ошибке в вызове, описание аргументов и завершает
+# выполнение.
+#
+arg_error()
+{
+  echo "$1" >&2
+  usage
+  exit $E_ARG_ERROR;
+}
+
+
+
+#
+# Выводит сообщение об ошибке и завершает выполнение.
+#
+exitError()
+{
+  echo "create-patch: $1" >&2
+  exit $E_PROCESS_ERROR
+}
+
+
+
+#
+# Выводит предупреждение.
+#
+printWarning()
+{
+  echo "create-patch: $1" >&2
+}
+
+
+
+#
+# Возвращает массив номеров ревизий, в которых изменялся файл.
+# Массив заполняется последовательно, начиная с номера ревизии, предшествующей
+# fromRevision ( если не установлена, то начиная с номера HEAD).
+#
+# Параметры:
+# revisionArrayVar            - массив ревизий ( возврат, имя переменной)
+# filePath                    - путь к файлу
+getRevisionArray()
+{
+  local revisionArrayVar="$1"
+  local filePath="$2"
+  local revisionList=""
+  local revision=""
+  for revision in $( \
+      svn log --quiet --revision HEAD:0 "$filePath" \
+      | gawk '/^r/ { print substr( $1, 2); }' \
+    )
+  do
+    revisionList="$revision $revisionList"
+    if [[ -z "$fromRevision" ]] || (( $revision < $fromRevision )) ; then
+      break;
+    fi
+  done
+                                        # Возврат значения
+  eval "${revisionArrayVar}=($revisionList)"
+}
+
+
+#
+# Формирует патч для файла.
+#
+# Параметры:
+# filePath                    - путь к исходному файлу
+# changeRevision              - номер правки, в которой вносились изменения
+# patchNumber                 - номер патча
+createPatch()
+{
+  local filePath="$1"
+  local changeRevision="$2"
+  local patchNumber="$3"
+                                        # в правке 273 выполнялся unix2dos
+  if [[ "$changeRevision" != "273" ]]; then
+    local patchDir="$updateDir/$filePath"
+    local patchFileName="p-------"
+    patchFileName="${patchFileName:0:8-${#patchNumber}}${patchNumber}.diff"
+    local patchFile="$patchDir/$patchFileName"
+    if (( $isOverwrite )) || [[ ! -f "$patchFile" ]]; then
+      local diffArg=""
+      if [[ -n "$changeRevision" ]]; then
+        diffArg=" --change $changeRevision"
+      fi
+      if $runCmd mkdir -p "$patchDir"; then
+        if (( $isDryRun )); then
+          $runCmd "svn diff${diffArg} \"$templateDir/$filePath\" > \"$patchFile\""
+        else
+          svn diff${diffArg} "$templateDir/$filePath" > "$patchFile" \
+            && unix2dos "$patchFile" 2>/dev/null
+                                          # Удаляем пустой файл
+          if [[ $? == 0 ]]; then
+            if [[ -s "$patchFile" ]]; then
+              echo "$patchFile ( rev. ${changeRevision:--})"
+            else
+              rm "$patchFile"
+            fi
+          fi
+        fi
+      fi
+    fi
+  fi
+}
+
+#
+# Определяет требующие обработки файлы и вызывает формирование по ним патчей.
+#
+processTarget()
+{
+  local revArray
+  declare -a revArray
+  local cmnRevArray
+  declare -a cmnRevArray
+  for file in $( \
+    cd "$templateDir" \
+    && find \
+      ${targetPath:-*} \
+      -name .svn -prune -o -type f -name "*[^~]" -print \
+    )
+  do
+    local srcPath="$templateDir/$file"  # Путь к исходному файлу
+    local isIgnore=0                    # игнорировать файл?
+                                        # Определяем параметры обработки
+    case "$file" in
+      DB/pkg_NewModule.pk[b,s] \
+        | DB/OmsModule/* \
+        | Doc/Map.txt \
+        | Doc/map.xml \
+        )
+        isIgnore=1
+        ;;
+    esac
+                                        # Не игнорируем явно заданный файл
+    if (( isIgnore)) && [[ $file == $targetPath ]]; then
+      isIgnore=0
+    fi
+                                        # Обрабатываем файл
+    if ! ((isIgnore)); then
+      if [[ ${#cmnRevArray[@]} == 0 ]]; then
+        getRevisionArray cmnRevArray "$templateDir/${omsDir}/common.mk"
+      fi
+      if [[ -n "$fromRevision" ]]; then
+        getRevisionArray revArray "$templateDir/$file"
+        local iRev=1
+        local iCmnRev=0
+        local patchNumber=""
+        while (( iRev < ${#revArray[@]} ))
+        do
+          while (( $iCmnRev < ${#cmnRevArray[@]} - 1 )) \
+              && (( ${cmnRevArray[(($iCmnRev+1))]} < ${revArray[$iRev]} ))
+          do
+            let "iCmnRev = $iCmnRev + 1"
+          done
+          patchNumber=${revArray[(($iRev-1))]}
+          if (( $patchNumber < ${cmnRevArray[$iCmnRev]})); then
+            patchNumber=${cmnRevArray[$iCmnRev]}
+          fi
+          createPatch "$file" "${revArray[$iRev]}" "$patchNumber"
+          let "iRev = $iRev + 1"
+        done
+      else
+        if svn status "$templateDir/$file" | grep --quiet "^M"; then
+          getRevisionArray revArray "$templateDir/$file"
+          local patchNumber=${revArray[0]}
+          if (( $patchNumber < ${cmnRevArray[0]} )); then
+            patchNumber=${cmnRevArray[0]}
+          fi
+          createPatch "$file" "" "$patchNumber"
+        fi
+      fi
+    fi
+  done
+}
+
+
+
+#
+# Разбор агрументов командной строки.
+#
+while [ $# != 0 ]
+do
+  case $1 in
+    --from-revision)
+      fromRevision="$2"; shift;
+      ;;
+    --help)
+      usage; exit 0;
+      ;;
+    -n | --dry-run)
+      isDryRun=1
+      runCmd="echo"
+      ;;
+    --overwrite)
+      isOverwrite=1
+      ;;
+    --version)
+      show_version; exit 0;
+      ;;
+    -* | --*)
+      arg_error "Illegal option: \"$1\"."
+      ;;
+    *)
+      if [[ -z "$targetPath" ]]; then
+        targetPath="$1";
+      else
+        arg_error "Illegal argument: \"$1\"."
+      fi
+      ;;
+  esac
+  shift
+done
+
+#
+# Устанавливаем значения по умолчанию.
+#
+
+
+#
+# Проверяем параметры выполнения.
+#
+if [[ -n "$targetPath" ]] && [[ ! -e "$templateDir/$targetPath" ]]; then
+  exitError "Target path \"$templateDir/$targetPath\" does not exist."
+fi
+
+#
+# Выполняем обработку
+#
+processTarget
+
+
+#
+# Возвращаем результат выполнения.
+#
+exit 0

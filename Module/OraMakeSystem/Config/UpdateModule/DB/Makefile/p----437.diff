@@ -1,0 +1,24 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 438)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -325,7 +325,8 @@
+ # ƒействи€, выполн€емые перед установкой модул€.
+ installBeforeTarget =                          \
+   $(addsuffix .$(ru),                          \
+-    $(wildcard Install/Config/$(INSTALL_VERSION)/before-action.sql)  \
++    $(if $(INSTALL_VERSION), \
++      $(wildcard Install/Config/$(INSTALL_VERSION)/before-action.sql),) \
+     $(wildcard Install/Config/before-action.sql)      \
+     $(installBeforeOmsAction)                  \
+   )                                            \
+@@ -381,7 +382,8 @@
+   $(addsuffix .$(ru),                          \
+     $(installAfterOmsAction)                  \
+     $(wildcard Install/Config/after-action.sql)      \
+-    $(wildcard Install/Config/$(INSTALL_VERSION)/after-action.sql)  \
++    $(if $(INSTALL_VERSION), \
++      $(wildcard Install/Config/$(INSTALL_VERSION)/after-action.sql),) \
+   )                                            \
+   $(addsuffix .$(ru2),                        \
+     $(installAfterOmsAction)                  \

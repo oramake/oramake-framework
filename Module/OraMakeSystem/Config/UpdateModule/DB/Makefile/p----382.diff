@@ -1,0 +1,102 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 392)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -14,6 +14,8 @@
+ 	load									\
+ 	load-clean						\
+ 	install								\
++	install-after					\
++	install-before				\
+ 	install-schema				\
+ 	
+ 
+@@ -218,7 +220,38 @@
+ # Install/Schema/$(SCHEMA_VERSION).
+ SCHEMA_VERSION	= 
+ 
+-# Скрипты для выполнения установки
++# Стандартные действия, выполняемые перед установкой.
++# Действия выполняются скриптами, входящими в OMS.
++# Значение переменной не должно изменяться в модуле ( в случае необходимости
++# можно убирать использование этой переменной из installBeforeTarget и указывать
++# там вручную необходимые стандартные действия).
++installBeforeOmsAction =											\
++
++
++
++# Действия, выполняемые перед установкой модуля.
++installBeforeTarget =													\
++	$(addsuffix .$(ru),													\
++		$(wildcard Install/Action/before.sql)			\
++		$(installBeforeOmsAction)									\
++	)																						\
++	$(addsuffix .$(ru2),												\
++		$(installBeforeOmsAction)									\
++	)																						\
++	$(addsuffix .$(ru3),												\
++		$(installBeforeOmsAction)									\
++	)																						\
++
++
++
++# target: install-before
++# Выполняет предварительные действия перед установкой.
++
++install-before: install-before.oms
++
++
++
++# Скрипты для выполнения установки схемы
+ installSchemaTarget = 									\
+ 	$(addsuffix .$(lu),										\
+ 		$(wildcard Install/Schema/$(SCHEMA_VERSION)/run.sql)			\
+@@ -238,15 +271,42 @@
+ install-schema: install-schema.oms
+ 
+ 
++
++# Стандартные действия, выполняемые после установки.
++# Действия выполняются скриптами, входящими в OMS.
++# Значение переменной не должно изменяться в модуле ( в случае необходимости
++# можно убирать использование этой переменной из installAfterTarget и указывать
++# там вручную необходимые стандартные действия).
++installAfterOmsAction =											\
++
++
++
++# Действия, выполняемые после установки.
++installAfterTarget =													\
++	$(addsuffix .$(ru),													\
++		$(installAfterOmsAction)									\
++		$(wildcard Install/Action/after.sql)			\
++	)																						\
++	$(addsuffix .$(ru2),												\
++		$(installAfterOmsAction)									\
++	)																						\
++	$(addsuffix .$(ru3),												\
++		$(installAfterOmsAction)									\
++	)																						\
++
++
++
++# target: install-after
++# Выполняет завершающие установку действия.
++
++install-after: install-after.oms
++
++
++
+ # target: install
+ # Устанавливает модуль в БД.
+-# Сначала выполняется установка схемы ( <install-schema>), затем загружаются
+-# остальные файлы модуля ( <load>).
+ 
+-install: 																\
+-	install-schema												\
+-	load																	\
+-	
++install: install.oms
+ 
+ 
+ 

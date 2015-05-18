@@ -1,0 +1,23 @@
+Index: Config/NewModule/Doc/map.xml
+===================================================================
+--- Config/NewModule/Doc/map.xml	(revision 719)
++++ Config/NewModule/Doc/map.xml	(working copy)
+@@ -1,8 +1,9 @@
+ <?xml version="1.0" encoding="Windows-1251"?>
+ <map>
+-  <map_version>1.2</map_version>
++  <map_version>1.3</map_version>
+   <name>$(moduleName)</name>
+   <description></description>
++  <version>$(moduleVersion)</version>
+   <prefix></prefix>
+   <team>
+     <programmerDB></programmerDB>
+@@ -13,6 +14,7 @@
+     <msp></msp>
+   </request>
+   <path>$(svnModuleRoot)</path>
++  <initialPath>$(svnInitialPath)</initialPath>
+   <db>
+     <database>
+       <instance></instance>

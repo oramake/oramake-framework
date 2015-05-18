@@ -1,0 +1,87 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 464)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -20,6 +20,7 @@
+   install               \
+   install-after         \
+   install-before        \
++  install-data          \
+   install-schema        \
+ 
+ 
+@@ -367,6 +368,74 @@
+ 
+ 
+ 
++# Каталоги для загрузки установочных данных.
++# Всегда загружаются данные из каталога Install/Data/Last. Дополнительно при
++# установке обновления ( INSTALL_VERSION=N.N.N) загружаются данные из каталога
++# Install/Data/N.N.N, при первоначальной установке последней версии
++# ( INSTALL_VERSION=Last) загружаются данные из всех каталогов обновлений
++# ( Install/Data/[0-9.]*) в порядке нумерации версий.
++#
++installDataDir := \
++  $(wildcard Install/Data/Last) \
++  $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST), \
++    $(wildcard Install/Data/$(INSTALL_VERSION)) \
++    , $(call getVersionDir,Install/Data) \
++  )
++
++
++
++# build func: getInstallDataFile
++# Возвращает файлы для загрузки установочных данных.
++#
++# Параметры:
++# $(1)    - название подкаталога в основном каталоге скриптов, откуда берутся
++#           файлы для загрузки ( по умолчанию из основного каталога)
++#
++# Замечания:
++# - в случае отсутствия в каталоге скриптов run.sql и run-after.sql для
++#   загрузки выбираются скрипты *.sql ( за исключением revert.sql) и *.dat,
++#   в противном случае берутся скрипты run.sql, *.dat, run-after.sql;
++#  
++# Пример:
++# - для получения скриптов из каталогов Install/Data/*/RFInfoP в соответствии
++#   с номером устанавливаемой версии нужно прописать
++#   $(call getInstallDataFile,RFInfoP)
++#
++getInstallDataFile = \
++  $(filter-out %/revert.sql, \
++    $(foreach d,$(addsuffix $(addprefix /,$(1)),$(installDataDir)), \
++      $(wildcard \
++        $(if $(wildcard $(d)/run.sql $(d)/run-after.sql), \
++          $(d)/run.sql $(d)/*.dat $(d)/run-after.sql \
++          , $(d)/*.sql $(d)/*.dat \
++        ) \
++      ) \
++    ) \
++  )
++
++
++
++# Скрипты для загрузки установочных данных в БД.
++installDataTarget = \
++  $(addsuffix .$(lu), \
++    $(call getInstallDataFile) \
++  ) \
++  $(addsuffix .$(lu2), \
++  ) \
++  $(addsuffix .$(lu3), \
++  ) \
++
++
++
++# target: install-data
++# Загружает установочные данные в БД.
++# Для выполнения загрузки установочных данных выполняются скрипты из
++# каталога Install/Data/$(INSTALL_VERSION).
++
++install-data: install-data.oms
++
++
++
+ # Стандартные действия, выполняемые после установки.
+ # Действия выполняются скриптами, входящими в OMS.
+ # Значение переменной не должно изменяться в модуле ( в случае необходимости

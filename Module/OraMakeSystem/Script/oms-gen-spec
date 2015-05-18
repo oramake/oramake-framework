@@ -1,0 +1,332 @@
+#!/bin/bash
+
+# script: oms-gen-spec
+# Генерирует спецификацию по телу plsql-объекта ( пакета или # объектного
+# типа).
+#
+# Использование:
+#   oms-gen-spec [options] bodyFileName
+#
+# Параметры:
+#   bodyFileName                  имя файла тела plsql-объекта
+#
+# Опции:
+# --debug-level DBG_LEVEL       - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+# --spec-file-name,-s FILE_NAME - имя результирующего файла спецификации
+#                                 ( по-умолчанию определяется автоматически)
+# -h, --help                    - вывести справку по использованию
+# --version                     - вывести информацию по версии
+#
+#
+# Замечания:
+#   - файлы тела и спецификации должны существовать;
+#   - для генерации необходимо существование группы, соотв. регулярному выражению
+#     <FUNCTION_GROUP_EXPR> ( пример: "group: Функции") в теле и спецификации; Данное
+#     выражение отделяет части, относящиеся к функциям, от остальных частей
+#     скрипта ( например, констант спецификации);
+#   - прототипы функций тела с комментариями должны удовлетворять
+#     требованиям по оформлению и соответствовать примерам в разделе <Комментарии>;
+#     Например, ключевое слово "is" должно начинаться с новой строки;
+#   - в случае если прототип функции ( процедуры) пакета ( типа) начинается с
+#     префикса "i" ( internal), то функция ( процедура) не переносится в
+#     спецификацию пакета ( типа);
+#
+#
+# Пример использования:
+#
+# ( code)
+# $ oms-gen-spec ./Db/pkg_AutoDialer.pkb
+# ( end code)
+
+
+# group: Переменные
+
+# var: OMS_VERSION
+# Версия программы
+OMS_VERSION=1.7.3
+
+# var: fileRevisionValue
+# Строка с номером последней правки, в которой был изменен файл ( автоматически
+# обновляется Subversion).
+fileRevisionValue='$Revision:: 2300                     $'
+
+# var: fileChangeDateValue
+# Строка с последней датой изменения файла ( автоматически обновляется
+# Subversion).
+fileChangeDateValue='$Date:: 2015-03-04 16:03:30 +0300 #$'
+
+
+
+# Подключение общих констант и функций
+. oms-common.sh || exit 11
+
+
+
+# group: Параметры вызова
+
+# var: bodyFileName
+# Имя файла тела
+bodyFileName=""
+
+# var: specFileName
+# Имя файла спецификации
+specFileName=""
+
+# var: skipDeleteTemp
+# Пропускать ли удаление временных файлов.
+skipDeleteTemp=0;
+
+
+
+# group: Переменные выполнения
+
+# var: bodyBaseFileName
+# Имя файла скрипта тела plsql-объекта без расширения
+bodyBaseFileName=""
+
+# var: bodyExtention
+# Расширение файла скрипта тела plsql-объекта
+bodyExtention=""
+
+# var: tmpFileDir
+# Каталог для временных файлов
+tmpFileDir="${TEMP:-/tmp}"
+
+# var: objectTypeFlag
+# Признак генерации спецификации объектного типа. 0 - пакет, 1 - объектный тип.
+objectTypeFlag=""
+
+
+
+# group: Константы
+
+# const: FUNCTION_GROUP_EXPR
+# Регулярное выражения ( gawk) для начала части функций
+FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<Функции\>[[:blank:]]*\*\/'
+
+# const: END_OBJECT_EXPR
+# Регулярное выражения для конца sql-скрипта для создания plsql-объекта
+END_OBJECT_EXPR='^\/[[:blank:]]*$'
+
+
+
+# group: Функции
+
+# func: usage
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+  Generate specification for plsql object ( package or object type) body.
+
+Usage:
+  oms-gen-spec [options] bodyFileName
+
+Arguments:
+  bodyFileName                name of body file name
+
+Options:
+  --debug-level DBG_LEVEL     set level for print debug information ( 0 - 3)
+  -s, --spec-file-name FILE_NAME
+                              specification file name
+                              ( by default, defined automatically using body file name)
+  -h, --help                  show this help
+   --version                  print version
+END
+}
+
+# func: parseOption
+# Разбор аргументов командной строки.
+#
+parseOption()
+{
+  while [ $# != 0 ]; do
+    case $1 in
+      --debug-level)
+        setDebugLevel "$2"
+        shift;
+        ;;
+      -h | --help)
+        usage
+        exitScript
+        ;;
+      -s | --spec-file-name)
+        specFileName="$2"; shift;
+        logDebug3 "Set specFileName: '$specFileName'"
+        ;;
+      --version)
+        showVersion
+        exitScript
+        ;;
+      --skip-delete-temp)
+        skipDeleteTemp=1;
+        shift;
+        ;;
+      -* | --*)
+        exitArgError "Illegal option: \"$1\"."
+        ;;
+      *)
+        if [[ -z "$bodyFileName" ]] ; then
+          bodyFileName="$1"
+          logDebug3 "Set bodyFileName: '$bodyFileName'"
+        else
+          exitArgError "Illegal argument: \"$1\"."
+        fi
+        ;;
+    esac
+    shift
+  done
+  # Проверяем параметры выполнения
+  if [[ -z "$bodyFileName" ]]; then
+    echo "Body file name is not set";
+    exitArgError "."
+  fi
+  bodyExtention=${bodyFileName##*.}
+  # Определяем имя файла спецификации
+  if [[ -z $specFileName ]]; then
+    case $bodyExtention in
+      "tyb")
+        destExtention="typ"
+        objectTypeFlag=1
+      ;;
+      "pkb")
+        destExtention="pks"
+        objectTypeFlag=0
+      ;;
+      *)
+      exitError "Unknown body extention: '$bodyExtention'"
+      ;;
+    esac
+    specFileName=${bodyFileName%.*}.$destExtention
+  fi
+  logDebug3 "objectTypeFlag: $objectTypeFlag"
+  logDebug3 "specFileName: '$specFileName'"
+  # Проверяем существование файлов
+  if [[ ! -e $bodyFileName ]]; then
+    exitError "Body file '$bodyFileName' does not exist"
+  fi
+  if [[ ! -e $specFileName ]]; then
+    exitError "Specification file '$specFileName' does not exist"
+  fi
+}
+
+# func: getPlsqlObjectPart
+# Получает часть тела или спецификации объекта
+#
+# Значение параметра функции:
+# 1                           - часть объекта до функций
+# 2                           - часть объекта, относящуюся к функциям
+# 3                           - окончание текста объекта
+#
+getPlsqlObjectPart()
+{
+
+  logDebug3 "tmpFileDir: '$tmpFileDir'"
+  local gawkScriptPath="${tmpFileDir}/$(basename $bodyFileName).functionpart.$$";
+  # Заводим переменную, для избежания предупреждения "MS-DOS style path
+  # detected".
+  gawkScript='
+BEGIN \
+{
+  functionPart = 1;
+  bracketDelta = 1;
+}
+{
+  if ( functionPart == '$1') {
+    print;
+  }
+  # Находимся в функциях
+  if ( functionPart == 2)  {
+
+    # Если это объект
+    if ( '$objectTypeFlag' == 1) {
+
+      # Вычисляем разницу скобок
+      bracketDelta = bracketDelta + length( $0) - \
+        length( gensub( /\(/, "", "g")) - ( length( $0) - length( gensub( /\)/, "", "g")))
+      ;
+      if ( bracketDelta == 0) {
+        functionPart = 3;
+        if ( '$1' == 3) {
+          print;
+        }
+      }
+
+    # Если это пакет
+    } else {
+      if ( match( $0, /'$END_OBJECT_EXPR'/)) {
+        functionPart = 3;
+        if ( '$1' == 3) {
+          print previousLine;
+          print;
+        }
+      }
+    }
+  }
+  if ( functionPart == 1 && match( $0, /'$FUNCTION_GROUP_EXPR'/)) {
+    functionPart = 2;
+  }
+  previousLine = $0;
+}
+  ';
+  echo "$gawkScript" > "$gawkScriptPath";
+  gawk -f "$gawkScriptPath"
+}
+
+# func: generateSpec
+# Генерирует спецификацию
+#
+generateSpec()
+{
+  logDebug3 "Set tmpFileDir: '$tmpFileDir'"
+
+  if [[ -z $(cat $specFileName | getPlsqlObjectPart 3) ]]; then
+    exitError "Incorrect specification: Must be expressions: \"$FUNCTION_GROUP_EXPR\" and \"$END_OBJECT_EXPR\"!"
+  fi;
+
+  # Временный файл - тела функций.
+  local tmpBodyFunction="${tmpFileDir}/$(basename $bodyFileName).function.$$"
+  logDebug3 "Set tmpBodyFunction: '$tmpBodyFunction'"
+
+  # Получаем тела функций
+  ( cat $bodyFileName | getPlsqlObjectPart 2) > $tmpBodyFunction
+
+  # Проверяем, что тела есть
+  if [[ ! -e $tmpBodyFunction ]]; then
+   rm $tmpBodyFunction
+   exitError "Expression \"$FUNCTION_GROUP_EXPR\" not found in body!"
+  fi;
+
+  # Временный файл - копия спецификации.
+  tmpSpecFileCopy="${tmpFileDir}/$(basename $specFileName).$$"
+  logDebug3 "Set tmpSpecFileCopy: '$tmpSpecFileCopy'"
+
+  cp $specFileName $tmpSpecFileCopy
+
+  # Спецификация = Начало спецификации + Генерирированные спецификации функций + Конец спецификации
+  ( \
+    cat $tmpSpecFileCopy | getPlsqlObjectPart 1 \
+    && ( cat $tmpBodyFunction | gawk -v objectTypeFlag=$objectTypeFlag -f "${0%.*}.awk") \
+    && echo \
+    && cat $tmpSpecFileCopy | getPlsqlObjectPart 3 \
+  ) | unix2dos > $specFileName
+
+  if (( $skipDeleteTemp == 0)); then
+    logDebug3 "Delete temporary files..."
+    rm $tmpSpecFileCopy
+    rm $tmpBodyFunction
+  fi;
+}
+
+# Разбор параметров
+parseOption "$@"
+# Генерирует спецификацию
+generateSpec
+# Завершаем выполнение
+exitScript

@@ -1,0 +1,15 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 424)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -104,6 +104,10 @@
+ getUser      = $(getUserName)@$(getDbName)
+ 
+ 
++# build var: NLS_LANG
++# Настройки локали, используемые при загрузке файлов в БД.
++export NLS_LANG = AMERICAN_CIS.CL8MSWIN1251
++
+ # build var: LOAD_DB
+ # БД для загрузки.
+ LOAD_DB      =

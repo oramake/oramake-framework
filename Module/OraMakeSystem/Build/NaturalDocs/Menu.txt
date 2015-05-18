@@ -1,0 +1,161 @@
+Format: 1.5
+
+
+Title: OraMakeSystem
+SubTitle: Версия 1.7.3
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Constants
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О проекте  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О проекте
+
+Group: Соглашения по оформлению модуля  {
+
+   File: Структура каталогов  (Doc/Agreement/directory_tree.txt)
+   File: Файлы  (Doc/Agreement/files.txt)
+   File: Комментарии  (Doc/Agreement/comment.txt)
+   File: Меню документации  (Doc/Agreement/doc_menu_tree.txt)
+   }  # Group: Соглашения по оформлению модуля
+
+Group: Скрипты  {
+
+   File: create-patch  (Script/create-patch)
+   File: oms-auto-doc  (Script/oms-auto-doc)
+   File: oms-common.sh  (Script/oms-common.sh)
+   File: oms-connect-info  (Script/oms-connect-info)
+   File: oms-create-module  (Script/oms-create-module)
+   File: oms-file-menu  (no auto-title, Script/oms-file-menu.awk)
+   File: oms-gen-spec  (Script/oms-gen-spec)
+   File: oms-gen-spec.awk  (Script/oms-gen-spec.awk)
+   File: oms-load  (Script/oms-load)
+   File: oms-module  (Script/oms-module)
+   File: oms-update-module  (Script/oms-update-module)
+   }  # Group: Скрипты
+
+Group: SQL-скрипты  {
+
+   Group: OmsInternal  {
+
+      File: add-install-result  (no auto-title, SqlScript/OmsInternal/add-install-result.sql)
+      File: exec-batch-operation  (no auto-title, SqlScript/OmsInternal/exec-batch-operation.sql)
+      File: finish-install-file  (no auto-title, SqlScript/OmsInternal/finish-install-file.sql)
+      File: nothing  (no auto-title, SqlScript/OmsInternal/nothing.sql)
+      File: set-environment  (no auto-title, SqlScript/OmsInternal/set-environment.sql)
+      File: start-install-file  (no auto-title, SqlScript/OmsInternal/start-install-file.sql)
+      }  # Group: OmsInternal
+
+   Group: Используемые в OMS  {
+
+      File: oms-check-lock  (no auto-title, SqlScript/oms-check-lock.sql)
+      File: oms-compile-invalid  (no auto-title, SqlScript/oms-compile-invalid.sql)
+      File: oms-init-var  (no auto-title, SqlScript/oms-init-var.sql)
+      File: oms-save-grant-info  (no auto-title, SqlScript/oms-save-grant-info.sql)
+      File: oms-save-install-info  (no auto-title, SqlScript/oms-save-install-info.sql)
+      File: oms-save-uninstall-info  (no auto-title, SqlScript/oms-save-uninstall-info.sql)
+      File: oms-show-invalid  (no auto-title, SqlScript/oms-show-invalid.sql)
+      }  # Group: Используемые в OMS
+
+   Group: Прикладные  {
+
+      File: oms-activate-batch  (no auto-title, SqlScript/oms-activate-batch.sql)
+      File: oms-deactivate-batch  (no auto-title, SqlScript/oms-deactivate-batch.sql)
+      File: oms-default  (no auto-title, SqlScript/oms-default.sql)
+      File: oms-default-with-test  (no auto-title, SqlScript/oms-default-with-test.sql)
+      File: oms-drop-foreign-key  (SqlScript/oms-drop-foreign-key.sql)
+      File: oms-drop-mview  (no auto-title, SqlScript/oms-drop-mview.sql)
+      File: oms-drop-type  (no auto-title, SqlScript/oms-drop-type.sql)
+      File: oms-gather-stats  (no auto-title, SqlScript/oms-gather-stats.sql)
+      File: oms-get-db-link  (no auto-title, SqlScript/oms-get-db-link.sql)
+      File: oms-reactivate-batch  (no auto-title, SqlScript/oms-reactivate-batch.sql)
+      File: oms-recreate-mview.sql  (SqlScript/oms-recreate-mview.sql)
+      File: oms-refresh-mview  (no auto-title, SqlScript/oms-refresh-mview.sql)
+      File: oms-resume-batch  (no auto-title, SqlScript/oms-resume-batch.sql)
+      File: oms-run  (no auto-title, SqlScript/oms-run.sql)
+      File: oms-set-indexTablespace  (no auto-title, SqlScript/oms-set-indexTablespace.sql)
+      File: oms-set-lobTablespace  (no auto-title, SqlScript/oms-set-lobTablespace.sql)
+      File: oms-stop-batch  (no auto-title, SqlScript/oms-stop-batch.sql)
+      File: oms-unindexed-foreign-key  (no auto-title, SqlScript/oms-unindexed-foreign-key.sql)
+      }  # Group: Прикладные
+
+   }  # Group: SQL-скрипты
+
+Group: Шаблон модуля  {
+
+   Group: О модуле  {
+
+      File: Описание  (Config/NewModule/DB/Doc/readme.txt)
+      File: Установка  (Config/NewModule/DB/Doc/install.txt)
+      File: Ошибки  (Config/NewModule/DB/Doc/bugs.txt)
+      File: Доработки  (Config/NewModule/DB/Doc/todo.txt)
+      File: Сборка  (Config/NewModule/DB/Makefile)
+      File: Версии  (Config/NewModule/DB/Doc/version.txt)
+      }  # Group: О модуле
+
+   File: Инициализация OMS  (Config/NewModule/DB/OmsModule/init.mk)
+   File: Сборка OMS  (Config/NewModule/DB/OmsModule/common.mk)
+   }  # Group: Шаблон модуля
+
+Group: Индекс  {
+
+   Group: Реализация  {
+
+      Variable Index: Переменные
+      Function Index: Функции
+      }  # Group: Реализация
+
+   Build Function Index: Функции сборки
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+

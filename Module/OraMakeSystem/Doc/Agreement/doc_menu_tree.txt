@@ -1,0 +1,98 @@
+Title: Меню документации
+
+Group: Рекомендации
+
+Для генерации меню рекомендуется использовать цель <gendoc-menu>
+( реализована в <gendoc-menu.oms> ).
+
+Group: Пример
+
+  Пример дерева меню ( "+" отменечены раскрывающиеся подменю, в скобках
+указывается исходный файл относительно каталога DB или комментарий):
+
+(start code)
+
++ О модуле
+  Описание                    ( Doc/readme.txt)
+  Установка                   ( Doc/install.txt)
+  Ошибки                      ( Doc/bugs.txt)
+  Доработки                   ( Doc/todo.txt)
+  Сборка                      ( Makefile)
+  Версии                      ( Doc/version.txt)
++ Объектные типы
+  + object_name_t
+    Спецификация              ( object_name_t.typ)
+    Реализация                ( object_name_t.tyb)
+  ...
++ Пакеты
+  + pkg_Name1
+    Спецификация              ( pkg_Name1.pks)
+    Реализация                ( pkg_Name1.pkb)
+  + pkg_Name2
+    Спецификация              ( pkg_Name2.pks)
+    Реализация                ( pkg_Name2.pkb)
+  ...
++ Java-исходники
+  Name1                       ( Name1.jav)
+  Name1                       ( Name2.jav)
+  ...
++ Java
+  + Библиотеки
+    LibName1                  ( Java/UsedLib/LibName1/readme.txt)
+    LibName2                  ( Java/UsedLib/LibName2/readme.txt)
+    ...
++ Скрипты
+  + Do                        ( скрипты управления/внесения изменений)
+    opername                  ( Do/opername.sql)
+    opername2                 ( Do/opername2.sql)
+    ...
+  + Install
+    + Grant
+      + Last
+        run                   ( Install/Grant/Last/run.sql)
+        ...
+      ...
+    + Schema
+      + Last
+        run                   ( Install/Schema/Last/run.sql)
+        table1                ( Install/Schema/Last/table1.tab)
+        ...
+      ...
+      + 1.3.0
+        run                   ( Install/Schema/1.3.0/run.sql)
+        ...
+      + 1.2.0
+        run                   ( Install/Schema/1.2.0/run.sql)
+        ...
+      ...
+    ...
+  + Show
+    + Config                  ( скрипты просмотра настроек)
+      ...
+    + Stats                   ( статистические скрипты)
+      ... 
+    ...         
++ Индекс                      ( индексы автодокументации)
+  + Объекты БД
+    Типы                      ( SQL-типы)
+    Представления
+    М-Представления           ( материализованные представления)
+    Таблицы
+    Триггеры
+    Индексы
+    Последовательности
+  + Открытые объявления
+    Типы
+    Константы
+    Переменные
+    Функции                   ( открытые процедуры и функции из спецификаций)
+  + Закрытые объявления
+    Типы
+    Константы
+    Переменные
+  Функции                     ( процедуры и функции из реализаций пакетов)
+  Скрипты
+  Все вместе
+    
+
+(end)

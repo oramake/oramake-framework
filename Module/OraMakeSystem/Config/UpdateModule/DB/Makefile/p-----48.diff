@@ -1,0 +1,75 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 113)
++++ Config/NewModule/DB/Makefile	(revision 114)
+@@ -63,6 +63,22 @@
+ # group: Загрузка файлов в БД
+ #
+ 
++# Функции для разбора строки подключения
++
++# Выделяет имя пользователя из loadUserId.
++getUserName	= $(firstword $(subst /, ,$(firstword $(subst @, ,$(loadUserId)))))
++
++# Выделяет имя БД из loadUserId
++getDbName		= \
++	$(word \
++		$(words $(subst @, ,$(loadUserId))) \
++		, $(subst @, ,$(loadUserId)) \
++	)
++	
++# Выделяет пользователя ( без пароля) из loadUserId.
++getUser			= $(getUserName)@$(getDbName)
++
++
+ # build var: LOAD_DB
+ # БД для загрузки.
+ LOAD_DB			= 
+@@ -73,6 +89,15 @@
+ # Имеет приоритет в случае противоречия с <LOAD_DB>.
+ LOAD_USERID = 
+ 
++# Устанавливаем LOAD_DB, если имя БД заданo в LOAD_USERID
++ifneq ($(LOAD_USERID),)
++loadUserId					:= $(LOAD_USERID)
++loadDb							:= $(getDbName)
++ifneq ($(loadDb),)
++override LOAD_DB		:= $(loadDb)
++endif
++endif
++
+ # build var: LOAD_DB2
+ # Вторая БД для загрузки.
+ LOAD_DB2		= 
+@@ -83,6 +108,15 @@
+ # Имеет приоритет в случае противоречия с <LOAD_DB2>.
+ LOAD_USERID2 = 
+ 
++# Устанавливаем LOAD_DB2, если имя БД заданo в LOAD_USERID2
++ifneq ($(LOAD_USERID2),)
++loadUserId					:= $(LOAD_USERID2)
++loadDb							:= $(getDbName)
++ifneq ($(loadDb),)
++override LOAD_DB2		:= $(loadDb)
++endif
++endif
++
+ # build var: LOAD_DB3
+ # Третья БД для загрузки.
+ LOAD_DB3		=
+@@ -93,6 +127,15 @@
+ # Имеет приоритет в случае противоречия с <LOAD_DB3>.
+ LOAD_USERID3 = 
+ 
++# Устанавливаем LOAD_DB3, если имя БД заданo в LOAD_USERID3
++ifneq ($(LOAD_USERID3),)
++loadUserId					:= $(LOAD_USERID3)
++loadDb							:= $(getDbName)
++ifneq ($(loadDb),)
++override LOAD_DB3		:= $(loadDb)
++endif
++endif
++
+ # build var: LOAD_OPERATORID
+ # Оператор для загрузки ( формат: operatorName[/password] ).
+ # 

@@ -1,0 +1,13 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 2131)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -29,6 +29,8 @@
+   install-load          \
+   install-save-info     \
+   install-schema        \
++  install-test          \
++  test                  \
+   uninstall             \
+   uninstall-after       \
+   uninstall-before      \

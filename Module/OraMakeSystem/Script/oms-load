@@ -1,0 +1,1415 @@
+#!/bin/bash
+
+# script: oms-load
+# Загружает файл в БД Oracle.
+#
+# Использование:
+#   oms-load [options] loadFile [args]
+#
+# Параметры:
+#   loadFile                    - файл для загрузки
+#   args                        - дополнительные параметры ( при загрузке через
+#                                 SQL*Plus передаются скрипту в качестве
+#                                 аргументов, при загрузке через SQL*Loader
+#                                 передаются ему в качестве дополнительных
+#                                 параметров)
+#
+#
+# Опции:
+#       --action-goals STR      - цели выполнения действия, к которому
+#                                 относится загрузка файла ( список с пробелами
+#                                 в качестве разделителя, по умолчанию из
+#                                 переменной окружения OMS_ACTION_GOALS)
+#       --action-options STR    - параметры выполнения действия, к которому
+#                                 относится загрузка файла ( список с пробелами
+#                                 в качестве разделителя, по умолчанию из
+#                                 переменной окружения MAKEFLAGS с заменой
+#                                 паролей в параметрах LOAD_USERID* и
+#                                 LOAD_OPERATORID на "???")
+#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+#       --file-module-part N    - номер части модуля, к которой относится
+#                                 загружаемый файл ( по умолчанию к основной
+#                                 части)
+#       --force                 - не прерывать загрузку при возникновении ошибки
+#                                 ( по умолчанию при первой ошибке
+#                                 выполнение скрипта в SQL*Plus прекращается)
+#   -h, --help                  - вывести справку по использованию
+#       --is-full-module_install N      - флаг выполнения полной установки
+#                                 модуля ( 1 полная, 0 установка обновления, по
+#                                 умолчанию из переменной окружения
+#                                 OMS_IS_FULL_MODULE_INSTALL)
+#       --is-save-install-info N - флаг сохранения в БД информации об установке
+#                                 файла ( 1 сохранять, 0 не сохранять, по
+#                                 умолчанию из переменной окружения
+#                                 OMS_SAVE_FILE_INSTALL_INFO ( при отсутствии
+#                                 сохранять если передан путь к корневому
+#                                 каталогу модуля, см. --module-svn-root))
+#       --log-path-prefix PATH  - префикс пути для логов и других временных
+#                                 файлов, создаваемых утилитами загрузки
+#       --module-initial-svn-path STR   - первоначальный путь к корневому
+#                                 каталогу модуля в Subversion ( начиная с
+#                                 имени репозитария и с добавлением через
+#                                 двоеточие номера правки, в которой был создан
+#                                 корневой каталог; по умолчанию из переменной
+#                                 окружения OMS_MODULE_INITIAL_SVN_PATH)
+#       --module-install-version STR    - номер устанавливаемой версии модуля
+#                                 ( по умолчанию из переменной окружения
+#                                 OMS_MODULE_INSTALL_VERSION)
+#       --module-svn-root STR   - путь к корневому каталогу модуля в Subversion
+#                                 ( начиная с имени репозитария, по умолчанию
+#                                 из переменной окружения OMS_MODULE_SVN_ROOT)
+#       --module-version STR    - номер текущей версии модуля ( по умолчанию
+#                                 из переменной окружения OMS_MODULE_VERSION)
+#       --operatorid STR        - задает оператора для регистрации после
+#                                 подключения ( формат: operatorName[/passwd])
+#       --plsql-warnings  STR   - задаёт параметр Oracle сессии PLSQL_WARNINGS
+#                                 ( уровень предупреждений компилятора PLSQL,
+#                                 по-умолчанию из переменной окрузения
+#                                 OMS_PLSQL_WARNINGS)
+#       --process-id N          - числовой идентификатор процесса
+#                                 на данном хосте, к которому относится
+#                                 загрузка файла ( по умолчанию из переменной
+#                                 окружения OMS_PROCESS_ID, при отсутствии
+#                                 идентификатор текущего процеcса)
+#       --process-start_time STR - время начала выполнения процесса
+#                                 на данном хосте, к которому относится
+#                                 загрузка файла ( строка в формате date
+#                                 "+%Y-%m-%dT%H:%M:%S%z", по умолчанию из
+#                                 переменной окружения OMS_PROCESS_START_TIME,
+#                                 при отсутствии текущее время)
+#       --file-mask STR         - список масок файлов для выполнения
+#                                 при загрузке файла с помощью SQL*Plus ( маски
+#                                 учитываются только для файлов, вызываемых с
+#                                 помощью скрипта <oms-run.sql>)
+#       --skip-file-mask STR    - список масок файлов, исключаемых из выполнения
+#                                 при загрузке файла с помощью SQL*Plus ( маски
+#                                 учитываются только для файлов, вызываемых с
+#                                 помощью скрипта <oms-run.sql>)
+#       --skip-check-job        - пропускать проверки корректности
+#                                 ( компиляции) PL/SQL-блоков заданий модуля
+#                                 Scheduler
+#       --skip-load-option      - исключениe загрузки параметров пакетных
+#                                 заданий модуля Scheduler
+#       --sql-define STR        - список значений макросов, задаваемых перед
+#                                 загрузкой файла с помощью SQL*Plus ( список
+#                                 вида "name=value[,name2=value2]...")
+#       --svn-file-path STR     - путь в Subversion, из которого были получены
+#                                 файлы модуля ( начиная с имени репозитария,
+#                                 по умолчанию из переменной окружения
+#                                 OMS_SVN_FILE_PATH)
+#       --svn-version-info STR  - информация о версии файлов модуля из
+#                                 Subversion ( в формате вывода утилиты
+#                                 svnversion, по умолчанию из переменной
+#                                 окружения OMS_SVN_VERSION_INFO)
+#       --update-option-value   - обновление существующих значений
+#                                 параметров пакетных заданий ( модуля
+#                                 Scheduler) при их загрузке согласно указанным
+#                                 в спецификации ( по умолчанию не обновлять (
+#                                 при этом значения параметров, указанные в
+#                                 спецификации, используются только при создании
+#                                 параметров))
+#       --update-schedule       - обновление расписания запуска пакетных
+#                                 заданий ( модуля Scheduler) согласно
+#                                 указанному в спецификации ( о умолчанию не
+#                                 обновлять ( при этом расписание в спецификации
+#                                 используется только если пакетное
+#                                 задание новое, новым )). В понятие
+#                                 расписание входит число повторных попыток и
+#                                 интервал между повторениями выполнения
+#                                 батчей.
+#       --userid STR            - задает пользователя для подключения
+#                                 ( формат: userName[/passwd][@db])
+#       --version               - вывести информацию по версии
+#
+#
+# В зависимости от расширешия файла используются различные утилиты:
+# *.jar                 - loadjava
+# *.dat                 - SQL*Loader
+# остальные             - SQL*Plus
+#
+# Для файлов загрузки данных батчей вызываются процедуры модуля Scheduler:
+# *.job.sql             - вызывается pkg_SchedulerLoad.loadJob
+# */batch.xml           - вызывается pkg_SchedulerLoad.loadBatch
+# */batch_config.xml    - вызывается pkg_SchedulerLoad.loadBatchConfig
+#
+#
+#
+# Устанавливаемые макропеременные ( SQL*Plus):
+#
+# OMS_SCRIPT_DIR              - путь к каталогу с собственными SQL-скриптами
+#
+# OMS_TEMP_FILE_PREFIX        - уникальный префикс полного пути для временных
+#                               файлов
+#
+# Файлы, созданные с этим префиксом, автоматически удаляются после завершения
+# загрузки ( временные файлы, например, могут использоваться для автоматической
+# генерации и выполнения скриптов).
+#
+# Пример: define OMS_TEMP_FILE_PREFIX = "c:\WINDOWS\TEMP\oms-load.3720.sqltmp"
+#
+#
+#
+# Замечания:
+# - для сохранения информации об установке файла в БД ( управляется параметром
+#   --is-save-install-info) при загрузке файлов с помощью SQL*Plus в той же
+#   сессии выполняется вызов скриптов
+#   <OmsInternal/start-install-file.sql> ( до загрузки
+#   файла) и <OmsInternal/finish-install-file.sql> ( после загрузки
+#   файла). При этом обязательно должны быть указаны параметры
+#   --module-svn-root, --module-initial-svn-path, --module-version либо
+#   соответсвующие значения должны быть переданы через переменные окружения.
+#   Также используются значения параметров --action-goals, --action-options,
+#   --file-module-part, --process-id, --process-start-time, --svn-file-path,
+#   --svn-version-info.
+# - для загрузки файлов данных с помощью SQL*Loader необходим контрольный файл,
+#   который должен быть явно указан с помощью дополнительного параметра args
+#   ( формат control=<filePath>, например, "control=Install/Data/contract.ctl")
+#   либо располагаться в том же или родительском каталоге, что и файл
+#   данных, и иметь то же имя и расширение ".ctl" вместо ".dat" ( например,
+#   для файла Install/Data/1.1.0/tst_contract.dat по умолчанию будет
+#   использован контрольный файл Install/Data/1.1.0/tst_contract.ctl либо при
+#   его отсутствии файл Install/Data/tst_contract.ctl);
+# - каталог для логов загрузки и других файлов, создаваемых утилитами загрузки
+#   ( например, SQL*Loader), определяется параметром --log-path-prefix, обычно
+#   эти файлы сохраняются в каталоге
+#   DB/OmsModule/Load/Log/{userName}-{dbName}/{путь loadFile относительно DB}
+# - при загрузке некоторых типов файлов ( пакеты, Java-исходники, SQL-типы,
+#   процедуры) отключается подстановка переменных ( set define off) в связи с
+#   возможными проблемами из-за использования символа подстановки ( "&") в
+#   исходном коде ( особенно при использовании Java);
+# - при загрузке файлов с помощью SQL*Plus для служебных целей используются
+#   макропеременные и bind-переменные c префиксом "OMS_", которые не должны
+#   изменяться в пользовательских скриптах;
+# - при загрузке файлов через SQL*Plus и loadjava из вывода этих утилит
+#   удаляются пустые строки для улучшения читабельности логов;
+# - в случае наличия в текущем каталоге файла с именем "nul" он удаляется
+#   ( файл может появиться при установке модулей с OMS-файлами версии 1.6.0
+#   или ниже);
+# - файлы для загрузки батчей должны находиться в директории ниже текущей;
+# - при загрузке файлов *job.sql уровень видимости job определяется следующим
+#   образом: если в той же директории есть файл batch.xml, уровень видимости
+#   соответствует батчу с именем, совпадающим с именем родительской директории.
+#   При этом job может быть использован только в данном батче. Если родительская
+#   директория называется PublicJob, то уровень видимости публичный ( job
+#   может быть использован во всех модулях); в остальных случаях считается, что
+#   уровень видимости соответствует видимости в рамках модуля;
+# - при загрузке файлов batch.xml выполняется проверка ( процедуре передаётся
+#   параметр batchShortName) соответствия имени батча родительской директории.
+#
+#
+#
+# Ниже строка для внесения фиктивных изменений ( меняем плюс на минус) для
+# получения новой правки файла ( т.к. версия скрипта сохраняется в логе
+# установки как версия локально установленного OMS).
+# -
+
+# group: Переменные
+
+
+# group: Информация о версии
+
+# var: OMS_VERSION
+# Версия программы
+OMS_VERSION=1.7.3
+
+# var: fileRevisionValue
+# Строка с номером последней правки, в которой был изменен файл ( автоматически
+# обновляется Subversion).
+fileRevisionValue='$Revision:: 2132                     $'
+
+# var: fileChangeDate
+# Строка с последней датой изменения файла ( автоматически обновляется
+# Subversion).
+fileChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+
+
+
+# Подключение общих констант и функций
+. oms-common.sh || exit 11
+
+
+
+# group: Настроечные параметры
+
+# var: sqlScriptDir
+# Каталог со стандартными SQL-скриптами
+sqlScriptDir="${installDataDir}/SqlScript"
+
+# var: tmpSqlFileNamePrefix
+# Префикс для имен временных файлов, используемых в скриптах SQL*Plus (
+# удаляются автоматически).
+tmpSqlFileNamePrefix="oms-load.$$.sqltmp"
+
+# var: operatorLoginScript
+# Скрипт для регистрации оператора.
+# Перед использованием подставляются значения переменных <operatorName> и
+# <operatorPassword>.
+operatorLoginScript="
+declare
+  userName varchar2(1024);
+begin
+  execute immediate '
+begin
+  :userName := pkg_Operator.Login(
+    operatorLogin => :operatorName
+    , password    => :operatorPassword
+  );
+end;
+'
+  using
+    out userName
+    , in '\$(operatorName)'
+    , in '\$(operatorPassword)'
+  ;
+exception when others then
+  if SQLERRM like
+        '%PLS-00201: identifier ''PKG_OPERATOR'' must be declared%'
+      or SQLERRM like
+        '%PLS-00201: identifier ''PKG_OPERATOR.LOGIN'' must be declared%'
+      or SQLERRM like
+        '%PLS-00904: insufficient privilege to access object %.PKG_OPERATOR%'
+      or SQLERRM like
+        '%ORA-06508: PL/SQL: could not find program unit being called:%'
+      then
+    null;
+  else
+    raise_application_error(
+      -20001
+      , 'Error during automatic operator login ('
+        || ' operatorName=\"\$(operatorName)\"'
+        || ').'
+      , true
+    );
+  end if;
+end;
+/
+"
+
+
+
+# group: Параметры вызова
+
+# var: actionGoals
+# Цели выполнения действия, к которому относится загрузка файла.
+actionGoals=$OMS_ACTION_GOALS
+
+# var: actionOptions
+# Параметры выполнения действия, к которому относится загрузка файла
+# ( список с пробелами в качестве разделителя).
+actionOptions=""
+
+# var: fileModulePartNumber
+# Номер части модуля, к которой относится загружаемый файл.
+fileModulePartNumber=
+
+# var: isForce
+# Не прерывать выполнение скрипта при ошибке
+isForce=0
+
+# var: isFullModuleInstall
+# Флаг выполнения полной установки модуля.
+#
+isFullModuleInstall=$OMS_IS_FULL_MODULE_INSTALL
+
+# var: isSaveInstallInfo
+# Флаг сохранения информации об установке в БД.
+#
+isSaveInstallInfo=$OMS_SAVE_FILE_INSTALL_INFO
+
+# var: logPathPrefix
+# Префикс пути для логов и других временных файлов, создаваемых при загрузке
+logPathPrefix=""
+
+# var: moduleInitialSvnPath
+# Первоначальный путь к корневому каталогу модуля в Subversion.
+moduleInitialSvnPath=$OMS_MODULE_INITIAL_SVN_PATH
+
+# var: moduleInstallVersion
+# Номер устанавливаемой версии модуля.
+moduleInstallVersion=$OMS_MODULE_INSTALL_VERSION
+
+# var: moduleSvnRoot
+# Путь к корневому каталогу модуля в Subversion.
+moduleSvnRoot=$OMS_MODULE_SVN_ROOT
+
+# var: moduleVersion
+# Номер текущей версии модуля.
+moduleVersion=$OMS_MODULE_VERSION
+
+# var: processId
+# Числовой идентификатор процесса на данном хосте, к которому относится
+# загрузка файла.
+processId=$OMS_PROCESS_ID
+
+# var: processStartTime
+# Время начала выполнения процесса на данном хосте, к которому относится
+# загрузка файла ( строка в формате date "+%Y-%m-%dT%H:%M:%S%z").
+processStartTime=$OMS_PROCESS_START_TIME
+
+# var: plsqlWarnings
+# Уровень предупреждений plsql-компилятора
+plsqlWarnings=$OMS_PLSQL_WARNINGS
+
+# var: operatorId
+# Оператор для регистрации
+operatorId=""
+
+# var: operatorName
+# Логин оператора ( определяется по <operatorId>).
+operatorName=""
+
+# var: operatorPassword
+# Пароль оператора ( определяется по <operatorId>).
+operatorPassword=""
+
+# var: fileMask
+# Список масок скриптов для выполнения при загрузке через SQL*Plus
+fileMask=""
+
+# var: skipFileMask
+# Список масок скриптов, исключаемых из выполнения при загрузке через
+# SQL*Plus
+skipFileMask=""
+
+# var: skipCheckJob
+# Флаг пропуска проверки корректности PL/SQL блоков заданий
+skipCheckJob=0
+
+# var: skipLoadOption
+# Флаг исключения загрузки параметров пакетных заданий
+skipLoadOption=0
+
+# var: updateOptionValue
+# Флаг обновление существующий параметров пакетных заданий
+updateOptionValue=0
+
+# var: updateSchedule
+# Флаг обновления расписания пакетных заданий
+updateSchedule=0
+
+# var: sqlDefine
+# Список значений макросов для SQL*PLus
+sqlDefine=""
+
+# var: svnFilePath
+# Путь в Subversion, из которого были получены файлы модуля ( начиная с имени
+# репозитария).
+svnFilePath=$OMS_SVN_FILE_PATH
+
+# var: svnVersionInfo
+# Информация о версии файлов модуля из Subversion ( в формате вывода утилиты
+# svnversion).
+svnVersionInfo=$OMS_SVN_VERSION_INFO
+
+# var: userId
+# Пользователь для подключения
+userId=""
+
+# var: loadFile
+# Файл для загрузки
+loadFile=""
+
+# var: loadArgList
+# Дополнительные параметры загрузки файла.
+declare -a loadArgList
+loadArgList=()
+
+
+
+# group: Параметры выполнения
+
+# var: fileModuleSvnRoot
+# Путь к корневому каталогу модуля в Subversion, которому относится загружаемый
+# файл ( в случае, если он не относится к устанавливаемому модулю).
+#
+fileModuleSvnRoot=""
+
+# var: fileModuleInitialSvnPath
+# Первоначальный путь к корневому каталогу модуля в Subversion, которому
+# относится загружаемый файл ( в случае, если он не относится к
+# устанавливаемому модулю).
+#
+fileModuleInitialSvnPath=""
+
+# var: sourceFile
+# Исходный файл для загрузки ( путь относительно каталога DB либо SqlScript
+# для SQL-скриптов OMS)
+#
+sourceFile=""
+
+
+
+# group: Функции
+
+
+
+# func: traceEnvironment
+# Выводит значения переменных окружения OMS в режиме отладки.
+#
+traceEnvironment()
+{
+  if [[ -n $OMS_MODULE_INITIAL_SVN_PATH ]]; then
+    logDebug2 "OMS_MODULE_INITIAL_SVN_PATH: '$OMS_MODULE_INITIAL_SVN_PATH'"
+  fi
+  if [[ -n $OMS_MODULE_SVN_ROOT ]]; then
+    logDebug2 "OMS_MODULE_SVN_ROOT        : '$OMS_MODULE_SVN_ROOT'"
+  fi
+  if [[ -n $OMS_MODULE_VERSION ]]; then
+    logDebug2 "OMS_MODULE_VERSION         : '$OMS_MODULE_VERSION'"
+  fi
+  if [[ -n $OMS_MODULE_INSTALL_VERSION ]]; then
+    logDebug2 "OMS_MODULE_INSTALL_VERSION : '$OMS_MODULE_INSTALL_VERSION'"
+  fi
+  if [[ -n $OMS_IS_FULL_MODULE_INSTALL ]]; then
+    logDebug2 "OMS_IS_FULL_MODULE_INSTALL : '$OMS_IS_FULL_MODULE_INSTALL'"
+  fi
+  if [[ -n $OMS_PROCESS_START_TIME ]]; then
+    logDebug2 "OMS_PROCESS_START_TIME     : '$OMS_PROCESS_START_TIME'"
+  fi
+  if [[ -n $OMS_PROCESS_ID ]]; then
+    logDebug2 "OMS_PROCESS_ID             : '$OMS_PROCESS_ID'"
+  fi
+  if [[ -n $OMS_PLSQL_WARNINGS ]]; then
+    logDebug2 "OMS_PLSQL_WARNINGS         : '$OMS_PLSQL_WARNINGS'"
+  fi
+  if [[ -n $OMS_SVN_FILE_PATH ]]; then
+    logDebug2 "OMS_SVN_FILE_PATH          : '$OMS_SVN_FILE_PATH'"
+  fi
+  if [[ -n $OMS_SVN_VERSION_INFO ]]; then
+    logDebug2 "OMS_SVN_VERSION_INFO       : '$OMS_SVN_VERSION_INFO'"
+  fi
+  if [[ -n $OMS_ACTION_GOALS ]]; then
+    logDebug2 "OMS_ACTION_GOALS           : '$OMS_ACTION_GOALS'"
+  fi
+  if [[ -n $MAKEFLAGS ]]; then
+    logDebug2 "MAKEFLAGS                  : '$MAKEFLAGS'"
+  fi
+}
+
+
+
+# func: usage
+# Выводит информацию об использовании.
+#
+usage()
+{
+  cat <<END
+Load file into Oracle database.
+
+Usage:
+  oms-load [options] file
+
+Arguments:
+  loadFile                        file for load
+  args                            file arguments
+
+Options:
+  --action-goals STR              goals of main action
+  --action-options STR            options of main action
+  --debug-level DBG_LEVEL         set level for print debug information ( 0 - 3)
+  --file-module-part N            module part number for file
+  --force                         don't stop execution on error
+  -h,
+  --help                          show this help
+  --is-full-module-install N      is full module install ( 0 no, 1 yes)
+  --is-save-install-info N        save file install info ( 0 no, 1 yes)
+  --log-path-prefix PATH          path prefix for logs and other temporary files
+  --module-initial-svn-path STR   initial module path in Subversion
+                                  ( with revision number)
+  --module-install-version STR    install module version
+  --module-svn-root STR           module path in Subversion
+  --module-version STR            current module version
+  --operatorid STR                operator for registration
+                                  ( operatorName[/passwd])
+  --plsql-warnings STR            PLSQL_WARNINGS compilation Oracle parameter
+  --process-id N                  main host process ID
+  --process-start-time STR        main host process start time
+                                  ( date format "+%Y-%m-%dT%H:%M:%S%z")
+  --skip-file-mask STR            list of mask for skip run script in SQL*Plus
+  --skip-check-job                skip checking PL/SQL blocks for jobs
+  --skip-load-option              skip loading batch options
+  --file-mask STR                 list of mask for run script in SQL*Plus
+  --sql-define STR                define macros for SQL*Plus ( name=value[,...])
+  --svn-file-path                 path in Subversion for module's files
+  --svn-version-info              files version information from Subversion
+  --update-option-value           update existing values of batch options
+  --update-schedule               update schedule of existing batches
+  --userid STR                    connection user ( userName[/passwd][@db])
+  --version                       print version
+END
+}
+
+
+
+# func: parseOption
+# Разбор аргументов командной строки.
+#
+parseOption()
+{
+  while [ $# != 0 ]; do
+    case $1 in
+      --action-goals)
+        actionGoals=$2; shift;
+        logDebug3 "Set actionGoals: '$actionGoals'"
+        ;;
+      --action-options)
+        actionOptions=$2; shift;
+        logDebug3 "Set actionOptions: '$actionOptions'"
+        ;;
+      --debug-level)
+        setDebugLevel "$2"
+        shift;
+        ;;
+      --file-module-part)
+        fileModulePartNumber=$2; shift;
+        logDebug3 "Set fileModulePartNumber: '$fileModulePartNumber'"
+        ;;
+      --force)
+        isForce=1;
+        logDebug3 "Set isForce: $isForce"
+        ;;
+      -h | --help)
+        usage
+        exitScript
+        ;;
+      --is-full-module-install)
+        isFullModuleInstall="$2"; shift;
+        logDebug3 "Set isFullModuleInstall: '$isFullModuleInstall'"
+        ;;
+      --is-save-install-info)
+        isSaveInstallInfo="$2"; shift;
+        logDebug3 "Set isSaveInstallInfo: '$isSaveInstallInfo'"
+        ;;
+      --log-path-prefix)
+        logPathPrefix="$2"; shift;
+        logDebug3 "Set logPathPrefix: '$logPathPrefix'"
+        ;;
+      --module-initial-svn-path)
+        moduleInitialSvnPath="$2"; shift;
+        logDebug3 "Set moduleInitialSvnPath: '$moduleInitialSvnPath'"
+        ;;
+      --module-install-version)
+        moduleInstallVersion="$2"; shift;
+        logDebug3 "Set moduleInstallVersion: '$moduleInstallVersion'"
+        ;;
+      --module-svn-root)
+        moduleSvnRoot="$2"; shift;
+        logDebug3 "Set moduleSvnRoot: '$moduleSvnRoot'"
+        ;;
+      --module-version)
+        moduleVersion="$2"; shift;
+        logDebug3 "Set moduleVersion: '$moduleVersion'"
+        ;;
+      --operatorid)
+        operatorId="$2"; shift;
+        logDebug3 "Set operatorId: '$operatorId'"
+        ;;
+      --plsql-warnings)
+        plsqlWarnings="$2"; shift;
+        logDebug3 "Set plsqlWarnings: '$plsqlWarnings'"
+        ;;
+      --process-id)
+        processId="$2"; shift;
+        logDebug3 "Set processId: '$processId'"
+        ;;
+      --process-start-time)
+        processStartTime="$2"; shift;
+        logDebug3 "Set processStartTime: '$processStartTime'"
+        ;;
+      --skip-check-job)
+        skipCheckJob=1;
+        logDebug3 "Set isForce: $skipCheckJob"
+        ;;
+      --skip-load-option)
+        skipLoadOption=1;
+        logDebug3 "Set skipLoadOption: $skipLoadOption"
+        ;;
+      --skip-file-mask)
+        skipFileMask="$2"; shift;
+        logDebug3 "Set skipFileMask: '$skipFileMask'"
+        ;;
+      --file-mask)
+        fileMask="$2"; shift;
+        logDebug3 "Set fileMask: '$fileMask'"
+        ;;
+      --sql-define)
+        sqlDefine="$2"; shift;
+        logDebug3 "Set sqlDefine: '$sqlDefine'"
+        ;;
+      --svn-file-path)
+        svnFilePath="$2"; shift;
+        logDebug3 "Set svnFilePath: '$svnFilePath'"
+        ;;
+      --svn-version-info)
+        svnVersionInfo="$2"; shift;
+        logDebug3 "Set svnVersionInfo: '$svnVersionInfo'"
+        ;;
+      --update-option-value)
+        updateOptionValue=1;
+        logDebug3 "Set updateOptionValue: '$updateOptionValue'"
+        ;;
+      --update-schedule)
+        updateSchedule=1;
+        logDebug3 "Set updateSchedule: '$updateSchedule'"
+        ;;
+      --userid)
+        userId="$2"; shift;
+        logDebug3 "Set userId: '$userId'"
+        ;;
+      --version)
+        showVersion
+        exitScript
+        ;;
+      -* | --*)
+        exitArgError "Illegal option: \"$1\"."
+        ;;
+      *)
+        loadFile="$1"; shift;
+        logDebug3 "Set loadFile: '$loadFile'"
+        break;
+        ;;
+    esac
+    shift
+  done
+  while [ $# != 0 ]; do
+    loadArgList[${#loadArgList[@]}]=$1
+    shift
+  done
+  logDebug3 "Set loadArgList[${#loadArgList[@]}]:" "${loadArgList[@]}"
+                                        # Проверка параметров
+  if ! [[ -d "$sqlScriptDir" ]]; then
+    exitArgError "SQL script directory not found: \"$sqlScriptDir\""
+  fi
+  if [[ -z "$loadFile" ]]; then
+    exitArgError "Not set file for load."
+  fi
+  if [[ -z "$userId" ]]; then
+    exitArgError "Not set connection userid."
+  elif [[ "${userId:0:4}" == "sys/" ]]; then
+    userId="$userId as sysdba"
+  fi
+                                        # Обрабатываем параметры
+  if [[ -n "$operatorId" ]]; then
+    operatorName="${operatorId%%/*}";
+    logDebug3 "Set operatorName: '$operatorName'"
+    if [[ "$operatorId" != "$operatorName" ]]; then
+      operatorPassword="${operatorId#*/}"
+      logDebug3 "Set operatorPassword: '$operatorPassword'"
+    fi
+    if [[ -z "$operatorName" ]]; then
+      exitError "Not set operator name ( parameter LOAD_OPERATORID)."
+    fi
+  fi
+  if [[ -z "$isSaveInstallInfo" ]]; then
+    if [[ -n "$moduleSvnRoot" ]]; then
+      isSaveInstallInfo=1
+    else
+      isSaveInstallInfo=0
+    fi
+  fi
+}
+
+
+
+# func: prepareInstallInfo
+# Подготовка информации об установке.
+#
+prepareInstallInfo()
+{
+  if [[ -z $actionOptions ]]; then
+    set -f
+    set -- $MAKEFLAGS
+    set +f
+    local option
+    for option in "$@"; do
+      case $option in
+        LOAD_USERID=?*/?*@?* \
+        | LOAD_USERID[2-9]=?*/?*@?* \
+          )
+          option=${option/\/*@/\/???@}
+          ;;
+        LOAD_OPERATORID=?*/?* \
+        | LOAD_USERID=?*/?* \
+        | LOAD_USERID[2-9]=?*/?* \
+          )
+          option=${option/\/*/\/???}
+          ;;
+      esac
+      actionOptions="$actionOptions $option"
+    done
+  fi
+  if [[ -z $processId ]] || [[ -z $processStartTime ]]; then
+    processId=$$
+    logDebug3 "Set processId: '$processId'"
+    processStartTime=$(date "+%Y-%m-%dT%H:%M:%S%z")
+    logDebug3 "Set processStartTime: '$processStartTime'"
+  fi
+  getFileObject "$loadFile"
+  if [[ ${loadFile#${sqlScriptDir}/} != $loadFile ]]; then
+    fileModuleSvnRoot=$omsSvnRoot
+    logDebug3 "Set fileModuleSvnRoot: '$fileModuleSvnRoot'"
+    fileModuleInitialSvnPath=$omsInitialSvnPath
+    logDebug3 "Set fileModuleInitialSvnPath: '$fileModuleInitialSvnPath'"
+    fileModulePartNumber=1
+    logDebug3 "Set fileModulePartNumber: '$fileModulePartNumber'"
+    sourceFile=${loadFile#${sqlScriptDir}/}
+    logDebug3 "Set sourceFile: '$sourceFile'"
+  fi
+}
+
+
+# func: deleteTempFile
+# Удаляет временные файлы.
+#
+# Параметры:
+# tempDir                     - каталог с временными файлами
+# filePrefix                  - префикс имени удаляемых файлов
+#
+#
+deleteTempFile()
+{
+  local tempDir="$1"
+  local filePrefix="$2"
+  logDebug2 "tempDir='$tempDir', filePrefix='$filePrefix'"
+                                        # Ничего не делаем, если нет префикса
+                                        # ( для исключения удаления всего)
+  if [[ -n "$filePrefix" ]]; then
+    if cd "$tempDir"; then
+                                        # Поиск файлов по маске
+      shopt -s nullglob
+      set -- ${filePrefix}*
+      shopt -u nullglob
+                                        # Удаляем файлы, если были найдены
+      if (( $# > 0 )); then
+        rm -f "$@"
+      fi
+      cd "$OLDPWD"
+    fi
+  fi
+}
+
+
+# func: outSqlDefine
+# Выводит список определений макросов для SQL*Plus.
+#
+# Параметры:
+# defineList                  - список определений макросов формата
+#                               [name=value[,name2=value2]...]
+#
+# Замечания:
+# - пробелы в части, относящейся к имени, а также находящиеся после знака
+#   равно и перед запятой, игнорируются;
+# - для экранирования разделителей ( например, запятой) можно использовать
+#   обратный слэш;
+#
+outSqlDefine()
+{
+  if [[ -n "$1" ]]; then
+    while IFS="=" read -d , defName defValue ; do
+                                        # Удаляем все пробелы из имени
+      defName="${defName// /}"
+      if [[ -n "$defName" ]]; then
+                                        # Удаляем начальные пробелы из значения
+        while [[ ${#defValue} -gt 0 ]] && [[ "${defValue:0:1}" == " " ]]; do
+          defValue=${defValue:1}
+        done
+                                        # Удаляем конечные пробелы из значения
+        while [[ ${#defValue} -gt 0 ]] \
+            && [[ "${defValue:${#defValue}-1}" == " " ]];
+            do
+          defValue=${defValue:0:${#defValue}-1}
+        done
+                                        # Удаляем ограничивающие кавычки
+        if [[ ${#defValue} -gt 1 ]] \
+            && [[ "${defValue:0:1}" == "\"" ]] \
+            &&  [[ "${defValue:${#defValue}-1}" == "\"" ]];
+            then
+          defValue=${defValue:1:${#defValue}-2}
+        fi
+                                        # Используем кавычки если их нет в
+                                        # значении, иначе одинарные кавычки
+        if [[ "$defValue" == "${defValue/\"/}" ]]; then
+          echo "define $defName=\"$defValue\""
+        else
+          echo "define $defName='$defValue'"
+        fi
+      fi
+    done <<END
+$1,
+END
+  fi
+}
+
+# func: outSqlScriptRun
+# Выводит строки для вызова скрипта $loadFile в SQL*Plus.
+#
+# Параметры:
+# список параметров скрипта
+#
+# Имя функции используется как значение outInternalSqlFunction при вызове
+# <outSqlCommon>;
+outSqlScriptRun()
+{
+  if (( isSaveInstallInfo )); then
+    echo "@\"$sqlScriptDirMixed/OmsInternal/start-install-file.sql\""
+  fi
+  # Необходимость отключения переменных
+  case "$loadFile" in
+    *.jav | *.pks | *.pkb | *.prc | *.typ | *.tyb)
+      echo "set define off";;
+  esac
+  # Для исключения записей транслятора sqlj
+  if [[ $fileObjectType == "JAVA SOURCE" ]]; then
+    echo "set serveroutput off"
+  fi;
+  echo -n "@\"$loadFileMixed\""
+  # Передаем параметры скрипта
+  nArg=1
+  for arg; do
+    if (( isBindArg[nArg] )) ; then
+      # Конструкция обеспечивает корректность использования параметра в
+      # одинарных кавычках, типа '&parameterName'
+      echo -n " \"' || :p${nArg} || '\""
+    else
+      echo -n " \"$arg\""
+    fi
+    (( nArg++ ))
+  done
+  echo
+  # Пустые строки после вызова обеспечивают присваивание пустых значений
+  # интерактивно запрашиваемым переменным ( максимум 30 штук)
+  local i=30
+  while (( i-- > 0 )) ; do echo ""; done;
+
+  # Показываем ошибки и выходим
+  case "$fileObjectType" in
+    # Для представления явно указываем объект, так как для SQL*Plus
+    # ошибка компиляции представления является предупреждением
+    VIEW)
+      echo "show error $fileObjectType $fileObjectName";;
+    *)
+      echo "show error";;
+  esac;
+
+  if (( isSaveInstallInfo )); then
+    echo "@\"$sqlScriptDirMixed/OmsInternal/finish-install-file.sql\""
+  fi
+}
+
+
+
+# func: outSqlSchedulerLogLevel
+# Вывод sql для включения уровня логирования загрузки батчей.
+#
+outSqlSchedulerLogLevel()
+{
+  if isLogLevelEnabled $DEBUG3_LOG_LEVEL; then
+    echo "pkg_SchedulerLoad.setLoggingLevel( pkg_Logging.Trace_LevelCode);"
+  elif isLogLevelEnabled $DEBUG_LOG_LEVEL; then
+    echo "pkg_SchedulerLoad.setLoggingLevel( pkg_Logging.Debug_LevelCode);"
+  fi;
+}
+
+
+# func: outSqlSchedulerJob
+# Генерация sql для загрузки job ( модуля Scheduler) в БД. Учитываются
+# переменные public_job_flag, batch_short_name
+#
+# Имя функции используется как значение outInternalSqlFunction при вызове
+# <outSqlCommon>;
+outSqlSchedulerJob()
+{
+  local jobShortName=${loadFile##*/}
+  jobShortName=${jobShortName%%.job.sql}
+  local parentDirectoryPath=$(dirname $loadFile)
+  local parentDirectory=$(baseName $parentDirectoryPath)
+  local batchShortName=""
+  local publicFlag=""
+  # Если в директории рядом есть batch.xml, то считаем что job
+  # относится к батчу
+  if [[ -e $parentDirectoryPath/batch.xml ]]; then
+    batchShortName=$parentDirectory
+    logDebug3 "Set batchShortName: '$batchShortName'"
+  else
+    # Если job не относится к батчу и директория называется
+    # PublicJob
+    if [[ $parentDirectory == "PublicJob" ]]; then
+      publicFlag=1;
+      logDebug3 "Set publicFlag: '$publicFlag'"
+    fi;
+  fi;
+  # Отключаем подстановку макропеременных
+  echo "set define off"
+  # Отключаем вывод сообщения о выполнении процедуры
+  echo "set feedback off"
+  # Вызываем процедуру
+  echo "begin"
+  outSqlSchedulerLogLevel
+  echo "pkg_SchedulerLoad.loadJob("
+  echo "moduleSvnRoot => '"$moduleSvnRoot"'"
+  echo ", moduleInitialSvnPath => '"$moduleInitialSvnPath"'"
+  echo ", jobShortName => '"$jobShortName"'"
+  echo ", skipCheckJob => "$skipCheckJob
+  echo ", fileText => '"
+  cat $loadFile | sed -e s/\'/\'\'/g
+  echo "'"
+  if [[ -n $batchShortName ]]; then
+    echo ", batchShortName => '"$batchShortName"'"
+  else
+    if [[ $publicFlag == 1 ]]; then
+      echo ", publicFlag => 1"
+    fi
+  fi
+  echo ");"
+  echo "end;"
+  echo "/"
+}
+
+
+# func: outSqlSchedulerBatch
+# Генерация sql для загрузки пакетного задания ( батча ) модуля Scheduler в БД.
+#
+# Имя функции используется как значение outInternalSqlFunction при вызове
+# <outSqlCommon>;
+outSqlSchedulerBatch()
+{
+  local parentDirectoryPath=$(dirname $loadFile)
+  local batchShortName=$(baseName $parentDirectoryPath);
+  logDebug3 "Set batchShortName: '$batchShortName'"
+  # Отключаем подстановку макропеременных
+  echo "set define off"
+  # Отключаем вывод сообщения о выполнении процедуры
+  echo "set feedback off"
+  # Вызываем процедуру
+  echo "begin"
+  outSqlSchedulerLogLevel
+  echo "pkg_SchedulerLoad.loadBatch("
+  echo "moduleSvnRoot => '"$moduleSvnRoot"'"
+  echo ", moduleInitialSvnPath => '"$moduleInitialSvnPath"'"
+  echo ", batchShortName => '"$batchShortName"'"
+  echo ", updateScheduleFlag => "$updateSchedule
+  echo ", skipLoadOption => "$skipLoadOption
+  echo ", updateOptionValue => "$updateOptionValue
+  echo ", xmlText => '"
+  cat $loadFile | sed -e s/\'/\'\'/g
+  echo "'"
+  echo ");"
+  echo "end;"
+  echo "/"
+}
+
+
+# func: outSqlSchedulerBatchConfig
+# Генерация sql для загрузки настроек задания ( батча ) модуля Scheduler в БД.
+#
+# Имя функции используется как значение outInternalSqlFunction при вызове
+# <outSqlCommon>;
+outSqlSchedulerBatchConfig()
+{
+  # Отключаем подстановку макропеременных
+  echo "set define off"
+  # Отключаем вывод сообщения о выполнении процедуры
+  echo "set feedback off"
+  # Вызываем процедуру
+  echo "begin"
+  outSqlSchedulerLogLevel
+  echo "pkg_SchedulerLoad.loadBatchConfig("
+  echo "moduleSvnRoot => '"$moduleSvnRoot"'"
+  echo ", moduleInitialSvnPath => '"$moduleInitialSvnPath"'"
+  echo ", updateScheduleFlag => "$updateSchedule
+  echo ", skipLoadOption => "$skipLoadOption
+  echo ", updateOptionValue => "$updateOptionValue
+  echo ", xmlText => '"
+  cat $loadFile | sed -e s/\'/\'\'/g
+  echo "'"
+  echo ");"
+  echo "end;"
+  echo "/"
+}
+
+
+# func: outSqlCommon
+# Вывод sql общий для всех видов файлов.
+#
+# Параметры: список параметров для передачи скрипту.
+#
+# outInternalSqlFunction      - должна быть указана функция,
+#                               возвращающая текст sql в выходном потоке
+outSqlCommon()
+{
+  # Необходимость выхода при ошибке
+  if ! (( isForce)); then
+    echo "whenever oserror exit 1 rollback"
+    echo "whenever sqlerror exit sql.sqlcode rollback"
+  fi
+
+  # Определяем макросы из sqlDefine
+  outSqlDefine "$sqlDefine"
+  # Подключаемся к БД
+  echo "connect $userId"
+  # Отключаем дополнительный вывод от служебных скриптов
+  echo "set feedback off"
+  echo "set autoprint off"
+  if [[ -n $plsqlWarnings ]]; then
+    echo "alter session set PLSQL_WARNINGS='"${plsqlWarnings}"'"
+    echo "/"
+  fi;
+  # Регистрация оператора если возможно
+  if [[ -n "$operatorName" ]]; then
+    local loginString=""
+    loginString="$operatorLoginScript";
+    loginString="${loginString//\$(operatorName)/$operatorName}"
+    loginString="${loginString//\$(operatorPassword)/$operatorPassword}"
+    echo "$loginString"
+  fi
+  # Путь к каталогу с собственными SQL-скриптами ( mixed-формат)
+  local sqlScriptDirMixed="${sqlScriptDirWin//\\//}"
+  # Инициализация используемых переменных значениями по умолчанию
+  echo "@\"$sqlScriptDirMixed/oms-init-var.sql\""
+  # Установка значений переменных
+  echo "define OMS_SCRIPT_DIR=\"$sqlScriptDirMixed\""
+  # Устанавливаем префикс временных файлов
+  echo \
+    "define OMS_TEMP_FILE_PREFIX=\"$(cygpath --mixed "${tmpFileDir}/${tmpSqlFileNamePrefix}")\""
+  # Путь к загружаемому скрипту в mixed-формате
+  local loadFileMixed="$(cygpath --mixed "$loadFile")"
+
+  # Параметры установки для OMS-скриптов
+  local oldIFS=$IFS
+  IFS=","
+  local fileExtensionListString="${fileExtensionList[*]}"
+  IFS=$oldIFS
+
+  echo -n "
+begin
+  :oms_debug_level                := $(( logLevel - DEBUG_LOG_LEVEL + 1 ));
+  :oms_file_extension_list        := '$fileExtensionListString';
+  :oms_initial_svn_path           := '$omsInitialSvnPath';
+  :oms_script_dir                 := '$sqlScriptDirMixed';
+  :oms_svn_root                   := '$omsSvnRoot';
+
+  :oms_action_goal_list           := '$actionGoals';
+  :oms_action_option_list         := '$actionOptions';
+  :oms_file_module_initial_svn_pa := '$fileModuleInitialSvnPath';
+  :oms_file_module_part_number    := ${fileModulePartNumber:-null};
+  :oms_file_module_svn_root       := '$fileModuleSvnRoot';
+  :oms_file_object_name           := '$fileObjectName';
+  :oms_file_object_type           := '$fileObjectType';
+  :oms_is_full_module_install     := ${isFullModuleInstall:-null};
+  :oms_is_save_install_info       := $isSaveInstallInfo;
+  :oms_module_initial_svn_path    := '$moduleInitialSvnPath';
+  :oms_module_install_version     := '$moduleInstallVersion';
+  :oms_module_svn_root            := '$moduleSvnRoot';
+  :oms_module_version             := '$moduleVersion';
+  :oms_process_id                 := $processId;
+  :oms_process_start_time         := '$processStartTime';
+  :oms_svn_file_path              := '$svnFilePath';
+  :oms_svn_version_info           := '$svnVersionInfo';
+
+  :oms_source_file                := '${sourceFile:-$loadFileMixed}';
+
+  :oms_run_file_stack             := '$loadFileMixed';
+  :oms_file_mask                  := '$fileMask';
+  :oms_skip_file_mask             := '$skipFileMask';
+end;
+/
+"
+  # Сохранение длинных параметров в bind-переменных из-за ограничения длины
+  # параметров в SQL*Plus
+  local -a isBindArg
+  local nArg=1
+  for arg; do
+    if (( ${#arg} > 239 )) ; then
+      echo "var p${nArg} varchar2(4000)"
+      echo "exec :p${nArg} := '$arg'"
+      isBindArg[$nArg]=1
+    fi
+    (( nArg++ ))
+  done
+  # Устанавливаем настройки для SQL*Plus
+  echo "@\"$sqlScriptDirMixed/OmsInternal/set-environment.sql\""
+  # Вызываем основную функцию генерации sql с параметрами скрипта
+  $outInternalSqlFunction "$@"
+  echo "exit"
+}
+
+
+# func: checkSqlplusOutput
+# Фильтрует вывод вызова SQL*Plus для форматирования и поиска ошибок.
+#
+checkSqlplusOutput()
+{
+  local checkResult=0
+                                        # Отключаем игнорирование пробелов
+                                        # с помощью IFS
+  while IFS=$'\n' read -r line; do
+    logDebug3 "SQL-OUTPUT: $line"
+                                        # Фильтруем пустые строки
+    if [[ ${#line} -ne 0 ]]; then
+      case "$line" in
+        ERROR\ at\ line\ [1-9]*: \
+        | ошибка\ в\ строке\ [1-9]*: \
+        | SP2-[0-9][0-9][0-9][0-9]:\ * \
+        | Warning:\ *\ created\ with\ compilation\ errors. \
+        | Предупреждение:\ *\ создано\ с\ ошибками\ компиляции. \
+        )
+          checkResult=$E_PROCESS_ERROR
+          logDebug "SQL*Plus error detected"
+          ;;
+        *)
+          ;;
+      esac
+      echo "$line"
+    fi
+  done
+  return $checkResult
+}
+
+
+# func: outSqlLog
+# Логирование потока, передаваемого sqlplus.
+#
+outSqlLog()
+{
+  logDebug3 "--- SQL*Plus command ---"
+  # Отключаем игнорирование пробелов # с помощью IFS
+  while IFS=$'\n' read -r line; do
+    logDebug3 "SQL-INPUT: $line"
+    echo "$line"
+  done
+  logDebug3 "---"
+}
+
+
+# func: execSql
+# Выполняет sql в SQL*Plus.
+#
+# Параметры: список параметров для передачи скрипту.
+#
+# outInternalSqlFunction      - должна быть указана функция,
+#                               возвращающая текст sql в выходном потоке
+#
+execSql()
+{
+  logDebug "Use SQL*Plus for load: loadFile='$loadFile'"
+  # Путь к собственным SQL-скриптам # ( также используется в outSqlScriptRun)
+  local sqlScriptDirWin="$(cygpath --windows "$sqlScriptDir")"
+
+  # Обеспечиваем доступность только собственных скриптов чтобы исключить
+  # влияние сторонних скриптов на результат выполнения ( например, скрипта
+  # login.sql, автоматически выполняемого SQL*Plus после подключения)
+  SQLPATH="${sqlScriptDirWin}"
+  export SQLPATH
+  # Подготовка информации об установке
+  prepareInstallInfo
+
+  # Получаем общий код завершения канала
+  set -o pipefail
+
+  # ( обычная или отладочная версия)
+  if isLogLevelEnabled $DEBUG3_LOG_LEVEL; then
+    outSqlCommon "$@" | outSqlLog ;
+  else
+    outSqlCommon "$@" ;
+  fi | sqlplus -S /NOLOG |
+    sed --unbuffered -e 's/\r//g' | checkSqlplusOutput
+  # sed используется для обхода бага с # зависанием команды read при наличии
+  # двух подряд символов возврата каретки
+  local sqlResult=$?
+  set +o pipefail
+
+  # Удаляем временные файлы ( если есть)
+  deleteTempFile "$tmpFileDir" "$tmpSqlFileNamePrefix"
+
+  # Проверяем на наличие ошибок
+  if [[ $sqlResult -ne 0 ]]; then
+    exitError "SQL*Plus finished with error ( code $sqlResult)."
+  fi
+}
+
+
+# func: checkLoadJavaOutput
+# Фильтрует вывод вызова loadjava для форматирования и поиска ошибок.
+#
+checkLoadJavaOutput()
+{
+  local checkResult=0
+  # Отключаем игнорирование пробелов с помощью IFS
+  while IFS=$'\n' read -r line; do
+    logDebug3 "JAVA-OUTPUT: $line"
+    # Фильтруем пустые строки
+    if [[ ${#line} -ne 0 ]]; then
+      case "$line" in
+        exiting\ \ :\ *                           \
+        | The\ following\ operations\ failed      \
+        )
+          checkResult=$E_PROCESS_ERROR
+          logDebug "loadjava error detected"
+          ;;
+        *)
+          ;;
+      esac
+      echo "$line"
+    fi
+  done
+  return $checkResult
+}
+
+
+# func: loadJava
+# Загружает Java-библиотеку через loadjava.
+#
+loadJava()
+{
+  logDebug "Use loadjava.bat for load: loadFile='$loadFile'"
+  # Получаем общий код завершения канала
+  set -o pipefail
+  # sed используется для обхода бага с  зависанием команды read при наличии
+  # двух подряд символов возврата каретки
+  ( loadjava.bat -user "$userId" "$loadFile" 2>&1 \
+  && loadjava.bat -resolve -user "$userId" "$loadFile" 2>&1 ) \
+    | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput
+  local loadResult=$?
+  set +o pipefail
+  if [[ $loadResult -ne 0 ]]; then
+    exitError "loadjava finished with error ( code $loadResult)."
+  fi
+}
+
+
+# func: loadData
+# Загружает данные с помощь SQL*Loader
+#
+loadData()
+{
+  logDebug "Use SQL*Loader for load: loadFile='$loadFile'"
+                                        # Признак указания контрольного файла
+                                        # в дополнительных параметрах
+  local isControlExtected=0
+                                        # Проверяем дополнительные параметры
+  local arg
+  for arg; do
+    case $arg in
+      control=?*) isControlExtected=1; break; ;;
+    esac
+  done
+                                        # Используем контрольный файл
+                                        # по-умолчанию, если он не был указан
+  if ! (( isControlExtected )); then
+                                        # Ищем файл в каталоге с файлом данных
+    local controlFile="${loadFile%.dat}.ctl"
+    if [[ ! -f "$controlFile" ]]; then
+                                        # Ищем файл в родительском каталоге
+                                        # ( не будет работать для путей вида
+                                        # ..././<fileName>)
+      if [[ "$controlFile" != "${controlFile%/?*/?*}" ]]; then
+        controlFile="${controlFile%/?*/?*}/${controlFile##*/}"
+      else
+        controlFile=""
+      fi
+                                        # Ошибка, если нет контрольного файла
+      if [[ -z "$controlFile" ]] || [[ ! -f "$controlFile" ]]; then
+        exitError "Not found control file for SQL*Loader."
+      fi
+    fi
+  fi
+  local logFile="${logPathPrefix:-.}/${loadFile%.dat}.log"
+                                        # Заменяем символ "@" на "-" для обхода
+                                        # ошибки открытия файла лога в sqlldr
+                                        # из-за подстановки вместо символа
+                                        # "@" логина пользователя ( возникала
+                                        # в версии 11.1.0.7.0 на некоторых
+                                        # хостах)
+  logFile=${logFile//@/-}
+  local badFile="${logFile%.log}.bad"
+  local discardFile="${logFile%.log}.dsc"
+                                        # Создаем каталог для логов
+  mkdir -p "`dirname "${logFile}"`"
+                                        # Удаляем файлы с прошлой загрузки
+  rm -f "$badFile" "$discardFile" "$logFile"
+                                        # Загружаем данные
+  sqlldr                                \
+    silent="(HEADER,FEEDBACK)"          \
+    userid="$userId"                    \
+    data="$loadFile"                    \
+    ${controlFile:+control="$controlFile"} \
+    bad="$badFile"                      \
+    discard="$discardFile"              \
+    log="$logFile"                      \
+    "$@"
+  local loadResult=$?
+  if [[ $loadResult -ne 0 ]]; then
+                                        # Выводим первые ошибки из лога
+    if [[ -f "$logFile" ]]; then
+      if [[ $loadResult -eq 2 ]]; then
+        grep --max-count=5 --after-context=5 " Error " "$logFile" \
+        | tr --delete "\r" >&2
+      fi
+      echo "load log: $logFile" >&2
+    fi
+    exitError "SQL*Loader finished with error ( code $loadResult)."
+  fi
+}
+
+
+# func: deleteNulFile
+# Проверяет и в случае наличия удаляет файл с именем "nul" в текущем каталоге
+# ( файл может быть создан при установке модулей с OMS-файлами версии 1.6.0
+# или ниже).
+#
+deleteNulFile()
+{
+  local nulFileName="nul"
+  if [[ -f "$nulFileName" ]]; then
+    rm "$nulFileName"
+    if [[ $? -eq 0 ]]; then
+      logMessage WARNING_LOG_LEVEL \
+        "Delete file \"$nulFileName\" ( please, run \"make update-oms-version\")."
+    else
+      logError "Error on delete file \"$nulFileName\"."
+    fi
+  fi
+}
+
+
+# Отладочный вывод переменных окружения
+traceEnvironment
+
+# Разбор параметров
+parseOption "$@"
+
+# В случае наличия удаляем временный файл с именем "nul"
+deleteNulFile
+
+# Загрузка файла
+case "$loadFile" in
+  *.jar)
+    loadJava "${loadArgList[@]}"
+    ;;
+  *.dat)
+    loadData "${loadArgList[@]}"
+    ;;
+  *.job.sql)
+    outInternalSqlFunction="outSqlSchedulerJob"
+    execSql "${loadArgList[@]}"
+    ;;
+  */batch.xml)
+    outInternalSqlFunction="outSqlSchedulerBatch"
+    execSql "${loadArgList[@]}"
+    ;;
+  */batch_config.xml)
+    outInternalSqlFunction="outSqlSchedulerBatchConfig"
+    execSql "${loadArgList[@]}"
+    ;;
+  *)
+    outInternalSqlFunction="outSqlScriptRun"
+    execSql "${loadArgList[@]}"
+    ;;
+esac
+                                        # Завершаем выполнение
+exitScript

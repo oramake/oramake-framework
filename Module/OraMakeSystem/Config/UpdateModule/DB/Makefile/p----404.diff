@@ -1,0 +1,22 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 404)
++++ Config/NewModule/DB/Makefile	(working copy)
+@@ -233,6 +233,7 @@
+ # можно убирать использование этой переменной из installBeforeTarget и указывать
+ # там вручную необходимые стандартные действия).
+ installBeforeOmsAction =											\
++	oms-show-invalid.sql												\
+ 
+ 
+ 
+@@ -285,7 +286,8 @@
+ # Значение переменной не должно изменяться в модуле ( в случае необходимости
+ # можно убирать использование этой переменной из installAfterTarget и указывать
+ # там вручную необходимые стандартные действия).
+-installAfterOmsAction =											\
++installAfterOmsAction =												\
++	oms-compile-invalid.sql											\
+ 
+ 
+ 

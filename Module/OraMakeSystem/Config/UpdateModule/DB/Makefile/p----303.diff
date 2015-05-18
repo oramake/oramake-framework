@@ -1,0 +1,38 @@
+Index: Config/NewModule/DB/Makefile
+===================================================================
+--- Config/NewModule/DB/Makefile	(revision 305)
++++ Config/NewModule/DB/Makefile	(revision 306)
+@@ -7,6 +7,8 @@
+ .PHONY:									\
+ 	all 									\
+ 	clean									\
++	show-oms-version			\
++	update-oms-version		\
+ 	gendoc								\
+ 	gendoc-clean					\
+ 	load									\
+@@ -33,6 +35,24 @@
+ 
+ 
+ #
++# group: Версия OMS-файлов
++#
++
++# target: show-oms-version
++# Показывает версию OMS-файлов, входящих в состав модуля.
++
++show-oms-version: show-oms-version.oms
++
++
++
++# target: update-oms-version
++# Обновляет OMS-файлы, входящие в состав модуля.
++
++update-oms-version: update-oms-version.oms
++
++
++
++#
+ # group: Генерация документации
+ # 
+ 
