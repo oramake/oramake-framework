@@ -148,7 +148,7 @@ group: 1.6.0 ( 2011-10-11)
 
 Требования:
 - в БД должен быть установлен модуль ModuleInfo
-  ( SVN Root: Oracle/Module/ModuleInfo) версии 1.0.0;
+  ( Root: Module/ModuleInfo) версии 1.0.0;
 - в файле Doc/map.xml модуля должны быть указаны корректные значения для тэгов
   initialPath, path, version ( см. <Описание::Параметры модуля>);
 - при выполнении команд по установке модуля ( цели <install>, <uninstall>,

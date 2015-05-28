@@ -42,7 +42,7 @@
 --
 --(code)
 --
---@oms-get-db-link.sql nicDbLink NicP,Nic_P NicT,Nic_T
+--@oms-get-db-link.sql dbLink ProdDb TestDb
 --
 --(end)
 --
