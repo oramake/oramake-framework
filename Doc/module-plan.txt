@@ -4,6 +4,10 @@
 
 Common
 UserCreate
+AccessOperator - трудоЄмкость 5 дней - здесь надо подумать
+выдел€ть какие-то части ( базова€ системна€ €часть pkg_Operator)
+и более прикладные части.
+
 Logging
 DynamicSql
 TestUtility
