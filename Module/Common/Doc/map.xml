@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>Common</name>
+  <description>Модуль содержит общеупотребительные функции и коды ошибок</description>
+  <version>2.7.4</version>
+  <prefix>cmn</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/Common</path>
+  <initialPath>Oracle/Module/Common@51</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table>cmn_database_config</table>
+      <table>cmn_sequence</table>
+      <table>cmn_string_uid_tmp</table>
+      <package>pkg_Common</package>
+      <package>pkg_Error</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

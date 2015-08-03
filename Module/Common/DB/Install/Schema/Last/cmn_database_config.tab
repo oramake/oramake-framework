@@ -1,0 +1,51 @@
+-- table: cmn_database_config
+-- Настройки для базы данных.
+--
+create table
+  cmn_database_config
+(
+  instance_name                   varchar2(20)                        not null
+  , is_production                 number(1,0)                         not null
+  , ip_address_production         varchar2(15)
+  , smtp_server                   varchar2(50)
+  , notify_email                  varchar2(50)
+  , constraint cmn_database_config_pk primary key
+    ( instance_name)
+  , constraint cmn_database_config_chk_is_pro check
+    (is_production in ( 0, 1))
+)
+organization index
+/
+
+
+
+comment on table cmn_database_config is
+  'Настройки для базы данных [ SVN root: Oracle/Module/Common]'
+/
+comment on column cmn_database_config.instance_name is
+  'Имя экземляра БД, к которой относятся настройки ( сравнивается без учета регистра, в случае отсутствия настроек база данных считается тестовой)'
+/
+comment on column cmn_database_config.is_production is
+  'Флаг промышленной БД ( 1 промышленная, 0 тестовая)'
+/
+comment on column cmn_database_config.ip_address_production is
+  'IP-адрес промышленного сервера БД ( если указан, то БД будет считаться промышленной только в случае совпадения IP-адреса сервера с указанным, при отсутствии IP-адрес сервера БД не проверяется)'
+/
+comment on column cmn_database_config.smtp_server is
+  'Используемый SMTP-сервер ( имя или ip-адрес, при отсутствии используется SMTP-сервер по умолчанию, заданный в пакете pkg_Common)'
+/
+comment on column cmn_database_config.notify_email is
+  'Адрес для отправки нотификации по e-mail ( при отсутствии используется адрес по умолчанию, заданный в пакете pkg_Common)'
+/
+
+
+
+-- index: cmn_database_config_ix_linstan
+-- Обеспечивает уникальность по instance_name без учета регистра.
+create unique index
+  cmn_database_config_ix_linstan
+on
+  cmn_database_config (
+    lower( instance_name)
+  )
+/

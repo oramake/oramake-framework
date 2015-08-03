@@ -1,0 +1,20 @@
+-- table: cmn_string_uid_tmp
+-- Временная таблица для хранения идентификаторов типа varchar2.
+create global temporary table
+  cmn_string_uid_tmp
+(
+  string_uid                      varchar2(50)
+  , constraint cmn_string_uid_tmp_pk primary key
+    ( string_uid)
+)
+on commit delete rows
+/
+
+
+
+comment on table cmn_string_uid_tmp is
+  'Временная таблица для хранения идентификаторов типа varchar2 [ SVN root: Oracle/Module/Common]'
+/
+comment on column cmn_string_uid_tmp.string_uid is
+  'Уникальный строковый идентификатор'
+/

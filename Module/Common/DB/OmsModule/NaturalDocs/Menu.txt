@@ -1,0 +1,183 @@
+Format: 1.5
+
+
+Title: Common
+SubTitle: Версия 2.7.4
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Объектные типы  {
+
+   Group: Install  {
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            Group: cmn_string_table_t  {
+
+               File: Спецификация  (no auto-title, Install/Schema/Last/cmn_string_table_t.typ)
+               }  # Group: cmn_string_table_t
+
+            Group: str_concat_t  {
+
+               File: Спецификация  (no auto-title, Install/Schema/Last/str_concat_t.typ)
+               File: Реализация  (no auto-title, Install/Schema/Last/str_concat_t.tyb)
+               }  # Group: str_concat_t
+
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   }  # Group: Объектные типы
+
+Group: Пакеты  {
+
+   Group: pkg_Common  {
+
+      File: Спецификация  (no auto-title, pkg_Common.pks)
+      File: Реализация  (no auto-title, pkg_Common.pkb)
+      }  # Group: pkg_Common
+
+   Group: pkg_Error  {
+
+      File: Спецификация  (no auto-title, pkg_Error.pks)
+      File: Реализация  (no auto-title, pkg_Error.pkb)
+      }  # Group: pkg_Error
+
+   }  # Group: Пакеты
+
+Group: Скрипты  {
+
+   Group: Install  {
+
+      Group: Config  {
+
+         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
+         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         }  # Group: Config
+
+      Group: Data  {
+
+         Group: Last  {
+
+            File: cmn_type_exception  (no auto-title, Install/Data/Last/cmn_type_exception.sql)
+            }  # Group: Last
+
+         }  # Group: Data
+
+      Group: Grant  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: acl-grant  (no auto-title, Install/Grant/Last/acl-grant.sql)
+            }  # Group: Last
+
+         }  # Group: Grant
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: cmn_case_exception  (no auto-title, Install/Schema/Last/cmn_case_exception.tab)
+            File: cmn_case_exception_bi_define  (no auto-title, Install/Schema/Last/cmn_case_exception_bi_define.trg)
+            File: cmn_case_exception_seq  (no auto-title, Install/Schema/Last/cmn_case_exception_seq.sqs)
+            File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
+            File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
+            File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
+            File: cmn_type_exception  (no auto-title, Install/Schema/Last/cmn_type_exception.tab)
+            File: cmn_type_exception_bi_define  (no auto-title, Install/Schema/Last/cmn_type_exception_bi_define.trg)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
+            File: v_cmn_case_exception  (no auto-title, Install/Schema/Last/v_cmn_case_exception.vw)
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Type Index: Типы
+      Database View Index: Представления
+      Database Table Index: Таблицы
+      Database Trigger Index: Триггеры
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Type Index: Типы
+      Constant Index: Константы
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Group: Закрытые объявления  {
+
+      Constant internal Index: Константы
+      Variable internal Index: Переменные
+      }  # Group: Закрытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+

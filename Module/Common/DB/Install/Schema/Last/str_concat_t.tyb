@@ -1,0 +1,154 @@
+/*
+ * dbtype: str_concat_t::body
+ * Реализаця объектного типа, который реализует интерфейс ODCIAggregate.
+ * Применяется в определении агрегирующей функции str_concat(<varchar2_value>)
+ * Тип реализует логику агрегирующей функции str_concat, которая возвращает результат
+ * конкатенации значений поля value разделенных символом '|' (в конкретной реализации)
+ * по группе кортежей.
+ *
+ * В текущей реализации также заданы параметры:
+ *     - разделитель по-умлочанию - '|'
+ *     - максимальнуя длина возвращаемой строки - 4000
+ *     - нужно ли выводить '...' в конце строки, если её длина превышает максимальную длину - да
+ *     - нужно ли генерировать исключение, если длина результирующей строки превышает максимальную длину - нет
+ *
+ * См. также - Описание способа создания пользовательский агрегативный типов в документации к
+ *            модулю.
+ */
+
+create or replace type body str_concat_t is
+
+	/* pproc: str_concat_t
+     * Конструктор типа, который задает параметры, применяемые при вычислении результата функции
+     * str_concat.
+     *
+     * Параметры:
+     *     delim       - сивол разделитель
+     *     max_length  - максимальнуя длина возвращаемой строки
+     *     dots        - нужно ли выводить '...' в конце строки, если её длина превышает максимальную длину
+     *     make_error  - нужно ли генерировать исключение, если длина результирующей строки превышает максимальную длину
+     */
+   CONSTRUCTOR FUNCTION str_concat_t( delim char
+                                     ,max_length NUMBER default 4000
+									 ,dots number default 1
+									 ,make_error number default 0)
+	 RETURN SELF AS RESULT
+	 as
+	 begin
+	   self.delim_f             := delim;
+		 self.maxStringLength_f := max_length;
+		 self.dots_f            := dots;
+		 self.makeError_f       := make_error;
+		 self.shouldPutDots     := 0;
+		 return;
+	 end str_concat_t;
+
+
+	/* pproc: ODCIAggregateInitialize
+	 * Реализация функции интерфейса ODCIAggregate
+	 * Выполняет инициализацию контекста для выполнения агрегирующей функции str_concat
+	 *
+ 	 * Параметры:
+	 *	  ctx - контекст агрегирующей функции (возврат)
+	 *
+	 * Возвращает:
+	 *    Cтатус выполнения инициализации (ODCIConst.Success или ODCIConst.Error)
+	 */
+   STATIC FUNCTION ODCIAggregateInitialize(ctx IN OUT str_concat_t) RETURN NUMBER IS
+   BEGIN
+     ctx := new str_concat_t('|', '4000', 1, 0);
+
+     RETURN ODCIConst.Success;
+   END ODCIAggregateInitialize;
+
+	/* pproc: ODCIAggregateIterate
+	 * Реализация функции интерфейса ODCIAggregate
+	 * Реализует логику итерации функции агрегирования str_concat
+	 *
+	 * Параметры:
+	 *				self   - контекст агрегирующей функции (возврат)
+	 *             	value - значение входного параметра функции str_concat для текущей итерации
+	 *
+	 * Возвращает:
+	 *              Статус выполнения инициализации (ODCIConst.Success или ODCIConst.Error)
+	 */
+   MEMBER FUNCTION ODCIAggregateIterate(self  IN OUT str_concat_t
+                                       ,value IN VARCHAR2)
+    RETURN NUMBER IS
+		newValueLength number := 0;
+		ls_sumLength number   := 0;
+   BEGIN
+	   newValueLength := length(value);
+
+		 if (self.ls_sum is not null) then
+		   ls_sumLength := length(self.ls_sum);
+		 end if;
+
+		 /*self.add_values_into_str_sum_log(self, value);*/
+
+		 if (ls_sumLength + length(self.delim_f) + newValueLength <= self.maxStringLength_f-3) then
+		   self.ls_sum := self.ls_sum || self.delim_f || value;
+		 else
+		   self.shouldPutDots := 1;
+			 if (self.makeError_f = 1) then
+			    Raise_application_error(-20000, 'str_concat_t.ODCIAggregateIterate ->'
+					                                ||' String value exceeding maximum length ('
+																					||to_char(self.maxStringLength_f)||')');
+			 end if;
+		 end if;
+
+     RETURN ODCIConst.Success;
+   END ODCIAggregateIterate;
+
+	/* pproc: ODCIAggregateMerge
+	 * Реализация функции интерфейса ODCIAggregate
+	 * Реализует логику слияния контекстов. Используетя на завершающем шаге вычисления
+	 * функции str_concat при применении ПАРАЛЛЕЛЬНЫХ вычислений.
+	 *
+	 * ВНИМАНИЕ!!! В текущей версии типа НЕ РЕАЛИЗОВАНА!
+	 *
+	 * Параметры:
+	 *             self  - текущий контекст контекст агрегирующей функции (возврат)
+	 *             ctx - внешний контекст контекст агрегирующей функции
+	 *
+	 * Возвращает:
+	 *				Статус выполнения инициализации (ODCIConst.Success или ODCIConst.Error)
+	 */
+   MEMBER FUNCTION ODCIAggregateMerge(self IN OUT str_concat_t
+                                     ,ctx  IN str_concat_t)
+    RETURN NUMBER IS
+   BEGIN
+     Raise_application_error(-20000, 'str_concat_t.ODCIAggregateMerge ->'
+		                                 ||' Parallel Execution is Not Implemented Yet');
+		 return ODCIConst.Error;
+   END ODCIAggregateMerge;
+
+	/* pproc: ODCIAggregateTerminate
+	 * Реализация функции интерфейса ODCIAggregateTerminate
+	 * Реализует логику завершения процедуры вычисления функции str_concat. И возвращение
+	 * результата вычислений в функцию str_concat.
+	 *
+	 * Параметры:
+	 *             self      - текущий контекст контекст агрегирующей функции
+	 *             value     - результирующее значение (возврат)
+	 *			   flags     - Битовый массив, который задает различные опции. (См. Документацию)
+	 *
+	 * Возвращает:
+	 *				Статус выполнения инициализации (ODCIConst.Success или ODCIConst.Error)
+	 */
+   MEMBER FUNCTION ODCIAggregateTerminate(self  IN str_concat_t
+                                         ,value OUT VARCHAR2
+                                         ,flags IN NUMBER)
+
+    RETURN NUMBER IS
+   BEGIN
+	   if (shouldPutDots = 1) then
+		   value := LTRIM(self.ls_sum, self.delim_f) || '...';
+		 else
+       value := LTRIM(self.ls_sum, self.delim_f);
+		 end if;
+     RETURN ODCIConst.Success;
+   END ODCIAggregateTerminate;
+
+end;
+/

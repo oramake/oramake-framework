@@ -1,0 +1,23 @@
+-- table: cmn_sequence
+-- Таблица с последовательными значениями от 1 до 10000 ( для использования
+-- в SQL-запросах).
+create table
+  cmn_sequence
+(
+  order_number                    integer                             not null
+  , constraint cmn_sequence_pk primary key
+    ( order_number)
+)
+organization index
+/
+
+
+
+comment on table cmn_sequence is
+  'Таблица с последовательными целыми значениями от 1 до 10000 ( для использования в SQL-запросах) [ SVN root: Oracle/Module/Common]'
+/
+comment on column cmn_sequence.order_number is
+  'Порядковый номер из последовательности ( целое число от 1 до 10000 включительно)'
+/
+
+
