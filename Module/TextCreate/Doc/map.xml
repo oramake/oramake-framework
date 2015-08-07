@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>TextCreate</name>
+  <description>Модуль утилит для формирования текстовых данных</description>
+  <version>1.3.1</version>
+  <prefix>tsc</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path></path>
+  <initialPath>Oracle/Module/TextCreate@451</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <package>pkg_TextCreate</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>
