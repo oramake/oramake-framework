@@ -1,0 +1,198 @@
+create or replace type body tpr_line_iterator_t
+as
+/* db object type body: tpr_line_iterator_t::body */
+
+
+/* group: Функции */
+
+
+/* func: tpr_line_iterator_t
+  Создает итератор.
+
+  Параметры:
+  textData                    - текстовые данные
+*/
+constructor function tpr_line_iterator_t(
+  textData clob
+)
+return self as result
+is
+begin
+  self.textData     := textData;
+  self.dataOffset   := 1;
+  self.lineClobFlag := 0;
+  self.lineText     := '';
+  self.lineNumber   := 0;
+  dbms_lob.createTemporary( self.lineData, false );
+  self.logger := lg_logger_t.getLogger(
+    loggerName => 'TextParser.tpr_line_iterator_t'
+  );
+  return;
+end tpr_line_iterator_t;
+
+
+/* func: next
+  Переходит на следующую строку.
+
+  Возврат:
+  - true в случае успешного перехода, false при отсутствии следующей записи
+*/
+member function next(
+  self in out nocopy tpr_line_iterator_t
+)
+return boolean
+is
+  -- Размер буфера ( должен соответствовать макс. длине переменной buffer)
+  Line_Size constant pls_integer := 32767;
+  -- Объем копируемых данных
+  copyAmount pls_integer;
+  -- Смещение символа конца строки
+  endlOffset pls_integer;
+
+begin
+  -- Если размер не определён определяем размер файла
+  dataLength := coalesce(
+    dataLength
+    , dbms_lob.getLength( lob_loc => textData )
+  );
+  if dataOffset <= dataLength then
+    -- Определяем смещение конца строки
+    endlOffset := dbms_lob.instr( textData, chr(10), dataOffset);
+    -- Определяем объем копируемых данных
+    if endlOffset > 0 then
+      copyAmount := endlOffset - dataOffset + 1;
+    else
+      copyAmount := dataLength - dataOffset + 1;
+    end if;
+    if copyAmount <= Line_Size then
+      lineClobFlag := 0;
+      lineText := dbms_lob.substr(
+          lob_loc => textData
+        , amount  => least( copyAmount, Line_Size )
+        , offset  => dataOffset
+        );
+      lineText :=
+        rtrim( ltrim( lineText, chr(10) || chr(13) ), chr(10) || chr(13) )
+      ;
+    else
+      lineClobFlag := 1;
+      lineData := substr( textData, dataOffset, copyAmount );
+      lineData :=
+        rtrim( ltrim( lineData, chr(10) || chr(13) ), chr(10) || chr(13) )
+      ;
+    end if;
+    lineNumber := coalesce( lineNumber, 0 ) + 1;
+    dataOffset := dataOffset + copyAmount;
+    return true;
+  else
+    -- не нашли строку
+    lineText   := '';
+    lineNumber := null;
+    return false;
+  end if;
+exception
+  when others then
+    raise_application_error(
+        pkg_Error.ProcessError
+      , logger.errorStack(
+          'Ошибка считывания строки ('
+            || ' lineNumber=' || to_char( lineNumber )
+            || ').'
+          )
+      , true
+    );
+end next;
+
+
+/* func: getLine
+  Возвращает текущую строку
+
+  Возврат:
+  - последняя считанная строка; null, если строка не считывалась
+    или в случае достижения конца файла
+*/
+member function getLine
+return varchar2
+is
+begin
+  if lineClobFlag = 0 then
+    return lineText;
+  else
+    raise_application_error(
+        pkg_Error.ProcessError
+      , 'Слишком длинная строка ('
+          || ' lineNumber=' || to_char( lineNumber )
+          || ').'
+      );
+  end if;
+
+exception
+  when others then
+    raise_application_error(
+        pkg_Error.ProcessError
+      , logger.errorStack(
+          'Ошибка получения текущей строки'
+          )
+      , true
+      );
+
+end getLine;
+
+
+/* func: getLineClob
+   Возвращает текущую строку в виде clob
+
+   Возврат:
+     - последняя считанная строка; null, если строка не считывалась или в
+       случае достижения конца файла
+*/
+member function getLineClob
+return clob
+is
+begin
+  if lineClobFlag = 1 then
+    return lineData;
+  else
+    return lineText;
+  end if;
+
+exception
+  when others then
+    raise_application_error(
+        pkg_Error.ProcessError
+      , logger.errorStack(
+          'Ошибка получения текущей строки'
+          )
+      , true
+      );
+
+end getLineClob;
+
+
+/* func: getLineNumber
+  Возвращает номер текущей строки
+
+  Возврат:
+  - номер считанной строки; 0, если строка не считывалась;
+    null, если достигнут конец файла
+*/
+member function getLineNumber
+return integer
+is
+begin
+  return lineNumber;
+exception
+  when others then
+    raise_application_error(
+        pkg_Error.ProcessError
+      , logger.errorStack(
+          'Ошибка извлечения номера строки'
+          )
+      , true
+      );
+
+end getLineNumber;
+
+
+end;
+/

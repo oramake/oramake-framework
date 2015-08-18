@@ -1,0 +1,39 @@
+title: Установка
+
+
+
+group: Общие замечания
+
+Параметры установки:
+INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
+                                первоначальной установке или номер при
+                                обновлении)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
+LOAD_USERID                   - основной пользователь для установки в БД
+                                ( формат: username/password@dbName)
+
+
+
+group: Первоначальная установка
+
+Команда для первоначальной установки текущей версии модуля:
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=all-to-public TO_USERNAME=public
+
+(end)
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)

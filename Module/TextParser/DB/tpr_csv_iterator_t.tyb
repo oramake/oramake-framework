@@ -1,0 +1,1093 @@
+create or replace type body tpr_csv_iterator_t is
+/* db object type body: tpr_csv_iterator_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Закрытые объявления */
+
+/* func: getFieldValue
+  Возвращает значение поля с указанным номером.
+  В случае некорректного номера выбрасывается исключение с информацией по
+  ошибке.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+
+  Возврат:
+  - значение поля
+*/
+member function getFieldValue(
+  fieldNumber integer
+)
+return varchar2
+is
+begin
+  if colValue is null then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Данные отсутствуют ( необходимо начать обработку).'
+    );
+  elsif recordNumber > parsedRecordCount then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Отсутствует текущая запись ( все записи были обработаны).'
+    );
+  end if;
+
+  return
+    -- Если в записи с данными меньше полей, чем было указано в записи
+    -- с именами полей, то значения отсутствующих полей считаются равными
+    -- null
+    case when recordNumber = parsedRecordCount
+        and fieldNumber between 1 and fieldNameCount
+        and fieldNumber > colValue.count
+        then
+      null
+    else
+      colValue( fieldNumber)
+    end
+  ;
+exception when SUBSCRIPT_BEYOND_COUNT then
+  if fieldNumber < 1 or fieldNumber > colValue.count() then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , case when fieldNumber < 1 then
+          'Некорректный номер поля.'
+        else
+          'Поле отсутствует в текущей записи.'
+        end
+    );
+  else
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , 'Ошибка при получении значения поля.'
+      , true
+    );
+  end if;
+end getFieldValue;
+
+
+
+/* group: Открытые объявления */
+
+/* func: tpr_csv_iterator_t
+  Создает итератор.
+
+  Параметры:
+  textData                    - текстовые данные
+  headerRecordNumber          - номер записи, содержащей названия полей ( 0
+                                отсутствует, по умолчанию 0)
+  skipRecordCount             - число пропускаемых записей от начала текстовых
+                                данных ( по умолчанию headerRecordNumber)
+  fieldSeparator              - символ-разделитель полей записи
+                                ( по умолчанию ";")
+  noEnclosedCharFlag          - флаг отсутствия в файле специального символа
+                                органичителя строк ( например, '"', по-умолчанию
+                                считается, что символ может быть)
+
+  Замечания:
+  - после создания итератора перед вызовом остальных функций ( за исключением
+    <getDataLength>) должна быть вызвана функций <next> чтобы начать обработку
+    данных ( обычно она вызывается в условии цикла while ... loop);
+*/
+constructor function tpr_csv_iterator_t(
+  textData clob
+  , headerRecordNumber integer := null
+  , skipRecordCount integer := null
+  , fieldSeparator varchar2 := null
+  , noEnclosedCharFlag number := null
+)
+return self as result
+is
+begin
+  self.logger := lg_logger_t.getLogger(
+    moduleName    => pkg_TextParserBase.Module_Name
+    , objectName  => 'tpr_csv_iterator_t'
+  );
+  self.textData := textData;
+  -- сразу определяем длину, чтобы функция getDataLength возвращала корректное
+  -- значение
+  self.dataLength :=
+    case when textData is not null then
+      dbms_lob.getlength( textData)
+    else
+      0
+    end
+  ;
+  self.headerRecordNumber := coalesce( headerRecordNumber, 0);
+  self.skipRecordCount := coalesce( skipRecordCount, self.headerRecordNumber);
+  if self.headerRecordNumber > self.skipRecordCount then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Значение параметра headerRecordNumber'
+        || ' должно быть меньше или равно значению skipRecordCount.'
+    );
+  end if;
+  if fieldSeparator is not null and length( fieldSeparator) > 1 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Длина разделителя полей ( fieldSeparator) должна быть равна 1 символу.'
+    );
+  end if;
+  self.fieldSeparator := coalesce( fieldSeparator, ';');
+  self.noEnclosedCharFlag := noEnclosedCharFlag;
+  logger.trace( 'tpr_csv_iterator_t: constructor: return');
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при создании CSV-итератора ('
+      || ' skipRecordCount=' || skipRecordCount
+      || ', headerRecordNumber=' || headerRecordNumber
+      || ', fieldSeparator="' || fieldSeparator || '"'
+      || ').'
+    , true
+  );
+end tpr_csv_iterator_t;
+
+/* func: getDataLength
+  Возвращает длину исходных текстовых данных.
+
+  Возврат:
+  - длина исходных текстовых данных ( в случае их отсутствия возвращает 0)
+*/
+member function getDataLength
+return integer
+is
+begin
+  return dataLength;
+end getDataLength;
+
+/* func: next
+  Переходит на следующую запись с данными.
+
+  Возврат:
+  - true в случае успешного перехода, false при отсутствии следующей записи
+*/
+member function next(
+  self in out tpr_csv_iterator_t
+)
+return boolean
+is
+
+  -- Размер буфера ( должен соответствовать макс. длине переменной buffer)
+  Buffer_Size constant integer := 32767;
+
+
+
+  /*
+    Разбирает очередную строку данных и возвращает истину при успешном разборе.
+  */
+  function parseLine(
+    isSaveValue boolean := null
+  )
+  return boolean
+  is
+
+    -- Спецсимволы при разборе данных
+
+    -- Разделитель строки
+    Line_Separator constant varchar2(1) := chr(10);
+
+    -- Опциональный префикс разделителя строк
+    Line_SeparatorPrefix constant varchar2(1) := chr(13);
+
+    -- Ограничитель строк
+    Enclosed_Char constant varchar2(1) := '"';
+
+    -- Режимы чтения данных
+
+    -- Не используется ограничитель строк
+    Normal_Mode constant varchar2(10) := 'N';
+
+    -- Данные внутри ограничителя строк
+    Enclosed_Mode constant varchar2(10) := 'E';
+
+    -- Был пройден парный ограничитель строк
+    EnclosedFound_Mode constant varchar2(10) := 'EF';
+
+    -- Был пройден парный ограничитель строк и префикс разделителя строк
+    EnclosedFoundLSP_Mode constant varchar2(10) := 'EFL';
+
+    -- Признак успешного разбора строки
+    isLineParsed boolean := false;
+
+    -- Признак успешного разбора поля
+    isFieldParsed boolean := false;
+
+    -- Текущий режим чтения данных
+    readMode varchar2(10) := null;
+
+    -- Порядковый номер разбираемого поля
+    iField integer := 1;
+
+    -- Смещение разделителя строки в буфере
+    iLineSeparator integer;
+
+    -- Смещение символа, следующего за последним копируемым в данные
+    iCopyEnd integer;
+
+    -- Новое значение смещения
+    newOffset integer;
+
+
+
+    /*
+      Выполняет разбор следующих данных из бурфера.
+    */
+    procedure parseBuffer
+    is
+
+      -- Символ для разбора
+      parsedChar char(1);
+
+      -- Смещение разделителя в буфере
+      iSeparator integer;
+
+    -- parseBuffer
+    begin
+
+      -- Поле начинается с Enclosed_Char
+      if readMode is null
+        and substr( buffer, bufferOffset, 1) = Enclosed_Char
+        and coalesce( self.noEnclosedCharFlag, 0) = 0
+      then
+          readMode := Enclosed_Mode;
+          newOffset := bufferOffset + 1;
+      elsif readMode is null or readMode = Normal_Mode then
+        if readMode is null then
+          readMode := Normal_Mode;
+        end if;
+
+        -- Ищем конец строки
+        if iLineSeparator is null
+            or iLineSeparator > 0 and iLineSeparator < bufferOffset
+            then
+          iLineSeparator := instr( buffer, Line_Separator, bufferOffset);
+        end if;
+        iSeparator := instr( buffer, fieldSeparator, bufferOffset);
+
+        -- Данные ограничены концом строки
+        if iLineSeparator > 0
+            and ( iSeparator = 0 or iLineSeparator < iSeparator)
+            then
+          newOffset := iLineSeparator + 1;
+          isFieldParsed := true;
+          isLineParsed := true;
+          iCopyEnd := iLineSeparator;
+
+          -- Игнорируем опциональный префикс разделителя строки
+          if bufferOffset < iCopyEnd then
+            if substr( buffer, iCopyEnd - 1, 1) = Line_SeparatorPrefix
+                then
+              iCopyEnd := iCopyEnd - 1;
+            end if;
+          elsif iField = colValue.count
+              and substr( colValue( iField), -1, 1) = Line_SeparatorPrefix
+              then
+            colValue( iField) :=
+              substr( colValue( iField), 1, length( colValue( iField)) - 1)
+            ;
+          end if;
+
+        -- Данные ограничены разделителем полей
+        elsif iSeparator > 0 then
+          newOffset := iSeparator + 1;
+          isFieldParsed := true;
+          iCopyEnd := iSeparator;
+
+        -- Данные не ограничены
+        else
+          newOffset := bufferLength + 1;
+          iCopyEnd := bufferLength + 1;
+        end if;
+
+      elsif readMode = Enclosed_Mode then
+        iSeparator := instr( buffer, Enclosed_Char, bufferOffset);
+        if iSeparator > 0 then
+          newOffset := iSeparator + 1;
+          readMode := EnclosedFound_Mode;
+          iCopyEnd := iSeparator;
+        else
+          newOffset := bufferLength + 1;
+          iCopyEnd := bufferLength + 1;
+        end if;
+      elsif readMode = EnclosedFound_Mode then
+        parsedChar := substr( buffer, bufferOffset, 1);
+        case parsedChar
+          when Enclosed_Char then
+            newOffset := bufferOffset + 1;
+            readMode := Enclosed_Mode;
+            iCopyEnd := bufferOffset + 1;
+          when fieldSeparator then
+            newOffset := bufferOffset + 1;
+            isFieldParsed := true;
+          when Line_Separator then
+            newOffset := bufferOffset + 1;
+            isFieldParsed := true;
+            isLineParsed := true;
+          when Line_SeparatorPrefix then
+            newOffset := bufferOffset + 1;
+            readMode := EnclosedFoundLSP_Mode;
+          else
+            raise_application_error(
+              pkg_Error.ProcessError
+              , 'Некорректный символ'
+                || ' "' || parsedChar || '"'
+                || ' ( код ' || to_char( ascii( parsedChar)) || ')'
+                || ' после ограничителя строки.'
+            );
+        end case;
+      elsif readMode = EnclosedFoundLSP_Mode then
+        parsedChar := substr( buffer, bufferOffset, 1);
+        case parsedChar
+          when Line_Separator then
+            newOffset := bufferOffset + 1;
+            isFieldParsed := true;
+            isLineParsed := true;
+          else
+            raise_application_error(
+              pkg_Error.ProcessError
+              , 'Некорректный символ'
+                || ' "' || parsedChar || '"'
+                || ' ( код ' || to_char( ascii( parsedChar)) || ')'
+                || ' после ограничителя строки и префикса разделителя строки.'
+            );
+        end case;
+      end if;
+    end parseBuffer;
+
+
+
+  -- parseLine
+  begin
+    colValue.delete;
+    if
+      bufferOffset > bufferLength and dataOffset > dataLength
+    then
+      return false;
+    else
+      -- Если нашли строку ( хоть и пустую)
+      loop
+        exit when isLineParsed;
+        -- Считываем порцию данных в буфер
+        if bufferOffset > bufferLength and dataOffset <= dataLength then
+          bufferLength := bufferReadSize;
+          dbms_lob.read(
+            lob_loc => textData
+            , amount => bufferLength
+            , offset => dataOffset
+            , buffer => buffer
+          );
+          dataOffset := dataOffset + bufferLength;
+          bufferOffset := 1;
+          iLineSeparator := null;
+        end if;
+        -- Если достигли конца файла, то считаем, что строка разобрана
+        if bufferOffset > bufferLength and dataOffset > dataLength then
+          isLineParsed := true;
+          logger.trace( 'parseLine: isLineParsed=true');
+        else
+          -- Разбор очередных данных из буфера
+          parseBuffer();
+        end if;
+        -- Копируем данные поля
+        if coalesce( isSaveValue, true) then
+          if iField > colValue.count then
+            colValue.extend( 1);
+          end if;
+          if iCopyEnd >= bufferOffset and iCopyEnd <= bufferLength + 1 then
+            if iCopyEnd > bufferOffset then
+              colValue( iField) := colValue( iField)
+                || substr( buffer, bufferOffset, iCopyEnd - bufferOffset)
+              ;
+            end if;
+            iCopyEnd := null;
+          elsif iCopyEnd is not null then
+            raise_application_error(
+              pkg_Error.ProcessError
+              , 'Некорректное смещение для копирования ('
+                || ' iCopyEnd=' || to_char( iCopyEnd)
+                || ').'
+            );
+          end if;
+        end if;
+        -- Завершен разбор поля
+        if isFieldParsed then
+          readMode := null;
+          iField := iField + 1;
+          isFieldParsed := false;
+        end if;
+        -- Если не достигли конца файла
+        if
+          not isLineParsed
+          or bufferOffset <= bufferLength
+          or dataOffset <= dataLength
+        then
+          -- Корректируем смещение для разбора
+          if newOffset > bufferOffset and newOffset <= bufferLength + 1 then
+            bufferOffset := newOffset;
+          else
+            raise_application_error(
+              pkg_Error.ProcessError
+              , 'Некорректное новое смещение в цикле разбора ('
+                || ' newOffset=' || to_char( newOffset)
+                || ').'
+            );
+          end if;
+        end if;
+      end loop;
+      parsedRecordCount := parsedRecordCount + 1;
+      return true;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , 'Ошибка при разборе строки ('
+        || ' dataOffset=' || to_char( dataOffset)
+        || ', bufferOffset=' || to_char( bufferOffset)
+        || ', bufferLength=' || to_char( bufferLength)
+        || ', iField=' || iField
+        || ', readMode=' || readMode
+        || ').'
+      , true
+    );
+  end parseLine;
+
+
+  /*
+    Заполняет список имен полей.
+  */
+  procedure fillNameList
+  is
+  begin
+    fieldNameCount := colValue.count;
+    fieldNameList := '';
+    for i in 1 .. colValue.count loop
+      fieldNameList := fieldNameList
+        || rpad(
+            coalesce( upper( trim( replace( colValue( i), chr(10), ' '))), ' ')
+            , 30
+          )
+        || chr(10)
+      ;
+    end loop;
+  end fillNameList;
+
+
+
+-- next
+begin
+
+  -- Инициализация переменных
+  if parsedRecordCount is null then
+    dataOffset := 1;
+    bufferLength := 0;
+    bufferOffset := 1;
+    bufferReadSize := Buffer_Size;
+    colValue := tpr_string_table_t();
+    if textData is not null then
+
+      -- Объем считываемых данных кратно getChunkSize для производительности
+      bufferReadSize := Buffer_Size - mod(
+          Buffer_Size
+          , least( dbms_lob.getChunkSize( textData), Buffer_Size)
+        )
+      ;
+    end if;
+    parsedRecordCount := 0;
+    recordNumber := 0;
+  end if;
+
+  -- Разбор до очередной строки с данными или до их исчерпания
+  while recordNumber = parsedRecordCount loop
+    recordNumber := recordNumber + 1;
+    if parseLine(
+      isSaveValue =>
+        recordNumber = headerRecordNumber
+        or recordNumber > skipRecordCount
+    )
+    then
+      if recordNumber = headerRecordNumber then
+        fillNameList();
+      elsif recordNumber > skipRecordCount then
+        exit;
+      end if;
+    end if;
+  end loop;
+  return recordNumber = parsedRecordCount;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при переходе на следующую запись ('
+      || ' parsedRecordCount=' || to_char( parsedRecordCount)
+      || ').'
+    , true
+  );
+end next;
+
+/* func: getRecordNumber
+  Возвращает номер текущей записи.
+  Записи нумеруются с 1, при этом в нумерацию включаются пропушенные от начала
+  данных записи ( если такие имеются).
+
+  Возврат:
+  - номер текущей записи ( начиная с 1) или null при отсутствии текущей записи
+*/
+member function getRecordNumber
+return integer
+is
+begin
+  return
+    case when recordNumber = parsedRecordCount then
+      recordNumber
+    end
+  ;
+end getRecordNumber;
+
+/* func: getFieldCount
+  Возвращает число полей в текущей записи.
+
+  Возврат:
+  - число полей в текущей записи или null при отсутствии текущей записи
+*/
+member function getFieldCount
+return integer
+is
+begin
+  return
+    case when recordNumber = parsedRecordCount then
+      colValue.count
+    end
+  ;
+end getFieldCount;
+
+/* func: getFieldNumber
+  Возвращает порядковый номер поля по имени.
+
+  Параметры:
+  fieldName                   - имя поля
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  порядковый номер поля ( начиная с 1) либо null, если поле отсутствует и
+  значение параметра isNotFoundRaised равно 0.
+
+  Замечания:
+  - в качестве имени используются первые 30 символов ( начальные и конечные
+    пробелы игнорируются) из значения поля в строке заголовка без учета
+    регистра;
+*/
+member function getFieldNumber(
+  fieldName varchar2
+  , isNotFoundRaised integer := null
+)
+return integer
+is
+
+  fieldNameKey varchar2(31);
+
+  i integer;
+  fieldIndex integer;
+
+begin
+  if fieldNameList is null then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Нет данных по именам полей.'
+    );
+  end if;
+  fieldNameKey := upper( trim( replace( fieldName, chr(10), ' ')));
+  if fieldNameKey is not null then
+    i := instr(
+      fieldNameList
+      , rpad( fieldNameKey, 30) || chr(10)
+    );
+    if i > 0 then
+      fieldIndex := ( i - 1) / 31 + 1;
+    end if;
+  end if;
+
+  -- Ошибка если поле не найдено
+  if fieldIndex is null and coalesce( isNotFoundRaised, 1) != 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Поле не найдено.'
+    );
+  end if;
+  return fieldIndex;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при определении номера поля по имени ('
+      || ' fieldName="' || fieldName || '"'
+      || ', isNotFoundRaised=' || isNotFoundRaised
+      || ').'
+    , true
+  );
+end getFieldNumber;
+
+/* func: isFieldExists
+  Проверяет наличие поля с указанным именем.
+
+  Параметры:
+  fieldName                   - имя поля
+
+  Возврат:
+  1 в случае наличия поля, иначе 0.
+
+  Замечания:
+  - для проверки наличия поля используется функция <getFieldNumber>;
+*/
+member function isFieldExists(
+  fieldName varchar2
+)
+return integer
+is
+begin
+  return
+    case when
+      getFieldNumber(
+        fieldName           => fieldName
+        , isNotFoundRaised  => 0
+      )
+      is not null
+    then
+      1
+    else
+      0
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при проверке наличия поля с указанным именем ('
+      || ' fieldName="' || fieldName || '"'
+      || ').'
+    , true
+  );
+end isFieldExists;
+
+/* func: getProcessedCount
+  Возвращает число обработанных записей с данными. Учитывается текущая запись
+  и не учитываются пропущенные записи по параметру конструктора skipRecordCount.
+
+  Возврат:
+  - число обработанных записей ( >= 0)
+*/
+member function getProcessedCount
+return integer
+is
+begin
+  return
+    case when parsedRecordCount > skipRecordCount then
+      parsedRecordCount - skipRecordCount
+    else
+      0
+    end
+  ;
+end getProcessedCount;
+
+/* func: getString
+  Возвращает значение поля с указанным номером в виде строки.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+
+  Возврат:
+  - значение поля в виде строки
+*/
+member function getString(
+  fieldNumber integer
+)
+return varchar2
+is
+begin
+  return getFieldValue( fieldNumber);
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении строкового значения поля ('
+      || ' recordNumber=' || recordNumber
+      || ', fieldNumber=' || fieldNumber
+      || ').'
+    , true
+  );
+end getString;
+
+/* func: getString( NAME)
+  Возвращает значение поля с указанным именем в виде строки.
+
+  Параметры:
+  fieldName                   - название поля
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  - значение поля в виде строки
+*/
+member function getString(
+  fieldName varchar2
+  , isNotFoundRaised integer := null
+)
+return varchar2
+is
+
+  -- Номер поля ( начиная с 1)
+  fieldNumber integer;
+
+begin
+  fieldNumber := getFieldNumber(
+    fieldName           => fieldName
+    , isNotFoundRaised  => isNotFoundRaised
+  );
+  return
+    case when fieldNumber is not null then
+      getString( fieldNumber => fieldNumber)
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении строкового значения поля по имени ('
+      || ' fieldName="' || fieldName || '"'
+      || ', isNotFoundRaised=' || isNotFoundRaised
+      || ').'
+    , true
+  );
+end getString;
+
+/* func: getNumber
+  Возвращает значение поля с указанным номером в виде числа.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+  decimalCharacter            - символ десятичного разделителя
+  isValueErrorRaised          - генерировать ли исключение ( 1,0 )
+                                в случае невозможности преобразования.
+                                По-умолчанию ( null ) генерировать.
+  isTrimPercent               - перед преобразованием в число удалять из
+                                значения поля завершающие символы процента
+                                ( "%") и пробелы
+                                ( 1 да, 0 нет ( по умолчанию))
+
+  Возврат:
+  - значение поля в виде числа
+*/
+member function getNumber(
+  fieldNumber integer
+  , decimalCharacter varchar2 := null
+  , isValueErrorRaised integer := null
+  , isTrimPercent integer := null
+)
+return number
+is
+
+  -- Числовое значение поля
+  fieldValue number;
+
+  -- Новый символ десятичного разделителя
+  newDecimalCharacter varchar2(1);
+
+
+
+  /*
+    Удаляет завершающие символы процента и пробела в случае необходимости.
+  */
+  function trimPercent(
+    inString varchar2
+  )
+  return varchar2
+  is
+  begin
+    return
+      case when isTrimPercent = 1 then
+        rtrim( inString, '%')
+      else
+        inString
+      end
+    ;
+  end trimPercent;
+
+
+
+  /*
+    Заменяет десятичный разделитель в строке в случае необходимости.
+  */
+  function replaceDecimalCharacter(
+    inString varchar2
+  )
+  return varchar2
+  is
+  begin
+    return
+      case when newDecimalCharacter is not null then
+        replace(
+          inString
+          , decimalCharacter
+          , newDecimalCharacter
+        )
+      else
+        inString
+      end
+    ;
+  end replaceDecimalCharacter;
+
+
+
+  /*
+    Конвертация строки в число с учётом параметра isValueErrorRaised
+  */
+  function toNumber(
+    stringValue varchar2
+  )
+  return number
+  is
+  -- toNumber
+  begin
+    return
+      to_number(
+        replaceDecimalCharacter(
+          trimPercent(
+            replace( stringValue, ' ', '')
+          )
+        )
+      )
+    ;
+  exception when others then
+    if coalesce( isValueErrorRaised, 1 ) = 0 then
+      return null;
+    else
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , 'Ошибка при преобразовании в числовое значение ('
+          || ' stringValue="' || stringValue || '"'
+          || ').'
+        , true
+      );
+    end if;
+  end toNumber;
+
+
+
+-- getNumber
+begin
+  if getFieldValue( fieldNumber) is not null then
+
+    -- Определяем необходимость изменения разделителя
+    if decimalCharacter is not null then
+      newDecimalCharacter := nullif(
+        substr( to_char( 0.1, 'tm9'), 1, 1)
+        , decimalCharacter
+      );
+    end if;
+
+    -- Конвертируем в число
+    fieldValue := toNumber(
+      stringValue => getFieldValue( fieldNumber)
+    );
+  end if;
+  return fieldValue;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении числового значения поля ('
+      || ' recordNumber=' || recordNumber
+      || ', fieldNumber=' || fieldNumber
+      || ', decimalCharacter="' || decimalCharacter || '"'
+      || ', isValueErrorRaised=' || isValueErrorRaised
+      || ', isTrimPercent=' || isTrimPercent
+      || ').'
+    , true
+  );
+end getNumber;
+
+/* func: getNumber( NAME)
+  Возвращает значение поля с указанным именем в виде числа.
+
+  Параметры:
+  fieldName                   - название поля
+  decimalCharacter            - символ десятичного разделителя
+  isValueErrorRaised          - генерировать ли исключение ( 1,0 )
+                                в случае невозможности преобразования.
+                                По-умолчанию ( null ) генерировать.
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+  isTrimPercent               - перед преобразованием в число удалять из
+                                значения поля завершающие символы процента
+                                ( "%") и пробелы
+                                ( 1 да, 0 нет ( по умолчанию))
+
+  Возврат:
+  - значение поля в виде числа
+*/
+member function getNumber(
+  fieldName varchar2
+  , decimalCharacter varchar2 := null
+  , isValueErrorRaised integer := null
+  , isNotFoundRaised integer := null
+  , isTrimPercent integer := null
+)
+return number
+is
+
+  -- Номер поля ( начиная с 1)
+  fieldNumber integer;
+
+begin
+  fieldNumber := getFieldNumber(
+    fieldName           => fieldName
+    , isNotFoundRaised  => isNotFoundRaised
+  );
+  return
+    case when fieldNumber is not null then
+      getNumber(
+        fieldNumber           => fieldNumber
+        , decimalCharacter    => decimalCharacter
+        , isValueErrorRaised  => isValueErrorRaised
+        , isTrimPercent       => isTrimPercent
+      )
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении числового значения поля по имени ('
+      || ' fieldName="' || fieldName || '"'
+      || ', isNotFoundRaised=' || isNotFoundRaised
+      || ').'
+    , true
+  );
+end getNumber;
+
+/* func: getDate
+  Возвращает значение поля с указанным номером в виде даты.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+  format                      - формат даты ( для to_date())
+  isValueErrorRaised           - генерировать ли исключение ( 1,0 )
+                                в случае невозможности преобразования.
+                                По-умолчанию ( null ) генерировать.
+
+  Возврат:
+  - значение поля в виде даты
+*/
+member function getDate(
+  fieldNumber integer
+  , format varchar2
+  , isValueErrorRaised integer := null
+)
+return date
+is
+
+
+
+  /*
+    Конвертация строки в дату с учётом параметра isValueErrorRaised.
+  */
+  function toDate(
+    stringValue varchar2
+  )
+  return date
+  is
+  begin
+    return to_date( stringValue, format);
+  exception when others then
+    if coalesce( isValueErrorRaised, 1 ) = 0 then
+      return null;
+    else
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , 'Ошибка при преобразовании в дату ('
+          || ' stringValue="' || stringValue || '"'
+          || ').'
+        , true
+      );
+    end if;
+  end toDate;
+
+
+
+-- getDate
+begin
+  return
+    toDate(
+      stringValue => getFieldValue( fieldNumber)
+    );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении значения поля в виде даты ('
+      || ' recordNumber=' || recordNumber
+      || ', fieldNumber=' || fieldNumber
+      || ', format="' || format || '"'
+      || ', isValueErrorRaised=' || isValueErrorRaised
+      || ').'
+    , true
+  );
+end getDate;
+
+/* func: getDate( NAME)
+  Возвращает значение поля с указанным именем в виде даты.
+
+  Параметры:
+  fieldName                   - название поля
+  format                      - формат даты ( для to_date())
+  isValueErrorRaised           - генерировать ли исключение ( 1,0 )
+                                в случае невозможности преобразования.
+                                По-умолчанию ( null ) генерировать.
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  - значение поля в виде даты
+*/
+member function getDate(
+  fieldName varchar2
+  , format varchar2
+  , isValueErrorRaised integer := null
+  , isNotFoundRaised integer := null
+)
+return date
+is
+
+  -- Номер поля ( начиная с 1)
+  fieldNumber integer;
+
+begin
+  fieldNumber := getFieldNumber(
+    fieldName           => fieldName
+    , isNotFoundRaised  => isNotFoundRaised
+  );
+  return
+    case when fieldNumber is not null then
+      getDate(
+        fieldNumber           => fieldNumber
+        , format              => format
+        , isValueErrorRaised  => isValueErrorRaised
+      )
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении значения поля в виде даты по имени ('
+      || ' fieldName="' || fieldName || '"'
+      || ', isNotFoundRaised=' || isNotFoundRaised
+      || ').'
+    , true
+  );
+end getDate;
+
+end;
+/
