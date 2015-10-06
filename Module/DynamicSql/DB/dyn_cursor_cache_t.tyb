@@ -1,0 +1,131 @@
+create or replace type body dyn_cursor_cache_t is
+/* db object type body: dyn_cursor_cache_t::body */
+
+
+
+/* group: Функции */
+
+/* func: dyn_cursor_cache_t
+  Создает объект.
+
+  Возврат:
+  - созданный объект
+*/
+constructor function dyn_cursor_cache_t
+return self as result
+is
+begin
+  self.cacheId := pkg_DynamicSqlCache.getNextCacheId();
+  return;
+end dyn_cursor_cache_t;
+
+/* func: getCursor
+  Возвращает курсор для выполнения указанного динамического SQL.
+
+  Параметры:
+  sqlText                     - текст SQL для выполнения в курсоре
+  isSave                      - допустимость сохранения курсора в кэше
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  Id открытого курсора из пакета dbms_sql, в котором был выполнен разбор
+  указаного текста SQL.
+*/
+member function getCursor(
+  sqlText varchar2
+  , isSave integer := null
+)
+return integer
+is
+begin
+  return
+    pkg_DynamicSqlCache.getCursor(
+      cacheId       => cacheId
+      , sqlText     => sqlText
+      , isSave      => isSave
+    )
+  ;
+end getCursor;
+
+/* proc: freeCursor
+  Освобождает курсор после завершения выполнения в нем SQL.
+
+  Параметры:
+  cursorId                    - Id курсора
+                                ( значение устанавливается в null)
+
+  Замечания:
+  - если курсор не был сохранен в кэше функцией <getCursor>, то он
+    закрывается иначе курсор сохраняется для повторного использования;
+*/
+member procedure freeCursor(
+  self in dyn_cursor_cache_t
+  , cursorId in out integer
+)
+is
+begin
+  pkg_DynamicSqlCache.freeCursor(
+    cacheId       => cacheId
+    , cursorId    => cursorId
+  );
+end freeCursor;
+
+/* proc: closeCursor
+  Закрывает курсор.
+
+  Параметры:
+  cursorId                    - Id курсора
+                                ( значение устанавливается в null)
+*/
+member procedure closeCursor(
+  self in dyn_cursor_cache_t
+  , cursorId in out integer
+)
+is
+begin
+  pkg_DynamicSqlCache.closeCursor(
+    cacheId       => cacheId
+    , cursorId    => cursorId
+  );
+end closeCursor;
+
+/* proc: clear
+  Очишает кэш, закрывая все относящиеся к нему курсоры.
+*/
+member procedure clear(
+  self in dyn_cursor_cache_t
+)
+is
+begin
+  pkg_DynamicSqlCache.clear(
+    cacheId       => cacheId
+  );
+end clear;
+
+/* func: getCursorUsedCount
+  Возвращает число использований курсора.
+
+  Параметры:
+  cursorId                    - Id курсора
+
+  Возврат:
+  число использований курсора ( число вызовов функции <getCursor>, в результате
+  которых был возвращен курсор), 0 в случае отсутствия курсора с указанным Id
+  в кэше.
+*/
+member function getCursorUsedCount(
+  cursorId integer
+)
+return integer
+is
+begin
+  return
+    pkg_DynamicSqlCache.getCursorUsedCount(
+      cacheId       => cacheId
+      , cursorId    => cursorId
+    )
+  ;
+end getCursorUsedCount;
+
+end;
+/
