@@ -1,0 +1,5 @@
+Title: Доработки
+
+[*] Применять преобразования, выполняемые в <pkg_FormatData.getBaseName>, в
+    частности, учет синонимов пустых значений, для функций
+    getBaseLastName, getBaseFirstName, getBaseMiddleName.

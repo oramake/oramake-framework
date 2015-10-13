@@ -1,0 +1,15 @@
+alter table fd_alias add constraint
+  fd_alias_fd_alias_type_fk
+foreign key
+  ( alias_type_code)
+references
+  fd_alias_type ( alias_type_code)
+/
+
+alter table fd_alias add constraint
+  fd_alias_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

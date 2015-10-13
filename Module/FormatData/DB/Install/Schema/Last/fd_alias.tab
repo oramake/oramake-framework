@@ -1,0 +1,39 @@
+-- table: fd_alias
+-- —инонимы, используемые при получении базовой формы значений.
+create table
+  fd_alias
+(
+  alias_type_code                 varchar2(10)                        not null
+  , alias_name                    varchar2(40)                        not null
+  , base_name                     varchar2(40)                        not null
+  , date_ins                      date            default sysdate     not null
+  , operator_id                   integer                             not null
+  , constraint fd_alias_pk primary key
+    ( alias_type_code, alias_name)
+  , constraint fd_alias_ck_no_value_base_name check
+    ( alias_type_code<>'NV' or base_name='-')
+)
+organization index
+tablespace &indexTablespace
+/
+
+
+
+comment on table fd_alias is
+  '—инонимы, используемые при получении базовой формы значений [ SVN root: Oracle/Module/FormatData]'
+/
+comment on column fd_alias.alias_type_code is
+  ' од типа синонима'
+/
+comment on column fd_alias.alias_name is
+  '»сходное значение'
+/
+comment on column fd_alias.base_name is
+  'Ѕазова€ форма'
+/
+comment on column fd_alias.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column fd_alias.operator_id is
+  'Id оператора, добавившего запись'
+/

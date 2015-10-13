@@ -1,0 +1,119 @@
+ALI ALIAS_NAME                          BASE_NAME                OPERATOR_LOGIN
+--- ----------------------------------- ------------------------ --------------
+FN  Едуард                              Эдуард                   Petrovskiy
+FN  Наталия                             Наталья                  Petrovskiy
+MN  Аркадиевич                          Аркадьевич               Petrovskiy
+MN  Валериевич                          Валерьевич               Petrovskiy
+MN  Валериевна                          Валерьевна               Petrovskiy
+MN  Вячеславич                          Вячеславович             Petrovskiy
+MN  Вячеславна                          Вячеславовна             Petrovskiy
+MN  Генадиевич                          Геннадьевич              Petrovskiy
+MN  Генадиевна                          Геннадьевна              Petrovskiy
+MN  Генадьевич                          Геннадьевич              Petrovskiy
+MN  Генадьевна                          Геннадьевна              Petrovskiy
+MN  Геннадиевич                         Геннадьевич              Petrovskiy
+MN  Геннадиевна                         Геннадьевна              Petrovskiy
+MN  Пвлович                             Павлович                 Petrovskiy
+NV  1кz-Отсутствует                     -                        Petrovskiy
+NV  "2.0l Не Установлен"                -                        Petrovskiy
+NV  =Отсутствует                        -                        Petrovskiy
+NV  B/N                                 -                        Petrovskiy
+NV  "Fр-Не Установлен"                  -                        Petrovskiy
+NV  "Gу Не Установлен"                  -                        Petrovskiy
+NV  "Wl Отсутствует"                    -                        Petrovskiy
+NV  "№ Отсутствует"                     -                        Petrovskiy
+NV  Б/Н                                 -                        Petrovskiy
+NV  Б\Н                                 -                        Petrovskiy
+NV  Безномера                           -                        Petrovskiy
+NV  "Дан. Отсутствуют"                  -                        Petrovskiy
+NV  "Данне Отсутствуют"                 -                        Petrovskiy
+NV  "Даннные Отсутствуют"               -                        Petrovskiy
+NV  "Данные Отсуствуют"                 -                        Petrovskiy
+NV  "Данные Отсут."                     -                        Petrovskiy
+NV  "Данные Отсутв"                     -                        Petrovskiy
+NV  "Данные Отсутсвует"                 -                        Petrovskiy
+NV  "Данные Отсутсвуют"                 -                        Petrovskiy
+NV  "Данные Отсутст."                   -                        Petrovskiy
+NV  "Данные Отсутств"                   -                        Petrovskiy
+NV  "Данные Отсутствует"                -                        Petrovskiy
+NV  "Данные Отсутствут"                 -                        Petrovskiy
+NV  "Данные Отсутствую"                 -                        Petrovskiy
+NV  "Данные Отсутствуют"                -                        Petrovskiy
+NV  "Данные Отустствуют"                -                        Petrovskiy
+NV  Данные_Отсутствуют                  -                        Petrovskiy
+NV  Данныеотсутствуют                   -                        Petrovskiy
+NV  "Данный Отсутствуют"                -                        Petrovskiy
+NV  "Даные Отсутствуют"                 -                        Petrovskiy
+NV  Н/У                                 -                        Petrovskiy
+NV  Н\У                                 -                        Petrovskiy
+NV  "Не Уставновлен"                    -                        Petrovskiy
+NV  "Не Установлен"                     -                        Petrovskiy
+NV  "Не Установленно"                   -                        Petrovskiy
+NV  "Не Установлено"                    -                        Petrovskiy
+NV  "Не Установлены"                    -                        Petrovskiy
+NV  "Не Установлео"                     -                        Petrovskiy
+NV  Не-Установлен                       -                        Petrovskiy
+NV  Не_Установлен                       -                        Petrovskiy
+NV  Нет                                 -                        Petrovskiy
+NV  Неустановлен                        -                        Petrovskiy
+NV  Неустановленй                       -                        Petrovskiy
+NV  Неустановлено                       -                        Petrovskiy
+NV  "Номер Не Установлен"               -                        Petrovskiy
+NV  "Номер Отсутсвует"                  -                        Petrovskiy
+NV  "Номер Отсутствует"                 -                        Petrovskiy
+NV  "Номер Отсутстует"                  -                        Petrovskiy
+NV  Номеротсутствует                    -                        Petrovskiy
+NV  Остутсвует                          -                        Petrovskiy
+NV  Остутствует                         -                        Petrovskiy
+NV  Осутствует                          -                        Petrovskiy
+NV  Отс.                                -                        Petrovskiy
+NV  Отсетствует                         -                        Petrovskiy
+NV  Отстствует                          -                        Petrovskiy
+NV  Отстуствует                         -                        Petrovskiy
+NV  Отстутсвует                         -                        Petrovskiy
+NV  Отстутствует                        -                        Petrovskiy
+NV  Отсуствует                          -                        Petrovskiy
+NV  Отсусутствует                       -                        Petrovskiy
+NV  Отсут                               -                        Petrovskiy
+NV  Отсут.                              -                        Petrovskiy
+NV  Отсутвует                           -                        Petrovskiy
+NV  Отсутсввует                         -                        Petrovskiy
+NV  Отсутсвтует                         -                        Petrovskiy
+NV  Отсутсвует                          -                        Petrovskiy
+NV  Отсутсвуют                          -                        Petrovskiy
+NV  Отсутст                             -                        Petrovskiy
+NV  Отсутств                            -                        Petrovskiy
+NV  Отсутств.                           -                        Petrovskiy
+NV  Отсутстввует                        -                        Petrovskiy
+NV  Отсутствет                          -                        Petrovskiy
+NV  Отсутствеует                        -                        Petrovskiy
+NV  Отсутствеут                         -                        Petrovskiy
+NV  Отсутствувет                        -                        Petrovskiy
+NV  Отсутствуе                          -                        Petrovskiy
+NV  Отсутствует                         -                        Petrovskiy
+NV  "Отсутствует- Н/У"                  -                        Petrovskiy
+NV  Отсутствует-00000                   -                        Petrovskiy
+NV  Отсутствует-00000___                -                        Petrovskiy
+NV  Отсутствуетооооо                    -                        Petrovskiy
+NV  Отсутствут                          -                        Petrovskiy
+NV  Отсутствуют                         -                        Petrovskiy
+NV  Отсутстсвует                        -                        Petrovskiy
+NV  Отсутстствует                       -                        Petrovskiy
+NV  Отсутсттвует                        -                        Petrovskiy
+NV  Отсутстувует                        -                        Petrovskiy
+NV  Отсутстует                          -                        Petrovskiy
+NV  Отсутсутвует                        -                        Petrovskiy
+NV  Отсутсутствует                      -                        Petrovskiy
+NV  Отсутчтвует                         -                        Petrovskiy
+NV  Отутствует                          -                        Petrovskiy
+NV  "Сведения Отсутсв."                 -                        Petrovskiy
+NV  "Сведения Отсутсвуют"               -                        Petrovskiy
+NV  "Сведения Отсутств."                -                        Petrovskiy
+NV  "Сведения Отсутствуют"              -                        Petrovskiy
+NV  Сведенияотсутств                    -                        Petrovskiy
+NV  Сведенияотсутствуют                 -                        Petrovskiy
+NV  "Сведенья Отсутствуют"              -                        Petrovskiy
+NV  Смрiнеустановлен                    -                        Petrovskiy
+NV  "Табл. Отсутствует"                 -                        Petrovskiy
+NV  "Табличка Отсутствует"              -                        Petrovskiy
+NV  Тсутствует                          -                        Petrovskiy

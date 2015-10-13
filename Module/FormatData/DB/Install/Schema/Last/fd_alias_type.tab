@@ -1,0 +1,37 @@
+-- table: fd_alias_type
+-- Типы синонимов.
+create table
+  fd_alias_type
+(
+  alias_type_code                 varchar2(10)                        not null
+  , alias_type_name_rus           varchar2(50)                        not null
+  , alias_type_name_eng           varchar2(50)                        not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint fd_alias_type_pk primary key
+    ( alias_type_code)
+)
+organization index
+tablespace &indexTablespace
+/
+
+
+
+comment on table fd_alias_type is
+  'Типы синонимов [ SVN root: Oracle/Module/FormatData]'
+/
+comment on column fd_alias_type.alias_type_code is
+  'Код типа синонима'
+/
+comment on column fd_alias_type.alias_type_name_rus is
+  'Название типа синонима ( рус)'
+/
+comment on column fd_alias_type.alias_type_name_eng is
+  'Название типа синонима ( анг)'
+/
+comment on column fd_alias_type.date_ins is
+  'Дата добавления записи'
+/
+comment on column fd_alias_type.operator_id is
+  'Id оператора, добавившего запись'
+/
