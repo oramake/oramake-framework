@@ -1,0 +1,112 @@
+-- table: mod_install_action
+-- Действия по установке модулей.
+create table
+  mod_install_action
+(
+  install_action_id               integer                             not null
+  , host                          varchar2(64)                        not null
+  , host_process_start_time       timestamp with local time zone      not null
+  , host_process_id               integer                             not null
+  , os_user                       varchar2(30)                        not null
+  , module_id                     integer                             not null
+  , module_version                varchar2(30)                        not null
+  , install_version               varchar2(30)
+  , action_goal_list              varchar2(1000)
+  , action_option_list            varchar2(4000)
+  , svn_path                      varchar2(255)
+  , svn_version_info              varchar2(50)
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_install_action_pk primary key
+    ( install_action_id)
+    using index tablespace &indexTablespace
+  , constraint mod_install_action_uk_ia_mod unique
+    ( install_action_id, module_id)
+    using index tablespace &indexTablespace
+  , constraint mod_install_action_uk_host_pr unique
+    ( host, host_process_start_time, host_process_id)
+    using index tablespace &indexTablespace
+  , constraint mod_install_action_ck_module_v check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( module_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( module_version, 1, 1) || substr( module_version, -1, 1), '-0123456789', '-')), 0) = 0 and module_version not like '%..%')
+  , constraint mod_install_action_ck_inst_ver check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( install_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( install_version, 1, 1) || substr( install_version, -1, 1), '-0123456789', '-')), 0) = 0 and install_version not like '%..%')
+)
+/
+
+
+
+comment on table mod_install_action is
+  'Действия по установке модулей [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_install_action.install_action_id is
+  'Id действия по установке'
+/
+comment on column mod_install_action.host is
+  'Имя хоста, с которого выполнялось действие'
+/
+comment on column mod_install_action.host_process_start_time is
+  'Время начала выполнения процесса, в котором выполнялось действие ( указывается локальное время на хосте)'
+/
+comment on column mod_install_action.host_process_id is
+  'Идентификатор процесса на хосте, в котором выполнялось действие'
+/
+comment on column mod_install_action.os_user is
+  'Имя пользователя операционной системы, выполнявшего действие'
+/
+comment on column mod_install_action.module_id is
+  'Id модуля'
+/
+comment on column mod_install_action.module_version is
+  'Версия модуля'
+/
+comment on column mod_install_action.install_version is
+  'Устанавливаемая версия модуля'
+/
+comment on column mod_install_action.action_goal_list is
+  'Цели выполнения действия ( список с пробелами в качестве разделителя)'
+/
+comment on column mod_install_action.action_option_list is
+  'Параметры действия ( список с пробелами в качестве разделителя)'
+/
+comment on column mod_install_action.svn_path is
+  'Путь в Subversion, из которого были получены файлы модуля ( начиная с имени репозитария)'
+/
+comment on column mod_install_action.svn_version_info is
+  'Информация о версии файлов модуля из Subversion ( в формате вывода утилиты svnversion)'
+/
+comment on column mod_install_action.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_install_action.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mon_install_action_ix_module_i
+-- Индекс для внешнего ключа.
+create index
+  mon_install_action_ix_module_i
+on
+  mod_install_action (
+    module_id
+  )
+tablespace &indexTablespace
+/
+
+
+
+-- index: mon_install_action_ix_date_ins
+-- Индекс для эффективной выборки действий за период.
+create index
+  mon_install_action_ix_date_ins
+on
+  mod_install_action (
+    date_ins
+  )
+tablespace &indexTablespace
+/

@@ -1,0 +1,32 @@
+-- table: mod_install_type
+-- Типы установок.
+create table
+  mod_install_type
+(
+  install_type_code               varchar2(10)                        not null
+  , install_type_name             varchar2(100)                       not null 
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_install_type_pk primary key
+    ( install_type_code)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table mod_install_type is
+  'Типы установок [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_install_type.install_type_code is
+  'Код типа установки'
+/
+comment on column mod_install_type.install_type_name is
+  'Название типа установки'
+/
+comment on column mod_install_type.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_install_type.operator_id is
+  'Id оператора, добавившего запись'
+/

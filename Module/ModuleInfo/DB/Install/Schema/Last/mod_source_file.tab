@@ -1,0 +1,79 @@
+-- table: mod_source_file
+-- Исходные файлы модулей.
+create table
+  mod_source_file
+(
+  source_file_id                  integer                             not null
+  , module_id                     integer                             not null
+  , file_path                     varchar2(255)                       not null
+  , module_part_id                integer                             not null
+  , object_name                   varchar2(128)
+  , object_type                   varchar2(30)
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_source_file_pk primary key
+    ( source_file_id)
+    using index tablespace &indexTablespace
+  , constraint mod_source_file_uk_mod_file unique
+    ( module_id, file_path)
+    using index tablespace &indexTablespace
+  , constraint mod_source_file_ck_object_n_t check
+    ( object_name is null and object_type is null or object_name is not null and object_type is not null)
+  , constraint mod_source_file_ck_object_type check
+    ( object_type in ( 'FUNCTION', 'JAVA SOURCE', 'MATERIALIZED VIEW', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'SEQUENCE', 'TABLE', 'TRIGGER', 'TYPE', 'TYPE BODY', 'VIEW'))
+)
+/
+
+
+
+comment on table mod_source_file is
+  'Исходные файлы модулей [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_source_file.source_file_id is
+  'Id исходного файла'
+/
+comment on column mod_source_file.module_id is
+  'Id модуля'
+/
+comment on column mod_source_file.file_path is
+  'Путь к исходному файлу'
+/
+comment on column mod_source_file.module_part_id is
+  'Id части модуля'
+/
+comment on column mod_source_file.object_name is
+  'Имя объекта БД, которому соответствует исходный файл'
+/
+comment on column mod_source_file.object_type is
+  'Тип объекта БД, которому соответствует исходный файл'
+/
+comment on column mod_source_file.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_source_file.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_source_file_ix_module_part
+-- Индекс для внешнего ключа.
+create index
+  mod_source_file_ix_module_part
+on
+  mod_source_file (
+    module_part_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_source_file_ix_object_name
+-- Индекс для поиска по имени объекта БД.
+create index
+  mod_source_file_ix_object_name
+on
+  mod_source_file (
+    object_name
+  )
+tablespace &indexTablespace
+/

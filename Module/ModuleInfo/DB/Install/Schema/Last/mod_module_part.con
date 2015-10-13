@@ -1,0 +1,11 @@
+alter table
+  mod_module_part
+add constraint
+  mod_module_part_mod_module_fk
+foreign key
+  ( module_id)
+references
+  mod_module ( module_id)
+/
+
+@oms-run mod_module_part.op.con

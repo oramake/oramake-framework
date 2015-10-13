@@ -1,0 +1,63 @@
+-- table: mod_module_part
+-- „асти прикладного модул€.
+create table
+  mod_module_part
+(
+  module_part_id                  integer                             not null
+  , module_id                     integer                             not null
+  , part_number                   integer                             not null
+  , is_main_part                  number(1)                           not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_module_part_pk primary key
+    ( module_part_id)
+    using index tablespace &indexTablespace
+  , constraint mod_module_part_uk_mod_part_md unique
+    ( module_part_id, module_id)
+    using index tablespace &indexTablespace
+  , constraint mod_module_part_uk_module_part unique
+    ( module_id, part_number)
+    using index tablespace &indexTablespace
+  , constraint mod_module_part_ck_part_number check
+    ( part_number >= 1)
+  , constraint mod_module_part_ck_is_main_par check
+    ( is_main_part in ( 0, 1))
+)
+/
+
+
+
+comment on table mod_module_part is
+  '„асти прикладного модул€ [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_module_part.module_part_id is
+  'Id части модул€'
+/
+comment on column mod_module_part.module_id is
+  'Id модул€'
+/
+comment on column mod_module_part.part_number is
+  'Ќомер части модул€ ( уникальный, начина€ с 1)'
+/
+comment on column mod_module_part.is_main_part is
+  '‘лаг основной части модул€ ( 1 основна€ часть модул€, 0 дополнительна€)'
+/
+comment on column mod_module_part.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column mod_module_part.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_module_part_ux_main_part
+-- »ндекс дл€ обеспечени€ единственности основной части в модуле.
+create unique index
+  mod_module_part_ux_main_part
+on
+  mod_module_part (
+    case is_main_part when 1 then module_id end
+  )
+tablespace &indexTablespace
+/

@@ -1,0 +1,21 @@
+alter table
+  mod_install_file
+add constraint
+  mod_install_file_install_ac_fk
+foreign key
+  ( install_action_id)
+references
+  mod_install_action ( install_action_id)
+/
+
+alter table
+  mod_install_file
+add constraint
+  mod_install_file_source_fil_fk
+foreign key
+  ( source_file_id)
+references
+  mod_source_file ( source_file_id)
+/
+
+@oms-run mod_install_file.op.con

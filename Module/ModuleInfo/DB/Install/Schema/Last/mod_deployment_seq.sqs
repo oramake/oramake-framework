@@ -1,0 +1,6 @@
+-- sequence: mod_deployment_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_deployment>.
+create sequence
+  mod_deployment_seq
+/

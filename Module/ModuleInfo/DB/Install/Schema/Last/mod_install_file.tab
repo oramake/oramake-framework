@@ -1,0 +1,80 @@
+-- table: mod_install_file
+-- Устанавливавшиеся файлы модулей.
+create table
+  mod_install_file
+(
+  install_file_id                 integer                             not null
+  , install_action_id             integer                             not null
+  , source_file_id                integer                             not null
+  , install_user                  varchar2(30)        default user    not null
+  , run_level                     integer                             not null
+  , start_date                    date                                not null
+  , finish_date                   date
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_install_file_pk primary key
+    ( install_file_id)
+    using index tablespace &indexTablespace
+  , constraint mod_install_file_ck_inst_user check
+    ( install_user = upper( install_user))
+  , constraint mod_install_file_ck_run_level check
+    ( run_level >= 1)
+)
+/
+
+
+
+comment on table mod_install_file is
+  'Устанавливавшиеся файлы модулей [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_install_file.install_file_id is
+  'Id записи'
+/
+comment on column mod_install_file.install_action_id is
+  'Id действия по установке'
+/
+comment on column mod_install_file.source_file_id is
+  'Id исходного файла'
+/
+comment on column mod_install_file.install_user is
+  'Имя пользователя, под которым выполнялась установка ( в верхнем регистре)'
+/
+comment on column mod_install_file.run_level is
+  'Уровень вложенности выполняемого файла ( 1 для файла верхнего уровня, 2 для вызываемого из него файла и т.д.)'
+/
+comment on column mod_install_file.start_date is
+  'Дата начала установки файла'
+/
+comment on column mod_install_file.finish_date is
+  'Дата завершения установки файла ( null если она не была успешно завершена)'
+/
+comment on column mod_install_file.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_install_file.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_install_file_ix_install_ac
+-- Индекс для внешнего ключа.
+create index
+  mod_install_file_ix_install_ac
+on
+  mod_install_file (
+    install_action_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_install_file_ix_source_fil
+-- Индекс для внешнего ключа.
+create index
+  mod_install_file_ix_source_fil
+on
+  mod_install_file (
+    source_file_id
+  )
+tablespace &indexTablespace
+/

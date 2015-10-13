@@ -1,0 +1,49 @@
+-- table: mod_deployment
+-- Окружения для развертывания приложений.
+create table
+  mod_deployment
+(
+  deployment_id                   integer                             not null
+  , deployment_path               varchar2(255)                       not null 
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_deployment_pk primary key
+    ( deployment_id)
+    using index tablespace &indexTablespace
+  , constraint mod_deployment_pk_uk_path unique
+    ( deployment_path)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table mod_deployment is
+  'Окружения для развертывания приложений [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_deployment.deployment_id is
+  'Id окружения для развертывания приложений'
+/
+comment on column mod_deployment.deployment_path is
+  'Путь для развертывания приложения'
+/
+comment on column mod_deployment.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_deployment.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_deployment_ux_upath
+-- Индекс для обеспечения уникальности по deployment_path без учета регистра.
+create unique index
+  mod_deployment_ux_upath
+on
+  mod_deployment (
+    upper( deployment_path)
+  )
+tablespace &indexTablespace
+/
+

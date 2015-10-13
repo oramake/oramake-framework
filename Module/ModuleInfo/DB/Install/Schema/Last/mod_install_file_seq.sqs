@@ -1,0 +1,6 @@
+-- sequence: mod_install_file_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_install_file>.
+create sequence
+  mod_install_file_seq
+/

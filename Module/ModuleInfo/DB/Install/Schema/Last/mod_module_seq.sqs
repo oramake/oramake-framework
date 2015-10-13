@@ -1,0 +1,7 @@
+-- sequence: mod_module_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_module>.
+create sequence
+  mod_module_seq
+nocache
+/

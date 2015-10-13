@@ -1,0 +1,6 @@
+-- sequence: mod_module_part_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_module_part>.
+create sequence
+  mod_module_part_seq
+/

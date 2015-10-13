@@ -1,0 +1,21 @@
+alter table
+  mod_app_install_result
+add constraint
+  mod_app_install_result_depl_fk
+foreign key
+  ( deployment_id)
+references
+  mod_deployment ( deployment_id)
+/
+
+alter table
+  mod_app_install_result
+add constraint
+  mod_app_install_result_mod_fk
+foreign key
+  ( module_id)
+references
+  mod_module ( module_id)
+/
+
+@oms-run mod_app_install_result.op.con

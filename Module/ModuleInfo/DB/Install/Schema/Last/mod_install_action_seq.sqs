@@ -1,0 +1,6 @@
+-- sequence: mod_install_action_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_install_action>.
+create sequence
+  mod_install_action_seq
+/

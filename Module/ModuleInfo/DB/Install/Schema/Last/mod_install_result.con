@@ -1,0 +1,31 @@
+alter table
+  mod_install_result
+add constraint
+  mod_install_result_mod_part_fk
+foreign key
+  ( module_part_id, module_id)
+references
+  mod_module_part ( module_part_id, module_id)
+/
+
+alter table
+  mod_install_result
+add constraint
+  mod_install_result_inst_typ_fk
+foreign key
+  ( install_type_code)
+references
+  mod_install_type ( install_type_code)
+/
+
+alter table
+  mod_install_result
+add constraint
+  mod_install_result_inst_act_fk
+foreign key
+  ( install_action_id, install_action_module_id)
+references
+  mod_install_action ( install_action_id, module_id)
+/
+
+@oms-run mod_install_result.op.con

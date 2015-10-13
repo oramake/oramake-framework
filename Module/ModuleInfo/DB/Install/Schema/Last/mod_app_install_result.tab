@@ -1,0 +1,138 @@
+-- table: mod_app_install_result
+-- Результаты установки приложений.
+create table
+  mod_app_install_result
+(
+  app_install_result_id           integer                             not null
+  , module_id                     integer                             not null
+  , deployment_id                 integer                             not null
+  , install_date                  date                default sysdate not null
+  , install_version               varchar2(30)                        not null
+  , module_version                varchar2(30)                        not null
+  , is_current_version            number(1)
+  , svn_path                      varchar2(255)
+  , svn_version_info              varchar2(50)
+  , java_return_code              integer
+  , error_message                 varchar2(4000)
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_app_install_result_pk primary key
+    ( app_install_result_id)
+    using index tablespace &indexTablespace
+  , constraint mod_app_install_result_ck_i_v check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( install_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( install_version, 1, 1) || substr( install_version, -1, 1), '-0123456789', '-')), 0) = 0 and install_version not like '%..%')
+  , constraint mod_app_install_result_ck_i_m check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( module_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( module_version, 1, 1) || substr( module_version, -1, 1), '-0123456789', '-')), 0) = 0 and module_version not like '%..%')
+  , constraint mod_app_install_result_ck_is_c check
+    ( is_current_version in ( 0, 1))
+)
+/
+
+
+
+comment on table mod_app_install_result is
+  'Результаты установки приложений [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_app_install_result.app_install_result_id is
+  'Id результата установки приложения'
+/
+comment on column mod_app_install_result.module_id is
+  'Id модуля'
+/
+comment on column mod_app_install_result.deployment_id is
+  'Id окружения для развертывания приложений'
+/
+comment on column mod_app_install_result.install_date is
+  'Дата установки'
+/
+comment on column mod_app_install_result.install_version is
+  'Устанавливаемая версия приложения'
+/
+comment on column mod_app_install_result.module_version is
+  'Версия модуля'
+/
+comment on column mod_app_install_result.is_current_version is
+  'Флаг текущей версии ( 1 - текущая, 0 - ранее установленная не текущая, null - установка не была успешно завершена)'
+/
+comment on column mod_app_install_result.svn_path is
+  'Путь в Subversion, из которого были получены файлы модуля ( начиная с имени репозитария)'
+/
+comment on column mod_app_install_result.svn_version_info is
+  'Информация о версии файлов модуля из Subversion ( в формате вывода утилиты svnversion)'
+/
+comment on column mod_app_install_result.java_return_code is
+  'Код результата выполнения установки Java-приложения ( 0 означает отсутствие ошибок)'
+/
+comment on column mod_app_install_result.error_message is
+  'Текст сообщения об ошибках при выполнении установки'
+/
+comment on column mod_app_install_result.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_app_install_result.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_app_install_result_ix_mod
+-- Индекс для внешнего ключа.
+create index
+  mod_app_install_result_ix_mod
+on
+  mod_app_install_result (
+    module_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_app_install_result_ix_depl
+-- Индекс для внешнего ключа.
+create index
+  mod_app_install_result_ix_depl
+on
+  mod_app_install_result (
+    deployment_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_app_install_result_ix_i_dt
+-- Индекс для эффективной выборки по дате установки.
+create index
+  mod_app_install_result_ix_i_dt
+on
+  mod_app_install_result (
+    install_date
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_app_install_result_ux_curr
+-- Обеспечивет уникальность текущей версии приложений.
+create unique index
+  mod_app_install_result_ux_curr
+on
+  mod_app_install_result (
+    case is_current_version when 1 then module_id end
+    , case is_current_version when 1 then deployment_id end
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_app_install_result_ix_cdm
+-- Индекс для эффективной выборки текущих установленных версий.
+create index
+  mod_app_install_result_ix_cdm
+on
+  mod_app_install_result (
+    is_current_version
+    , module_id
+    , deployment_id
+  )
+tablespace &indexTablespace
+/

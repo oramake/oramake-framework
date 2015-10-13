@@ -1,0 +1,182 @@
+-- table: mod_install_result
+-- Результаты действий по установке модулей.
+create table
+  mod_install_result
+(
+  install_result_id               integer                             not null
+  , module_id                     integer                             not null
+  , module_part_id                integer                             not null
+  , install_user                  varchar2(30)        default user    not null
+  , install_date                  date                default sysdate not null
+  , install_version               varchar2(30)                        not null
+  , install_type_code             varchar2(10)                        not null
+  , is_full_install               number(1)                           not null
+  , is_revert_install             number(1)                           not null
+  , object_schema                 varchar2(30)
+  , privs_user                    varchar2(30)
+  , install_script                varchar2(100)
+  , result_version                varchar2(30)
+  , is_current_version            number(1)                           not null
+  , install_action_id             integer
+  , install_action_module_id      integer
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_install_result_pk primary key
+    ( install_result_id)
+    using index tablespace &indexTablespace
+  , constraint mod_install_result_ck_inst_use check
+    ( install_user = upper( install_user))
+  , constraint mod_install_result_ck_inst_ver check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( install_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( install_version, 1, 1) || substr( install_version, -1, 1), '-0123456789', '-')), 0) = 0 and install_version not like '%..%')
+  , constraint mod_install_result_ck_is_full check
+    ( is_full_install in ( 0, 1))
+  , constraint mod_install_result_ck_is_rever check
+    ( is_revert_install in ( 0, 1))
+  , constraint mod_install_result_ck_obj_sch check
+    ( install_type_code <> 'OBJ' or object_schema is not null)
+  , constraint mod_install_result_ck_obj_sch2 check
+    ( object_schema = upper( object_schema))
+  , constraint mod_install_result_ck_privs_us check
+    ( install_type_code <> 'PRI' and privs_user is null or install_type_code = 'PRI' and privs_user is not null)
+  , constraint mod_install_result_ck_privs_u2 check
+    ( privs_user = upper( privs_user))
+  , constraint mod_install_result_ck_inst_scr check
+    ( install_type_code <> 'PRI' or install_script is not null)
+  , constraint mod_install_result_ck_res_ver check
+    -- только символы цифр и точка, первый и последний символ цифра, нет двух
+    -- точек подряд
+    ( coalesce( length( translate( result_version, '-.0123456789', '-')), 0) = 0 and coalesce( length( translate( substr( result_version, 1, 1) || substr( result_version, -1, 1), '-0123456789', '-')), 0) = 0 and result_version not like '%..%')
+  , constraint mod_install_result_ck_res_ver2 check
+    ( is_revert_install = 0 and nullif( install_version, result_version) is null
+or is_revert_install = 1 and is_full_install = 0 and nullif( result_version, install_version) is not null
+or is_revert_install = 1 and is_full_install = 1 and result_version is null)
+  , constraint mod_install_result_ck_is_curr check
+    ( is_current_version in ( 0, 1))
+  , constraint mod_install_result_ck_i_a_mod check
+    ( install_action_id is null and install_action_module_id is null
+or install_action_id is not null and install_action_module_id is not null and install_action_module_id = module_id)
+)
+/
+
+
+
+comment on table mod_install_result is
+  'Результаты действий по установке модулей [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_install_result.install_result_id is
+  'Id результата установки'
+/
+comment on column mod_install_result.module_id is
+  'Id модуля ( для обеспечения согласованности между install_action_id и module_part_id)'
+/
+comment on column mod_install_result.module_part_id is
+  'Id части модуля'
+/
+comment on column mod_install_result.install_user is
+  'Имя пользователя, под которым выполнялась установка ( в верхнем регистре)'
+/
+comment on column mod_install_result.install_date is
+  'Дата установки'
+/
+comment on column mod_install_result.install_version is
+  'Устанавливаемая версия'
+/
+comment on column mod_install_result.install_type_code is
+  'Код типа установки'
+/
+comment on column mod_install_result.is_full_install is
+  'Флаг полной установки ( 1 при полной установке, 0 при установке обновления)'
+/
+comment on column mod_install_result.is_revert_install is
+  'Флаг выполнения отмены установки версии ( 1 отмена установки версии, 0 установка версии)'
+/
+comment on column mod_install_result.object_schema is
+  'Схема, в которой расположены объекты данной части модуля ( в верхнем регистре)'
+/
+comment on column mod_install_result.privs_user is
+  'Имя пользователя, для которого выполнялась настройка прав доступа ( в верхнем регистре)'
+/
+comment on column mod_install_result.install_script is
+  'Стартовый установочный скрипт ( может отсутствовать, если для установки может быть использован только единственный тривиальный вариант, например run.sql)'
+/
+comment on column mod_install_result.result_version is
+  'Версия, получившаяся результате выполнения установки ( отличается от install_version в случае выполнения отмены установки обновления, null в случае полной отмены установки)'
+/
+comment on column mod_install_result.is_current_version is
+  'Флаг текущей версии ( 1 текущая, иначе 0)'
+/
+comment on column mod_install_result.install_action_id is
+  'Id действия по установке ( null если нет информации по действию)'
+/
+comment on column mod_install_result.install_action_module_id is
+  'Id модуля для действия по установке ( для обеспечения согласованности между install_action_id и module_part_id)'
+/
+comment on column mod_install_result.date_ins is
+  'Дата добавления записи'
+/
+comment on column mod_install_result.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_install_result_ix_module_p
+-- Индекс для внешнего ключа.
+create index
+  mod_install_result_ix_module_p
+on
+  mod_install_result (
+    module_part_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_install_result_ix_inst_dat
+-- Индекс для эффективной выборки по дате установки.
+create index
+  mod_install_result_ix_inst_dat
+on
+  mod_install_result (
+    install_date
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_install_result_ux_curr_m_t
+-- Обеспечивет уникальность текущей версии установок частей модулей.
+create unique index
+  mod_install_result_ux_curr_m_t
+on
+  mod_install_result (
+    case is_current_version when 1 then module_part_id end
+    , case is_current_version when 1 then install_type_code end
+    , case is_current_version when 1 then object_schema end
+    , case is_current_version when 1 then privs_user end
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_install_result_ix_curr_mod
+-- Индекс для эффективной выборки текущих установленных версий.
+create index
+  mod_install_result_ix_curr_mod
+on
+  mod_install_result (
+    is_current_version
+    , module_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_install_result_ix_inst_act
+-- Индекс для внешнего ключа.
+create index
+  mod_install_result_ix_inst_act
+on
+  mod_install_result (
+    install_action_id
+  )
+tablespace &indexTablespace
+/

@@ -1,0 +1,6 @@
+-- sequence: mod_source_file_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <mod_source_file>.
+create sequence
+  mod_source_file_seq
+/

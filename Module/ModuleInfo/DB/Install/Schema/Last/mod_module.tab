@@ -1,0 +1,77 @@
+-- table: mod_module
+-- ѕрограммные модули.
+create table
+  mod_module
+(
+  module_id                       integer                             not null
+  , svn_root                      varchar2(100)                       not null
+  , initial_svn_root              varchar2(100)                       not null
+  , initial_svn_revision          integer                             not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer
+  , constraint mod_module_pk primary key
+    ( module_id)
+    using index tablespace &indexTablespace
+  , constraint mod_module_uk_svn_root unique
+    ( svn_root)
+    using index tablespace &indexTablespace
+  , constraint mod_module_uk_initial_svn_rt_r unique
+    ( initial_svn_root, initial_svn_revision)
+    using index tablespace &indexTablespace
+  , constraint mod_module_ck_svn_root check
+( svn_root like '_%/_%' and coalesce( length( translate( lower( svn_root), './_0123456789abcdefghijklmnopqrstuvwxyz', '.')), 0) = 0)
+  , constraint mod_module_ck_initial_svn_root check
+( initial_svn_root like '_%/_%' and coalesce( length( translate( lower( initial_svn_root), './_0123456789abcdefghijklmnopqrstuvwxyz', '.')), 0) = 0)
+  , constraint mod_module_ck_initial_svn_rev check
+    ( initial_svn_revision > 0)
+)
+/
+
+
+
+comment on table mod_module is
+  'ѕрограммные модули [ SVN root: Oracle/Module/ModuleInfo]'
+/
+comment on column mod_module.module_id is
+  'Id модул€'
+/
+comment on column mod_module.svn_root is
+  'ѕуть к корневому каталогу модул€ в Subversion ( начина€ с имени репозитари€, например: "Oracle/Module/ModuleInfo")'
+/
+comment on column mod_module.initial_svn_root is
+  'ѕервоначальный путь к корневому каталогу модул€ в Subversion ( начина€ с имени репозитари€, может отличатьс€ от svn_root в случае переименовани€ модул€ или переноса в другой репозитарий)'
+/
+comment on column mod_module.initial_svn_revision is
+  'Ќомер правки в Subversion, в которой был создан первоначальный корневой каталог модул€ ( значение этого пол€ совместно со значением пол€ initial_svn_root составл€ют глобальный уникальный неизмен€емый идентификатор модул€)'
+/
+comment on column mod_module.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column mod_module.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: mod_module_ux_usvn_root
+-- »ндекс дл€ обеспечени€ уникальности без учета регистра.
+create unique index
+  mod_module_ux_usvn_root
+on
+  mod_module (
+    upper( svn_root)
+  )
+tablespace &indexTablespace
+/
+
+-- index: mod_module_ux_uinitial_svn_r_r
+-- »ндекс дл€ обеспечени€ уникальности без учета регистра.
+create unique index
+  mod_module_ux_uinitial_svn_r_r
+on
+  mod_module (
+    upper( initial_svn_root)
+    , initial_svn_revision
+  )
+tablespace &indexTablespace
+/

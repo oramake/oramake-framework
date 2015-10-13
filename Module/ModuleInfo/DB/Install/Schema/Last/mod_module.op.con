@@ -1,0 +1,9 @@
+alter table
+  mod_module
+add constraint
+  mod_module_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/
