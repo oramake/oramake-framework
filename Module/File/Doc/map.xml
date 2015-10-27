@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>File</name>
+  <description>Работа с файлами и внешними программами из Oracle</description>
+  <version>3.2.0</version>
+  <prefix></prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/File</path>
+  <initialPath>Oracle/Module/File@389</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <table>tmp_file_name</table>
+      <package>pkg_File</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

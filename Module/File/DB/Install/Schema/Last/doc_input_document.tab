@@ -1,0 +1,10 @@
+--table: doc_output_document
+--
+--Временная таблица для выгружаемых данных.
+--
+create global temporary table doc_output_document(
+  output_document_id          integer             not null
+  , output_document           clob
+  , constraint doc_output_document_pk primary key ( output_document_id)
+)
+/

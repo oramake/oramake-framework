@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+  <title>How to use FXP for server-to-server transfers</title>
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+<body style="background-color: rgb(255, 255, 255);">
+
+<table cellpadding="0" cellspacing="0" width="100%">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_tl.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_t.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_tr.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_l.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image: url(../images/bk_c.jpg); background-repeat: repeat;" width="100%"> &nbsp;How to use FXP for server-to-server transfers</td>
+
+      <td style="background-image: url(../images/bk_r.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_bl.jpg); background-repeat: repeat-x;" height="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_b.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_br.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">
+The File Exchange Protocol (FXP) is a method of using the FTP protocol to 
+transfer files from one remote FTP server to another - without routing the data
+via the client controlling the exchange.
+</span></font></div>
+
+<div align="left"><br>
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">
+The client maintains a standard FTP connection to each server, and can direct either server to
+connect to the other to initiate a file transfer. This is particularly useful when the client 
+has only low bandwidth available but the servers are high bandwidth.
+</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">
+FXP is generally not enabled by default on most FTP servers. Enabling FXP support can make an FTP server 
+vulnerable to an <a href="http://en.wikipedia.org/wiki/FTP_bounce_attack">FTP bounce attack</a>. For this
+reason it is not advisable to enable FXP on a publicly available FTP server. FXP is not currently supported
+for FTPS servers in edtFTPj/PRO.
+
+</span></font></div>
+
+<div align="left"><br>
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">
+Performing an FXP transfer between two FTP servers is straightforward using edtFTPj/PRO. Two separate FTPClient
+objects representing the source and destination FTP servers must be supplied to the 
+<a href="../../api/com/enterprisedt/net/ftp/FXPTransfer.html">FXPTransfer</a> constructor. 
+Before <b>transferFile</b> is called, the two clients must be logged in
+and have navigated to the correct directories where the file will be transferred from and to.
+Binary or ASCII mode should also be set in both clients as desired (and consistently). Sample code is shown below:
+</span></font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><br>
+
+<font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;">  
+
+            // set up source<br>
+            FTPClient source = new FTPClient();<br>
+            source.setRemoteHost(host1);<br>
+            source.connect();<br>
+            source.login(user1, password1);<br>
+            source.chdir(dir);<br><br>
+            
+            // set up destination<br>
+            FTPClient dest = new FTPClient();<br><br>
+            dest.setRemoteHost(host2);<br>
+            dest.connect();<br>
+            dest.login(user2, password2);<br>
+            dest.chdir(dir);<br><br>
+            
+            // kick off the transfer<br>
+            <a href="../../api/com/enterprisedt/net/ftp/FXPTransfer.html">FXPTransfer</a> fxp = new FXPTransfer(source, dest);<br>
+            fxp.transferFile(file, file);<br><br>
+            
+            // quit both sessions<br>
+            source.quit();<br>
+            dest.quit();   <br>        
+</span></font></div>
+
+
+
+<div align="left"><br>
+
+</div>
+
+
+</body>
+</html>

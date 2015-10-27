@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>How to pause and resume transfers</title>
+
+
+  <meta name="generator" content="HelpMaker.net">
+
+  <meta name="keywords" content="Chapter 3,">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+
+
+<body style="background-color: rgb(255, 255, 255);">
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;How to pause and resume transfers
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">FTP
+is generally quite a reliable way to transfer files.&nbsp;However
+at times network connections fail or processes are restarted,
+interrupting transfers. Also, it is sometimes necessary to terminate
+transfers, particularly for larger files that take a long time to
+transfer.&nbsp;</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">In
+these cases, it is often desirable to resume transfers rather than
+starting them from scratch - especially for large files. This means
+only the remaining part of the file is subsequently uploaded or
+downloaded.&nbsp;</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">In
+edtFTPj/PRO, two methods are available to achieve transfer termination
+and resumption. These methods are supported in <a href="../../api/com/enterprisedt/net/ftp/FTPClient.html">FTPClient</a>,
+<a href="../../api/com/enterprisedt/net/ftp/ssl/SSLFTPClient.html">SSLFTPClient</a>,
+<a href="../../api/com/enterprisedt/net/ftp/pro/ProFTPClient.html">ProFTPClient</a>
+and <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html">SSHFTPClient</a>.&nbsp;</span></font>
+<div align="left"> <br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Invoking
+<a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#cancelTransfer%28%29">cancelTransfer</a>
+will cancel the
+currently executing transfer. To be able to call this method during a
+transfer will require a separate thread. Once this method is called,
+the transfer will cease once the current transfer buffer is emptied:</span></font>
+<div align="left"> <br>
+
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#cancelTransfer%28%29">cancelTransfer</a>();
+// called from
+a different thread&nbsp;<br>
+
+</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Cancelling
+a transfer may leave the connection to the server in an inconsistent
+state. After cancelling a transfer, it may be necessary to quit and
+reconnect to the server.</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Once
+a transfer has been cancelled
+or has been interrupted, <a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#resume%28%29">resume</a>
+can be used to complete the
+transfer. <span style="font-weight: bold;">Please note
+that resume
+is only supported for binary mode transfers</span>. For resuming
+both uploads and downloads, it relies on
+examining the partially downloaded or uploaded file to see how many
+bytes remain to be transferred. The remaining bytes are then appended
+to the partial file.&nbsp;To perform a resume, call resume,
+and then
+upload or download the file again, as shown below:</span></font>
+</div>
+
+<div align="left"> <br>
+
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"> <font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#resume%28%29">resume</a>();<br>
+
+</span></font> </div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"> <font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.get(localFilename,
+remoteFilename); // gets the rest of the file<br>
+
+</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Note
+that resume only applies to the next transfer (upload or
+download). The internal resume flag is reset once a transfer has been
+made. If&nbsp;two transfers in a row need to be resumed,
+resumeTransfer must be called prior to each
+transfer.&nbsp;&nbsp;</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">Because
+resumeTransfer relies only on the size of the partially downloaded or
+uploaded file, it does not matter how long ago the transfer failed or
+was terminated. As long as the partially transferred file is still
+available (and of course&nbsp;the original file to be transferred
+has not changed) , resuming the transfer will work correctly.</span></font>
+</div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">If&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#resume%28%29">resume</a> is called erroneously, it can be cancelled by calling <a href="../../api/com/enterprisedt/net/ftp/FTPClientInterface.html#cancelResume%28%29">cancelResume</a>. This means the next transfer will not be resumed, but will be transferred completely.
+</span></font>
+</div>
+
+<div align="left"> <br>
+
+</div>
+
+</div>
+</div>
+</body>
+</html>

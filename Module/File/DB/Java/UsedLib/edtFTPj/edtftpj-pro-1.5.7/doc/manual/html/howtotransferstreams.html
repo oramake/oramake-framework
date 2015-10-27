@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>How to transfer directly from/to memory</title>
+
+
+  <meta name="generator" content="HelpMaker.net">
+
+  <meta name="keywords" content="Chapter 3,">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+
+
+<body style="background-color: rgb(255, 255, 255);">
+
+<table cellpadding="0" cellspacing="0" width="100%">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_tl.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_t.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_tr.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_l.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image: url(../images/bk_c.jpg); background-repeat: repeat;" width="100%"> &nbsp;How to transfer directly from/to
+memory </td>
+
+      <td style="background-image: url(../images/bk_r.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_bl.jpg); background-repeat: repeat-x;" height="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_b.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_br.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">One
+of the advantages of integrating FTP functionality directly into a
+product rather than using stand-alone FTP applications is that data can
+be transferred directly to and from memory. This is particularly useful
+when transferring dynamic content needs, such as the results of
+database queries and other application data.</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <a href="../../api/com/enterprisedt/net/ftp/FTPClient.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> FTPClient</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> offers two alternatives for memory
+transfers: byte-arrays and streams.&nbsp; Byte-arrays are generally
+easier to deal with but do not facilitate streaming.&nbsp; In other
+words, the data must be fully generated and stored in a byte-array
+before being transferred.&nbsp; This is fine when memory usage is
+not an issue, but if it is necessary to limit memory usage then streams
+should be used.</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;"><b>Byte-Array
+Transfers</b> are performed using the (overloaded)</span></font>
+<a href="../../api/com/enterprisedt/net/ftp/FTPClient.html#get%28java.lang.String%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> get</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> and</span></font> <a href="../../api/com/enterprisedt/net/ftp/FTPClient.html#put%28byte%5B%5D,%20java.lang.String%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> put</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> methods.&nbsp; They simply
+take the byte-array and/or the remote file-name as parameters.</span></font>
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"> <br>
+
+<font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;">string</span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;"> s = "Hello world";</span></font>
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"> <font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;">byte</span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;">[] bytes = s1.getBytes();</span></font>
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"> <font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.put(bytes, remoteFileName);<br>
+
+</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">Because
+all of the transferred data is stored in memory, byte array transfers
+should be avoided for large files.&nbsp;</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;"><b>Stream
+Transfers</b> allow the local data being transferred to be
+supplied as an InputStream, and the remote data to be written to a
+local OutputStream.</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">To
+transfer streams, the overloaded methods</span></font> <a href="../../api/com/enterprisedt/net/ftp/FTPClient.html#get%28java.io.OutputStream,%20java.lang.String%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> get</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> and</span></font> <a href="../../api/com/enterprisedt/net/ftp/FTPClient.html#put%28java.io.InputStream,%20java.lang.String%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> put</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> can be used as shown below:</span></font> </div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+following shows how a file can be wrapped in a stream and then uploaded:<br>
+
+</span></font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<br>
+
+<font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;"></span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;">InputStream srcStream = new
+FileInputStream(localFilename);</span></font>
+</font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;"></span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.put(srcStream,
+remoteFilename);&nbsp;</span></font>
+</font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<font face="Lucida Console" size="1"><span style="font-size: 8pt;"><br>
+
+<br>
+
+</span></font> </font></div>
+
+<div align="left"> <span style="font-family: Arial;">Similarly,
+the</span><font color="#010101" face="Arial"><span style="font-size: 10pt;"> following shows how a file can be
+downloaded to a stream:<br>
+
+</span></font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<br>
+
+<font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;"></span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;">OutputStream outStream = new
+FileOutputStream(</span></font></font><font color="#010101" face="Arial"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">localFilename</span></font></font><font color="#010101" face="Arial"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">);</span></font>
+</font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<font color="#0000ff" face="Lucida Console" size="1"><span style="font-size: 8pt;"></span></font><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.get(outStream,
+remoteFilename);&nbsp;</span></font>
+</font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Arial">
+<font face="Lucida Console" size="1"><span style="font-size: 8pt;"><br>
+
+<br>
+
+</span></font> </font></div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+above examples of files wrapped in streams are trivial, however they
+illustrate how the API can be used.</span></font>
+</div>
+
+<div align="left"> <br>
+
+</div>
+
+<div align="left"> <font color="#010101" face="Arial"><span style="font-size: 10pt;"></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><span style="font-weight: bold;">FTP Streams</span>
+are also supported in edtFTPj/PRO.&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/FTPInputStream.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>FTPInputStream</u></span></font></a>
+and <a href="../../api/com/enterprisedt/net/ftp/FTPOutputStream.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u> FTPOutputStream</u></span></font></a>
+can be
+used to read and write data directly from the FTP server, as described
+in <span style="font-size: 10pt;"><a href="howtotransferstreams2.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to transfer using FTP streams.</u></span></font></a>
+</span></span></font><br>
+
+</div>
+
+</body>
+</html>

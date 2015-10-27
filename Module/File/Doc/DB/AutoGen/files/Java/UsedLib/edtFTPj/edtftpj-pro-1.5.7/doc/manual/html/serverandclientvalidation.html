@@ -1,0 +1,45 @@
+<html xmlns:MSHelp="http://msdn.microsoft.com/mshelp"><head>
+   <title>Server and Client Validation</title>
+   <meta name="generator"  content="HelpMaker.net" >
+   <meta name="keywords"  content="Chapter 3," ><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLink.css"><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLinkDefault.css"></head>
+<body bgcolor="FFFFFF" >
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;Server and Client Validation
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+
+<p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >The previous sections described how public key certificates may be used to validate parties
+involved in secure communications.&nbsp; They also explained why some work, time, and cost is
+involved in obtaining certificates.&nbsp; </span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >The nature of Internet usage is such that it is important to distinguish between server
+validation and client validation.&nbsp; Server validation allows a client to know that it is talking to the
+intended server.&nbsp; Conversely, client validation allows a server to know that it is talking to the
+intended client.</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >It is often more important for a client to know that it is talking to the intended server than the
+converse.&nbsp; The reason for this is often financial.&nbsp; For example, if a client is purchasing an item
+from an online retailer, the client needs to be certain that their credit card details are going to
+the intended destination.&nbsp; While it might be nice for the retailer to be certain where the money
+if coming from, it is not usually essential.&nbsp; Therefore, server validation is nearly always used in
+such transactions, but client validation is less often used.&nbsp; Other applications, such as Internet
+banking often use both client and server validation.</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >In FTPS, both server and client validation by certificate are optional.&nbsp; Though the server's
+certificate is always sent, it is up to the client whether or not it validates the certificate.&nbsp; It is up
+to the client whether or not it will try to validate itself to the server, but some servers have a
+policy of not allowing unvalidated clients to access some or all its resources.</span></font><font color="#010101" ></font><br><div align="left" ><font face="Arial" ><span style="font-size:10pt" >It is important to note that, although many FTPS servers don't request client certificates, most
+require a user-name and password to be sent.&nbsp; If these are sent over a secure control channel
+then a reasonable level of client validation is inherent.</span></font><font color="#010101" ></font></div><div align="left" ><br></div><font color="#010101" ><div align="left" ><br></font></div><font color="#010101" ><div align="left" ></font><font face="Arial" ><span style="font-size:10pt" >Next: </span></font><a href="hostnamechecking.html"><font face="Arial"  color="#0000ff" ><span style="font-size:10pt" ><u>Hostname Checking</u></span></font></a><font color="#010101" ></font></div>
+
+</body></html>

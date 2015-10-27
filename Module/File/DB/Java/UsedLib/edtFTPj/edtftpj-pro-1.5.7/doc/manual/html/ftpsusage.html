@@ -1,0 +1,144 @@
+<html xmlns:MSHelp="http://msdn.microsoft.com/mshelp"><head>
+   <title>FTPS Usage</title>
+   <meta name="generator"  content="HelpMaker.net" >
+   <meta name="keywords"  content="Chapter 2," ><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLink.css"><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLinkDefault.css"></head>
+<body bgcolor="FFFFFF" >
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;FTPS Usage
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+<p align="justify" ><font face="Arial" ><span style="font-size:10pt" >A typical explicit FTPS session might consist of the following sequence of commands:</span></font><font color="#010101" ></font><br><table width="803"  cellpadding="0"  cellspacing="0"  style="border-collapse: collapse; border: none" >
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; USER (user-name)</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Log in</i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; PASS (password)</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" >&nbsp;<font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; LIST</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Get a directory listing</i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; AUTH TLS</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Switch to TLS on control-channel</i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; RETR (file-name)</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Download a file (without security)</i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; PBSZ 0</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Switch to TLS on the data-channel </i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; PROT P</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" >&nbsp;<font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; STOR (file-name)</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>Upload a file (with security)</i></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="329" >
+    <div align="left"  style="margin-left:13mm; margin-right:0mm; text-indent:0mm; " ><font face="Courier New" ><span style="font-size:10pt" >&gt; QUIT</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="474" >
+    <div align="left" ><font face="Times New Roman" ><span style="font-size:12pt" ><i>End session</i></span></font><font color="#010101" ></font></div>
+    </td></tr></table><p align="justify" ><font face="Arial" ><span style="font-size:10pt" >In this example, the first three commands (USER, PASS, and LIST) are standard FTP and
+therefore insecure.&nbsp; The AUTH command causes the rest of the commands to be sent to the
+server securely, in other words, an attacker cannot see which commands are issued.&nbsp; The
+GET command, being after AUTH, is protected, but the actual file that is transferred is not
+protected since it precedes the PBSZ and PROT commands.&nbsp;&nbsp; PBSZ and PROT tell the
+server to use TLS on all future data-channels, thus the file transferred in the PUT command is
+secure.</span></font><font color="#010101" ></font><br><p align="justify" ><font color="#010101" ></font><br><font face="Arial"  size="4" ><span style="font-size:14pt" ><b>Rules</b></span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial" ><span style="font-size:10pt" >There are two rules regarding the issuing of explicit FTPS commands that must be followed:</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:5mm; margin-right:0mm; text-indent:-5mm; " ><font face="Arial" ><span style="font-size:10pt" >1.&nbsp;&nbsp;&nbsp;&nbsp;AUTH must precede PBSZ</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:5mm; margin-right:0mm; text-indent:-5mm; " ><font face="Arial" ><span style="font-size:10pt" >2.&nbsp;&nbsp;&nbsp;&nbsp;PBSZ must precede PROT</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial" ><span style="font-size:10pt" >Apart from these, a FTPS server has policies regarding access permissions to its resources.
+These policies will also determine the order in which commands must be issued.&nbsp; There are
+too many possible policies to list here, but a few examples of such policies are given below
+along with their consequences in terms of the issuing of commands.</span></font><font color="#010101" ></font><br><p align="justify" ><font color="#010101" ></font><br><table width="668"  cellpadding="0"  cellspacing="0"  style="border-collapse: collapse; border: none" >
+    <tr>
+    <td align="center"  valign="top"  width="338" >
+    <div align="center" ><font face="Arial" ><span style="font-size:10pt" ><b><i>Policy</i></b></span></font><font color="#010101" ></font></div>
+    </td>
+    <td align="center"  valign="top"  width="330" >
+    <div align="center" ><font face="Arial" ><span style="font-size:10pt" ><b><i>Consequences</i></b></span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="338" >
+    <div align="left"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial" ><span style="font-size:10pt" >No unprotected commands</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="330" >
+    <div align="left" ><font face="Arial" ><span style="font-size:10pt" >AUTH must be issued before any other
+    commands.</span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="338" >
+    <div align="left"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial" ><span style="font-size:10pt" >Certain users are not permitted to log
+    in without security.</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="330" >
+    <div align="left" ><font face="Arial" ><span style="font-size:10pt" >The USER command is rejected for
+    particular users unless preceded by a
+    successful AUTH command.</span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="338" >
+    <div align="left"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial" ><span style="font-size:10pt" >No unprotected data may be
+    transferred</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="330" >
+    <div align="left" ><font face="Arial" ><span style="font-size:10pt" >A 'PROT P' command (preceded by a PBSZ
+    command) must be issued before any files
+    are transferred.</span></font><font color="#010101" ></font></div>
+    </td></tr>
+    <tr>
+    <td valign="top"  width="338" >
+    <div align="left"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial" ><span style="font-size:10pt" >Allow TLS authentication instead of
+    USER/PASS authentication</span></font><font color="#010101" ></font></div>
+    </td>
+    <td valign="top"  width="330" >
+    <div align="left" ><font face="Arial" ><span style="font-size:10pt" >A client certificate must be supplied and
+    USER/PASS commands are not required.</span></font><font color="#010101" ></font></div>
+    </td></tr></table><p align="justify" ><font color="#010101" ></font><br><div align="left" ><br></div><font color="#010101" ><div align="left" ></font><font face="Arial" ><span style="font-size:10pt" >Next: </span></font><a href="theessentialsofftpsecurity.html"><font face="Arial"  color="#0000ff" ><span style="font-size:10pt" ><u>The Essentials of FTP Security</u></span></font></a><font color="#010101" ></font></div>
+
+</body></html>

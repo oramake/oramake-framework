@@ -1,0 +1,48 @@
+title: Установка
+
+group: Общие замечания
+
+Параметры установки:
+INSTALL_VERSION               - устанавливаемая версия схемы ( Last при
+                                первоначальной установке или номер при
+                                обновлении, например 1.1.0)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+LOAD_USERID                   - основная схема
+BATCH_WAIT                    - ожидание окончания работы батчей в секундах
+
+Используемые настроечные параметры:
+- перечислены в <pkg_FileBase::Наименования настроечных параметров>.
+
+
+
+group: Last
+
+Предварительные требования: в БД должна быть настроена поддержка Java.
+
+Команды для установки
+( "???" нужно заменить на реальные значения):
+
+(code)
+
+$ make grant LOAD_USERID=sys/???@??? GRANT_SCRIPT=sys-privs TO_USERNAME=???
+
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Восстановление запуска заданий в БД ( после прерывания установки ):
+
+(code)
+
+$ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+group: Выдача системных привилегий для установки
+
+(code)
+
+$ make grant LOAD_USERID=???/???@??? GRANT_SCRIPT=sys-privs TO_USERNAME=???
+
+(end)
+

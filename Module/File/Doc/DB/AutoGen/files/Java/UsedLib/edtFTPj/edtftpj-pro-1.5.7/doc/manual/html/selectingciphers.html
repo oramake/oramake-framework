@@ -1,0 +1,46 @@
+<html xmlns:MSHelp="http://msdn.microsoft.com/mshelp"><head>
+   <title>Selecting Ciphers</title>
+   <meta name="generator"  content="HelpMaker.net" >
+   <meta name="keywords"  content="Chapter 3," ><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLink.css"><LINK REL="stylesheet" TYPE="text/css" HREF="ms-help://Hx/HxRuntime/HxLinkDefault.css"></head>
+<body bgcolor="FFFFFF" >
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;Selecting Ciphers
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+<p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >SSL and TLS can use a variety of encryption/decryption algorithms (called <i>ciphers</i>).&nbsp; In a
+single secure connection, as many as four different ciphers may be used for various purposes;
+this set of ciphers is called a <i>cipher suite</i>.&nbsp; Each party in a secure connection must designate
+which cipher suites it is going to support. When a new secure connection is made, the parties
+involved try to agree on which cipher suite to use.&nbsp; There must be at least one cipher suite that
+is available on both sides of the connection for this to be possible.</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >Different cipher suites have different levels of security and performance.&nbsp; The lower the level
+of security, the easier the cipher is to break.&nbsp; Unfortunately, stronger ciphers usually offer
+slower performance.&nbsp; Hence, there is a certain level of trade-off between the two.&nbsp; For this
+reason, the decision on which cipher suites to support is left to the developers and/or users of
+SSL and TLS applications.</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >Every cipher suite has a standard name (e.g. TLS_RSA_WITH_RC4_128_SHA).&nbsp; This name
+reveals which ciphers are used in the suite.</span></font><font color="#010101" ></font><br><p align="justify" ><font face="Arial"  color="#010101" ><span style="font-size:10pt" >Some guidelines which may be useful when selecting cipher suites are:</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol"  color="#010101" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"  color="#010101" ><span style="font-size:10pt" >Triple DES offers high security but relatively poor performance (look for names
+with the
+characters, 3DES).</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol"  color="#010101" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"  color="#010101" ><span style="font-size:10pt" >DES (not 3DES) can be cracked relatively easily</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol"  color="#010101" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"  color="#010101" ><span style="font-size:10pt" >128-bit RC4 offers high performance and reasonable security (look for names with
+the
+characters RC4_128).</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol"  color="#010101" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"  color="#010101" ><span style="font-size:10pt" >SHA is preferable to MD5 (choose algorithms whose names ending with SHA ahead
+of
+those ending with MD5).</span></font><font color="#010101" ></font><br><p align="justify"  style="margin-left:6mm; margin-right:0mm; text-indent:-6mm; " ><font face="Symbol"  color="#010101" ><span style="font-size:10pt" >&middot;&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"  color="#010101" ><span style="font-size:10pt" >Export version of algorithms are deliberately weakened; avoid them if possible
+(i.e.
+avoid 40-bit&nbsp; suites).</span></font><font color="#010101" ></font><br><div align="left" ><br></div><font color="#010101" ><div align="left" ><br></font></div><font color="#010101" ><div align="left" ></font><font face="Arial" ><span style="font-size:10pt" >Next: </span></font><a href="socksproxies.html"><font face="Arial"  color="#0000ff" ><span style="font-size:10pt" ><u>SOCKS Proxies</u></span></font></a><font color="#010101" ></font></div>
+
+</body></html>

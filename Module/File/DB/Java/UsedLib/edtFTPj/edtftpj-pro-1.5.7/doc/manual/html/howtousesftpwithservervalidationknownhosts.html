@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+  <title>How to use SFTP (with server validation - known hosts)</title>
+
+
+  <meta name="generator" content="HelpMaker.net">
+
+  <meta name="keywords" content="Chapter 3,">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+
+
+<body style="background-color: rgb(255, 255, 255);">
+
+<table cellpadding="0" cellspacing="0" width="100%">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_tl.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_t.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_tr.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_l.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image: url(../images/bk_c.jpg); background-repeat: repeat;" width="100%"> &nbsp;How to use SFTP (with server
+validation - known hosts) </td>
+
+      <td style="background-image: url(../images/bk_r.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_bl.jpg); background-repeat: repeat-x;" height="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_b.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_br.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+topic&nbsp;</span></font><font><u><a href="howtousesftpintroduction.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How
+to use SFTP (introduction)</u></span></font></a></u></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">
+gives an overview of server validation.
+Many SSH implementations use a file called <i>known_hosts</i>
+which is loaded by clients to
+validate servers. Typically, this file is generated when a command-line
+client
+first connects to a server - a
+prompt asks if the server should be added to the list of known hosts.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+<i>known_hosts </i>file contains a list of approved
+servers and their public keys.&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><br>
+
+<br>
+
+A single line in a <i>known_hosts</i> file looks like this:<br>
+
+<br>
+
+</span></font><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;">edtmobile,10.0.0.3
+ssh-rsa
+AAAAB3NzaC1yc2EAAAABIwAAAIEAt60CtjBMxiOOqgqfFtKZHY3g99uZpuh5E143FTO4dw+EHWNKemoWq59FMFMIZfSLyUpWmsjVT3PP1bczOXP1OSn967kxLB/w7Xr84B1ZrTLwuR/ilq73HpgO7A8pdEJN7ybprzhs5CBEgaLQo2pOxfqRYyc8TO2ADnZ1WwtjW48=<br>
+
+<br>
+
+</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">The first field is the hostname,
+i.e. the SSH server. The IP address is also listed - a number of
+comma separated hostnames and IP addresses can be listed.<br>
+
+<br>
+
+The second field is the applicable public key algorithm -"ssh-rsa" (for
+RSA key pairs) or "ssh-dss" (for DSA key pairs).<br>
+
+<br>
+
+The third field is the public key encoded using base 64.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+<i>known_hosts</i> file normally consists of multiple
+lines, one for each of the hosts that the
+client may wish to connect to. It is quite typical for a host to have
+entries in two lines, so that
+both RSA and DSA public keys can be listed. Note that the server may
+send back an RSA key or a DSA key. If <i>known_hosts</i> only
+contains a DSA key for the host, and an RSA key is returned, <span style="font-weight: bold;">server validation will fail</span>.
+The server can be forced to send back a particular type of key as
+described in <a href="howtousesftpchoosingalgorithms.html">How
+to use SFTP (choosing algorithms)</a>.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">As
+noted, public keys are cached by an
+instance of <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html">SSHFTPValidator</a>
+which can
+be accessed through the <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">SSHFTPClient.getValidator()</a>
+method.</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><br>
+
+<br>
+
+To load the&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><i>known_hosts</i>
+file into the validator cache, use the <a href="../doc/api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#loadKnownHosts%28java.lang.String%29">loadKnownHosts</a>
+method, as shown
+below:<br>
+
+<br>
+
+</span></font></div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">getValidator</a>().<a href="../doc/api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#loadKnownHosts%28java.lang.String%29">loadKnownHosts</a>(knownHostsFilePath);</span></font>
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;"><br>
+
+</span></font></div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">If
+another <i>known_hosts</i> file is subsequently loaded via
+this method, its contents will be
+added to the current list of known hosts.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">To
+clear out the current list of known hosts, use the <a href="../doc/api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#removeAllKnownHosts%28%29">removeAllKnownHosts</a></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../doc/api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#removeAllKnownHosts%28%29">
+</a>method, e.g.</span></font>
+</div>
+
+<div align="left"><br>
+
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">getValidator</a>().<a href="../doc/api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#removeAllKnownHosts%28%29">removeAllKnownHosts</a>()</span></font><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;">;</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+list of&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">public
+keys in the cache can be retrieved by the <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#getKnownHosts%28%29">getKnownHosts</a>
+method. The hashtable returned has host-names as its keys and
+hash-tables of algorithm-names/fingerprints as its values.</span></font>
+</div>
+
+<div align="left"><br>
+
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">Hashtable cache = ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">getValidator</a>().</span></font><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;"><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#getKnownHosts%28%29">getKnownHosts</a>();</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Server
+public keys can also be maintained in their own file and explicitly
+added to the validator cache</span></font><a href="ms-help://edtFTPnetPRO/edtftpnetpro-api/EnterpriseDT.Net.Ftp.Ssh.KnownHostsManager.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;">. See </span></font><a href="howtousesftpwithservervalidationpublickeyfile.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to use SFTP (with
+server validation
+-
+public key files)</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;">.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"></div>
+
+</body>
+</html>

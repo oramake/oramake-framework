@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+  <title>How to use SFTP (with server validation - public key
+files)</title>
+
+
+  <meta name="generator" content="HelpMaker.net">
+
+  <meta name="keywords" content="Chapter 3,">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+
+
+<body style="background-color: rgb(255, 255, 255);">
+
+<table cellpadding="0" cellspacing="0" width="100%">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_tl.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_t.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_tr.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_l.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image: url(../images/bk_c.jpg); background-repeat: repeat;" width="100%"> &nbsp;How to use SFTP (with server
+validation - public key files) </td>
+
+      <td style="background-image: url(../images/bk_r.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+    <tr>
+
+      <td style="background-image: url(../images/bk_bl.jpg); background-repeat: repeat-x;" height="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_b.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      <td style="background-image: url(../images/bk_br.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">As
+discussed in </span></font><a href="howtousesftpwithservervalidationknownhosts.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to use SFTP (with
+server validation - known hosts)</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;">, SFTP clients can
+validate servers by loading a list of approved servers and their public
+keys, and checking the
+server key against this list. The list is generally maintained in a
+file called <i>known_hosts.</i></span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">In&nbsp;</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>SSHFTPClient</u></span></font></a></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">, server validation is always
+enabled by default - it must
+be explicitly disabled as described in&nbsp;</span></font><font><u><a href="howtousesftpwithoutservervalidation.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to use SFTP (without
+server validation)</u></span></font></a></u></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">. <br>
+
+<br>
+
+Server public keys can also be
+maintained in their own individual key files and be used for server
+validation without adding them to the <i>known_hosts</i>
+file. The </span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html">SSHFTPValidator</a></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"> </span></font><font face="Arial"><span style="font-size: 10pt;">supports
+explicitly adding server public keys.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">The </span></font><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#addKnownHost%28java.lang.String,%20java.lang.String%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>addKnownHost</u></span></font></a><font face="Arial"><span style="font-size: 10pt;">
+method
+requires the hostname and the public key file, as shown below:</span></font><br>
+
+</div>
+
+<div align="left"><br>
+
+</div>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">getValidator</a>().<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#addKnownHost%28java.lang.String,%20java.lang.String%29">addKnownHost</a>("hostname","myhost.dsa.pub")</span></font><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;">;</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">Note
+that the server may
+send back an RSA key or a DSA key. If the key file contains a DSA key for the host, and an RSA key is returned, <span style="font-weight: bold;">server validation will fail</span>.
+The server can be forced to send back a particular type of key as
+described in <a href="howtousesftpchoosingalgorithms.html">How
+to use SFTP (choosing algorithms)</a>.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+<font face="Arial"><span style="font-size: 10pt;">SSH
+public key files have two standard formats - OpenSSH and
+SECSH.&nbsp; edtFTPj/PRO
+supports both these public key formats. Formats can be recognized by
+their first line as shown
+in the table below:<br>
+
+</span></font><br>
+
+<table style="border: medium none ; border-collapse: collapse;" border="1" cellpadding="4" cellspacing="0" width="690">
+
+  <tbody>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" align="center" height="47" valign="top" width="335">
+      <div align="center"><br>
+
+      </div>
+
+      <font color="#010101"> </font>
+      <div align="center"><font face="Times New Roman"><span style="font-size: 10pt;"><b>Public key type</b></span></font></div>
+
+      <div align="center"></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" align="center" height="47" valign="top" width="333">
+      <div align="center"><br>
+
+      <font face="Times New Roman"><span style="font-size: 10pt;"><b>Start of first line</b></span></font></div>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" height="36" valign="top" width="335">
+      <div align="left"><br>
+
+      </div>
+
+      <font color="#010101"> </font>
+      <div align="left"><font face="Times New Roman" size="1"><span style="font-size: 9pt;">OpenSSH&nbsp;
+(DSA)</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" height="36" valign="top" width="333">
+      <div align="left"><br>
+
+      </div>
+
+      <font color="#010101"> </font>
+      <div align="left"><font face="Courier New" size="1"><span style="font-size: 9pt;">ssh-dss
+AAAAB3NzaC1kc3MAA ...</span></font></div>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="335">
+      <div align="left"><br>
+
+      </div>
+
+      <font color="#010101"> </font>
+      <div align="left"><font face="Times New Roman" size="1"><span style="font-size: 9pt;">OpenSSH&nbsp;
+(RSA)</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="333">
+      <div align="left"><br>
+
+      <font face="Courier New" size="1"><span style="font-size: 9pt;">ssh-rsa AAAAB3NzaC1yc2EAA ...</span></font></div>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="335">
+      <div align="left"><br>
+
+      <font face="Times New Roman" size="1"><span style="font-size: 9pt;"> SECSH</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="333">
+      <div align="justify"><br>
+
+      <font face="Courier New" size="1"><span style="font-size: 9pt;">---- BEGIN SSH2 PUBLIC KEY ----</span></font></div>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<p align="justify"><br>
+
+<font face="Arial"><span style="font-size: 10pt;">You
+can convert between OpenSSH and
+SECSH using OpenSSH's <i>ssh-keygen</i> (which by
+default generates OpenSSH keys). </span></font><br>
+
+</p>
+
+<p align="justify"><font face="Arial"><span style="font-size: 10pt;">For example, to convert an OpenSSH
+public key generated by ssh-keygen to SECSH for use
+in a commercial SSH server, use:</span></font><br>
+
+</p>
+
+<p style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="justify"><font face="Lucida Console"><span style="font-size: 10pt;">ssh-keygen -f keyfile -e &gt;
+keyfile.secsh</span></font><br>
+
+</p>
+
+<p align="justify"><br>
+
+<br>
+
+</p>
+
+<p align="justify"><font color="#010101"><br>
+
+</font><br>
+
+</p>
+
+<p align="justify"><font color="#010101"><br>
+
+</font><br>
+
+</p>
+
+<p align="justify"><br>
+
+</p>
+
+<div align="left"></div>
+
+</body>
+</html>

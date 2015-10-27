@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+
+   
+   
+  <title>Implicit FTPS and Explicit FTPS</title>
+  <meta name="generator" content="HelpMaker.net">
+
+   
+  <meta name="keywords" content="Chapter 2,">
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+</head>
+<body bgcolor="#ffffff">
+
+<table bgcolor="#ffffff" border="0" cellpadding="2" cellspacing="0" width="100%">
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;Implicit FTPS and Explicit FTPS
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+<p align="justify"><font face="Arial"><span style="font-size: 10pt;">Before the FTPS Internet Draft was published a somewhat abortive attempt at offering a
+secure version of FTP was made.&nbsp; This is now referred to as <i>implicit FTPS</i>.&nbsp; It is a very
+simplistic technique which involves using standard secure TLS sockets in place of plain
+sockets at all points.&nbsp; Since standard TLS sockets require an exchange of security data
+immediately upon connection, it is not possible to offer standard FTP and implicit FTPS on the
+same port.&nbsp; For this reason another port needs to be opened &ndash; usually port 990.&nbsp; </span></font><font color="#010101"></font><br>
+</p>
+<p align="justify"><font face="Arial"><span style="font-size: 10pt;">Implicit FTPS is in the process of being phased out in favour of FTPS as described in the
+Internet Draft.&nbsp; This newer variant of FTPS is now referred to as explicit FTPS.&nbsp; It has some
+substantial advantages over implicit FTPS:</span></font><br>
+</p>
+<p style="margin-left: 6mm; margin-right: 0mm; text-indent: -6mm;" align="justify"><font face="Times New Roman"><span style="font-size: 10pt;">1.&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"><span style="font-size: 10pt;">It is a standard extension of FTP and is therefore supported by most FTP servers.</span></font><font color="#010101"></font><br>
+</p>
+<p style="margin-left: 6mm; margin-right: 0mm; text-indent: -6mm;" align="justify"><font face="Times New Roman"><span style="font-size: 10pt;">2.&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"><span style="font-size: 10pt;">It uses standard FTP ports meaning that there is no need to open addition ports in
+firewalls when upgrading from FTP to FTPS.</span></font><font color="#010101"></font><br>
+</p>
+<p style="margin-left: 6mm; margin-right: 0mm; text-indent: -6mm;" align="justify"><font face="Times New Roman"><span style="font-size: 10pt;">3.&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"><span style="font-size: 10pt;">It is more flexible in that it allows security to be turned off and on in a single session.</span></font><font color="#010101"></font><br>
+</p>
+<p style="margin-left: 6mm; margin-right: 0mm; text-indent: -6mm;" align="justify"><font face="Times New Roman"><span style="font-size: 10pt;">4.&nbsp;&nbsp;&nbsp;&nbsp;</span></font><font face="Arial"><span style="font-size: 10pt;">It is compatible with the RFC2228 standard.</span></font><font color="#010101"></font><br>
+</p>
+<p align="justify"><font face="Arial"><span style="font-size: 10pt;">Both implicit and explicit FTPS are supported by edtFTPj/PRO.&nbsp; Most of the rest of this
+guide will apply to explicit FTPS as this is the protocol that is recommended for any but
+applications requiring compatibility with legacy applications, however a howto example of usage of
+implicit FTPS will be provided.</span></font><br>
+</p>
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">Next: </span></font><a href="securingcontrolanddatachannels.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>Securing Control and Data Channels</u></span></font></a><font color="#010101"></font></div>
+
+
+</body>
+</html>

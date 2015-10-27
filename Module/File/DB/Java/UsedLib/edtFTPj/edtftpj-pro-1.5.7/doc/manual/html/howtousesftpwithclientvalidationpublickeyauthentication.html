@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+  <title>How to use SFTP (with client validation - public key
+authentication)</title>
+
+
+  <meta name="generator" content="HelpMaker.net">
+
+  <meta name="keywords" content="Chapter 3,">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+
+</head>
+<body style="background-color: rgb(255, 255, 255);">
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td style="background-image:url(../images/bk_tl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_t.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_tr.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td width="4" style="background-image:url(../images/bk_l.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+        <td width="100%" style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image:url(../images/bk_c.jpg); background-repeat: repeat">
+          &nbsp;How to use SFTP (with client validation - public key authentication)
+        </td>
+        <td width="4" style="background-image:url(../images/bk_r.jpg); background-repeat: repeat-y"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+      <tr>
+        <td height="4" style="background-image:url(../images/bk_bl.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_b.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+        <td style="background-image:url(../images/bk_br.jpg); background-repeat: repeat-x"><img src="../images/space.gif" width=4 height=4></td>
+      </tr>
+    </table>
+<br>
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">The topic </span></font><a href="howtousesftpwithclientvalidation.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to use SFTP (with
+client validation - password authentication)</u></span></font></a><font face="Arial"><span style="font-size: 10pt;">
+discusses the
+simplest form of client authentication, via password.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">In public key authentication, SSH
+clients and servers authenticate each other via public/private
+key pairs. Each must have access to their own private key, and they
+must have access to
+each other's public key (unless server validation is disabled).<br>
+
+<br>
+
+</span></font>
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">You
+should ensure that the
+server's public keys are
+loaded by the client as described in </span></font><a href="howtousesftpwithservervalidation.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to use SFTP (with
+server validation)</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;">,
+or you may want to <a href="howtouseftpswithoutservervalidation.html">switch
+off
+server validation</a> to get started.</span></font></div>
+
+</div>
+
+<p align="justify"><font face="Arial"><span style="font-size: 10pt;">The client's public key must be
+registered with the SSH server, typically by copying it into the
+server's <i>authorized_keys </i>file.&nbsp;</span></font></p>
+
+<p align="justify"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+client's private key is loaded via </span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>SSHFTPClient</u></span></font></a>'s</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"> <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setAuthentication%28java.lang.String,%20java.lang.String,%20java.lang.String%29">setAuthentication</a>
+method before calling connect, supplying the full path of the private
+key file, the SSH username and the passphrase of the private key file:</span></font><font face="Arial"><span style="font-size: 10pt;"></span></font></p>
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setAuthentication%28java.lang.String,%20java.lang.String,%20java.lang.String%29">setAuthentication</a>("C:\\myhome\\.ssh\\id_rsa",
+username, passphrase);</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">Both DSA and RSA keypairs can be
+used. </span></font></div>
+<div align="left"><br>
+
+</div>
+
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">There are no formal standards for
+SSH private key files, however three main formats are in
+common use. All are supported by edtFTPj/PRO (PuTTY since version 1.5.7).</span></font></div>
+
+<div align="left"><br></div>
+
+<table style="border: medium none ; border-collapse: collapse;" border="1" cellpadding="4" cellspacing="0" width="692">
+
+  <tbody>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" align="center" height="22" valign="middle" width="222">
+      <b>Private Key Type</b>
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" align="center" height="22" valign="middle" width="449">
+      <b>Start of key</b>
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="222">
+      <div align="left"><br>
+
+      <font face="Arial" size="1"><span style="font-size: 9pt;">&nbsp; OpenSSH</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="449">
+      <div align="left"><br>
+
+      <font face="Courier New" size="1"><span style="font-size: 9pt;">-----BEGIN DSA PRIVATE KEY-----<br>
+
+      </span></font></div>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="222">
+      <div align="left"><br>
+
+      <font face="Arial" size="1"><span style="font-size: 9pt;">&nbsp; SSH.com</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="449">
+      <div align="left"><br>
+
+      <font face="Courier New" size="1"><span style="font-size: 9pt;">---- BEGIN SSH2 ENCRYPTED PRIVATE
+KEY ----<br>
+
+      </span></font></div>
+
+      </td>
+
+    </tr>
+    
+    <tr>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="222">
+      <div align="left"><br>
+
+      <font face="Arial" size="1"><span style="font-size: 9pt;">&nbsp; PuTTY</span></font></div>
+
+      </td>
+
+      <td style="border: 1px solid rgb(1, 1, 1);" valign="top" width="449">
+      <div align="left"><br>
+
+      <font face="Courier New" size="1"><span style="font-size: 9pt;">PuTTY-User-Key-File-2:<br>
+
+      </span></font></div>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<div align="left"><br></div>
+
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">The format is automatically
+detected when the file is loaded.</span></font></div>
+
+<div align="left"><br></div>
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">
+Note that earlier versions of edtFTPj/PRO (prior to 1.5.7) do not support PuTTY keys, but they can be easily converted into
+SSH.COM or OpenSSH formats via PuTTYgen. The <i>PuTTYgen.exe</i> utility can be freely downloaded from 
+<a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html">here</a>. It is
+a simple GUI application that can generate keypairs, and import and export keys in various formats.</span></font></div>
+
+<div align="left"><br></div>
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">
+On the <i>File</i> menu item, select <i>Load Private Key</i> and load your PuTTY private key file. You can
+optionally enter your key's passphrase (which is advisable – otherwise the converted key will be
+saved without a passphrase, which is insecure). Then via <i>Conversions -> Export OpenSSH</i> key you
+can export your private key to another file in OpenSSH format (similarly for ssh.com format).</span></font></div>
+
+<div align="left"><br></div>
+
+<div align="left"><font face="Arial"><span style="font-size: 10pt;">The other authentication method,
+keyboard-interactive authentication, is discussed in </span></font><a href="howtousesftpwithclientvalidationkeyboardinteractiveauthentication.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How to
+use SFTP (with client validation - keyboard-interactive authentication)</u></span></font></a><font face="Arial"><span style="font-size: 10pt;">.</span></font></div>
+
+<div align="left"><br>
+
+</div>
+
+
+<div align="left"></div>
+
+<div align="left"><br>
+
+</div>
+
+
+<div align="left"><font color="#010101"><br>
+
+</font></div>
+
+
+<div align="left"><font color="#010101"><br>
+
+</font></div>
+
+
+<div align="left"></div>
+
+<div align="left"></div>
+
+</body>
+</html>

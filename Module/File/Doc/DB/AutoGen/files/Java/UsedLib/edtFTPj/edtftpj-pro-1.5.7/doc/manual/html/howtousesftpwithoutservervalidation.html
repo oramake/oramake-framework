@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:mshelp="http://msdn.microsoft.com/mshelp">
+<head>
+
+  
+
+
+  
+  <title>How to use SFTP (without server validation)</title>
+  <meta name="generator" content="HelpMaker.net">
+
+
+  
+  <meta name="keywords" content="Chapter 3,">
+
+
+  
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLink.css">
+
+
+  
+  <link rel="stylesheet" type="text/css" href="ms-help://Hx/HxRuntime/HxLinkDefault.css">
+</head>
+
+
+<body style="background-color: rgb(255, 255, 255);">
+
+    
+<table cellpadding="0" cellspacing="0" width="100%">
+
+      <tbody>
+    <tr>
+
+        <td style="background-image: url(../images/bk_tl.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+        <td style="background-image: url(../images/bk_t.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+        <td style="background-image: url(../images/bk_tr.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      </tr>
+
+      <tr>
+
+        <td style="background-image: url(../images/bk_l.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+        <td style="font-family: sans-serif; font-weight: bold; font-size: 14pt; background-image: url(../images/bk_c.jpg); background-repeat: repeat;" width="100%">
+          &nbsp;How to use SFTP (without server validation)
+        </td>
+
+        <td style="background-image: url(../images/bk_r.jpg); background-repeat: repeat-y;" width="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+      </tr>
+
+      <tr>
+
+        <td style="background-image: url(../images/bk_bl.jpg); background-repeat: repeat-x;" height="4"><img src="../images/space.gif" height="4" width="4"></td>
+
+        <td style="background-image: url(../images/bk_b.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+        <td style="background-image: url(../images/bk_br.jpg); background-repeat: repeat-x;"><img src="../images/space.gif" height="4" width="4"></td>
+
+      </tr>
+
+    
+  </tbody>
+</table>
+
+<br>
+
+<div align="left"><font color="#010101" face="Arial"><span style="font-size: 10pt;">The
+topic </span></font><a href="howtousesftpintroduction.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>How
+to use SFTP (introduction)</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;"> describes
+the SFTP features of </span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>SSHFTPClient</u></span></font></a></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">. </span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;"></span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">This topic demonstrates the use of
+SFTP without server
+validation.
+Server validation should always be used in a production environment,
+but disabling it is a good
+way of getting started.</span></font></div>
+<font color="#ff0000" face="Arial"><span style="font-size: 10pt;"></span></font>
+
+<br>
+
+
+<font color="#010101" face="Arial"><span style="font-size: 10pt;">Using SFTP without server
+validation is simply a matter of getting a reference to the current
+validator and switching off host validation</span></font><font color="#010101" face="Arial"><span style="font-size: 10pt;">:</span></font><br>
+
+
+<font face="Lucida Console" size="1"><span style="font-size: 8pt;"><br>
+
+
+</span></font>
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><span style="font-size: 8pt;">ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#getValidator%28%29">getValidator</a>().<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPValidator.html#setHostValidationEnabled%28boolean%29">setHostValidationEnabled</a>(false);</span></font>
+</div>
+
+
+<div align="left"><br>
+
+
+</div>
+
+
+<div align="left"><font face="Lucida Console" size="1"><font color="#010101" face="Arial"><span style="font-size: 10pt;">For <a href="howtousesftpwithclientvalidation.html">password authentication</a>, the
+username and password of the SSH user must be passed into the <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setAuthentication%28java.lang.String,%20java.lang.String%29">setAuthentication</a>
+method,
+and <a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setRemoteHost%28java.lang.String%29">setRemoteHost</a>
+must be set to the server's hostname or IP address.
+Note that
+some SFTP servers are set up to disallow password authentication, in
+which case the
+connection attempt will fail unless password authentication is enabled
+in the server
+configuration file.</span></font></font></div>
+
+
+<div align="left"><font face="Lucida Console" size="1"><br>
+
+
+</font></div>
+
+
+<font face="Lucida Console" size="1">
+</font>
+<div align="left"><font face="Lucida Console" size="1"><font color="#010101" face="Arial"><span style="font-size: 10pt;">After
+this a secure connection is established by&nbsp;calling </span></font><a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#connect%28%29"><font color="#0000ff" face="Arial"><span style="font-size: 10pt;"><u>connect()</u></span></font></a><font color="#010101" face="Arial"><span style="font-size: 10pt;">:</span></font></font></div>
+
+
+<div style="margin-left: 13mm; margin-right: 0mm; text-indent: 0mm;" align="left"><font face="Lucida Console" size="1"><br>
+
+
+<font color="#010101" face="Lucida Console" size="1"><span style="font-size: 8pt;"><br>
+
+
+ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setAuthentication%28java.lang.String,%20java.lang.String%29">setAuthentication</a>(username,
+password);<br>
+
+
+ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#setRemoteHost%28java.lang.String%29">setRemoteHost</a>(host);<br>
+
+
+ftp.<a href="../../api/com/enterprisedt/net/ftp/ssh/SSHFTPClient.html#connect%28%29">connect</a>();<br>
+
+
+<br>
+
+
+</span></font></font></div>
+
+
+</body>
+</html>
