@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="CheckMemory">
+  <name>Проверка использования памяти процессами Oracle</name>
+  <batch_config>
+    <retry_count>1</retry_count>
+    <retry_interval>15</retry_interval>
+    <schedule>
+      <name>every hour at 14 minute</name>
+      <interval type="mi">
+        <value>14</value>
+      </interval>
+    </schedule>
+    <option short_name="OsMemoryThreshold" type="number" name="Порог объёма памяти процесса ОС ( в байтах)">
+      <value>10000000000</value>
+    </option>
+    <option short_name="PgaMemoryThreshold" type="number" name="Порог объёма PGA отдельных процессов Oracle">
+      <value>1000000000</value>
+    </option>
+    <option short_name="EmailRecipient" type="string" name="Получатель(и) предупреждения">
+      <value></value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="check_memory">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">error</condition>
+    <condition id="3">skip</condition>
+  </content>
+</batch>

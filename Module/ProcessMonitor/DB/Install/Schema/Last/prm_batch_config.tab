@@ -1,0 +1,54 @@
+-- table: prm_batch_config
+-- Настройки отслеживания работы батчей
+create table prm_batch_config(
+  batch_short_name                varchar2(50)
+  , warning_time_percent          number 
+  , warning_time_hour             number
+  , abort_time_hour               number
+  , orakill_wait_hour             number
+  , trace_time_hour               number
+  , sql_trace_level               integer
+  , is_final_trace_sending        integer
+  , date_ins                      date default sysdate not null
+  , operator_id                   integer not null
+  , constraint prm_batch_config_pk primary key( 
+      batch_short_name 
+    ) 
+    using index tablespace &indexTablespace
+)  
+/
+comment on table prm_batch_config is
+'Настройки отслеживания работы батчей
+[ SVN root: Oracle/Module/ProcessMonitor ]
+'
+/
+comment on column prm_batch_config.batch_short_name is
+'Короткое наименование батча (логическая ссылка на sch_batch)'
+/
+comment on column prm_batch_config.warning_time_percent is
+'Порог предупреждения о длительном выполнении( в процентах)'
+/
+comment on column prm_batch_config.warning_time_hour is
+'Порог предупреждения о длительном выполнении( в часах)'
+/
+comment on column prm_batch_config.abort_time_hour is
+'Порог прерывания ( в часах)'
+/
+comment on column prm_batch_config.orakill_wait_hour is
+'Порог ожидания для выполнения oraKill для сессии в состоянии KILLED'
+/
+comment on column prm_batch_config.trace_time_hour is
+'Порог установки и отправки файла трассировки'
+/
+comment on column prm_batch_config.is_final_trace_sending is
+'Отправка ссылки на файл трассировки при завершении пакетного задания'
+/
+comment on column prm_batch_config.sql_trace_level is
+'Уровень трассировки'
+/
+comment on column prm_batch_config.date_ins is
+'Дата добавления записи'
+/
+comment on column prm_batch_config.operator_id is
+'Id оператора, добавившего запись'
+/

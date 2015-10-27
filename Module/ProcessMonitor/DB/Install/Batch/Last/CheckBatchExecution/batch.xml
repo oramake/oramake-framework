@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="CheckBatchExecution">
+  <batch_config>
+    <retry_count>1</retry_count>
+    <retry_interval>15</retry_interval>
+    <schedule>
+      <name>every hour at 5 and 35 minute</name>
+      <interval type="mi">
+        <value>5</value>
+      </interval>
+      <interval type="mi">
+        <value>35</value>
+      </interval>
+    </schedule>
+    <option short_name="AbortTimeHour" type="number" name="Порог прерывания выполнения пакета ( в часах)">
+      <value>20</value>
+    </option>
+    <option short_name="MinWarningTimeHour" type="number" name="Минимальный порог предупреждения по времени выполнения пакета ( в часах)">
+      <value>3</value>
+    </option>
+    <option short_name="OrakillWaitTimeHour" type="number" name="Порог прерывания выполнения пакета через OraKill ( в часах)">
+      <value>12</value>
+    </option>
+    <option short_name="WarningTimeHour" type="number" name="Порог предупреждения по времени выполнения пакета ( в часах)">
+      <value>15</value>
+    </option>
+    <option short_name="WarningTimePercent" type="number" name="Порог предупреждения по превышению максимального времени выполнения пакета ( в процентах)">
+      <value>130</value>
+    </option>
+  </batch_config>
+  <name>Проверка длительности выполнения пакетов</name>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="check_batch_execution">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">error</condition>
+    <condition id="2">skip</condition>
+    <condition id="2">run_error</condition>
+  </content>
+</batch>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>ProcessMonitor</name>
+  <description>Модуль, отвечающий за отслеживание работы процессов</description>
+  <version>1.1.0</version>
+  <prefix>prm</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/ProcessMonitor</path>
+  <initialPath>Oracle/Module/ProcessMonitor@575</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table>prm_registered_session</table>
+      <table>prm_session_action</table>
+      <table>prm_batch_config</table>
+      <package>pkg_ProcessMonitorBase</package>
+      <package>pkg_ProcessMonitorUtility</package>
+      <package>pkg_ProcessMonitor</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

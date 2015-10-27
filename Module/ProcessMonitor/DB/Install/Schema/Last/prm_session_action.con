@@ -1,0 +1,12 @@
+alter table 
+  prm_session_action 
+add constraint 
+  prm_session_action_fk_ses
+foreign key(
+    registered_session_id 
+  )  
+references 
+  prm_registered_session(
+    registered_session_id 
+  )
+/  

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="CheckOrakill">
+  <name>Прерывание сессий с помощью Orakill</name>
+  <batch_config>
+    <retry_count>1</retry_count>
+    <retry_interval>15</retry_interval>
+    <schedule>
+      <name>every hour at 55 minute</name>
+      <interval type="mi">
+        <value>55</value>
+      </interval>
+    </schedule>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="check_ora_kill">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">error</condition>
+    <condition id="2">skip</condition>
+    <condition id="2">run_error</condition>
+  </content>
+</batch>

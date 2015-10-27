@@ -1,0 +1,65 @@
+-- table: prm_registered_session
+-- Список зарегистированных сессий 
+-- для выполнения заданных действий
+create table prm_registered_session(
+  registered_session_id           integer 
+  , sid                           integer not null
+  , serial#                       integer not null
+  , spid                          integer
+  , sql_trace_level_set           integer
+  , sql_trace_date                date
+  , is_finished                   integer default 0 not null 
+  , date_ins                      date default sysdate not null
+  , operator_id                   integer not null
+  , constraint prm_registered_session_pk primary key(
+      registered_session_id
+    )    
+    using index tablespace &indexTablespace
+)
+/
+-- index: prm_reg_session_ux_exist
+-- Уникальный индекс по существующим сессиям
+create unique index prm_reg_session_ux_exist 
+on 
+  prm_registered_session(
+    case is_finished when 0 then sid end
+    , case is_finished when 0 then serial# end
+  )
+tablespace &indexTablespace
+/ 
+comment on table prm_registered_session is
+'Список зарегистированных сессий
+для выполнения заданных действий в модуле
+[ SVN root: Oracle/Module/ProcessMonitor ]
+'
+/
+comment on column prm_registered_session.registered_session_id is
+'Id записи. Первичный ключ таблицы'
+/
+comment on column prm_registered_session.sid is
+'sid сессии Oracle'
+/
+comment on column prm_registered_session.serial# is
+'serial# сессии Oracle'
+/
+comment on column prm_registered_session.spid is
+'spid сессии Oracle'
+/
+comment on column prm_registered_session.sql_trace_level_set is
+'Включённый уровень трассировки для сессии'
+/
+comment on column prm_registered_session.sql_trace_date is
+'Дата включения трассировки'
+/
+comment on column prm_registered_session.is_finished is
+'Завершена ли сотв. сессия Oracle и завершены ли все действия
+по ней'
+/
+comment on column prm_registered_session.date_ins is
+'Дата добавления записи'
+/
+comment on column prm_registered_session.operator_id is
+'Id оператора, создавшего запись'
+/
+create sequence  prm_registered_session_seq
+/                                                                                                                               

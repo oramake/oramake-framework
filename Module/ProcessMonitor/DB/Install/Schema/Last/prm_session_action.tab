@@ -1,0 +1,65 @@
+-- table: prm_session_action
+-- Действия для зарегистрированных сессий
+create table prm_session_action(
+  session_action_id               integer not null
+  , registered_session_id         integer not null
+  , session_action_code           varchar2(10) not null
+  , planned_time                  date
+  , execution_time                date
+  , email_recipient               varchar2(100)
+  , email_subject                 varchar2(100)  
+  , date_ins                      date default sysdate not null
+  , operator_id                   integer not null
+  , constraint prm_session_action_pk primary key(
+      session_action_id
+    )    
+    using index tablespace &indexTablespace
+  , constraint prm_session_action_uk unique(
+      registered_session_id
+      , session_action_code
+      , planned_time
+    )    
+    using index tablespace &indexTablespace
+  , constraint prm_ses_action_ck_plan check (
+      planned_time is not null
+      or session_action_code = 'SENDTRACE'
+    )
+)
+/
+comment on table prm_session_action is
+'Действия для зарегистрированных сессий
+[ SVN root: Oracle/Module/ProcessMonitor ]
+'
+/
+comment on column prm_session_action.session_action_id is
+'Id записи. Первичный ключ таблицы'
+/
+comment on column prm_session_action.registered_session_id is
+'Id записи зарегистрированной сессии'
+/
+comment on column prm_session_action.session_action_code is
+'Код действия для сессии'
+/
+comment on column prm_session_action.planned_time is
+'Запланированная дата/время для действия.
+При null, действие выполняется при завершении сессии'
+/
+comment on column prm_session_action.execution_time is
+'Реальная дата/время выполнения. Null означает, что действие не выполнялось'
+/
+comment on column prm_session_action.email_recipient is
+'Получатель(ли) ссылки на файл трассировки. При null используется
+электронный адрес получателя по-умолчанию ( модуль Common)'
+/
+comment on column prm_session_action.email_subject is
+'Тема письма. По-умолчанию используется тема с указанием параметров сессии'
+/
+comment on column prm_session_action.date_ins is
+'Дата добавления записи'
+/
+comment on column prm_session_action.operator_id is
+'Id оператора, создавшего запись'
+/
+-- sequence: prm_session_action_seq
+create sequence prm_session_action_seq
+/
