@@ -1,0 +1,35 @@
+Title: Доработки
+
+[+] Реализовать функцию <FtpFile.renameTo> с помощью ftp-команды "rename" для
+    обеспечения эффективного выполнения процедуры <pkg_FileOrigin.fileMove>
+    для ftp-файлов на одном сервере.
+
+[+] Реализовать отдельную функцию, возвращающую размер файла ( при этом она
+    может быть реализована для HTTP на основе значения заголовка
+    "Content-Length" не смотря на невозможность получения списка файлов
+    каталога).
+
+[+] Обеспечить проверку сервера при подключении по SFTP.
+
+[*] При загрузке BouncyCastle ( jce-jdk12-139.jar) в Oracle 10g возникают
+    ошибки ( объекты после загрузки валидные, работа по SFTP возможна):
+
+(code)
+
+errors   : class java/security/spec/RSAOtherPrimeInfo
+  ORA-29552: verification warning: java.lang.SecurityException: Prohibited package name: java.security.spec
+
+errors   : class java/security/spec/RSAMultiPrimePrivateCrtKeySpec
+  ORA-29552: verification warning: java.lang.SecurityException: Prohibited package name: java.security.spec
+
+errors   : class java/security/spec/PSSParameterSpec
+  ORA-29552: verification warning: java.lang.SecurityException: Prohibited package name: java.security.spec
+
+errors   : class java/security/spec/RSAKeyGenParameterSpec
+  ORA-29552: verification warning: java.lang.SecurityException: Prohibited package name: java.security.spec
+
+(end)
+
+[*] Избавиться от избыточных сообщений при логировании установки общих модулей.
+
+[*] Использовать модуль TextCreate при формировании текста для выгрузки.
