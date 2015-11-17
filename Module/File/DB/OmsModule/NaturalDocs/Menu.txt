@@ -1,0 +1,253 @@
+Format: 1.5
+
+
+Title: File
+SubTitle: Версия 3.2.0
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Classes
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Пакеты  {
+
+   Group: pkg_FileBase  {
+
+      File: Спецификация  (no auto-title, pkg_FileBase.pks)
+      File: Реализация  (no auto-title, pkg_FileBase.pkb)
+      }  # Group: pkg_FileBase
+
+   Group: pkg_FileOrigin  {
+
+      File: Спецификация  (no auto-title, pkg_FileOrigin.pks)
+      File: Реализация  (no auto-title, pkg_FileOrigin.pkb)
+      }  # Group: pkg_FileOrigin
+
+   Group: Test  {
+
+      Group: pkg_FileTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_FileTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_FileTest.pkb)
+         }  # Group: pkg_FileTest
+
+      }  # Group: Test
+
+   }  # Group: Пакеты
+
+Group: Java-исходники  {
+
+   File: pkg_File  (no auto-title, pkg_File.jav)
+
+   Group: Source  {
+
+      Group: com  {
+
+         Group: technology  {
+
+            Group: oramake  {
+
+               Group: file  {
+
+                  Group: netfile  {
+
+                     File: ArrayInputStream  (no auto-title, Java/Source/com/technology/oramake/file/netfile/ArrayInputStream.java)
+                     File: ArrayOutputStream  (no auto-title, Java/Source/com/technology/oramake/file/netfile/ArrayOutputStream.java)
+                     File: FileClass  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FileClass.java)
+                     File: FileInfo  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FileInfo.java)
+                     File: FileType  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FileType.java)
+                     File: FsFile  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FsFile.java)
+                     File: FsFileInfo  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FsFileInfo.java)
+                     File: FtpFile  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FtpFile.java)
+                     File: FtpFileInfo  (no auto-title, Java/Source/com/technology/oramake/file/netfile/FtpFileInfo.java)
+                     File: HttpFile  (no auto-title, Java/Source/com/technology/oramake/file/netfile/HttpFile.java)
+                     File: NetFile  (no auto-title, Java/Source/com/technology/oramake/file/netfile/NetFile.java)
+                     File: NetFileImpl  (no auto-title, Java/Source/com/technology/oramake/file/netfile/NetFileImpl.java)
+                     File: ReaderInputStream  (no auto-title, Java/Source/com/technology/oramake/file/netfile/ReaderInputStream.java)
+                     File: StreamConverter  (no auto-title, Java/Source/com/technology/oramake/file/netfile/StreamConverter.java)
+                     }  # Group: netfile
+
+                  }  # Group: file
+
+               }  # Group: oramake
+
+            }  # Group: technology
+
+         }  # Group: com
+
+      }  # Group: Source
+
+   }  # Group: Java-исходники
+
+Group: Java  {
+
+   Group: Библиотеки  {
+
+      Group: BouncyCastle  {
+
+         File: BouncyCastle  (Java/UsedLib/BouncyCastle/readme.txt)
+         }  # Group: BouncyCastle
+
+      Group: edtFTPj  {
+
+         File: edtFTPj  (Java/UsedLib/edtFTPj/readme.txt)
+         }  # Group: edtFTPj
+
+      Group: HttpClient  {
+
+         File: HttpClient  (Java/UsedLib/HttpClient/readme.txt)
+         }  # Group: HttpClient
+
+      }  # Group: Библиотеки
+
+   }  # Group: Java
+
+Group: Скрипты  {
+
+   Group: Do  {
+
+      File: check-exists  (no auto-title, Do/check-exists.sql)
+      File: copy  (no auto-title, Do/copy.sql)
+      File: delete  (no auto-title, Do/delete.sql)
+      File: exec  (no auto-title, Do/exec.sql)
+      File: file-list  (no auto-title, Do/file-list.sql)
+      File: move  (no auto-title, Do/move.sql)
+      File: subdir-list  (no auto-title, Do/subdir-list.sql)
+      }  # Group: Do
+
+   Group: Install  {
+
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
+         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         }  # Group: Config
+
+      Group: Grant  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: grant-common-java-privs  (no auto-title, Install/Grant/Last/grant-common-java-privs.sql)
+            File: grant-edtFTPj  (no auto-title, Install/Grant/Last/grant-edtFTPj.sql)
+            File: grant-HttpClient  (no auto-title, Install/Grant/Last/grant-HttpClient.sql)
+            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
+            }  # Group: Last
+
+         }  # Group: Grant
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: doc_input_document  (no auto-title, Install/Schema/Last/doc_input_document.tab)
+            File: doc_input_document_bi_define  (no auto-title, Install/Schema/Last/doc_input_document_bi_define.trg)
+            File: doc_output_document  (no auto-title, Install/Schema/Last/doc_output_document.tab)
+            File: doc_output_document_bi_define  (no auto-title, Install/Schema/Last/doc_output_document_bi_define.trg)
+            File: tmp_file_name  (no auto-title, Install/Schema/Last/tmp_file_name.tab)
+            File: tmp_file_name_bi_define  (no auto-title, Install/Schema/Last/tmp_file_name_bi_define.trg)
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   Group: Java  {
+
+      File: drop-java-lib  (no auto-title, Java/drop-java-lib.sh)
+      File: load-java-lib  (no auto-title, Java/load-java-lib.sh)
+      }  # Group: Java
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: set-test-directory  (no auto-title, Test/set-test-directory.sql)
+      File: unit-test-100megabyte  (no auto-title, Test/unit-test-100megabyte.sql)
+      File: unit-test-10megabyte  (no auto-title, Test/unit-test-10megabyte.sql)
+      File: unit-test-2gigabyte  (no auto-title, Test/unit-test-2gigabyte.sql)
+      File: unit-test-megabyte  (no auto-title, Test/unit-test-megabyte.sql)
+      }  # Group: Test
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Table Index: Таблицы
+      Database Trigger Index: Триггеры
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Constant Index: Константы
+      Variable Index: Переменные
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Group: Закрытые объявления  {
+
+      Type internal Index: Типы
+      Constant internal Index: Константы
+      Variable internal Index: Переменные
+      }  # Group: Закрытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+

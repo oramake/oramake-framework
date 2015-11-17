@@ -1,0 +1,10 @@
+--table: doc_input_document
+--
+--Временная таблица для загруженных данных.
+--
+create global temporary table doc_input_document(
+  input_document_id           integer             not null
+  , input_document            clob
+  , constraint doc_input_document_pk primary key ( input_document_id)
+)
+/
