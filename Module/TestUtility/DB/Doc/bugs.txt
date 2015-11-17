@@ -1,0 +1,25 @@
+Title: Ошибки
+
+[!] В функции <pkg_TestUtility.compareRowCount( func, cursor)> возникает ошибка
+    в случае наличия в курсоре имен колонок, отличающихся префиксом
+    ( например, первая goods_link_flag, следующая descendant_goods_link_flag).
+    При этом вложенная функция transformFilterCondition может некорректно
+    преобразовывать выражение фильтрации, что приводит к ошибке. Например,
+    выражение
+
+(code)
+has_child_flag = 1
+and goods_link_flag is null
+and descendant_goods_link_flag is null
+(end)
+
+    преобразуется в некорректное
+
+(code)
+rec.has_child_flag = 1
+and rec.goods_link_flag is null
+and descendant_rec.goods_link_flag is null
+(end)
+
+    ( получили "descendant_rec.goods_link_flag" вместо ожидаемого
+    "rec.descendant_goods_link_flag").
