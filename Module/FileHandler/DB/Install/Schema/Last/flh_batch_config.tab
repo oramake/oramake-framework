@@ -1,0 +1,34 @@
+-- table: flh_batch_config
+-- Настройки обработки для прикладных батчей
+--
+create table flh_batch_config(
+  batch_config_id 		integer not null
+  , batch_short_name 		varchar2( 50 ) not null
+  , auto_cache_text_mask 	varchar2( 100 )
+  , request_priority_order 	number
+  , cache_priority_order 	number
+  , date_ins 			date default sysdate not null
+  , operator_id 			integer
+  ,
+  constraint flh_batch_config_pk primary key(
+    batch_config_id
+  )
+  using index tablespace &indexTablespace
+  ,
+  constraint flh_batch_config_uk_batch unique(
+    batch_short_name
+  )
+  using index tablespace &indexTablespace
+)
+/
+comment on table flh_batch_config is
+'Настройки обработки для прикладных батчей
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+-- sequence: flh_batch_config_seq
+-- Последователность для генерации первичного ключа
+create sequence flh_batch_config_seq
+/
+
+

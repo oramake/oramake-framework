@@ -1,0 +1,75 @@
+-- table: flh_cached_file
+-- Закэшированные файлы
+--
+create table flh_cached_file(
+  cached_file_id				integer not null,
+  cached_directory_id			integer not null,
+  file_full_path				varchar2( 1000 ) not null,
+  file_name					varchar2( 255 ) not null,
+  file_size					integer not null,
+  last_modification			timestamp with time zone not null,
+  used_text_mask_id			integer,
+  used_binary_mask_id			integer,
+  file_data_id				integer,
+  existing				      integer not null,
+  delete_request_id			integer,
+  last_load      				timestamp with time zone,
+  date_ins					date default sysdate not null,
+  constraint  flh_cached_file_pk primary key( cached_file_id)
+    using index tablespace &indexTablespace,
+  constraint flh_cached_file_uk_name unique(
+    cached_directory_id
+    , file_name
+  )
+    using index tablespace &indexTablespace,
+  constraint flh_cached_file_uk_path unique(
+    cached_directory_id
+    , file_full_path
+  )
+    using index tablespace &indexTablespace,
+  constraint flh_cached_file_uk_exists unique(
+    cached_directory_id
+    , existing
+    , file_name
+  )
+    using index tablespace &indexTablespace,
+  constraint flh_cached_file_ck_exists check (
+    existing = 0
+    or existing = 1
+    and delete_request_id is null
+  )
+  ,
+  constraint flh_cached_file_ck_data check (
+    file_data_id is null
+    and last_load is null
+    or
+    file_data_id is not null
+    and last_load is not null
+    and coalesce( used_text_mask_id, used_binary_mask_id )
+      is not null
+  )
+)
+/
+comment on table flh_cached_file is
+'Закэшированные файлы
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+-- index: flh_cached_file_ix_dir
+-- Индекс для доступа по пути
+create index flh_cached_file_ix_dir on flh_cached_file(
+  cached_directory_id
+)
+tablespace &indexTablespace
+/
+-- index: flh_cached_file_ix_delete
+-- Индекс для доступа по запросу на удаление
+create index flh_cached_file_ix_delete on flh_cached_file(
+  delete_request_id
+)
+tablespace &indexTablespace
+/
+-- sequence:flh_cached_file_seq
+-- Последовательность для генерации первичного ключа
+create sequence flh_cached_file_seq
+/

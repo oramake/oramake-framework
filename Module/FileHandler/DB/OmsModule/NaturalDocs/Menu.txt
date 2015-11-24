@@ -1,0 +1,185 @@
+Format: 1.5
+
+
+Title: FileHandler
+SubTitle: Версия ???
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Пакеты  {
+
+   Group: pkg_FileHandler  {
+
+      File: Спецификация  (no auto-title, pkg_FileHandler.pks)
+      File: Реализация  (no auto-title, pkg_FileHandler.pkb)
+      }  # Group: pkg_FileHandler
+
+   Group: pkg_FileHandlerBase  {
+
+      File: Спецификация  (no auto-title, pkg_FileHandlerBase.pks)
+      File: Реализация  (no auto-title, pkg_FileHandlerBase.pkb)
+      }  # Group: pkg_FileHandlerBase
+
+   Group: pkg_FileHandlerCachedDirectory  {
+
+      File: Спецификация  (no auto-title, pkg_FileHandlerCachedDirectory.pks)
+      File: Реализация  (no auto-title, pkg_FileHandlerCachedDirectory.pkb)
+      }  # Group: pkg_FileHandlerCachedDirectory
+
+   Group: pkg_FileHandlerRequest  {
+
+      File: Спецификация  (no auto-title, pkg_FileHandlerRequest.pks)
+      File: Реализация  (no auto-title, pkg_FileHandlerRequest.pkb)
+      }  # Group: pkg_FileHandlerRequest
+
+   Group: pkg_FileHandlerUtility  {
+
+      File: Спецификация  (no auto-title, pkg_FileHandlerUtility.pks)
+      File: Реализация  (no auto-title, pkg_FileHandlerUtility.pkb)
+      }  # Group: pkg_FileHandlerUtility
+
+   }  # Group: Пакеты
+
+Group: Скрипты  {
+
+   Group: FileOrigin  {
+
+      File: revert  (no auto-title, FileOrigin/revert.sql)
+      File: replace-file-module  (no auto-title, FileOrigin/replace-file-module.sql)
+      }  # Group: FileOrigin
+
+   Group: Install  {
+
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
+         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         }  # Group: Config
+
+      Group: Data  {
+
+         Group: Last  {
+
+            File: flh_request_operation  (no auto-title, Install/Data/Last/flh_request_operation.sql)
+            File: flh_request_state  (no auto-title, Install/Data/Last/flh_request_state.sql)
+            }  # Group: Last
+
+         }  # Group: Data
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: flh_batch_config  (no auto-title, Install/Schema/Last/flh_batch_config.tab)
+            File: flh_batch_config_bi_define  (no auto-title, Install/Schema/Last/flh_batch_config_bi_define.trg)
+            File: flh_cached_directory  (no auto-title, Install/Schema/Last/flh_cached_directory.tab)
+            File: flh_cached_directory_bi_def  (no auto-title, Install/Schema/Last/flh_cached_directory_bi_def.trg)
+            File: flh_cached_file  (no auto-title, Install/Schema/Last/flh_cached_file.tab)
+            File: flh_cached_file_bi_define  (no auto-title, Install/Schema/Last/flh_cached_file_bi_define.trg)
+            File: flh_cached_file_mask  (no auto-title, Install/Schema/Last/flh_cached_file_mask.tab)
+            File: flh_cached_file_mask_bi_def  (no auto-title, Install/Schema/Last/flh_cached_file_mask_bi_def.trg)
+            File: flh_file_data  (no auto-title, Install/Schema/Last/flh_file_data.tab)
+            File: flh_file_data_bi_define  (no auto-title, Install/Schema/Last/flh_file_data_bi_define.trg)
+            File: flh_request  (no auto-title, Install/Schema/Last/flh_request.tab)
+            File: flh_request_bi_define  (no auto-title, Install/Schema/Last/flh_request_bi_define.trg)
+            File: flh_request_file_list  (no auto-title, Install/Schema/Last/flh_request_file_list.tab)
+            File: flh_request_file_list_bi  (no auto-title, Install/Schema/Last/flh_request_file_list_bi.trg)
+            File: flh_request_operation  (no auto-title, Install/Schema/Last/flh_request_operation.tab)
+            File: flh_request_operation_bi_def  (no auto-title, Install/Schema/Last/flh_request_operation_bi_def.trg)
+            File: flh_request_state  (no auto-title, Install/Schema/Last/flh_request_state.tab)
+            File: flh_request_state_bi_define  (no auto-title, Install/Schema/Last/flh_request_state_bi_define.trg)
+            File: flh_request_tmp  (no auto-title, Install/Schema/Last/flh_request_tmp.tab)
+            File: flh_text_data  (no auto-title, Install/Schema/Last/flh_text_data.tab)
+            File: flh_text_data_bi_define  (no auto-title, Install/Schema/Last/flh_text_data_bi_define.trg)
+            File: v_flh_cached_directory_wait  (no auto-title, Install/Schema/Last/v_flh_cached_directory_wait.vw)
+            File: v_flh_request_wait  (no auto-title, Install/Schema/Last/v_flh_request_wait.vw)
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database View Index: Представления
+      Database Table Index: Таблицы
+      Database Trigger Index: Триггеры
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Type Index: Типы
+      Constant Index: Константы
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Group: Закрытые объявления  {
+
+      Constant internal Index: Константы
+      Variable internal Index: Переменные
+      }  # Group: Закрытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+

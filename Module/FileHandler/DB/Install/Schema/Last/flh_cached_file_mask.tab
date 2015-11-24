@@ -1,0 +1,39 @@
+-- table: flh_cached_file_mask
+-- Маски файлов, подлежащих кэшированию
+--
+create table flh_cached_file_mask(
+  cached_file_mask_id			integer not null,
+  cached_directory_id			integer not null,
+  file_mask					varchar2( 100 ) not null,
+  is_text					number(1,0) not null,
+  date_ins					date default sysdate not null,
+  operator_id				integer,
+  constraint flh_cached_file_mask_pk primary key( cached_file_mask_id)
+    using index tablespace &indexTablespace,
+  constraint flh_cached_mask_uk_mask unique (
+    cached_directory_id
+    , file_mask
+  )
+    using index tablespace &indexTablespace,
+  constraint flh_cached_mask_uk_mask_id unique (
+    cached_directory_id
+    , cached_file_mask_id
+  )
+    using index tablespace &indexTablespace,
+  constraint flh_cached_mask_ck_txt check(
+    is_text in ( 0, 1 )
+  )
+)
+/
+comment on table flh_cached_file_mask is
+'Маски файлов, подлежащих кэшированию
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+-- sequence: flh_cached_file_mask_seq
+-- Последователность для генерации первичного ключа
+create sequence flh_cached_file_mask_seq
+/
+
+
+

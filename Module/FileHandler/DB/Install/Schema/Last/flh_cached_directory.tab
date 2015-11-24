@@ -1,0 +1,39 @@
+-- table: flh_cached_directory
+-- Директории, подлежащие кэшированию
+--
+create table flh_cached_directory(
+  cached_directory_id			integer not null,
+  path					varchar2( 1000 ) not null,
+  list_refresh_timeout		      interval day to second,
+  file_refresh_timeout		      interval day to second,
+  is_actual_when_new_file		number( 1, 0 ),
+  last_refresh				timestamp with time zone,
+  priority_order				number,
+  batch_short_name			varchar2( 50 ),
+  existing_batch_short_name		varchar2( 50 ),
+  date_ins					date default sysdate not null,
+  operator_id				integer,
+  constraint flh_cached_directory_pk primary key( cached_directory_id)
+    using index tablespace &indexTablespace,
+  constraint flh_cached_directory_uk unique( path)
+    using index tablespace &indexTablespace,
+  constraint flh_cached_directory_ck_new check (
+    is_actual_when_new_file in ( 0, 1 )
+  ),
+  constraint flh_cached_directory_ck_path check(
+    path not like '%\'
+  ),
+  constraint flh_cached_directory_ck_batch check(
+    existing_batch_short_name = batch_short_name
+  )
+)
+/
+comment on table flh_cached_directory is
+'Директории, подлежащие кэшированию
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+-- sequence: flh_cached_directory_seq
+-- Последовательность для генерации первичного ключа
+create sequence flh_cached_directory_seq
+/

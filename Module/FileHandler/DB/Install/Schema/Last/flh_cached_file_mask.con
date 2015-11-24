@@ -1,0 +1,24 @@
+alter table flh_cached_file_mask
+  add constraint 
+    flh_cached_file_mask_fk_dir
+  foreign key(
+    cached_directory_id
+  )
+  references 
+    flh_cached_directory
+  (
+    cached_directory_id
+  )
+/
+alter table flh_cached_file_mask
+  add constraint 
+    flh_cached_file_mask_fk_oper
+  foreign key(
+    operator_id
+  )
+  references 
+    op_operator
+  (
+    operator_id
+  )
+/    

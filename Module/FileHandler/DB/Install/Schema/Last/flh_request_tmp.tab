@@ -1,0 +1,13 @@
+-- table: flh_request_tmp
+-- Временная таблица идентификаторов запросов
+--
+create table flh_request_tmp(
+  request_id				integer not null,
+  constraint flh_request_tmp_pk primary key( request_id )
+)
+/
+comment on table flh_request_tmp is
+'Временная таблица идентификаторов запросов
+[ SVN root: Oracle/Module/FileHandler]
+'
+/

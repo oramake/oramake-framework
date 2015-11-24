@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>FileHandler</name>
+  <description>Модуль обработчиков запросов на операции в файловой системе через Java</description>
+  <version></version>
+  <prefix>flh</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/FileHandler</path>
+  <initialPath></initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table>flh_batch_config</table>
+      <table>flh_cached_directory</table>
+      <table>flh_cached_file</table>
+      <table>flh_cached_file_mask</table>
+      <table>flh_file_data</table>
+      <table>flh_request</table>
+      <table>flh_request_file_list</table>
+      <table>flh_request_operation</table>
+      <table>flh_request_state</table>
+      <table>flh_request_tmp</table>
+      <table>flh_text_data</table>
+      <package>pkg_FileHandler</package>
+      <package>pkg_FileHandlerBase</package>
+      <package>pkg_FileHandlerCachedDirectory</package>
+      <package>pkg_FileHandlerRequest</package>
+      <package>pkg_FileHandlerUtility</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
+    <module>Oracle/Module/Scheduler</module>
+    <module>Oracle/Module/File</module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

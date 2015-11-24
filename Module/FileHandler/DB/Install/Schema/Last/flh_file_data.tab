@@ -1,0 +1,21 @@
+--table: flh_file_data
+--
+--Таблица для хранения данных файлов
+--
+create table flh_file_data(
+  file_data_id 		integer not null
+  , binary_data		blob
+  , date_ins 		date default sysdate not null
+  , constraint flh_file_data_pk primary key ( file_data_id )
+	using index tablespace &indexTablespace
+)
+/
+comment on table flh_file_data is
+'Таблица для хранения данных файлов
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+-- sequence: flh_file_data_seq
+-- Последовательность для генерации первичного ключа
+create sequence  flh_file_data_seq
+/

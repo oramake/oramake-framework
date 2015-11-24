@@ -1,0 +1,29 @@
+--table: flh_text_data
+--
+--Таблица детализации текстовых данных файлов
+--
+create table flh_text_data(
+  text_data_id 		integer not null
+  , file_data_id 		integer not null
+  , text_data 		clob not null
+  , order_by		integer not null
+  , date_ins 		date default sysdate not null
+  , constraint flh_file_data_text_pk primary key ( text_data_id )
+	using index tablespace &indexTablespace
+  , constraint flh_file_data_text_uk unique( text_data_id, order_by )
+	using index tablespace &indexTablespace
+)
+/
+comment on table flh_text_data is
+'Таблица детализации текстовых данных файлов
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
+create index flh_text_data_ix_file on flh_text_data(
+  file_data_id
+) tablespace &indexTablespace
+/
+-- sequence: flh_text_data_seq
+-- Последовательность для генерации первичного ключа
+create sequence  flh_text_data_seq
+/

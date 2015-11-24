@@ -1,0 +1,16 @@
+-- table: flh_request_operation
+-- Операции запросов к модулю FileHandler
+--
+create table flh_request_operation(
+  operation_code				varchar2( 10 ) not null,
+  date_ins					date default sysdate not null,
+  operator_id				integer not null,
+  constraint flh_request_operation_pk primary key(operation_code)
+    using index tablespace &indexTablespace
+)
+/
+comment on table flh_request_operation is
+'Операции запросов к модулю FileHandler
+[ SVN root: Oracle/Module/FileHandler]
+'
+/
