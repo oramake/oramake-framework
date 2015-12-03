@@ -553,9 +553,9 @@ installDataDir = \
 #   в противном случае берутся скрипты run.sql, *.dat, run-after.sql;
 #
 # Пример:
-# - для получения скриптов из каталогов Install/Data/*/RFInfoP в соответствии
+# - для получения скриптов из каталогов Install/Data/*/TestDB в соответствии
 #   с номером устанавливаемой версии нужно прописать
-#   $(call getInstallDataFile,RFInfoP)
+#   $(call getInstallDataFile,TestDB)
 #
 getInstallDataFile = \
   $(filter-out %/revert.sql, \
