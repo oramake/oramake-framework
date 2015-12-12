@@ -1,0 +1,15 @@
+alter table tp_task_type add constraint
+  tp_task_type_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator( operator_id)
+;
+
+alter table tp_task_type add constraint
+  tp_task_type_op_role_fk
+foreign key
+  ( access_role_short_name)
+references
+  op_role( short_name)
+;

@@ -1,0 +1,8 @@
+-- sequence: tp_task_type_seq
+-- Последовательность для заполнения первичного ключа таблицы <tp_task_type>.
+create sequence tp_task_type_seq
+  nomaxvalue
+  nominvalue
+  nocycle
+  nocache
+/

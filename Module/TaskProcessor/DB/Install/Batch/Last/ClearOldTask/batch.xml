@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="ClearOldTask">
+  <name>Удаление старых неиспользуемых заданий</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>daily at 2:45</name>
+      <interval type="hh24">
+        <value>2</value>
+      </interval>
+      <interval type="mi">
+        <value>45</value>
+      </interval>
+    </schedule>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="process">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">skip</condition>
+    <condition id="3">error</condition>
+  </content>
+</batch>

@@ -1,0 +1,39 @@
+alter table tp_task add constraint
+  tp_task_op_operator_manage_fk
+foreign key
+  ( manage_operator_id)
+references
+  op_operator( operator_id)
+;
+
+alter table tp_task add constraint
+  tp_task_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator( operator_id)
+;
+
+alter table tp_task add constraint
+  tp_task_tp_result_fk
+foreign key
+  ( result_code)
+references
+  tp_result( result_code)
+;
+
+alter table tp_task add constraint
+  tp_task_tp_task_status_fk
+foreign key
+  ( task_status_code)
+references
+  tp_task_status( task_status_code)
+;
+
+alter table tp_task add constraint
+  tp_task_tp_task_type_fk
+foreign key
+  ( task_type_id)
+references
+  tp_task_type( task_type_id)
+;

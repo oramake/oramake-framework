@@ -1,0 +1,7 @@
+alter table tp_task_status add constraint
+  tp_task_status_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator( operator_id)
+;

@@ -1,0 +1,7 @@
+alter table tp_result add constraint
+  tp_result_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator( operator_id)
+;

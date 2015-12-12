@@ -1,0 +1,31 @@
+alter table
+  tp_file
+add constraint
+  tp_file_fk_task_id
+foreign key
+  ( task_id)
+references
+  tp_task ( task_id)
+on delete
+  cascade
+/
+
+alter table
+  tp_file
+add constraint
+  tp_file_fk_file_status_code
+foreign key
+  ( file_status_code)
+references
+  tp_file_status ( file_status_code)
+/
+
+alter table
+  tp_file
+add constraint
+  tp_file_fk_op_operator
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

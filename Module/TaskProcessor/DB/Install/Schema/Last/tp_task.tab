@@ -1,0 +1,129 @@
+-- table: tp_task
+-- Задания.
+create table tp_task
+(
+  task_id                         integer                             not null
+  , task_type_id                  integer                             not null
+  , task_status_code              varchar2(10)                        not null
+  , next_start_date               date
+  , sid                           number
+  , serial#                       number
+  , start_number                  integer
+  , start_date                    date
+  , finish_date                   date
+  , result_code                   varchar2(10)
+  , exec_result                   integer
+  , error_code                    integer
+  , error_message                 varchar2(4000)
+  , manage_date                   date                                not null
+  , manage_operator_id            integer                             not null
+  , date_ins                      date            default sysdate     not null
+  , operator_id                   integer                             not null
+  , constraint tp_task_pk primary key ( task_id)
+    using index tablespace &indexTablespace
+  , constraint tp_task_ck_start_number check( start_number > 0)
+)
+/
+
+
+
+comment on table tp_task is
+  'Задания [ SVN root: Oracle/Module/TaskProcessor]'
+/
+comment on column tp_task.task_id is
+  'Id задания'
+/
+comment on column tp_task.task_type_id is
+  'Id типа задания'
+/
+comment on column tp_task.task_status_code is
+  'Код состояния задания'
+/
+comment on column tp_task.next_start_date is
+  'Дата следующего запуска ( если задание стоит в очереди)'
+/
+comment on column tp_task.sid is
+  'sid сессии, в которой выполняется задание ( из v$session)'
+/
+comment on column tp_task.serial# is
+  'serial# сессии, в которой выполняется задание ( из v$session)'
+/
+comment on column tp_task.start_number is
+  'Номер запуска, начиная с 1 ( последнего или текущего, если задание выполняется)'
+/
+comment on column tp_task.start_date is
+  'Дата запуска ( последнего или текущего, если задание выполняется)'
+/
+comment on column tp_task.finish_date is
+  'Дата завершения выполнения'
+/
+comment on column tp_task.result_code is
+  'Код результата выполнения'
+/
+comment on column tp_task.exec_result is
+  'Результат выполнения, возвращенный прикладным обработчиком'
+/
+comment on column tp_task.error_code is
+  'Код ошибки выполнения'
+/
+comment on column tp_task.error_message is
+  'Сообщение об ошибке выполнения'
+/
+comment on column tp_task.manage_date is
+  'Дата действия по управлению заданием ( создание, постановка на запуск, остановка и т.д.)'
+/
+comment on column tp_task.manage_operator_id is
+  'Id оператора, выполнившего действие по управлению заданием'
+/
+comment on column tp_task.date_ins is
+  'Дата добавления записи'
+/
+comment on column tp_task.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: tp_task_ix_task_type_manage_dt
+-- Индекс для внешнего ключа и для эффективной выборки старых заданий.
+create index
+  tp_task_ix_task_type_manage_dt
+on
+  tp_task(
+    task_type_id
+    , manage_date
+  )
+  tablespace &indexTablespace
+/
+
+-- index: tp_task_ix_active
+-- Обеспечивает эффективную выборку ключевых данных активных заданий через
+-- представление <v_tp_active_task>.
+create index
+  tp_task_ix_active
+on
+  tp_task (
+    case when task_status_code not in ( 'I') then
+        coalesce( next_start_date, start_date)
+      end
+    , case when task_status_code not in ( 'I') then
+        task_id
+      end
+    , case when task_status_code not in ( 'I') then
+        task_type_id
+      end
+    , case when task_status_code not in ( 'I') then
+        task_status_code
+      end
+    , case when task_status_code not in ( 'I') then
+        manage_operator_id
+      end
+    , case when task_status_code not in ( 'I') then
+        sid
+      end
+    , case when task_status_code not in ( 'I') then
+        serial#
+      end
+  )
+  tablespace &indexTablespace
+/
