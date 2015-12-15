@@ -1,0 +1,142 @@
+--table: ml_fetch_request
+--Запросы на извлечение email-сообщений из ящиков
+--
+create table ml_fetch_request  (
+   fetch_request_id		integer not null,
+   url				varchar2( 1000) not null,
+   password				varchar2( 100),
+   recipient_address		varchar2( 100),
+   is_got_message_deleted 	integer,
+   request_state_code		varchar2( 10) default 'WAIT' not null,
+   request_time			timestamp with time zone,
+   handler_reserved_time	timestamp with time zone,
+   processed_time			timestamp with time zone,
+   batch_short_name		varchar2( 50),
+   handler_batch_short_name	varchar2( 50),
+   handler_sid 			integer,
+   handler_serial#		integer,
+   priority_order			number,
+   result_message_count		integer,
+   error_code			integer,
+   error_message			varchar2( 4000),
+   date_ins				date default sysdate not null,
+   constraint ml_fetch_request_pk primary key( fetch_request_id )
+     using index tablespace &indexTablespace,
+   constraint ml_fetch_request_ck_state_code check (
+     request_state_code in
+     ( 'WAIT', 'PROCESSED', 'ERROR' )
+   ),
+   constraint ml_fetch_request_ck_processed check (
+     request_state_code = 'WAIT'
+     and processed_time is null
+     or request_state_code = 'PROCESSED'
+     and result_message_count is not null
+     and processed_time is not null
+     or request_state_code = 'ERROR'
+     and processed_time is not null
+   ),
+   constraint ml_fetch_request_ck_error check (
+     error_message is not null
+     and request_state_code in ( 'ERROR')
+     or 
+     error_code is null
+     and error_message is null 
+     and request_state_code in ( 'WAIT', 'PROCESSED')
+   )
+)
+/
+comment on table ml_fetch_request is
+'Запросы на получения email-сообщений из ящиков
+[SVN root: Exchange/Module/Mail]'
+/
+comment on column ml_fetch_request.fetch_request_id is
+'Id запроса извлечения сообщений из ящика. Первичный ключ.'
+/
+comment on column ml_fetch_request.request_state_code is
+'Состояние запроса ( ссылка на ml_request_state)'
+/
+comment on column ml_fetch_request.url is
+'URL почтового ящика в URL-encoded формате'
+/
+comment on column ml_fetch_request.password is
+'Пароль к почтовому ящику'
+/
+comment on column ml_fetch_request.recipient_address is
+'Адрес получателя, под которым будут сохраняться
+полученные сообщения ( при отсутствии выделяется
+из URL как user@domen)'
+/
+comment on column ml_fetch_request.is_got_message_deleted is
+'Удалять ли из ящика полученные сообщения 
+(1 - да, 0 - нет, null - по-умолчанию - удалять)'
+/
+comment on column ml_fetch_request.request_time is
+'Время создания запроса ( уточнение date_ins)'
+/
+comment on column ml_fetch_request.processed_time is
+'Время окончания обработки запроса'
+/
+comment on column ml_fetch_request.handler_reserved_time is
+'Время резервирования запроса для обработки'
+/
+comment on column ml_fetch_request.batch_short_name is
+'Имя батча, сеанс job''а которого добавил запрос'
+/
+comment on column ml_fetch_request.handler_batch_short_name is
+'Имя батча-обработчика'
+/
+comment on column ml_fetch_request.handler_sid is
+'Атрибут сеанса обработчика: "sid"'
+/
+comment on column ml_fetch_request.handler_serial# is
+'Атрибут сеанса обработчика: "serial#"'
+/
+comment on column ml_fetch_request.priority_order is
+'Приоритет запроса 
+( первыми обрабатываются запросы с большим priority_order)'
+/
+comment on column ml_fetch_request.error_code is
+'Код ошибки обработки'
+/
+comment on column ml_fetch_request.error_message is
+'Сообщение об ошибке обработки'
+/
+comment on column ml_fetch_request.date_ins is
+'Дата добавления записи'
+/
+create index ml_fetch_request_ix_wait on ml_fetch_request
+(
+  case request_state_code when 'WAIT' then
+    fetch_request_id   
+  end     
+  , 
+  case request_state_code when 'WAIT' then
+    handler_sid
+  end     
+  , 
+  case request_state_code when 'WAIT' then
+    handler_serial#
+  end     
+  , 
+  case request_state_code when 'WAIT' then
+    priority_order
+  end     
+  ,
+  case request_state_code when 'WAIT' then
+    batch_short_name
+  end     
+) 
+tablespace &indexTablespace
+/
+-- index:  ml_fetch_request_ix_date_ins 
+-- Индекс для доступа по дате создания записи
+-- запроса 
+create index ml_fetch_request_ix_date_ins on ml_fetch_request(
+  date_ins
+)
+tablespace &indexTablespace
+/
+-- sequence: ml_fetch_request_seq
+-- Последовательность для генерации первичного ключа
+create sequence  ml_fetch_request_seq
+/

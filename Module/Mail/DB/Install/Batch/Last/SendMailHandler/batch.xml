@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="SendMailHandler">
+  <name>Обработчик отправки почтовых сообщений</name>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="send_mail_handler">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">skip</condition>
+    <condition id="2">error</condition>
+  </content>
+</batch>

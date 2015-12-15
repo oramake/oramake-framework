@@ -1,0 +1,4 @@
+alter table ml_fetch_request
+   add constraint ml_fetch_request_fk_state  foreign key (request_state_code)
+      references ml_request_state( request_state_code);
+

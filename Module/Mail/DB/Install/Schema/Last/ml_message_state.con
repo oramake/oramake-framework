@@ -1,0 +1,3 @@
+alter table ml_message_state
+   add constraint ml_message_state_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

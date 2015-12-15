@@ -1,0 +1,135 @@
+--table: ml_message
+--Почтовые сообщения ( входящие и исходящие).
+--
+--Замечания:
+--  - поля sender_address и recipient_address содержат приведенный к нижнему
+--    регистру почтовый адрес, полученный, соответственно, из sender и
+--    recipient ( в случае, если поле содержит несколько адресов, берется первый
+--    из них);
+--  - поля sender, recipient, copy_recipient содержат оригинальные
+--    ( кодированные) значения соответствующих полей сообщения;
+--  - поля sender_text, recipient_text, copy_recipient_text содержат текстовые
+--    ( декодированные) значения соответствующих полей сообщения ( в случае
+--    исходящих сообщений содержат оригинальные значения, указанные при
+--    создании сообщения);
+--
+create table ml_message  (
+   message_id                     integer                         not null
+   , parent_message_id            integer
+   , sender_address               varchar2(50)
+   , recipient_address            varchar2(50)
+   , message_state_code           varchar2(10)
+   , smtp_server		              varchar2(255)
+   , sender_text                  varchar2(2000)
+   , recipient_text               varchar2(2000)
+   , copy_recipient_text          varchar2(2000)
+   , sender                       varchar2(2000)
+   , recipient                    varchar2(2000)
+   , copy_recipient               varchar2(2000)
+   , send_date                    timestamp with local time zone
+   , subject                      varchar2(100)
+   , content_type                 varchar2(512)
+   , message_size                 integer
+   , message_uid                  varchar2(250)
+   , source_message_id            integer
+   , message_text                 clob
+   , process_date                 date
+   , expire_date                  date
+   , error_code                   integer
+   , error_message                varchar2(4000)
+   , is_html 			                number(1,0)
+   , fetch_request_id	            integer
+   , date_ins                     date default sysdate not null
+   , operator_id                  integer not null
+   , constraint 
+       ml_message_pk 
+     primary key (
+       message_id
+     )
+	   using index tablespace &indexTablespace
+   , constraint 
+       ml_message_chk_sender_address 
+     check( 
+       sender_address like '%@%'
+       and sender_address not like '% %'
+       and nullif( sender_address, lower( sender_address)) is null
+     )
+   , constraint 
+       ml_message_chk_recipient_addr
+     check(
+       recipient_address like '%@%'
+       and recipient_address not like '% %'
+       and nullif( recipient_address, lower( recipient_address)) is null
+     )
+   , constraint 
+       ml_message_chk_parent_message 
+     check( 
+       parent_message_id is null and message_state_code <> 'N'
+       or parent_message_id is not null 
+       and nullif( 'N', message_state_code) is null
+     )
+   , constraint 
+       ml_message_ck_is_html 
+     check( 
+       coalesce( is_html, 0) in ( 0, 1)
+     )
+   , constraint 
+       ml_message_ck_mandatory 
+     check(
+       message_state_code in ( 'P','N','R')
+       or sender_text is not null
+       and recipient_text is not null
+       and sender is not null
+       and recipient is not null
+       and sender_address is not null
+       and recipient_address is not null
+     )  
+)
+/
+--index: ml_message_ix_state_smtp
+create index ml_message_ix_state_smtp on ml_message (
+   message_state_code asc
+   , smtp_server asc
+) tablespace &indexTablespace;
+
+--index: ml_message_ix_expire_date
+create index ml_message_ix_expire_date on ml_message (
+   expire_date asc
+) tablespace &indexTablespace
+;
+--index: ml_message_ix_fetch
+create index ml_message_ix_fetch on ml_message (
+   fetch_request_id asc
+) tablespace &indexTablespace
+;
+
+--index: ml_message_ux
+create unique index ml_message_ux on ml_message (
+   substr( sender, 1, 1000 ) asc,
+   substr( recipient, 1, 1000 ) asc,
+   send_date asc,
+   message_uid asc,
+   case when message_state_code in ( 'N', 'WS', 'S', 'SE') then message_id end asc
+) tablespace &indexTablespace;
+
+
+--index: ml_message_ux_rcadr_state_id
+create unique index ml_message_ux_rcadr_state_id on ml_message (
+   recipient_address asc,
+   message_state_code asc,
+   message_id asc
+) tablespace &indexTablespace;
+
+
+--index: ml_message_ix_source_message
+create index ml_message_ix_source_message on ml_message (
+   source_message_id asc
+) tablespace &indexTablespace;
+
+
+--index: ml_message_ix_parent_message
+create index ml_message_ix_parent_message on ml_message (
+   parent_message_id asc
+) tablespace &indexTablespace;
+
+@oms-run ml_message.cmn

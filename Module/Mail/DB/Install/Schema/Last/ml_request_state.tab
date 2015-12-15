@@ -1,0 +1,25 @@
+-- table: ml_request_state
+-- Состояния запросов модуля Mail
+-- 
+create table ml_request_state(
+  request_state_code			varchar2( 10 ) not null,
+  date_ins					date default sysdate not null,
+  operator_id				integer not null,
+  constraint ml_request_state_pk primary key(request_state_code)
+    using index tablespace &indexTablespace
+)
+/
+comment on table ml_request_state is 
+'Состояния запросов модуля Mail
+[ SVN root: Exchange/Module/Mail]
+'
+/
+comment on column ml_request_state.request_state_code is
+'Код состояния. Первичный ключ таблицы.'
+/
+comment on column ml_request_state.date_ins is
+'Дата добавления записи.'
+/
+comment on column ml_request_state.operator_id is
+'Id оператора, создавшего запись'
+/
