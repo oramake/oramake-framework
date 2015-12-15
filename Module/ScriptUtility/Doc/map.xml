@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>ScriptUtility</name>
+  <description></description>
+  <version>1.2.1</version>
+  <prefix></prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/ScriptUtility</path>
+  <initialPath>Oracle/Module/ScriptUtility@744</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <package>pkg_ScriptUtility</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Oracle/Module/File</module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>
