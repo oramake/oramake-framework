@@ -1,0 +1,51 @@
+moduleName          : AccessOperator
+modulePath          : Module/AccessOperator
+moduleInitialPath   : Module/AccessOperator@20
+moduleVersion       : 3.12.0
+SVN path            : 
+SVN version info    : 
+
+module OMS version    : 1.7.3 ( rev. 2133, 2014-07-09)
+installed OMS version : 1.7.3 ( rev. 2132, 2014-07-08)
+
+process ID          : 12440
+process start time  : 2016-01-10T16:59:07+0300
+
+*** make option
+MAKECMDGOALS        : install
+INSTALL_VERSION     : Last
+loadUserList        : operator_test@exchanget - - - - - - - -
+loadOperator        : LysyonokE
+FILE_MASK           : 
+LOAD_FILE_MASK      : 
+SKIP_FILE_MASK      :  ,*oms-check-lock*
+SQL_DEFINE          : indexTablespace=exchange_index
+PLSQL_WARNINGS      : 
+make flags          : w
+OMS_SAVE_FILE_INSTALL_INFO: 0
+
+/usr/local/share/oms/SqlScript/oms-show-invalid.sql: -> operator_test@exchanget ...
+* Count accessable invalid objects
+OWNER                          INVALID_COUNT
+------------------------------ -------------
+OPERATOR_TEST                              1
+1 row selected.
+* Show invalid objects in user schema
+OBJECT_TYPE         OBJECT_NAME
+------------------- ----------------------------------------------------------------------------------------------------
+PACKAGE BODY        PKG_OPERATOR
+1 row selected.
+No errors.
+pkg_Operator.pkb: -> operator_test@exchanget ...
+Package body created.
+No errors.
+Install/Data/1.0.0/op_operator.sql: -> operator_test@exchanget ...
+declare
+*
+ERROR at line 1:
+ORA-20001: Error during automatic operator login ( operatorName="LysyonokE").
+ORA-06512: at line 29
+ORA-20150: ќшибка при регистрации оператора ( login="LysyonokE").
+ORA-06512: at "OPERATOR_TEST.PKG_OPERATOR", line 161
+ORA-20195: ”казан неверный логин или пароль.
+oms-load: SQL*Plus finished with error ( code 11).

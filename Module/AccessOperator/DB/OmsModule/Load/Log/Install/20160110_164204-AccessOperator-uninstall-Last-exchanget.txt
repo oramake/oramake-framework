@@ -1,0 +1,99 @@
+moduleName          : AccessOperator
+modulePath          : Module/AccessOperator
+moduleInitialPath   : Module/AccessOperator@20
+moduleVersion       : 3.12.0
+SVN path            : 
+SVN version info    : 
+
+module OMS version    : 1.7.3 ( rev. 2133, 2014-07-09)
+installed OMS version : 1.7.3 ( rev. 2132, 2014-07-08)
+
+process ID          : 13716
+process start time  : 2016-01-10T16:41:59+0300
+
+*** make option
+MAKECMDGOALS        : uninstall
+INSTALL_VERSION     : Last
+loadUserList        : operator_test@exchanget - - - - - - - -
+loadOperator        : 
+FILE_MASK           : 
+LOAD_FILE_MASK      : 
+SKIP_FILE_MASK      : 
+SQL_DEFINE          : 
+PLSQL_WARNINGS      : 
+make flags          : wiB
+OMS_SAVE_FILE_INSTALL_INFO: 0
+
+/usr/local/share/oms/SqlScript/oms-show-invalid.sql: -> operator_test@exchanget ...
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+Install/Schema/Last/revert.sql: -> operator_test@exchanget ...
+Package dropped.
+View dropped.
+View dropped.
+drop foreign key: op_group
+Foreign key OP_GROUP_OP_OPERATOR_FK for table OP_GROUP dropped.
+PL/SQL procedure successfully completed.
+drop foreign key: op_group_role
+Foreign key OP_GROUP_ROLE_OP_GROUP_FK for table OP_GROUP_ROLE dropped.
+Foreign key OP_GROUP_ROLE_OP_OPERATOR_FK for table OP_GROUP_ROLE dropped.
+Foreign key OP_GROUP_ROLE_OP_ROLE_FK for table OP_GROUP_ROLE dropped.
+PL/SQL procedure successfully completed.
+drop foreign key: op_operator
+Foreign key OP_OPERATOR_OP_OPERATOR_FK for table OP_OPERATOR dropped.
+PL/SQL procedure successfully completed.
+drop foreign key: op_operator_group
+Foreign key OP_OPERATOR_GROUP_OPERATOR_FK1 for table OP_OPERATOR_GROUP dropped.
+Foreign key OP_OPERATOR_GROUP_OPERATOR_FK2 for table OP_OPERATOR_GROUP dropped.
+Foreign key OP_OPERATOR_GROUP_OP_GROUP_FK for table OP_OPERATOR_GROUP dropped.
+PL/SQL procedure successfully completed.
+drop foreign key: op_operator_role
+Foreign key OP_OPERATOR_ROLE_OPERATOR_FK1 for table OP_OPERATOR_ROLE dropped.
+Foreign key OP_OPERATOR_ROLE_OPERATOR_FK2 for table OP_OPERATOR_ROLE dropped.
+Foreign key OP_OPERATOR_ROLE_OP_ROLE_FK for table OP_OPERATOR_ROLE dropped.
+PL/SQL procedure successfully completed.
+drop foreign key: op_role
+Foreign key OP_ROLE_OP_OPERATOR_FK for table OP_ROLE dropped.
+PL/SQL procedure successfully completed.
+Table dropped.
+Table dropped.
+Table dropped.
+Table dropped.
+Table dropped.
+Table dropped.
+Sequence dropped.
+Sequence dropped.
+Sequence dropped.
+No errors.
+/usr/local/share/oms/SqlScript/oms-compile-invalid.sql: -> operator_test@exchanget ...
+* Show invalid objects in user schema
+no rows selected
+* Compile user invalid objects...
+PL/SQL procedure successfully completed.
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+/usr/local/share/oms/SqlScript/oms-save-uninstall-info.sql: -> operator_test@exchanget ...
+declare
+*
+ERROR at line 1:
+ORA-20150: OMS: Ошибка при добавлении информации о результате установки ( скрипт OmsInternal/add-install-result.sql modulePartNumberList="1", installVersion="", installTypeCode="OBJ", isFullInstall=, isRevertInstall=1, resultVersion="", installScript="", privsUser="").
+ORA-06512: at line 136
+ORA-20150: Ошибка при определении Id прикладного модуля ( svnRoot="Module/AccessOperator", initialSvnPath="Module/AccessOperator@20", isCreate=1).
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 290
+ORA-20150: Ошибка при создании записи для модуля ( initialSvnRoot="Module/AccessOperator", initialSvnRevision=20).
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 227
+ORA-20150: Ошибка при определении Id текущего зарегистрированного оператора.
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 59
+ORA-20012: Вы не зарегистрировались. Для регистрации в системе выполните функцию Login.
+ORA-06512: at "EXCHANGE.MOD_MODULE_BI_DEFINE", line 13
+ORA-04088: error during execution of trigger 'EXCHANGE.MOD_MODULE_BI_DEFINE
+No errors.
+oms-load: SQL*Plus finished with error ( code 11).
+
+uninstall: finished

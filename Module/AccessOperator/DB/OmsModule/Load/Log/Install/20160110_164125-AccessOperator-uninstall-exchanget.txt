@@ -1,0 +1,44 @@
+moduleName          : AccessOperator
+modulePath          : Module/AccessOperator
+moduleInitialPath   : Module/AccessOperator@20
+moduleVersion       : 3.12.0
+SVN path            : 
+SVN version info    : 
+
+module OMS version    : 1.7.3 ( rev. 2133, 2014-07-09)
+installed OMS version : 1.7.3 ( rev. 2132, 2014-07-08)
+
+process ID          : 13140
+process start time  : 2016-01-10T16:41:21+0300
+
+*** make option
+MAKECMDGOALS        : uninstall
+INSTALL_VERSION     : 
+loadUserList        : operator_test@exchanget - - - - - - - -
+loadOperator        : 
+FILE_MASK           : 
+LOAD_FILE_MASK      : 
+SKIP_FILE_MASK      : 
+SQL_DEFINE          : 
+PLSQL_WARNINGS      : 
+make flags          : wiB
+OMS_SAVE_FILE_INSTALL_INFO: 0
+
+/usr/local/share/oms/SqlScript/oms-show-invalid.sql: -> operator_test@exchanget ...
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+/usr/local/share/oms/SqlScript/oms-compile-invalid.sql: -> operator_test@exchanget ...
+* Show invalid objects in user schema
+no rows selected
+* Compile user invalid objects...
+PL/SQL procedure successfully completed.
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+
+uninstall: finished

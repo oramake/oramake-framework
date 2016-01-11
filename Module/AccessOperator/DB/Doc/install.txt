@@ -1,0 +1,20 @@
+title: Установка
+
+
+group: Общие замечания
+
+Параметры установки:
+
+LOAD_USERID                   - пользователь для загрузки ( формат: [userName[/password]][@dbName] )
+
+
+
+group: Первоначальная установка
+
+- установка в основную схему
+
+(code)
+
+make install LOAD_USERID=???/???@??? INSTALL_VERSION=Last LOAD_OPERATORID=
+
+(end code)

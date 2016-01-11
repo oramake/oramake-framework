@@ -1,0 +1,78 @@
+-- table: op_operator
+-- Операторы.
+
+create table op_operator
+(
+  operator_id                     integer                             not null
+  , login                         varchar2(50)                        not null
+  , password                      varchar2(50)                        not null
+  , date_begin                    date
+  , date_finish                   date
+  , operator_name                 varchar2(100)                       not null
+  , operator_name_en              varchar2(100)
+  , operator_comment              varchar2(1000)
+  , operator_id_ins               integer not null
+  , date_ins                      date                default sysdate not null
+  , constraint op_operator_pk primary key (
+      operator_id
+    )
+    using index tablespace &indexTablespace
+)
+/
+
+comment on table op_operator is
+  'Операторы [SVN root: Module/AccessOperator]'
+/
+comment on column op_operator.operator_id is
+  'Первичный ключ. Идентификатор пользователя'
+/
+comment on column op_operator.login is
+  'Логин пользователя'
+/
+comment on column op_operator.password is
+  'Хеш пароля пользователя'
+/
+comment on column op_operator.date_begin is
+  'Дата начала действия записи'
+/
+comment on column op_operator.date_finish is
+  'Дата окончания действия записи'
+/
+comment on column op_operator.operator_name is
+  'Наименование пользователя на языке по умолчанию'
+/
+comment on column op_operator.operator_name_en is
+  'Наименование пользователя на английском языке'
+/
+comment on column op_operator.operator_comment is
+  'Комментарий'
+/
+comment on column op_operator.operator_id_ins is
+  'Id пользователя, создавшего запись'
+/
+comment on column op_operator.date_ins is
+  'Дата создания записи'
+/
+-- Индекс для контроля уникальности логина (верхний регистр)
+create unique index
+  op_operator_ux_login
+on
+  op_operator (
+    upper( login)
+  )
+tablespace
+  &indexTablespace
+/
+
+-- index: op_operator_ix_name
+-- Индекс для доступа по имени оператора (верхний регистр)
+create index
+  op_operator_ix_name
+on
+  op_operator (
+    upper( operator_name)
+  )
+tablespace
+  &indexTablespace
+/
+

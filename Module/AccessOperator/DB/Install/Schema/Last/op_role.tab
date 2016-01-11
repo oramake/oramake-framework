@@ -1,0 +1,57 @@
+-- table: op_role
+-- Роли.
+
+create table op_role
+(
+  role_id                         integer                             not null
+  , role_short_name               varchar2(50)                        not null
+  , role_name                     varchar2(255)                       not null
+  , role_name_en                  varchar2(255)                       not null
+  , description                   varchar2(4000)
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint op_role_pk         primary key
+      ( role_id)
+    using index tablespace
+      &indexTablespace
+  , constraint op_role_uk_sname   unique
+      ( role_short_name)
+    using index tablespace
+      &indexTablespace
+)
+/
+
+comment on table op_role is
+  'Роли [SVN root: Module/AccessOperator]'
+/
+comment on column op_role.role_id is
+  'Идентификатор роли'
+/
+comment on column op_role.role_short_name is
+  'Краткое наименование роли'
+/
+comment on column op_role.role_name is
+  'Наименование роли на языке по умолчанию'
+/
+comment on column op_role.role_name_en is
+  'Наименование роли на английском языке'
+/
+comment on column op_role.description is
+  'Описание роли на языке по умолчанию'
+/
+comment on column op_role.date_ins is
+  'Дата создания записи'
+/
+comment on column op_role.operator_id is
+  'Идентификатор оператора, создавшего запись'
+/
+
+-- index: op_role_ix_name
+-- Индекс для доступа по названию роли (верхний регистр)
+create index
+  op_role_ix_name
+on
+  op_role ( upper( role_name))
+tablespace
+  &indexTablespace
+/

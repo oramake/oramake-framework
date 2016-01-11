@@ -1,0 +1,161 @@
+moduleName          : AccessOperator
+modulePath          : Module/AccessOperator
+moduleInitialPath   : Module/AccessOperator@20
+moduleVersion       : 3.12.0
+SVN path            : 
+SVN version info    : 
+
+module OMS version    : 1.7.3 ( rev. 2133, 2014-07-09)
+installed OMS version : 1.7.3 ( rev. 2132, 2014-07-08)
+
+process ID          : 11740
+process start time  : 2016-01-10T16:57:46+0300
+
+*** make option
+MAKECMDGOALS        : install
+INSTALL_VERSION     : Last
+loadUserList        : operator_test@exchanget - - - - - - - -
+loadOperator        : LysyonokE
+FILE_MASK           : 
+LOAD_FILE_MASK      : 
+SKIP_FILE_MASK      :  ,*oms-check-lock*
+SQL_DEFINE          : indexTablespace=exchange_index
+PLSQL_WARNINGS      : 
+make flags          : wB
+OMS_SAVE_FILE_INSTALL_INFO: 0
+
+/usr/local/share/oms/SqlScript/oms-show-invalid.sql: -> operator_test@exchanget ...
+* Count accessable invalid objects
+OWNER                          INVALID_COUNT
+------------------------------ -------------
+OPERATOR_TEST                              1
+1 row selected.
+* Show invalid objects in user schema
+OBJECT_TYPE         OBJECT_NAME
+------------------- ----------------------------------------------------------------------------------------------------
+PACKAGE BODY        PKG_OPERATOR
+1 row selected.
+No errors.
+Install/Schema/Last/run.sql: -> operator_test@exchanget ...
+indexTablespace
+------------------------------
+exchange_index
+Install/Schema/Last/op_group.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Install/Schema/Last/op_group_role.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Install/Schema/Last/op_operator.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Index created.
+Install/Schema/Last/op_operator_group.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Install/Schema/Last/op_operator_role.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Install/Schema/Last/op_role.tab: ...
+Table created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Index created.
+Install/Schema/Last/op_group.con: ...
+Table altered.
+Install/Schema/Last/op_group_role.con: ...
+Table altered.
+Table altered.
+Table altered.
+Install/Schema/Last/op_operator.con: ...
+Table altered.
+Install/Schema/Last/op_operator_group.con: ...
+Table altered.
+Table altered.
+Table altered.
+Install/Schema/Last/op_operator_role.con: ...
+Table altered.
+Table altered.
+Table altered.
+Install/Schema/Last/op_role.con: ...
+Table altered.
+Install/Schema/Last/op_group_seq.sqs: ...
+Sequence created.
+Install/Schema/Last/op_operator_seq.sqs: ...
+Sequence created.
+Install/Schema/Last/op_role_seq.sqs: ...
+Sequence created.
+No errors.
+Install/Schema/Last/v_op_operator.vw: -> operator_test@exchanget ...
+View created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+No errors.
+Install/Schema/Last/v_op_operator_role.vw: -> operator_test@exchanget ...
+View created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+Comment created.
+No errors.
+pkg_Operator.pks: -> operator_test@exchanget ...
+Package created.
+No errors.
+pkg_Operator.pkb: -> operator_test@exchanget ...
+Warning: Package Body created with compilation errors.
+Errors for PACKAGE BODY PKG_OPERATOR:
+LINE/COL ERROR
+-------- -----------------------------------------------------------------
+229/3    PL/SQL: Statement ignored
+229/3    PLS-00307: too many declarations of 'LOGIN' match this call
+oms-load: SQL*Plus finished with error ( code 11).

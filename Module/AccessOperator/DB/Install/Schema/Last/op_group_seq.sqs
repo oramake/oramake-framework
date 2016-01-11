@@ -1,0 +1,6 @@
+-- sequence: op_group_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <op_group>.
+create sequence
+  op_group_seq
+/

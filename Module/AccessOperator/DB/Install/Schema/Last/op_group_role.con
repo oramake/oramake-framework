@@ -1,0 +1,27 @@
+-- script: Install/Schema/Last/op_group_role.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_group_role>
+
+alter table 
+  op_group_role
+add 
+  constraint op_group_role_op_group_fk foreign key 
+    ( group_id)
+  references op_group 
+    ( group_id)
+/
+alter table 
+  op_group_role
+add 
+  constraint op_group_role_op_operator_fk foreign key 
+    ( operator_id)
+  references op_operator 
+    ( operator_id)
+/
+alter table 
+  op_group_role
+add 
+  constraint op_group_role_op_role_fk foreign key 
+    ( role_id)
+  references op_role 
+    ( role_id)
+/

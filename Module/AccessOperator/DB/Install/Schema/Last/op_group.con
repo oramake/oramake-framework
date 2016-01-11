@@ -1,0 +1,11 @@
+-- script: Install/Schema/Last/op_group.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_group>.
+
+alter table
+  op_group
+add
+  constraint op_group_op_operator_fk foreign key
+    ( operator_id)
+  references op_operator
+    ( operator_id)
+/

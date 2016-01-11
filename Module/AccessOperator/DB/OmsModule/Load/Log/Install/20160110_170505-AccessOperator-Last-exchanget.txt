@@ -1,0 +1,66 @@
+moduleName          : AccessOperator
+modulePath          : Module/AccessOperator
+moduleInitialPath   : Module/AccessOperator@20
+moduleVersion       : 3.12.0
+SVN path            : 
+SVN version info    : 
+
+module OMS version    : 1.7.3 ( rev. 2133, 2014-07-09)
+installed OMS version : 1.7.3 ( rev. 2132, 2014-07-08)
+
+process ID          : 11520
+process start time  : 2016-01-10T17:05:01+0300
+
+*** make option
+MAKECMDGOALS        : install
+INSTALL_VERSION     : Last
+loadUserList        : operator_test@exchanget - - - - - - - -
+loadOperator        : 
+FILE_MASK           : 
+LOAD_FILE_MASK      : 
+SKIP_FILE_MASK      :  ,*oms-check-lock*
+SQL_DEFINE          : indexTablespace=exchange_index
+PLSQL_WARNINGS      : 
+make flags          : w
+OMS_SAVE_FILE_INSTALL_INFO: 0
+
+/usr/local/share/oms/SqlScript/oms-show-invalid.sql: -> operator_test@exchanget ...
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+Install/Data/1.0.0/op_operator.sql: -> operator_test@exchanget ...
+2 rows merged.
+Commit complete.
+No errors.
+Install/Data/1.0.0/op_group.sql: -> operator_test@exchanget ...
+1 row merged.
+Commit complete.
+No errors.
+/usr/local/share/oms/SqlScript/oms-compile-invalid.sql: -> operator_test@exchanget ...
+* Show invalid objects in user schema
+no rows selected
+* Compile user invalid objects...
+PL/SQL procedure successfully completed.
+* Count accessable invalid objects
+no rows selected
+* Show invalid objects in user schema
+no rows selected
+No errors.
+/usr/local/share/oms/SqlScript/oms-save-install-info.sql: -> operator_test@exchanget ...
+declare
+*
+ERROR at line 1:
+ORA-20150: OMS: Ошибка при добавлении информации о результате установки ( скрипт OmsInternal/add-install-result.sql modulePartNumberList="1", installVersion="", installTypeCode="OBJ", isFullInstall=, isRevertInstall=0, resultVersion="", installScript="", privsUser="").
+ORA-06512: at line 136
+ORA-20150: Ошибка при определении Id прикладного модуля ( svnRoot="Module/AccessOperator", initialSvnPath="Module/AccessOperator@20", isCreate=1).
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 290
+ORA-20150: Ошибка при создании записи для модуля ( initialSvnRoot="Module/AccessOperator", initialSvnRevision=20).
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 227
+ORA-20150: Ошибка при определении Id текущего зарегистрированного оператора.
+ORA-06512: at "EXCHANGE.PKG_MODULEINFOINTERNAL", line 59
+ORA-20012: Вы не зарегистрировались. Для регистрации в системе выполните функцию Login.
+ORA-06512: at "EXCHANGE.MOD_MODULE_BI_DEFINE", line 13
+ORA-04088: error during execution of trigger 'EXCHANGE.MOD_MODULE_BI_DEFINE
+oms-load: SQL*Plus finished with error ( code 11).
