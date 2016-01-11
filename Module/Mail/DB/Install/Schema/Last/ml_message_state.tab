@@ -1,0 +1,32 @@
+--table: ml_message_state
+create table ml_message_state  (
+   message_state_code   varchar2(10)                    not null,
+   message_state_name_rus varchar2(50)                    not null,
+   message_state_name_eng varchar2(50)                    not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint ml_message_state_pk primary key (message_state_code)
+)
+organization index
+tablespace &indexTablespace
+;
+
+comment on table ml_message_state is
+'Состояния сообщения ( справочник) 
+[ Exchange/Module/Mail]';
+
+comment on column ml_message_state.message_state_code is
+'Код состояния сообщения'
+/
+comment on column ml_message_state.message_state_name_rus is
+'Наименование состояния сообщения'
+/
+comment on column ml_message_state.message_state_name_eng is
+'Наименование состояния на английском'
+/
+comment on column ml_message_state.date_ins is
+'Дата вставки записи'
+/
+comment on column ml_message_state.operator_id is
+'Id оператора, создавшего запись'
+/

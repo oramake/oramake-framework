@@ -1,0 +1,74 @@
+-- table: tp_file
+-- Файлы с данными заданий.
+create table
+  tp_file
+(
+  task_id                         integer                             not null
+  , file_status_code              varchar2(10)                        not null
+  , file_name                     varchar2(100)                       not null
+  , mime_type_code                varchar2(30)                        not null
+  , file_data                     clob
+  , loaded_date                   date
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint tp_file_pk primary key
+    ( task_id)
+    using index tablespace &indexTablespace
+  , constraint tp_file_ck_loaded_date check
+    ( file_status_code = 'LOADING' and loaded_date is null or file_status_code != 'LOADING' and loaded_date is not null)
+)
+/
+
+
+
+comment on table tp_file is
+  'Файлы с данными заданий [ SVN root: Oracle/Module/TaskProcessor]'
+/
+comment on column tp_file.task_id is
+  'Id задания'
+/
+comment on column tp_file.file_status_code is
+  'Код состояния файла'
+/
+comment on column tp_file.file_name is
+  'Имя файла'
+/
+comment on column tp_file.mime_type_code is
+  'MIME-тип файла'
+/
+comment on column tp_file.file_data is
+  'Данные файла'
+/
+comment on column tp_file.loaded_date is
+  'Дата загрузки данных файла'
+/
+comment on column tp_file.date_ins is
+  'Дата добавления записи'
+/
+comment on column tp_file.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: tp_file_ix_ufname
+-- Индекс по имени файла в верхнем регистре для поиска из интерфейса.
+create index
+  tp_file_ix_ufname
+on
+  tp_file (
+    upper( file_name)
+  )
+tablespace &indexTablespace
+/
+
+-- index: tp_file_ix_date_ins
+-- Индекс по имени дате вставки для поиска из интерфейса.
+create index
+  tp_file_ix_date_ins
+on
+  tp_file (
+    date_ins
+  )
+tablespace &indexTablespace
+/

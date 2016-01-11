@@ -1,0 +1,7 @@
+alter table ml_attachment
+   add constraint ml_attachment_ml_message_fk foreign key (message_id)
+      references ml_message (message_id);
+
+alter table ml_attachment
+   add constraint ml_attachment_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

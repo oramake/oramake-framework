@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="TaskProcessorHandler_2">
+  <name>Обработчик заданий модуля TaskProcessor #2</name>
+  <batch_config>
+    <retry_count>60</retry_count>
+    <retry_interval>1</retry_interval>
+    <schedule>
+      <name>immediate</name>
+    </schedule>
+    <option short_name="IsFinishAfterProcess" type="number" name="Флаг завершения обработки после выполнения ( с любым результатом) одного задания либо нескольких идущих подряд заданий одного типа ( 1 завершить, 0 не завершать ( по умолчанию))">
+      <value>1</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="task_handler">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">skip</condition>
+    <condition id="2">error</condition>
+  </content>
+</batch>

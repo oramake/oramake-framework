@@ -1,0 +1,12 @@
+alter table ml_request_state
+  add constraint 
+    ml_request_state_fk_oper
+  foreign key(
+    operator_id
+  )
+  references 
+    op_operator
+  (
+    operator_id
+  )
+/    

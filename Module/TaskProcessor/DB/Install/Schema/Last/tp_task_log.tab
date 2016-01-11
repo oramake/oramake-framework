@@ -1,0 +1,91 @@
+-- table: tp_task_log
+-- Лог выполнения заданий.
+create table
+  tp_task_log
+(
+  task_log_id                     integer                             not null
+  , task_id                       integer                             not null
+  , start_number                  integer                             not null
+  , line_number                   integer                             not null
+  , level_code                    varchar2(10)                        not null
+  , message_text                  varchar2(4000)                      not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint tp_task_log_pk primary key
+    ( task_log_id)
+    using index tablespace &indexTablespace
+  , constraint tp_task_log_ck_start_number check
+    ( start_number > 0)
+  , constraint tp_task_log_ck_line_number check
+    ( line_number >= 0)
+  , constraint tp_task_log_ck_level_code check
+    ( level_code not in ( 'ALL', 'OFF'))
+)
+/
+
+
+
+comment on table tp_task_log is
+  'Лог выполнения заданий [ SVN root: Oracle/Module/TaskProcessor]'
+/
+comment on column tp_task_log.task_log_id is
+  'Id записи лога'
+/
+comment on column tp_task_log.task_id is
+  'Id задания'
+/
+comment on column tp_task_log.start_number is
+  'Номер запуска задания ( начиная с 1)'
+/
+comment on column tp_task_log.line_number is
+  'Номер строки обрабатываемого файла, к которой относится сообщение ( строки нумеруются начиная с 1, 0 если задание не выполняет обработку файла или сообщение не связано с конкретной строкой файла)'
+/
+comment on column tp_task_log.level_code is
+  'Код уровня сообщения'
+/
+comment on column tp_task_log.message_text is
+  'Текст сообщения'
+/
+comment on column tp_task_log.date_ins is
+  'Дата добавления записи'
+/
+comment on column tp_task_log.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: tp_task_log_ix_task_start
+-- Индекс для выборки лога запуска задания.
+create index
+  tp_task_log_ix_task_start
+on
+  tp_task_log (
+    task_id
+    , start_number
+  )
+tablespace &indexTablespace
+/
+
+-- index: tp_task_log_ix_level_date
+-- Индекс для внешнего ключа с добавлением даты.
+create index
+  tp_task_log_ix_level_date
+on
+  tp_task_log (
+    level_code
+    , date_ins
+  )
+tablespace &indexTablespace
+/
+
+-- index: tp_task_log_ix_date_ins
+-- Индекс по дате вставки записи.
+create index
+  tp_task_log_ix_date_ins
+on
+  tp_task_log (
+    date_ins
+  )
+tablespace &indexTablespace
+/

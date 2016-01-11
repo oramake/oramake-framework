@@ -1,0 +1,15 @@
+alter table ml_message
+   add constraint ml_message_ml_message_fk_paren foreign key (parent_message_id)
+      references ml_message (message_id);
+
+alter table ml_message
+   add constraint ml_message_ml_message_fk_src foreign key (source_message_id)
+      references ml_message (message_id);
+
+alter table ml_message
+   add constraint ml_message_ml_message_state_fk foreign key (message_state_code)
+      references ml_message_state (message_state_code);
+
+alter table ml_message
+   add constraint ml_message_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

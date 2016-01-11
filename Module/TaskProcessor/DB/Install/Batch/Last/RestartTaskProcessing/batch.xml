@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="RestartTaskProcessing">
+  <name>Перезапуск пакетов обработки заданий</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>daily at 1:15</name>
+      <interval type="hh24">
+        <value>1</value>
+      </interval>
+      <interval type="mi">
+        <value>15</value>
+      </interval>
+    </schedule>
+    <option short_name="BatchList" type="string" name="Имена пакетов (через &quot;,&quot;) для перезапуска">
+      <value>TaskProcessorHandler,TaskProcessorHandler_2,TaskProcessorHandler_3,TaskProcessorHandler_4,TaskProcessorHandler_5</value>
+    </option>
+    <option short_name="CheckTimeout" type="number" name="Таймаут перед проверкой рестарта сессий в секундах RestartTaskProcessing">
+      <value>600</value>
+    </option>
+    <option short_name="RestartTimeout" type="number" name="Таймаут между рестартом пакетов в секундах RestartTaskProcessing">
+      <value>60</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="restart_task_handler" module="TaskHandler">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">skip</condition>
+    <condition id="2">error</condition>
+  </content>
+</batch>

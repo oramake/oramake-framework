@@ -39,8 +39,8 @@ testFailMessage varchar2(32767) := null;
 testBeginTime timestamp with time zone := null;
 
 
-
 /* group: Функции */
+
 
 /* func: isTestFailed
   Возвращает истину, если по последнему выполнявшемуся тесту ( текущему либо
@@ -57,6 +57,7 @@ begin
     testFailMessage is not null
   ;
 end isTestFailed;
+
 
 /* proc: beginTest
    Начало теста.
@@ -78,6 +79,7 @@ begin
   testFailMessage := null;
   testBeginTime := systimestamp;
 end beginTest;
+
 
 /* proc: endTest
   Завершение теста.
@@ -114,6 +116,7 @@ begin
   end if;
 end endTest;
 
+
 /* proc: failTest
   Неуспешное завершение теста.
 
@@ -130,6 +133,7 @@ begin
   end if;
   endTest();
 end failTest;
+
 
 /* proc: addTestInfo
   Добавить информацию в соообщение по тесту.
@@ -151,6 +155,7 @@ begin
   ;
 end addTestInfo;
 
+
 /* func: getTestTimeSecond
   Получение интервала времени выполнения теста ( в секундах).
 */
@@ -169,6 +174,7 @@ begin
     + extract( second from timeDiff)
   ;
 end getTestTimeSecond;
+
 
 /* func: compareChar ( func )
    Сравнение строковых данных.
@@ -305,7 +311,7 @@ procedure compareChar (
     actualString        in varchar2
   , expectedString      in varchar2
   , failMessageText     in varchar2
-  , considerWhitespace in boolean := null
+  , considerWhitespace  in boolean := null
   )
 is
   dummy boolean;

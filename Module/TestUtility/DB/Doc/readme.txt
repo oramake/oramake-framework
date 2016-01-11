@@ -33,12 +33,10 @@ compareRowCount   - сравнивает текущее кол-во строк в источнике (таблица, ref-ку
 ...
 pkg_TestUtility.beginTest( ... );
 begin
-  testId := pkg_Test.createTestRow(
-    ...
-    );
+  testId := pkg_<<PACKAGE_NAME>>.create( ... );
 
   if testId is not null then
-    if not isExceptionResult then
+    if not isException then
       pkg_TestUtility.compareRowCount(
           tableName        => 'test_table'
         , filterCondition  => 'test_id = ' || to_char( testId )
@@ -54,7 +52,7 @@ begin
 
 exception
   when others then
-    if isExceptionResult then
+    if isException then
       logger.trace( 'Message: ' || pkg_Logging.getErrorStack() );
     else
       pkg_TestUtility.failTest( 'Exception: ' || pkg_Logging.getErrorStack() );
@@ -66,14 +64,14 @@ pkg_TestUtility.endTest();
 (end)
 
 В данном тесте по переданному набору параметров создается тестовая строка (с помощью
-вызова pkg_Test.createTestRow()) и анализируется результат её создания.
+вызова pkg_<<PACKAGE_NAME>>.create()) и анализируется результат её создания.
 
 В зависимости от тестового сценария, корректным результатом может быть один из следующих вариантов
 
 * Запись создана, её идентификатор передан в testId и в таблице
   test_table есть запись с test_id = to_char( testId )
 
-* Функция создания записи pkg_Test.createTestRow() завершилась с ошибкой (вернула исключение)
+* Функция создания записи pkg_<<PACKAGE_NAME>>.create() завершилась с ошибкой (вернула исключение)
 
 * Функция создания записи отработала без ошибок, но идентификатор testId пустой
 
@@ -111,6 +109,45 @@ pkg_TestUtility.endTest();
   списком с помощью pkg_TestUtility.compareRowCount() анализируется на наличие
   требуемой записи
 
+Пример тестирования длительности работы функции/процедуры:
+
+(code)
+
+begin
+  ...
+  pkg_TestUtility.beginTest( ... );
+
+  rc := pkg_<<PACKAGE_NAME>>.find( ... );
+
+  responseTime := pkg_TestUtility.getTestTimeSecond();
+  pkg_TestUtility.addTestInfo( ' (' || to_char( responseTime ) || ' sec)' );
+
+  if responseTime > timeLimitSec then
+    pkg_TestUtility.failTest( 'Response time of find() exceeds ' || to_char( timeLimitSec ) || ' seconds!' );
+  end if;
+  pkg_TestUtility.endTest();
+  ...
+end;
+
+(end)
+
+pkg_<<PACKAGE_NAME>>.find() - тестируемая функция
+
+В данном примере используется функция получения длительности выполнения теста
+pkg_TestUtility.getTestTimeSecond(). Отсчет времени начинается от момента вызова
+pkg_TestUtility.beginTest(). Полученное время работы теста (responseTime) можно
+сравнить с эталонным временем (timeLimitSec в примере) и прервать тест, если
+производительность тестируемой функции неприемлема.
+
+Следует помнить, что повторный вызов функции при незначительном изменении
+параметров обычно выполняется значительно быстрее, что объясняется загрузкой
+используемых блоков индексов/данных в буфер-кэш БД. Принимая это во внимание,
+рекомендуется создавать не менее двух тестов на производительность одной функции,
+первый тест из которых имеет больший лимит по времени, чем второй и последующие.
+Другими словами, например, пользователи могут подождать 10-20 секунд при первом
+вызове функции, если последующие запуски не будут превышать 1 секунду, что и
+можно отразить в виде сценариев.
+
 Структура в OMS:
 
 Функционал по внутреннему тестированию модуля размещается в целевом модуле по
@@ -137,10 +174,10 @@ $ make test LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 Пример вывода:
 
 > $ make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-> Test/pkg_TestTest.pks: -> ???@??? ...
+> Test/pkg_Test.pks: -> ???@??? ...
 > Package created.
 > No errors.
-> Test/pkg_TestTest.pkb: -> ???@??? ...
+> Test/pkg_Test.pkb: -> ???@??? ...
 > Package body created.
 > No errors.
 >

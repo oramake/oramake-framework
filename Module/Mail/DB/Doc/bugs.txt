@@ -1,0 +1,8 @@
+Title: Ошибки
+
+[!] Для батча SendMailHandler вместо параметра SmtpServer следует определить
+    параметр SmtpServerList ( который используется в задании send_mail_handler).
+
+[!] В MS Outlook отображается некорректная длина файла вложения.
+
+

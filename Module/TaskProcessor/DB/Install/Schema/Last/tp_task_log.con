@@ -1,0 +1,31 @@
+alter table
+  tp_task_log
+add constraint
+  tp_task_log_fk_task_id
+foreign key
+  ( task_id)
+references
+  tp_task ( task_id)
+on delete
+  cascade
+/
+
+alter table
+  tp_task_log
+add constraint
+  tp_task_log_fk_level_code
+foreign key
+  ( level_code)
+references
+  lg_level ( level_code)
+/
+
+alter table
+  tp_task_log
+add constraint
+  tp_task_log_fk_op_operator
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

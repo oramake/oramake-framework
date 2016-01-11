@@ -1,0 +1,27 @@
+--table: lg_destination
+--Назначение вывода сообщений лога.
+create table lg_destination
+(
+  destination_code                varchar2(10)                        not null
+  , destination_description       varchar2(255)
+  , date_ins                      date            default sysdate     not null
+  , constraint lg_destination_pk primary key ( destination_code)
+)
+organization index
+tablespace &indexTablespace;
+
+
+
+comment on table lg_destination is
+  'Назначения вывода сообщений лога ( SVN root: Oracle/Module/Logging).'
+;
+comment on column lg_destination.destination_code is
+  'Код назначения'
+;
+comment on column lg_destination.destination_description is
+  'Описание назначения'
+;
+comment on column lg_destination.date_ins is
+  'Дата добавления записи'
+;
+

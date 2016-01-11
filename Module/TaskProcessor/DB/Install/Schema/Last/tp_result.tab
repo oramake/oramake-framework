@@ -1,0 +1,35 @@
+--table: tp_result
+--Результат выполнения.
+create table tp_result
+(
+  result_code                     varchar2(10)                        not null
+  , result_name_eng               varchar2(50)                        not null
+  , result_name_rus               varchar2(50)                        not null
+  , date_ins                      date            default sysdate     not null
+  , operator_id                   integer                             not null
+  , constraint tp_result_pk primary key ( result_code)
+)
+organization index
+tablespace &indexTablespace
+/
+
+
+
+comment on table tp_result is
+  'Результат выполнения [ SVN root: Oracle/Module/TaskProcessor].'
+/
+comment on column tp_result.result_code is
+  'Код результата выполнения'
+/
+comment on column tp_result.result_name_eng is
+  'Название результата выполнения ( анг.)'
+/
+comment on column tp_result.result_name_rus is
+  'Название результата выполнения ( рус.)'
+/
+comment on column tp_result.date_ins is
+  'Дата добавления записи'
+/
+comment on column tp_result.operator_id is
+  'Id оператора, добавившего запись.'
+/

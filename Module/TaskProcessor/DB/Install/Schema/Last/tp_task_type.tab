@@ -1,0 +1,74 @@
+-- table: tp_task_type
+-- Типы заданий.
+create table tp_task_type
+(
+  task_type_id                    integer                             not null
+  , module_name                   varchar2(30)                        not null
+  , process_name                  varchar2(30)                        not null
+  , task_type_name_eng            varchar2(100)                       not null
+  , task_type_name_rus            varchar2(100)                       not null
+  , exec_command                  varchar2(1000)                      not null
+  , file_name_pattern             varchar2(100)
+  , access_role_short_name        varchar2(50)
+  , task_keep_day                 integer
+  , date_ins                      date            default sysdate     not null
+  , operator_id                   integer                             not null
+  , constraint tp_task_type_pk primary key ( task_type_id)
+    using index tablespace &indexTablespace
+  , constraint tp_task_type_uk unique
+    ( module_name, process_name)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table tp_task_type is
+  'Типы заданий [ SVN root: Oracle/Module/TaskProcessor]'
+/
+comment on column tp_task_type.task_type_id is
+  'Id типа задания'
+/
+comment on column tp_task_type.module_name is
+  'Название прикладного модуля'
+/
+comment on column tp_task_type.process_name is
+  'Название прикладного процесса, обрабатывающего этот тип задания'
+/
+comment on column tp_task_type.task_type_name_eng is
+  'Название типа задания ( анг.)'
+/
+comment on column tp_task_type.task_type_name_rus is
+  'Название типа задания ( рус.)'
+/
+comment on column tp_task_type.exec_command is
+  'Команда, вызываемая для обработки ( корректный PL/SQL текст, возможно с использованием предопределенных переменных)'
+/
+comment on column tp_task_type.file_name_pattern is
+  'Маска имени файла ( для like, экранирующий символ "\") с данными для обработки заданием ( если указана, то для выполнения задания нужно загрузить файл с подходящим именем через интерфейс, иначе файл для задания не используется)'
+/
+comment on column tp_task_type.access_role_short_name is
+  'Название роли из модуля AccessOperator, необходимой для доступа к заданиям этого типа'
+/
+comment on column tp_task_type.task_keep_day is
+  'Время хранения заданий в днях, по истечении которого неиспользуемые бездействующие задания автоматически удаляются ( по умолчанию неограничено)'
+/
+comment on column tp_task_type.date_ins is
+  'Дата добавления записи'
+/
+comment on column tp_task_type.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+--index: tp_task_type_ix_role_sname
+--Обеспечивает индексирования внешнего ключа на таблицу другого модуля.
+create index
+  tp_task_type_ix_acc_role_sname
+on
+  tp_task_type(
+    access_role_short_name
+  )
+  tablespace &indexTablespace
+/

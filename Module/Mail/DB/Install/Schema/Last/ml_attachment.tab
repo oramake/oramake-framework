@@ -1,0 +1,50 @@
+--table: ml_attachment
+create table ml_attachment  (
+   attachment_id        integer                         not null,
+   message_id           integer                         not null,
+   file_name            varchar2(2000)                  not null,
+   content_type         varchar2(512)                   not null,
+   attachment_data      blob                            not null,
+   is_image_content_id  number(1,0),
+   date_ins             date                            default sysdate not null,
+   operator_id          integer                         not null,
+   constraint ml_attachment_pk primary key (attachment_id) 
+	using index tablespace &indexTablespace
+);
+
+comment on table ml_attachment is
+'¬ложени€ почтовых сообщений
+[ SVN root: Exchange/Module/Mail]';
+
+comment on column ml_attachment.attachment_id is
+'ID вложени€';
+
+comment on column ml_attachment.message_id is
+'ID сообщени€';
+
+comment on column ml_attachment.file_name is
+'»м€ файла';
+
+comment on column ml_attachment.content_type is
+'“ип содержимого';
+
+comment on column ml_attachment.attachment_data is
+'ƒанные вложени€';
+
+comment on column ml_attachment.date_ins is
+'ƒата добавлени€ записи';
+
+comment on column ml_attachment.operator_id is
+'ID оператора, добавившего запись';
+
+comment on column ml_attachment.is_image_content_id is
+'явл€етс€ ли вложение изображением
+( 0 - нет, 1 - да, по-умолчанию ( null ) - не €вл€етс€ )
+Ќазвание пол€ выбрано по причинам особенности 
+использовани€ параметра вложени€
+';
+
+--index: ml_attachment_ix_message_id
+create index ml_attachment_ix_message_id on ml_attachment (
+   message_id asc
+);
