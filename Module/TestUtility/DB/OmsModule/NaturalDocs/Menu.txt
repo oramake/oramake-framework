@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TestUtility
-SubTitle: Версия 1.0.3
+SubTitle: Версия 1.0.4
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -56,6 +56,12 @@ Group: О модуле  {
    }  # Group: О модуле
 
 Group: Пакеты  {
+
+   Group: pkg_Tests  {
+
+      File: Спецификация  (no auto-title, pkg_Tests.pks)
+      File: Реализация  (no auto-title, pkg_Tests.pkb)
+      }  # Group: pkg_Tests
 
    Group: pkg_TestUtility  {
 

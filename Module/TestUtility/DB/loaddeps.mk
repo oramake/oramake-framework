@@ -31,4 +31,7 @@
 pkg_TestUtility.pkb.$(lu): \
   pkg_TestUtility.pks.$(lu)
 
+pkg_Tests.pkb.$(lu): \
+  pkg_Tests.pks.$(lu) \
+  pkg_TestUtility.pks.$(lu)
 
