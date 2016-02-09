@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>ConvertNameInCase</name>
+  <description>Модуль обеспечивает автоматическое склонение ФИО по падежам</description>
+  <version>1.1.0</version>
+  <prefix>ccs</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/ConvertNameInCase</path>
+  <initialPath>Oracle/Module/ConvertNameInCase@1</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <package></package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
+    <module>Oracle/Module/AccessOperator</module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

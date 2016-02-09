@@ -1,0 +1,16 @@
+alter table
+  ccs_case_exception
+add
+  constraint ccs_case_except_fk_except_type foreign key
+    ( type_exception_code )
+  references ccs_type_exception
+    ( type_exception_code )
+/
+alter table
+  ccs_case_exception
+add
+  constraint ccs_case_exception_fk_op foreign key
+    ( operator_id )
+  references op_operator
+    ( operator_id )
+/

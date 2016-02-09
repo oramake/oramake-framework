@@ -1,0 +1,35 @@
+-- table: ccs_type_exception
+-- Типы исключений
+create table
+  ccs_type_exception
+(
+  type_exception_code varchar2(10) not null
+  , type_exception_name_rus varchar2(50) not null
+  , type_exception_name_eng varchar2(50) not null
+  , date_ins date default sysdate not null
+  , operator_id integer not null
+  , constraint ccs_type_exception_pk primary key
+      ( type_exception_code )
+    using index tablespace
+      &indexTablespace
+)
+/
+
+comment on table ccs_type_exception is
+  'Типы исключений [ SVN root: Oracle/Module/ConvertNameInCase]'
+/
+comment on column ccs_type_exception.type_exception_code is
+  'Код типа исключения'
+/
+comment on column ccs_type_exception.type_exception_name_rus is
+  'Название типа исключения (рус.)'
+/
+comment on column ccs_type_exception.type_exception_name_eng is
+  'Название типа исключения (англ.)'
+/
+comment on column ccs_type_exception.date_ins is
+  'Дата добавления записи'
+/
+comment on column ccs_type_exception.operator_id is
+  'Идентификатор оператора, добавившего запись'
+/

@@ -1,0 +1,5 @@
+-- sequence: ccs_case_exception_seq
+-- ѕоследовательность дл€ заполнени€ таблицы <ccs_case_exception>
+
+create sequence ccs_case_exception_seq
+/

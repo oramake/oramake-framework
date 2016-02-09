@@ -1,0 +1,80 @@
+-- table: ccs_case_exception
+-- Справочник исключений в склонениях по падежам фамилий, имен и отчеств
+create table
+  ccs_case_exception
+(
+  exception_case_id               integer                             not null
+  , native_case_name              varchar2(50)
+  , genetive_case_name            varchar2(50)
+  , dative_case_name              varchar2(50)
+  , accusative_case_name          varchar2(50)
+  , ablative_case_name            varchar2(50)
+  , preposition_case_name         varchar2(50)
+  , sex_code                      varchar2(1)                         not null
+  , type_exception_code           varchar2(1)                         not null
+  , deleted                       number(1,0)                         default 0 not null
+  , date_ins                      date                                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint ccs_case_exception_pk primary key
+      ( exception_case_id )
+    using index tablespace
+      &indexTablespace
+  , constraint ccs_case_exception_ck_del check ( deleted in (0,1) )
+  , constraint ccs_case_exception_ck_sex check ( sex_code in ('M','W') )
+)
+/
+
+comment on table ccs_case_exception is
+  'Справочник исключений в склонениях по падежам фамилий, имен и отчеств [ SVN root: Oracle/Module/ConvertNameInCase]'
+/
+comment on column ccs_case_exception.exception_case_id is
+  'Уникальный идентификатор записи'
+/
+comment on column ccs_case_exception.native_case_name is
+  'Строка исключение в именительном падеже'
+/
+comment on column ccs_case_exception.genetive_case_name is
+  'Строка исключение в родительном падеже'
+/
+comment on column ccs_case_exception.dative_case_name is
+  'Строка исключение в дательном падеже'
+/
+comment on column ccs_case_exception.accusative_case_name is
+  'Строка исключение в винительном падеже'
+/
+comment on column ccs_case_exception.ablative_case_name is
+  'Строка исключение в творительном падеже'
+/
+comment on column ccs_case_exception.preposition_case_name is
+  'Строка исключение в предложном падеже'
+/
+comment on column ccs_case_exception.sex_code is
+  'Пол M - мужской, F - женский'
+/
+comment on column ccs_case_exception.type_exception_code is
+  'Тип исключения'
+/
+comment on column ccs_case_exception.deleted is
+  'Флаг логического удаления записи'
+/
+comment on column ccs_case_exception.date_ins is
+  'Дата добавления записи'
+/
+comment on column ccs_case_exception.operator_id is
+  'Идентификатор оператора, добавившего запись'
+/
+
+
+-- index: ccs_case_exception_ux_name
+-- Индекс для контроля уникальности ФИО
+create unique index
+  ccs_case_exception_ux_name
+on
+  ccs_case_exception (
+    upper( trim( native_case_name ) )
+    , sex_code
+    , type_exception_code
+  )
+tablespace
+  &indexTablespace
+/

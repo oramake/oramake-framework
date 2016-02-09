@@ -1,0 +1,122 @@
+Format: 1.5
+
+
+Title: ConvertNameInCase
+SubTitle: Версия 1.1.0
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Пакеты  {
+
+   Group: pkg_ConvertNameInCase  {
+
+      File: Спецификация  (no auto-title, pkg_ConvertNameInCase.pks)
+      File: Реализация  (no auto-title, pkg_ConvertNameInCase.pkb)
+      }  # Group: pkg_ConvertNameInCase
+
+   }  # Group: Пакеты
+
+Group: Скрипты  {
+
+   Group: Install  {
+
+      Group: Data  {
+
+         Group: Last  {
+
+            File: ccs_type_exception  (no auto-title, Install/Data/Last/ccs_type_exception.sql)
+            }  # Group: Last
+
+         }  # Group: Data
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: ccs_case_exception  (no auto-title, Install/Schema/Last/ccs_case_exception.tab)
+            File: ccs_case_exception_bi_define  (no auto-title, Install/Schema/Last/ccs_case_exception_bi_define.trg)
+            File: ccs_case_exception_seq  (no auto-title, Install/Schema/Last/ccs_case_exception_seq.sqs)
+            File: ccs_type_exception  (no auto-title, Install/Schema/Last/ccs_type_exception.tab)
+            File: ccs_type_exception_bi_define  (no auto-title, Install/Schema/Last/ccs_type_exception_bi_define.trg)
+            File: v_ccs_case_exception  (no auto-title, Install/Schema/Last/v_ccs_case_exception.vw)
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database View Index: Представления
+      Database Table Index: Таблицы
+      Database Trigger Index: Триггеры
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Constant Index: Константы
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+
