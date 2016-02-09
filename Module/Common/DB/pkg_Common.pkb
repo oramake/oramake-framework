@@ -81,40 +81,13 @@ return varchar2
 is
 begin
   return sys_context( 'USERENV','INSTANCE_NAME');
-end getInstanceName;
-
-/* iproc: getSessionId
-  Получает sid и serial# текущей сессии и сохраняет в переменных пакета.
-  Для компиляции пакета при отсутствии прав на v$session выборка производится
-  через динамический SQL ( в случае отсутствия прав возникнет ошибка при
-  выполнении процедуры).
-*/
-procedure getSessionId
-is
-begin
-  if currentSessionSid is null then
-    -- Динамический SQL для исключения зависимости от прав на v$session
-    execute immediate '
-select
-  ss.sid
-  , ss.serial#
-from
-  v$session ss
-where
-  ss.sid = ( select ms.sid from v$mystat ms where rownum = 1)
-'
-    into
-      currentSessionSid
-      , currentSessionSerial
-    ;
-  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , 'Ошибка при получении sid и serial# текущей сессии.'
+    , 'Ошибка при получении instance_name.'
     , true
   );
-end getSessionId;
+end getInstanceName;
 
 /* func: getSessionSid
   Возвращает SID текущей сессии.
@@ -123,19 +96,54 @@ function getSessionSid
 return number
 is
 begin
-  getSessionId();
+  if currentSessionSid is null then
+    currentSessionSid := sys_context( 'USERENV','SID');
+  end if;
   return currentSessionSid;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении sid текущей сессии.'
+    , true
+  );
 end getSessionSid;
 
 /* func: getSessionSerial
   Возвращает serial# текущей сессии.
+
+  Замечания:
+  - для компиляции пакета при отсутствии прав на v$session выборка производится
+    через динамический SQL ( в случае отсутствия прав будет возникать ошибка
+    при выполнении функции);
 */
 function getSessionSerial
 return number
 is
 begin
-  getSessionId();
+  if currentSessionSerial is null then
+
+    -- Динамический SQL для исключения зависимости от прав на v$session
+    execute immediate '
+select
+  ss.serial#
+from
+  v$session ss
+where
+  ss.sid = :sessionSid
+'
+    into
+      currentSessionSerial
+    using
+      getSessionSid()
+    ;
+  end if;
   return currentSessionSerial;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении serial# текущей сессии.'
+    , true
+  );
 end getSessionSerial;
 
 /* func: getIpAddress

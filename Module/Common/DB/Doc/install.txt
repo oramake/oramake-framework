@@ -11,6 +11,8 @@ LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
+TO_USERNAME                   - имя пользователя, которому выдаются права
+                                ( формат: username)
 
 
 
@@ -61,22 +63,47 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 group: Первоначальная установка
 
-Команды для первоначальной установки последней версии модуля
-(??? нужно заменить на актуальные значения):
+Порядок для первоначальной установки последней версии модуля:
+
+- выдача дополнительных прав на системные объекты ( в TO_USERNAME указывается
+  пользователь, в схему которого будет установлен модуль)
 
 (code)
 
 $ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs
 
+(end)
+
+- установка объектов модуля
+
+(code)
+
 $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@???
 
 (end)
 
-Команда для выдачи прав на объекты модуля для всех пользователей:
-make grant INSTALL_VERSION=Last LOAD_USERID=<ОсновнойПользователь>/???@<TNS> TO_USERNAME=public
+- выдача прав на использование модуля
 
-Команда для добавления smtp-сервера по-умолчанию в acl-лист ( актуально для 11 версии Oracle):
-make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@<TNS> GRANT_SCRIPT=acl-grant TO_USERNAME=<ОсновнойПользователь>
+Команда для выдачи прав на объекты модуля для всех пользователей
+( у пользователя, в схему которого установлен модуль, должна быть системная
+привилегия "CREATE PUBLIC SYNONYM"):
+
+(code)
+
+$ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? TO_USERNAME=public
+
+(end)
+
+- выдача дополнительных прав через ACL
+
+Команда для добавления smtp-сервера по-умолчанию в acl-лист ( актуально для 11
+версии Oracle):
+
+(code)
+
+$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@<TNS> GRANT_SCRIPT=acl-grant TO_USERNAME=<ОсновнойПользователь>
+
+(end)
 
 Для успешного выполнения функции <pkg_Common.getIpAddress> в Oracle 11 и выше
 также требуется выдача дополнительных прав через ACL.

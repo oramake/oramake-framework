@@ -40,6 +40,11 @@ return number;
 /* pfunc: getSessionSerial
   Возвращает serial# текущей сессии.
 
+  Замечания:
+  - для компиляции пакета при отсутствии прав на v$session выборка производится
+    через динамический SQL ( в случае отсутствия прав будет возникать ошибка
+    при выполнении функции);
+
   ( <body::getSessionSerial>)
 */
 function getSessionSerial

@@ -13,10 +13,8 @@ define userName = &1
 
 
 
--- требуется для функции pkg_Common.getSessionId
+-- требуется для успешного выполнения функции pkg_Common.getSessionSerial
 grant select on sys.v_$session to &userName
-/
-grant select on sys.v_$mystat to &userName
 /
 
 
