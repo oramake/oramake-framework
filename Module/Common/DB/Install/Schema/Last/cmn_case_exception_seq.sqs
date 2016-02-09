@@ -1,5 +1,0 @@
--- sequence: cmn_case_exception_seq
--- ѕоследовательность дл€ заполнени€ таблицы <cmn_case_exception>
-
-create sequence cmn_case_exception_seq
-/

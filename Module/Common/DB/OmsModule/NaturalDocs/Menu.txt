@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Common
-SubTitle: Версия 2.7.4
+SubTitle: Версия 2.8.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -108,15 +108,6 @@ Group: Скрипты  {
          File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
          }  # Group: Config
 
-      Group: Data  {
-
-         Group: Last  {
-
-            File: cmn_type_exception  (no auto-title, Install/Data/Last/cmn_type_exception.sql)
-            }  # Group: Last
-
-         }  # Group: Data
-
       Group: Grant  {
 
          Group: Last  {
@@ -132,17 +123,11 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
-            File: cmn_case_exception  (no auto-title, Install/Schema/Last/cmn_case_exception.tab)
-            File: cmn_case_exception_bi_define  (no auto-title, Install/Schema/Last/cmn_case_exception_bi_define.trg)
-            File: cmn_case_exception_seq  (no auto-title, Install/Schema/Last/cmn_case_exception_seq.sqs)
             File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
             File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
             File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
-            File: cmn_type_exception  (no auto-title, Install/Schema/Last/cmn_type_exception.tab)
-            File: cmn_type_exception_bi_define  (no auto-title, Install/Schema/Last/cmn_type_exception_bi_define.trg)
             File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
             File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
-            File: v_cmn_case_exception  (no auto-title, Install/Schema/Last/v_cmn_case_exception.vw)
             }  # Group: Last
 
          }  # Group: Schema
@@ -156,11 +141,8 @@ Group: Индекс  {
    Group: Объекты БД  {
 
       Database Type Index: Типы
-      Database View Index: Представления
       Database Table Index: Таблицы
-      Database Trigger Index: Триггеры
       Database Index Index: Индексы
-      Database Sequence Index: Последовательности
       }  # Group: Объекты БД
 
    Group: Открытые объявления  {

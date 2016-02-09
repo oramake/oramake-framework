@@ -1,8 +1,0 @@
-alter table
-  cmn_type_exception
-add
-  constraint cmn_type_exception_fk_op foreign key
-    ( operator_id )
-  references op_operator
-    ( operator_id )
-/
