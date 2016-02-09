@@ -112,12 +112,10 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??
 
 group: Удаление модуля из БД
 
-Порядок удаления модуля из БД:
-
-- удаление объектов модуля
+Команда для удаления модуля из БД:
 
 (code)
 
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@???
 
 (end)
