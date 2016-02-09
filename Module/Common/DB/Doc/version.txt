@@ -8,6 +8,10 @@ group: 2.8.0 ( 2016-02-08)
     св€зи с переносом его в отдельный модуль ConvertNameInCase ( дл€ исключени€
     зависимости модул€ Common от модул€ AccessOperator).
 
+[*] ќпределение имени экземпл€ра в функции <pkg_Common.getInstanceName> стало
+    выполн€тьс€ с помощью sys_context вместо dbms_utility.get_parameter_value
+    ( т.к. этот способ не требует прав на v_$parameter).
+
 
 
 group: 2.7.4 ( 2015-01-30)

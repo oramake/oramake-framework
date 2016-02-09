@@ -114,6 +114,7 @@ Group: Скрипты  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
             File: acl-grant  (no auto-title, Install/Grant/Last/acl-grant.sql)
+            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
          }  # Group: Grant

@@ -22,7 +22,7 @@ Module_Name constant varchar2(30) := 'Common';
 /* group: Параметры сессии */
 
 /* pfunc: getInstanceName
-  Возвращает имя текущей базы.
+  Возвращает имя текущей базы ( значение параметра INSTANCE_NAME).
 
   ( <body::getInstanceName>)
 */

@@ -74,31 +74,13 @@ nextUpdateLongopsTick number := null;
 /* group: Параметры сессии */
 
 /* func: getInstanceName
-  Возвращает имя текущей базы.
+  Возвращает имя текущей базы ( значение параметра INSTANCE_NAME).
 */
 function getInstanceName
 return varchar2
 is
-
-  -- Имя текущего экземпляра
-  instanceName varchar2(16);
-
-  -- Временная переменная целого типа
-  intValue binary_integer;
-
 begin
-  -- Функция возвращает значение указанного параметра в переменные intValue и
-  -- strValue и тип параметра: 0 - integer/boolean 1 - string/file
-  if dbms_utility.get_parameter_value( 'instance_name', intValue, instanceName)
-      = 1 then
-    null;
-  else
-    raise_application_error(
-      pkg_Error.TypeMismatch
-      , 'Параметр "instance_name" не является типом String.'
-    );
-  end if;
-  return instanceName;
+  return sys_context( 'USERENV','INSTANCE_NAME');
 end getInstanceName;
 
 /* iproc: getSessionId
