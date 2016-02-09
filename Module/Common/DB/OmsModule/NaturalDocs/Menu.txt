@@ -124,6 +124,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
             File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
             File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)

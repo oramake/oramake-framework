@@ -25,9 +25,9 @@ JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
 
 
 
-ѕеред установкой модуль останавливает выполнение заданий в Ѕƒ ( см.
-<Install/Config/stop-batches.sql>), а после успешной установки восстанавливает
-их выполнение ( см. <Install/Config/resume-batches.sql>).
+ѕеред установкой обновлени€ модул€ останавливатс€ выполнение заданий в Ѕƒ ( см.
+<Install/Config/stop-batches.sql>), а после успешной установки
+восстанавливаетс€ их выполнение ( см. <Install/Config/resume-batches.sql>).
 ѕри повторном запуске установки возможно по€вление сообщени€
 "Warning. There's a non-zero value saved in view...",
 которое говорит о том, что используетс€ значение параметра JOB_QUEUE_PROCESSES,
@@ -113,3 +113,15 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@<TNS> GRANT_SCRIPT=acl-gra
   настроек, например, SMTP-сервера) нужно модифицировать скрипт
   Install/Data/Last/cmn_database_config.sql, заполн€ющий таблицу
   <cmn_database_config> при установке;
+
+
+
+group: ”даление модул€ из Ѕƒ
+
+ оманда дл€ удалени€ модул€ из Ѕƒ:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@???
+
+(end)
