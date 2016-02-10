@@ -440,11 +440,20 @@ load-clean: load-clean.oms
 # При первоначальной установке модуля в БД должно указываться значение "Last".
 INSTALL_VERSION  =
 
+# build var: NO_ACCESSOPERATOR
+# Флаг отсутствия в БД модуля AccessOperator.
+# Возможные значения:
+# 1 - отсутствует ( при этом не создаются внешние ключи на таблицу op_operator)
+# 0 - присутствует ( по умолчанию)
+#
+NO_ACCESSOPERATOR =
+
 # Список дополнительных параметров установки, используемых в модуле.
 # Обеспечивает сохранение в логе установки значений дополнительных параметров
 # ( в случае наличия у них непустых значений).
 # Формат: список имен параметров с пробелом в качестве разделителя.
-installAddonOptionList =
+installAddonOptionList = \
+  NO_ACCESSOPERATOR \
 
 
 # Список объектов для обязательной проверки блокировок перед установкой и
@@ -829,6 +838,7 @@ uninstallSchemaTarget = \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Common/revert.sql) \
   ) \
   $(addsuffix .$(ru3), \
   ) \
@@ -998,12 +1008,3 @@ grant: grant.oms
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk
-
-uninstall:  \
-  $(addsuffix .$(ru),  \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql)    \
-  )  \
-  $(addsuffix .$(ru2),  \
-  )        \
-  $(addsuffix .$(ru3),  \
-  )

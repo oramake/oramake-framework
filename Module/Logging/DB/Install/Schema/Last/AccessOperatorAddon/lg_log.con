@@ -1,0 +1,9 @@
+alter table
+  lg_log
+add constraint
+  lg_log_fk_operator_id
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

@@ -60,6 +60,11 @@ Root_LoggerUid constant varchar2(1) := '.';
 */
 lg lg_logger_t := null;
 
+/* ivar: isAccessOperatorFound
+  Признак доступности модуля AccessOperator.
+*/
+isAccessOperatorFound boolean := null;
+
 /* ivar : previousDebugTimeStamp
   Переменная для хранения последней даты вывода отадочного сообщения
 */
@@ -80,6 +85,13 @@ colLogger TColLogger;
   Загружается при первом обращении к пакету.
 */
 colLevelOrder TColLevelOrder;
+
+/* ivar: lastParentLogId
+  Значение поля parent_log_id последней вставленной в таблицу <lg_log>
+  записи
+*/
+lastParentLogId integer := null;
+
 
 
 
@@ -278,6 +290,58 @@ end initialize;
 
 
 
+/* group: Использование модуля AccessOperator */
+
+/* func: getCurrentOperatorId
+  Возвращает Id текущего зарегистрированного оператора при доступности модуля
+  AccessOperator.
+
+  Возврат:
+  Id текущего оператора либо null в случае недоступности модуля AccessOperator
+  или отсутствии текущего зарегистрированного оператора.
+*/
+function getCurrentOperatorId
+return integer
+is
+
+  -- Id текущего оператора
+  operatorId integer := null;
+
+--getCurrentOperatorId
+begin
+  if coalesce( isAccessOperatorFound, true) then
+    execute immediate
+      'begin :operatorId := pkg_Operator.getCurrentUserId; end;'
+    using
+      out operatorId
+    ;
+  end if;
+  return operatorId;
+exception when others then
+  if isAccessOperatorFound is null
+      and (
+        -- Не проверяем точно текст сообщения, т.к. он зависит от настроек NLS
+        SQLERRM like
+          -- PLS-00201: identifier 'PKG_OPERATOR' must be declared
+          '%PLS-00201: % ''PKG_OPERATOR'' %'
+        or SQLERRM like
+          -- PLS-00201: identifier 'PKG_OPERATOR.%' must be declared
+          '%PLS-00201: % ''PKG_OPERATOR.%'' %'
+        or SQLERRM like
+          -- PLS-00904: insufficient privilege to access object %.PKG_OPERATOR%
+          '%PLS-00904: %.PKG_OPERATOR%'
+        or SQLERRM like
+          -- ORA-06508: PL/SQL: could not find program unit being called:
+          '%ORA-06508: PL/SQL: %:%'
+      )
+      then
+    isAccessOperatorFound := false;
+  end if;
+  return null;
+end getCurrentOperatorId;
+
+
+
 /* group: Настройки логирования */
 
 /* proc: setDestination
@@ -294,7 +358,7 @@ begin
   if destinationCode is not null
       and destinationCode not in (
         pkg_Logging.DbmsOutput_DestinationCode
-        , pkg_Logging.Scheduler_DestinationCode
+        , pkg_Logging.Table_DestinationCode
       )
   then
     raise_application_error(
@@ -308,6 +372,21 @@ end setDestination;
 
 
 /* group: Логирование сообщений */
+
+/* proc: setLastParentLogId
+  Сохраняет значение parent_log_id последней вставленной записи в переменной
+  пакета.
+
+  Параметры:
+  parentLogId                 - Id родительской записи лога
+*/
+procedure setLastParentLogId(
+  parentLogId integer
+)
+is
+begin
+  lastParentLogId := parentLogId;
+end setLastParentLogId;
 
 /* ifunc: logDBOut
   Выводит сообщение через dbms_output.
@@ -425,88 +504,64 @@ begin
   previousDebugTimeStamp := curTime;
 end logDebugDBOut;
 
-/* ifunc: logScheduler
-  Выводит сообщение в лог модуля Scheduler.
+/* ifunc: logTable
+  Добавляет сообщение в таблицу лога.
 
   Параметры:
   levelCode                   - код уровня сообщения
   messageText                 - текст сообщения
 */
-procedure logScheduler(
+procedure logTable(
   levelCode varchar2
   , messageText varchar2
 )
 is
 
-  -- Признак установки флага отладки в Scheduler для вывода сообщения
-  isSetDebug boolean;
-
---LogScheduler
-
-  function isOperatorLoggedIn
-  return boolean
-  -- Проверка логина оператора
-  is
-    operatorId integer;
-  begin
-    execute immediate
-      'begin :operatorId := pkg_Operator.GetCurrentUserId;end;'
-    using out
-      operatorId;
-    return ( operatorId is not null);
-  exception when others then
-    return false;
-  end isOperatorLoggedIn;
-
-  procedure writeLog(
-    operatorId integer
-  )
-  is
-  -- Добавляет сообщение в лог Scheduler
-  begin
-    pkg_Scheduler.WriteLog(
-      messageTypeCode =>
-        case levelCode
-          when pkg_Logging.Fatal_LevelCode then
-            pkg_Scheduler.Error_MessageTypeCode
-          when pkg_Logging.Error_LevelCode then
-            pkg_Scheduler.Error_MessageTypeCode
-          when pkg_Logging.Warning_LevelCode then
-            pkg_Scheduler.Warning_MessageTypeCode
-          when pkg_Logging.Info_LevelCode then
-            pkg_Scheduler.Info_MessageTypeCode
-          when pkg_Logging.Debug_LevelCode then
-            pkg_Scheduler.Debug_MessageTypeCode
-          when pkg_Logging.Trace_LevelCode then
-            pkg_Scheduler.Debug_MessageTypeCode
-        end
-      , messageText => messageText
-      , operatorId => operatorId
-    );
-  end writeLog;
+  pragma autonomous_transaction;
 
 begin
-  if colLevelOrder( levelCode) < colLevelOrder( pkg_Logging.Info_LevelCode)
-      and nullif( 1, pkg_Scheduler.getDebugFlag()) is not null
-      then
-    pkg_Scheduler.setDebugFlag( 1);
-    isSetDebug := true;
-  end if;
-  begin
-    writeLog( operatorId => null);
-  exception when others then
-    -- Если ошибка связана с регистрацией оператора
-    if not isOperatorLoggedIn() then
-      -- Лог от имени сервера
-      writeLog( operatorId => 1);
-    else
-      raise;
-    end if;
-  end;
-  if isSetDebug then
-    pkg_Scheduler.setDebugFlag( 0);
-  end if;
-end logScheduler;
+  insert into
+    lg_log
+  (
+    parent_log_id
+    , message_type_code
+    , message_text
+  )
+  values
+  (
+    -- временное решение для более-менее корректной поддержки использования
+    -- иерархического лога в модуле Scheduler
+    lastParentLogId
+    , case levelCode
+        when pkg_Logging.Fatal_LevelCode then
+          Error_MessageTypeCode
+        when pkg_Logging.Error_LevelCode then
+          Error_MessageTypeCode
+        when pkg_Logging.Warning_LevelCode then
+          Warning_MessageTypeCode
+        when pkg_Logging.Info_LevelCode then
+          Info_MessageTypeCode
+        when pkg_Logging.Debug_LevelCode then
+          Debug_MessageTypeCode
+        when pkg_Logging.Trace_LevelCode then
+          Debug_MessageTypeCode
+      end
+    , substr( messageText, 1, 4000)
+  );
+  commit;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при записи в сообщения в таблицу лога:'
+        || chr( 10)
+        || ' parent_log_id=' || lastParentLogId
+        || ' , levelCode=' || levelCode
+        || ' , length(messageText)=' || length( messageText)
+        || ' , messageText ( first 200 char):'
+          || chr( 10) || substr( messageText, 1, 200)
+    , true
+  );
+end logTable;
 
 /* proc: logMessage
   Логирует сообщение.
@@ -519,9 +574,7 @@ end logScheduler;
 
   Замечания:
   - текущая реализация по умолчанию выводит сообщения на промышленной БД
-    в лог модуля Scheduler, а на тестовой БД также через dbms_output, при
-    этом уровень логирования в модуле Scheduler не контролируется ( по
-    умолчанию отладочные сообщения в нем игнорируются);
+    в таблицу <lg_log>, а на тестовой БД также через dbms_output
 */
 procedure logMessage(
   levelCode varchar2
@@ -529,11 +582,14 @@ procedure logMessage(
   , loggerUid varchar2 := null
 )
 is
-                                       -- Ошибка logDebugDBOut
+
+  -- Ошибка logDebugDBOut
   dbOutError varchar2( 4000);
+
 begin
   if isMessageEnabled( coalesce( loggerUid, Root_LoggerUid), levelCode) then
-                                        -- Вывод через dbms_output
+
+    -- Вывод через dbms_output
     if forcedDestinationCode = pkg_Logging.DbmsOutput_DestinationCode
        or nullif( pkg_Common.IsProduction, 0) is null
     then
@@ -545,20 +601,21 @@ begin
         dbOutError := sqlerrm;
       end;
     end if;
-                                        -- Вывод через Scheduler
-    if nullif( forcedDestinationCode, pkg_Logging.Scheduler_DestinationCode)
+
+    -- Вывод в таблицу лога
+    if nullif( forcedDestinationCode, pkg_Logging.Table_DestinationCode)
       is null
     then
-                                        -- Если неуспешный вызов
-                                        -- logDebugDBOut
+
+      -- Если неуспешный вызов logDebugDBOut
       if dbOutError is not null then
-        logScheduler( levelCode
+        logTable( levelCode
           , 'Ошибка вывода в буфер dbms_output: '
             || '"'  || dbOutError || '"' || ' Сообщение: '
             || '"' || messageText || '"'
         );
       end if;
-      logScheduler(
+      logTable(
         levelCode
         , messageText
       );

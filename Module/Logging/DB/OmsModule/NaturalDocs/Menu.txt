@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Logging
-SubTitle: Версия 1.3.0
+SubTitle: Версия 1.4.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -67,23 +67,6 @@ Group: Объектные типы  {
 
 Group: Пакеты  {
 
-   Group: Install  {
-
-      Group: Config  {
-
-         Group: Last  {
-
-            Group: pkg_Scheduler  {
-
-               File: Спецификация  (no auto-title, Install/Config/Last/pkg_Scheduler.pks)
-               }  # Group: pkg_Scheduler
-
-            }  # Group: Last
-
-         }  # Group: Config
-
-      }  # Group: Install
-
    Group: pkg_Logging  {
 
       File: Спецификация  (no auto-title, pkg_Logging.pks)
@@ -130,8 +113,7 @@ Group: Скрипты  {
 
          Group: Last  {
 
-            File: all-to-public  (no auto-title, Install/Grant/Last/all-to-public.sql)
-            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
             }  # Group: Last
 
          }  # Group: Grant
@@ -140,9 +122,20 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Common  {
+
+               File: revert  (no auto-title, Install/Schema/Last/Common/revert.sql)
+               }  # Group: Common
+
             File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: lg_destination  (no auto-title, Install/Schema/Last/lg_destination.tab)
             File: lg_level  (no auto-title, Install/Schema/Last/lg_level.tab)
+            File: lg_log  (no auto-title, Install/Schema/Last/lg_log.tab)
+            File: lg_log_ai_save_parent  (no auto-title, Install/Schema/Last/lg_log_ai_save_parent.trg)
+            File: lg_log_bi_define  (no auto-title, Install/Schema/Last/lg_log_bi_define.trg)
+            File: lg_log_seq  (no auto-title, Install/Schema/Last/lg_log_seq.sqs)
+            File: lg_message_type  (no auto-title, Install/Schema/Last/lg_message_type.tab)
             }  # Group: Last
 
          }  # Group: Schema
@@ -157,6 +150,8 @@ Group: Индекс  {
 
       Database Table Index: Таблицы
       Database Trigger Index: Триггеры
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
       }  # Group: Объекты БД
 
    Group: Открытые объявления  {

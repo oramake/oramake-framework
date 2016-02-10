@@ -13,13 +13,8 @@ begin
       from dual
       union all
       select
-        pkg_Logging.Scheduler_DestinationCode
-        , 'Лог модуля Scheduler'
-      from dual
-      union all
-      select
         pkg_Logging.Table_DestinationCode
-        , 'Таблица в БД'
+        , 'Таблица лога в БД'
       from dual
       )
     minus
@@ -49,4 +44,3 @@ begin
   dbms_output.put_line( 'changed: ' || SQL%ROWCOUNT);
 end;
 /
-

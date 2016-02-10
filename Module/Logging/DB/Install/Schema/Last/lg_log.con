@@ -1,0 +1,25 @@
+alter table
+  lg_log
+add constraint
+  lg_log_fk_parent_log_id
+foreign key
+  ( parent_log_id)
+references
+  lg_log (
+    log_id
+  )
+/
+
+alter table
+  lg_log
+add constraint
+  lg_log_fk_message_type_code
+foreign key
+  ( message_type_code)
+references
+  lg_message_type (
+    message_type_code
+  )
+/
+
+@oms-run Install/Schema/Last/AccessOperatorAddon/lg_log.con

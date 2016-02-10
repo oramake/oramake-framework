@@ -5,12 +5,16 @@ create or replace package pkg_Logging is
   SVN root: Oracle/Module/Logging
 */
 
+
+
 /* group: Константы */
 
 /* const: Module_Name
   Название модуля, к которому относится пакет.
 */
 Module_Name constant varchar2(30) := 'Logging';
+
+
 
 /* group: Уровни сообщений лога */
 
@@ -54,6 +58,8 @@ Trace_LevelCode varchar2(10) := 'TRACE';
 */
 All_LevelCode varchar2(10) := 'ALL';
 
+
+
 /* group: Назначения вывода */
 
 /* const: DbmsOutput_DestinationCode
@@ -61,15 +67,12 @@ All_LevelCode varchar2(10) := 'ALL';
 */
 DbmsOutput_DestinationCode varchar2(10) := 'DBOUT';
 
-/* const: Scheduler_DestinationCode
-  Код назначения "Лог модуля Scheduler".
-*/
-Scheduler_DestinationCode varchar2(10) := 'SCH';
-
 /* const: Table_DestinationCode
-  Код назначения "Таблица в БД".
+  Код назначения "Таблица лога в БД".
 */
 Table_DestinationCode varchar2(10) := 'TAB';
+
+
 
 /* group: Функции */
 
@@ -97,7 +100,7 @@ procedure LogDebug( Message varchar2 );
   Получает информацию о стеке ошибок
   ( <body::GetErrorStack>).
 */
-function GetErrorStack( 
+function GetErrorStack(
   isStackPreserved integer := null
 )
 return varchar2;

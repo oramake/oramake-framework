@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>Logging</name>
   <description>Обеспечивает логирование работы прикладных модулей</description>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
   <prefix>lg</prefix>
   <team>
     <programmerDB></programmerDB>
@@ -34,7 +34,7 @@
     <infrastructure></infrastructure>
   </diagram>
   <depend>
-    <module></module>
+    <module>Oracle/Module/Common</module>
     <link></link>
   </depend>
   <image></image>

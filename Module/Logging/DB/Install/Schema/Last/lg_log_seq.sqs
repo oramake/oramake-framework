@@ -1,0 +1,7 @@
+-- sequence: lg_log_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <lg_log>.
+create sequence
+  lg_log_seq
+cache 100
+/

@@ -7,7 +7,52 @@ create or replace package pkg_LoggingInternal is
 
 
 
+/* group: Константы */
+
+
+
+/* group: Типы сообщений лога */
+
+/* const: Error_MessageTypeCode
+  Код типа сообщений "Ошибка".
+*/
+Error_MessageTypeCode constant varchar2(10) := 'ERROR';
+
+/* const: Info_MessageTypeCode
+  Код типа сообщений "Информация".
+*/
+Info_MessageTypeCode constant varchar2(10) := 'INFO';
+
+/* const: Warning_MessageTypeCode
+  Код типа сообщений "Предупреждение".
+*/
+Warning_MessageTypeCode constant varchar2(10) := 'WARNING';
+
+/* const: Debug_MessageTypeCode
+  Код типа сообщений "Отладка".
+*/
+Debug_MessageTypeCode constant varchar2(10) := 'DEBUG';
+
+
+
 /* group: Функции */
+
+
+
+/* group: Использование модуля AccessOperator */
+
+/* pfunc: getCurrentOperatorId
+  Возвращает Id текущего зарегистрированного оператора при доступности модуля
+  AccessOperator.
+
+  Возврат:
+  Id текущего оператора либо null в случае недоступности модуля AccessOperator
+  или отсутствии текущего зарегистрированного оператора.
+
+  ( <body::getCurrentOperatorId>)
+*/
+function getCurrentOperatorId
+return integer;
 
 
 
@@ -29,6 +74,19 @@ procedure setDestination(
 
 /* group: Логирование сообщений */
 
+/* pproc: setLastParentLogId
+  Сохраняет значение parent_log_id последней вставленной записи в переменной
+  пакета.
+
+  Параметры:
+  parentLogId                 - Id родительской записи лога
+
+  ( <body::setLastParentLogId>)
+*/
+procedure setLastParentLogId(
+  parentLogId integer
+);
+
 /* pproc: logMessage
   Логирует сообщение.
 
@@ -40,9 +98,7 @@ procedure setDestination(
 
   Замечания:
   - текущая реализация по умолчанию выводит сообщения на промышленной БД
-    в лог модуля Scheduler, а на тестовой БД также через dbms_output, при
-    этом уровень логирования в модуле Scheduler не контролируется ( по
-    умолчанию отладочные сообщения в нем игнорируются);
+    в таблицу <lg_log>, а на тестовой БД также через dbms_output
 
   ( <body::logMessage>)
 */
