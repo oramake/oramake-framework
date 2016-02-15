@@ -881,16 +881,15 @@ begin
 end split;
 
 /* func: split( CLOB)
-  Перегруженная функция разделяет строку по заданному разделителю и
-  преобразует к таблице для обработки и использования в запросах.
-  Функция аналогична функции <split>, но обрабатывает входную строку типа CLOB.
+  Функция разделяет объект типа Clob по заданному разделителю и преобразует к таблице
+  для обработки и использования в запросах.
 
-  Параметры:
-  initClob                    - входная строка для разбора
-  delimiter                   - разделитель
+  Входные параметры:
+    initClob                    - входной объект типа Clob для разбора
+    delimiter                   - разделитель
 
-  Возвращаемые значения:
-  nested table со значениями преобразованной строки.
+  Возврат:
+    nested table со значениями преобразованного объекта типа Clob.
 */
 function split(
   initClob clob
@@ -899,19 +898,39 @@ function split(
 return cmn_string_table_t
 pipelined
 is
+  currentIndex pls_integer;
+  nextIndex pls_integer := 1;
 
-  lIdx pls_integer;
-  lList clob :=  initClob;
-
+-- split
 begin
-  loop
-    lIdx := dbms_lob.instr(lList,delimiter);
+  for safeLoopIndex in 1..100000 loop
+    currentIndex := nextIndex;
+    nextIndex := dbms_lob.instr( delimiter || initClob, delimiter, currentIndex + length( delimiter));
 
-    if lIdx > 0 then
-      pipe row( dbms_lob.substr( lList, lIdx - 1));
-      lList := dbms_lob.substr( lList, 32767, lIdx + length( delimiter));
+    if safeLoopIndex >= 100000 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Сработала защита от зацикливания '
+          || '( ' || to_char( safeLoopIndex) || ' итераций)'
+      );
+    end if;
+
+    if nextIndex > 0 then
+      pipe row(
+        dbms_lob.substr(
+          delimiter || initClob
+          , nextIndex - currentIndex - length( delimiter)
+          , currentIndex + length( delimiter)
+        )
+      );
     else
-      pipe row( dbms_lob.substr( lList));
+      pipe row(
+        dbms_lob.substr(
+          delimiter || initClob
+          , dbms_lob.getlength( delimiter || initClob) - currentIndex
+          , currentIndex + length( delimiter)
+        )
+      );
       exit;
     end if;
   end loop;
