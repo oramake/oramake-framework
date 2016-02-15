@@ -76,6 +76,11 @@ Group: Скрипты  {
             File: ccs_type_exception  (no auto-title, Install/Data/Last/ccs_type_exception.sql)
             }  # Group: Last
 
+         Group: 1.0.0  {
+
+            File: ccs_case_exception  (no auto-title, Install/Data/1.0.0/ccs_case_exception.sql)
+            }  # Group: 1.0.0
+
          }  # Group: Data
 
       Group: Schema  {
