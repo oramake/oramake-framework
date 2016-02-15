@@ -79,7 +79,7 @@ Women_SexCode constant varchar2(10) := 'W';
     exceptionCaseId             - ИД записи исключения
     stringException             - Строка исключения
     stringNativeCase            - Строка исключения в именительном падеже
-    strConvertInCase            - Строка, полученная склонением функцией
+    stringConvertInCase         - Строка, полученная склонением функцией
                                   convertNameInCase
     formatString                - формат строки для преобразования (
                                   "L"- строка содержит фамилию
@@ -87,10 +87,10 @@ Women_SexCode constant varchar2(10) := 'W';
                                   , "M" - строка содержит отчество)
                                   , если параметр null, то считаем,
                                   что формат строки "LFM"
-    sexCode                     - Пол (M – мужской, W - женский)
-    caseCode                    - код падежа (NAT – именительный
+    sexCode                     - Пол (M - мужской, W - женский)
+    caseCode                    - код падежа (NAT - именительный
                                   , GEN - родительный
-                                  , DAT - дательный, ACC – винительный
+                                  , DAT - дательный, ACC - винительный
                                   , ABL - творительный, PREP - предложный)
     operatorId                  - ИД оператора
 
