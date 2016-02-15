@@ -5,6 +5,18 @@ create or replace trigger lg_log_ai_save_parent
   on lg_log
   for each row
 begin
-  pkg_LoggingInternal.setLastParentLogId( :new.parent_log_id);
+  pkg_LoggingInternal.setLastParentLogId(
+    case
+      -- Поддержка совместимости с Scheduler
+      when :new.message_type_code in (
+            'BSTART'
+            , 'JSTART'
+          )
+          then
+        :new.log_id
+      else
+        :new.parent_log_id
+    end
+  );
 end;
 /
