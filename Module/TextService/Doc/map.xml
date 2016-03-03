@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>TextService</name>
+  <description>
+  Модуль предназначен для “проксирования” методов Oracle Text, которые могут быть вызваны только под CTXSYS.  Модуль устанавливается в схему
+  CTXSYS и вызывается из прикладных схем.
+  </description>
+  <version>1.2.0</version>
+  <prefix>tsr</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/TextService</path>
+  <initialPath>Oracle/Module/TextService@854</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <package>pkg_TextService</package>
+      <package>pkg_TextUtility</package>
+    </database>
+  </db>
+  <app></app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>
