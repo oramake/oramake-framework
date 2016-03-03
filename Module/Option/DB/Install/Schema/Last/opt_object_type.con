@@ -1,0 +1,19 @@
+alter table
+  opt_object_type
+add constraint
+  opt_object_type_fk_module_id
+foreign key
+  ( module_id)
+references
+  mod_module ( module_id)
+/
+
+alter table
+  opt_object_type
+add constraint
+  opt_object_type_fk_operator_id
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

@@ -1,0 +1,4665 @@
+create or replace type body opt_option_list_t is
+/* db object type body: opt_option_list_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Защищенные объявления */
+
+/* proc: initialize
+  Инициализирует экземпляр объекта.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относятся параметры
+  objectShortName             - короткое название объекта модуля, к которому
+                                относятся параметры ( по умолчанию относящиеся
+                                ко всему модулю)
+  objectTypeShortName         - короткое название типа объекта
+                                ( нужно указывать если указан objectShortName,
+                                  по умолчанию отсутствует)
+  objectTypeModuleId          - Id модуля, к которому относится тип объекта
+                                ( по умолчанию к тому же модулю, что и
+                                  параметры)
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  oldModuleName               - имя модуля для использования с устаревшими
+                                функциями ( null если для создания объекта
+                                использовался новый интерфейс ( по умолчанию))
+*/
+member procedure initialize(
+  moduleId integer
+  , objectShortName varchar2 := null
+  , objectTypeShortName varchar2 := null
+  , objectTypeModuleId integer := null
+  , usedOperatorId integer := null
+  , oldModuleName varchar2 := null
+)
+is
+begin
+  logger := lg_logger_t.getLogger(
+    moduleName => pkg_OptionMain.Module_Name
+    , objectName => 'opt_option_list_t'
+  );
+  if moduleId is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Не указан Id модуля, к которому относятся параметры.'
+    );
+  end if;
+  if objectShortName is not null and objectTypeShortName is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Не указано короткое название типа объекта ( objectTypeShortName).'
+    );
+  elsif objectShortName is null and objectTypeShortName is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Не указано короткое название объекта ( objectShortName).'
+    );
+  end if;
+  self.moduleId := moduleId;
+  self.objectShortName := objectShortName;
+  self.objectTypeId :=
+    case when objectShortName is not null then
+      pkg_OptionMain.getObjectTypeId(
+        objectTypeShortName   => objectTypeShortName
+        , moduleId            => coalesce( objectTypeModuleId, moduleId)
+      )
+    end
+  ;
+  self.usedOperatorId := usedOperatorId;
+  self.oldModuleName := oldModuleName;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при инциализации набора настроечных параметров ('
+        || ' moduleId=' || moduleId
+        || ', objectShortName="' || objectShortName || '"'
+        || ', objectTypeShortName="' || objectTypeShortName || '"'
+        || ', objectTypeModuleId=' || objectTypeModuleId
+        || ', usedOperatorId=' || usedOperatorId
+        || ', oldModuleName="' || oldModuleName || '"'
+        || ').'
+      )
+    , true
+  );
+end initialize;
+
+
+
+/* group: Открытые объявления */
+
+
+
+/* group: Статические функции */
+
+
+
+/* group: Уровни доступа через интерфейс */
+
+/* func: getFullAccessLevelCode
+  Возвращает код уровня доступа "Полный доступ".
+*/
+static function getFullAccessLevelCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.Full_AccessLevelCode;
+end getFullAccessLevelCode;
+
+/* func: getReadAccessLevelCode
+  Возвращает код уровня доступа "Только для чтения".
+*/
+static function getReadAccessLevelCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.Read_AccessLevelCode;
+end getReadAccessLevelCode;
+
+/* func: getValueAccessLevelCode
+  Возвращает код уровня доступа "Изменение значения".
+*/
+static function getValueAccessLevelCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.Value_AccessLevelCode;
+end getValueAccessLevelCode;
+
+
+
+/* group: Типы значений параметров */
+
+/* func: getDateValueTypeCode
+  Возвращает код типа значения "Дата ( со временем)".
+*/
+static function getDateValueTypeCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.Date_ValueTypeCode;
+end getDateValueTypeCode;
+
+/* func: getNumberValueTypeCode
+  Возвращает код типа значения "Число".
+*/
+static function getNumberValueTypeCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.Number_ValueTypeCode;
+end getNumberValueTypeCode;
+
+/* func: getStringValueTypeCode
+  Возвращает код типа значения "Строка".
+*/
+static function getStringValueTypeCode
+return varchar2
+is
+begin
+  return pkg_OptionMain.String_ValueTypeCode;
+end getStringValueTypeCode;
+
+
+
+/* group: Типы объектов */
+
+/* func: getPlsqlObjectTypeSName
+  Возвращает короткое название типа объекта "PL/SQL объект".
+*/
+static function getPlsqlObjectTypeSName
+return varchar2
+is
+begin
+  return pkg_OptionMain.PlsqlObject_ObjTypeSName;
+end getPlsqlObjectTypeSName;
+
+
+
+/* group: Изменение значения параметра */
+
+/* proc: updateDateValue
+  Изменяет значение настроечного параметра типа дата.
+
+  Параметры:
+  valueId                     - Id значения
+  dateValue                   - значение параметра типа дата
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+static procedure updateDateValue(
+  valueId integer
+  , dateValue date
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.updateValue(
+    valueId                 => valueId
+    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+    , dateValue             => dateValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при изменении значения параметра типа дата.'
+    , true
+  );
+end updateDateValue;
+
+/* proc: updateNumberValue
+  Изменяет числовое значение настроечного параметра.
+
+  Параметры:
+  valueId                     - Id значения
+  numberValue                 - числовое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+static procedure updateNumberValue(
+  valueId integer
+  , numberValue number
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.updateValue(
+    valueId                 => valueId
+    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+    , numberValue           => numberValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при изменении числового значения параметра.'
+    , true
+  );
+end updateNumberValue;
+
+/* proc: updateStringValue
+  Изменяет строковое значение настроечного параметра.
+
+  Параметры:
+  valueId                     - Id значения
+  stringValue                 - строковое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+static procedure updateStringValue(
+  valueId integer
+  , stringValue varchar2
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.updateValue(
+    valueId                 => valueId
+    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+    , stringValue           => stringValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при изменении строкового значения параметра.'
+    , true
+  );
+end updateStringValue;
+
+
+
+/* group: Удаление значения по value_id */
+
+/* proc: deleteValue( VALUE_ID)
+  Удаляет значение настроечного параметра.
+
+  Параметры:
+  valueId                     - Id значения
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+static procedure deleteValue(
+  valueId integer
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.deleteValue(
+    valueId                 => valueId
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при удалении значения параметра.'
+    , true
+  );
+end deleteValue;
+
+
+
+/* group: Конструкторы */
+
+/* func: opt_option_list_t
+  Создает набор настроечных параметров и устанавливает его свойства.
+
+  Параметры:
+  findModuleString            - строка для поиска модуля (
+                                может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+  objectShortName             - короткое название объекта модуля, к которому
+                                относятся параметры ( по умолчанию относящиеся
+                                ко всему модулю)
+  objectTypeShortName         - короткое название типа объекта
+                                ( нужно указывать если указан objectShortName,
+                                  по умолчанию отсутствует)
+  objectTypeFindModuleString  - строка для поиска модуля типа объекта
+                                ( аналогично findModuleString, по умолчанию
+                                  отсутствует)
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  moduleName                  - название модуля ( например "ModuleInfo")
+  moduleSvnRoot               - путь к корневому каталогу модуля в Subversion
+                                ( начиная с имени репозитария, например
+                                "Oracle/Module/ModuleInfo")
+  objectTypeModuleName        - название модуля типа объекта
+                                ( аналогично moduleName, по умолчанию
+                                  отсутствует)
+  objectTypeModuleSvnRoot     - путь к корневому каталогу модуля типа объекта
+                                в Subversion ( аналогично moduleSvnRoot, по
+                                умолчанию отсутствует)
+
+  Замечания:
+  - для определения модуля должен быть задан один из параметров
+    findModuleString, moduleName, moduleSvnRoot и модуль по нему
+    должен определяться однозначно, иначе будет выброшено исключение
+    ( то же самое касается параметров определения модуля типа объекта);
+  - если не заданы параметры для определения модуля типа объекта, то считается,
+    что тип объекта относится к тому же модулю, что и параметры;
+*/
+constructor function opt_option_list_t(
+  findModuleString varchar2 := null
+  , objectShortName varchar2 := null
+  , objectTypeShortName varchar2 := null
+  , objectTypeFindModuleString varchar2 := null
+  , usedOperatorId integer := null
+  , moduleName varchar2 := null
+  , moduleSvnRoot varchar2 := null
+  , objectTypeModuleName varchar2 := null
+  , objectTypeModuleSvnRoot varchar2 := null
+)
+return self as result
+is
+begin
+  initialize(
+    moduleId                =>
+        pkg_ModuleInfo.getModuleId(
+          findModuleString      => findModuleString
+          , moduleName          => moduleName
+          , svnRoot             => moduleSvnRoot
+          , raiseExceptionFlag  => 1
+        )
+    , objectShortName       => objectShortName
+    , objectTypeShortName   => objectTypeShortName
+    , objectTypeModuleId    =>
+        case when
+          objectTypeFindModuleString is not null
+          or objectTypeModuleName is not null
+          or objectTypeModuleSvnRoot is not null
+        then
+          pkg_ModuleInfo.getModuleId(
+            findModuleString      => objectTypeFindModuleString
+            , moduleName          => objectTypeModuleName
+            , svnRoot             => objectTypeModuleSvnRoot
+            , raiseExceptionFlag  => 1
+          )
+        end
+    , usedOperatorId        => usedOperatorId
+    , oldModuleName         =>
+        case when
+          -- возможно устаревшая сигнатура вызова: либо один неименованый
+          -- аргумент, либо moduleName
+          coalesce(
+                objectShortName, moduleSvnRoot
+                , objectTypeFindModuleString
+                , objectTypeModuleName
+                , objectTypeModuleSvnRoot
+              )
+              is null
+          and usedOperatorId is null
+          and not (
+            findModuleString is not null
+            and moduleName is not null
+          )
+        then
+          coalesce( moduleName, findModuleString)
+        end
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при создании набора настроечных параметров.'
+    , true
+  );
+end opt_option_list_t;
+
+/* func: opt_option_list_t( moduleId)
+  Создает набор настроечных параметров и устанавливает его свойства.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относятся параметры
+  objectShortName             - короткое название объекта модуля, к которому
+                                относятся параметры ( по умолчанию относящиеся
+                                ко всему модулю)
+  objectTypeShortName         - короткое название типа объекта
+                                ( нужно указывать если указан objectShortName,
+                                  по умолчанию отсутствует)
+  objectTypeModuleId          - Id модуля, к которому относится тип объекта
+                                ( по умолчанию к тому же модулю, что и
+                                  параметры)
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+*/
+constructor function opt_option_list_t(
+  moduleId integer
+  , objectShortName varchar2 := null
+  , objectTypeShortName varchar2 := null
+  , objectTypeModuleId integer := null
+  , usedOperatorId integer := null
+)
+return self as result
+is
+begin
+  initialize(
+    moduleId                  => moduleId
+    , objectShortName         => objectShortName
+    , objectTypeShortName     => objectTypeShortName
+    , objectTypeModuleId      => objectTypeModuleId
+    , usedOperatorId          => usedOperatorId
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть не инициализирован
+    , 'Ошибка при создании набора настроечных параметров ('
+      || ' moduleId=' || moduleId
+      || ').'
+    , true
+  );
+end opt_option_list_t;
+
+
+
+/* group: Вспомогательные функции */
+
+/* func: existsOption
+  Проверяет наличие настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+
+  Возврат:
+  1 в случае наличия параметра, иначе 0.
+*/
+member function existsOption(
+  optionShortName varchar2
+)
+return integer
+is
+begin
+  return
+    case
+      when
+        pkg_OptionMain.getOptionId(
+          moduleId            => moduleId
+          , objectShortName   => objectShortName
+          , objectTypeId      => objectTypeId
+          , optionShortName   => optionShortName
+          , raiseNotFoundFlag => 0
+        )
+        is not null
+      then 1
+      else 0
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при проверке наличия настроечного параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end existsOption;
+
+/* func: getModuleId
+  Возвращает Id модуля, к которому относятся параметры.
+
+  Возврат:
+  Id модуля ( из таблицы mod_module модуля ModuleInfo).
+*/
+member function getModuleId
+return integer
+is
+begin
+  return moduleId;
+end getModuleId;
+
+/* func: getObjectShortName
+  Возвращает короткое название объекта модуля, к которому относятся параметры.
+
+  Возврат:
+  короткое название объекта ( null если параметры относятся ко всему модулю).
+*/
+member function getObjectShortName
+return varchar2
+is
+begin
+  return objectShortName;
+end getObjectShortName;
+
+/* func: getObjectTypeId
+  Возвращает Id типа объекта, к которому относятся параметры.
+
+  Возврат:
+  Id типа объекта ( null при отсутствии объекта).
+*/
+member function getObjectTypeId
+return integer
+is
+begin
+  return objectTypeId;
+end getObjectTypeId;
+
+/* func: getObjectTypeId( objectTypeShortName)
+  Возвращает Id типа объекта.
+
+  Параметры:
+  objectTypeShortName         - короткое название типа объекта
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                типа объекта ( 1 да, 0 нет ( по умолчанию))
+
+  Возврат:
+  Id типа объекта.
+
+  Замечания:
+  - считается, что тип объекта относится к модулю, для которого был создан
+    текущий экземпляр объекта opt_option_list_t;
+*/
+member function getObjectTypeId(
+  objectTypeShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+begin
+  return
+    pkg_OptionMain.getObjectTypeId(
+      moduleId              => moduleId
+      , objectTypeShortName => objectTypeShortName
+      , raiseNotFoundFlag   => raiseNotFoundFlag
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении Id типа объекта.'
+      )
+    , true
+  );
+end getObjectTypeId;
+
+/* func: getOptionId
+  Возвращает Id настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  Id параметра ( из таблицы <opt_option_new>) либо null, если параметр не
+  найден и значение raiseNotFoundFlag равно 0.
+*/
+member function getOptionId(
+  optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+begin
+  return
+    pkg_OptionMain.getOptionId(
+      moduleId            => moduleId
+      , objectShortName   => objectShortName
+      , objectTypeId      => objectTypeId
+      , optionShortName   => optionShortName
+      , raiseNotFoundFlag => raiseNotFoundFlag
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении Id настроечного параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getOptionId;
+
+/* func: getUsedOperatorId
+  Id оператора, для которого может использоваться значение.
+
+  Возврат:
+  Id оператора ( null без ограничений).
+*/
+member function getUsedOperatorId
+return integer
+is
+begin
+  return usedOperatorId;
+end getUsedOperatorId;
+
+/* func: getValueId
+  Возвращает Id указанного значения ( списка значений) настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  Id значения ( из таблицы <opt_value>) либо null, если указанное значение
+  не задано.
+*/
+member function getValueId(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => instanceName
+      , usedOperatorId    => usedOperatorId
+      , decryptValueFlag  => 0
+      , raiseNotFoundFlag => 0
+    );
+  end if;
+  return vlr.value_id;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении Id указанного значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', prodValueFlag=' || prodValueFlag
+        || ', instanceName="' || instanceName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueId;
+
+/* func: getValueId( USED)
+  Возвращает Id используемого в текущей БД значения ( списка значений)
+  настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  Id значения ( из таблицы <opt_value>) либо null, если подходящего для
+  использования значения параметра не задано.
+*/
+member function getValueId(
+  optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          => optionId
+      , usedOperatorId    => usedOperatorId
+      , usedValueFlag     => 1
+      , decryptValueFlag  => 0
+      , raiseNotFoundFlag => 0
+    );
+  end if;
+  return vlr.value_id;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении Id используемого значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueId;
+
+/* func: getValueCount
+  Возвращает число указанных значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  0 если значение ( в т.ч. null) не задано, иначе положительное число заданных
+  значений ( 1 если задано значение для параметра, не использующего список
+  значений, либо число значений в списке значений параметра).
+*/
+member function getValueCount(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => instanceName
+      , usedOperatorId    => usedOperatorId
+      , decryptValueFlag  => 0
+      , raiseNotFoundFlag => 0
+    );
+  end if;
+  return
+    case when vlr.value_id is not null then
+      pkg_OptionMain.getValueCount(
+        valueTypeCode       => vlr.value_type_code
+        , listSeparator     => vlr.list_separator
+        , stringValue       => vlr.string_value
+      )
+    else
+      0
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении числа указанных значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', prodValueFlag=' || prodValueFlag
+        || ', instanceName="' || instanceName || '"'
+        || ').'
+      )
+    , true
+  );
+end getValueCount;
+
+/* func: getValueCount( USED)
+  Возвращает число используемых в текущей БД значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  0 если значение ( в т.ч. null) не задано, иначе положительное число заданных
+  значений ( 1 если задано значение для параметра, не использующего список
+  значений, либо число значений в списке значений параметра).
+*/
+member function getValueCount(
+  optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          => optionId
+      , usedOperatorId    => usedOperatorId
+      , usedValueFlag     => 1
+      , decryptValueFlag  => 0
+      , raiseNotFoundFlag => 0
+    );
+  end if;
+  return
+    case when vlr.value_id is not null then
+      pkg_OptionMain.getValueCount(
+        valueTypeCode       => vlr.value_type_code
+        , listSeparator     => vlr.list_separator
+        , stringValue       => vlr.string_value
+      )
+    else
+      0
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении числа используемых значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end getValueCount;
+
+/* func: getValueListSeparator
+  Возвращает символ, используемый в качестве разделителя в указанном списке
+  значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  символ, используемый в качестве разделителя в списке значений, либо null,
+  если для параметра не используется список значений или значение не задано.
+*/
+member function getValueListSeparator(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , decryptValueFlag      => 0
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.list_separator;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении символа-разделителя для указанного списка'
+        || ' значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueListSeparator;
+
+/* func: getValueListSeparator( USED)
+  Возвращает символ, используемый в качестве разделителя в используемом в
+  текущей БД списке значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  символ, используемый в качестве разделителя в списке значений, либо null,
+  если для параметра не используется список значений или значение не задано.
+*/
+member function getValueListSeparator(
+  optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , usedOperatorId        => usedOperatorId
+      , usedValueFlag         => 1
+      , decryptValueFlag      => 0
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.list_separator;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении символа-разделителя для использумого списка'
+        || ' значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueListSeparator;
+
+
+
+/* group: Добавление параметра */
+
+/* proc: addDate
+  Добавляет настроечный параметр со значением типа дата, если он не был создан
+  ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  dateValue                   - значение параметра типа дата
+                                ( по умолчанию null)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addDate(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , dateValue date := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Date_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , dateValue               => dateValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со значением типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addDate;
+
+/* proc: addDate( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым значениями типа
+  дата если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodDateValue               - значение параметра типа дата для промышленных
+                                БД
+  testDateValue               - значение параметра типа дата для тестовых БД
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addDate(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodDateValue date
+  , testDateValue date
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Date_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , dateValue               => prodDateValue
+    , testDateValue           => testDateValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' значениями типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addDate;
+
+/* proc: addDateList
+  Добавляет настроечный параметр со списком значений типа дата если он не был
+  создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueList                   - строка со списком значений параметра
+                                ( по умолчанию null)
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                ( по умолчанию используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным указанием
+                                времени)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addDateList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , valueList varchar2 := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Date_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => valueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , valueListItemFormat     => valueFormat
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со списком значений типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addDateList;
+
+/* proc: addDateList( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым списками значений
+  типа дата если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodValueList               - строка со списком значений параметра для
+                                промышленных БД
+  testValueList               - строка со списком значений параметра для
+                                тестовых БД
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                ( по умолчанию используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным указанием
+                                времени)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addDateList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodValueList varchar2
+  , testValueList varchar2
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Date_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => prodValueList
+    , testStringValue         => testValueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , valueListItemFormat     => valueFormat
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' списками значений типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addDateList;
+
+/* proc: addNumber
+  Добавляет настроечный параметр с числовым значением, если он не был создан
+  ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  numberValue                 - числовое значение параметра
+                                ( по умолчанию null)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addNumber(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , numberValue number := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Number_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , numberValue             => numberValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с числовым значением ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addNumber;
+
+/* proc: addNumber( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым числовыми значениями
+  если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodNumberValue             - числовое значение параметра для промышленных
+                                БД
+  testNumberValue             - числовое значение параметра для тестовых БД
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addNumber(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodNumberValue number
+  , testNumberValue number
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Number_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , numberValue             => prodNumberValue
+    , testNumberValue         => testNumberValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' числовыми значениями ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addNumber;
+
+/* proc: addNumberList
+  Добавляет настроечный параметр со списком числовых значений если он не был
+  создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueList                   - строка со списком значений параметра
+                                ( по умолчанию null)
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addNumberList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , valueList varchar2 := null
+  , listSeparator varchar2 := null
+  , decimalChar varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Number_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => valueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , valueListDecimalChar    => decimalChar
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со списком числовых значений ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addNumberList;
+
+/* proc: addNumberList( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым списками числовых
+  значений если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodValueList               - строка со списком значений параметра для
+                                промышленных БД
+  testValueList               - строка со списком значений параметра для
+                                тестовых БД
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addNumberList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodValueList varchar2
+  , testValueList varchar2
+  , listSeparator varchar2 := null
+  , decimalChar varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.Number_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => prodValueList
+    , testStringValue         => testValueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , valueListDecimalChar    => decimalChar
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' списками числовых значений ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addNumberList;
+
+/* proc: addString
+  Добавляет настроечный параметр со строковым значением, если он не был создан
+  ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию только изменение значения в
+                                  случае хранения значений в зашифрованном
+                                  виде, иначе полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  stringValue                 - строковое значение параметра
+                                ( по умолчанию null)
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addString(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , encryptionFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , stringValue varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.String_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , encryptionFlag          => encryptionFlag
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => stringValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со строковым значением ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addString;
+
+/* proc: addString( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым строковыми значениями
+  если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию только изменение значения в
+                                  случае хранения значений в зашифрованном
+                                  виде, иначе полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodStringValue             - строковое значение параметра для промышленных
+                                БД
+  testStringValue             - строковое значение параметра для тестовых БД
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure addString(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , encryptionFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodStringValue varchar2
+  , testStringValue varchar2
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.String_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 0
+    , encryptionFlag          => encryptionFlag
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => prodStringValue
+    , testStringValue         => testStringValue
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' строковыми значениями ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addString;
+
+/* proc: addStringList
+  Добавляет настроечный параметр со списком строковых значений если он не был
+  создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию только изменение значения в
+                                  случае хранения значений в зашифрованном
+                                  виде, иначе полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueList                   - строка со списком значений параметра
+                                ( по умолчанию null)
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addStringList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , encryptionFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , valueList varchar2 := null
+  , listSeparator varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.String_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , encryptionFlag          => encryptionFlag
+    , testProdSensitiveFlag   => 0
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => valueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со списком строковых значений ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addStringList;
+
+/* proc: addStringList( TEST_PROD)
+  Добавляет настроечный параметр с промышленным и тестовым списками строковых
+  значений если он не был создан ранее.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionName                  - название параметра
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию только изменение значения в
+                                  случае хранения значений в зашифрованном
+                                  виде, иначе полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  prodValueList               - строка со списком значений параметра для
+                                промышленных БД
+  testValueList               - строка со списком значений параметра для
+                                тестовых БД
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  changeValueFlag             - установить значение параметра, если он был
+                                создан ранее
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure addStringList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionName varchar2
+  , encryptionFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , instanceName varchar2 := null
+  , prodValueList varchar2
+  , testValueList varchar2
+  , listSeparator varchar2 := null
+  , changeValueFlag integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValue(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => pkg_OptionMain.String_ValueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => 1
+    , encryptionFlag          => encryptionFlag
+    , testProdSensitiveFlag   => 1
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , instanceName            => instanceName
+    , usedOperatorId          => usedOperatorId
+    , stringValue             => prodValueList
+    , testStringValue         => testValueList
+    , setValueListFlag        => 1
+    , valueListSeparator      => listSeparator
+    , changeValueFlag         => changeValueFlag
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с промышленными и тестовым'
+        || ' списками строковых значений ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end addStringList;
+
+
+
+/* group: Получение значения параметра */
+
+/* func: getDate
+  Возвращает указанное значение настроечного параметра типа дата.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  значение типа дата.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getDate(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return date
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.date_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getDate;
+
+/* func: getDate( USED)
+  Возвращает используемое в текущей БД значение настроечного параметра типа
+  дата.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  значение типа дата.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getDate(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return date
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , usedOperatorId        => usedOperatorId
+      , usedValueFlag         => 1
+      , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.date_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getDate;
+
+/* func: getNumber
+  Возвращает указанное числовое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  числовое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getNumber(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return number
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.number_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getNumber;
+
+/* func: getNumber( USED)
+  Возвращает используемое в текущей БД числовое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  числовое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getNumber(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return number
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , usedOperatorId        => usedOperatorId
+      , usedValueFlag         => 1
+      , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.number_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getNumber;
+
+/* func: getString
+  Возвращает указанное строковое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строковое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getString(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getString;
+
+/* func: getString( USED)
+  Возвращает используемое в текущей БД строковое значение настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строковое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getString(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , usedOperatorId        => usedOperatorId
+      , usedValueFlag         => 1
+      , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+      , valueIndex            => coalesce( valueIndex, 1)
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getString;
+
+/* func: getValueList
+  Возвращает указанный список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строка со списком значений ( символ, используемый в качестве разделителя,
+  возвращается функцией <getValueListSeparator>).
+
+  Замечения:
+  - в случае, если указанное значение настроечного параметра не задано,
+    возвращается null;
+*/
+member function getValueList(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , valueListFlag         => 1
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного списка значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueList;
+
+/* func: getValueList( USED)
+  Возвращает используемый в текущей БД список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строка со списком значений ( символ, используемый в качестве разделителя,
+  возвращается функцией <getValueListSeparator( USED)>).
+
+  Замечения:
+  - в случае, если указанное значение настроечного параметра не задано,
+    возвращается null;
+*/
+member function getValueList(
+  optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => raiseNotFoundFlag
+  );
+  if optionId is not null then
+    pkg_OptionMain.getValue(
+      rowData                 => vlr
+      , optionId              => optionId
+      , usedOperatorId        => usedOperatorId
+      , usedValueFlag         => 1
+      , valueListFlag         => 1
+      , raiseNotFoundFlag     => 0
+    );
+  end if;
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого списка значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueList;
+
+
+
+/* group: Установка значения параметра */
+
+/* proc: setDate
+  Устанавливает указанное значение настроечного параметра типа дата.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  dateValue                   - значение параметра типа дата
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setDate(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , dateValue date
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.setValue(
+    optionId                =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+    , dateValue             => dateValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке указанного значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ').'
+      )
+    , true
+  );
+end setDate;
+
+/* proc: setDate( TEST_PROD)
+  Устанавливает промышленное и тестовое значение настроечного параметра типа
+  дата.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodDateValue               - значение параметра типа дата для промышленных
+                                БД
+  testDateValue               - значение параметра типа дата для тестовых БД
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setDate(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodDateValue date
+  , testDateValue date
+  , valueIndex integer := null
+  , instanceName varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  setDate(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 1
+    , instanceName      => instanceName
+    , dateValue         => prodDateValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+  setDate(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 0
+    , instanceName      => instanceName
+    , dateValue         => testDateValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке промышленного и тестового значения параметра'
+        || ' типа дата.'
+      )
+    , true
+  );
+end setDate;
+
+/* proc: setDate( USED)
+  Устанавливает используемое в текущей БД значение настроечного параметра типа
+  дата.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  dateValue                   - значение параметра типа дата
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  createForInstanceFlag       - при отсутствии используемого значения задавать
+                                его для использования только в текущем
+                                экземпляре БД
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+  moduleOptionName            - устаревший параметр процедуры, следует
+                                использовать optionShortName с указанием
+                                короткого названия параметра в рамках модуля
+
+  Замечание:
+  - для обеспечения совместимости параметр процедуры optionShortName сделан
+    необязательным и при отсутствии у него значения используется значение из
+    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
+    будет обязательным, а параметр moduleOptionName будет удален;
+*/
+member procedure setDate(
+  self in opt_option_list_t
+  , optionShortName varchar2 := null
+  , dateValue date
+  , valueIndex integer := null
+  , createForInstanceFlag integer := null
+  , operatorId integer := null
+  , moduleOptionName varchar2 := null
+)
+is
+
+  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
+  isOldProcess boolean;
+
+  -- Id параметра и вид значения при обеспечении совместимости
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные используемого значения
+  vlr opt_value%rowtype;
+
+begin
+  isOldProcess :=
+    oldModuleName is not null
+    and valueIndex is null
+    and createForInstanceFlag is null
+    and (
+      moduleOptionName is not null
+      -- для обеспечения совместимости в случае вызова процедуры без указания
+      -- имен параметров для тестовых значений параметров
+      or optionShortName like '%_Test'
+        and pkg_OptionMain.getOldOptionId(
+          moduleName            => oldModuleName
+          , moduleOptionName    => optionShortName
+          , raiseNotFoundFlag   => 0
+        )
+        is not null
+    )
+  ;
+
+  if isOldProcess then
+    pkg_OptionMain.getOptionInfoOld(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , moduleName        => oldModuleName
+      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
+      , raiseNotFoundFlag => 1
+    );
+    pkg_OptionMain.setValue(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => null
+      , usedOperatorId    => null
+      , valueTypeCode     => pkg_OptionMain.Date_ValueTypeCode
+      , dateValue         => dateValue
+      , valueIndex        => null
+      , operatorId        => operatorId
+    );
+  else
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          =>
+          getOptionId(
+            optionShortName     => optionShortName
+            , raiseNotFoundFlag => 1
+          )
+      , usedOperatorId    => usedOperatorId
+      , usedValueFlag     => 1
+      , raiseNotFoundFlag => 0
+    );
+    setDate(
+      optionShortName     => optionShortName
+      , prodValueFlag     => vlr.prod_value_flag
+      , instanceName      =>
+          case when vlr.value_id is not null or createForInstanceFlag = 1 then
+            vlr.instance_name
+          end
+      , dateValue         => dateValue
+      , valueIndex        => valueIndex
+      , operatorId        => operatorId
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке используемого значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', createForInstanceFlag=' || createForInstanceFlag
+        || ', moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end setDate;
+
+/* proc: setNumber
+  Устанавливает указанное числовое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  numberValue                 - числовое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setNumber(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , numberValue number
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.setValue(
+    optionId                =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+    , numberValue           => numberValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке указанного числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ').'
+      )
+    , true
+  );
+end setNumber;
+
+/* proc: setNumber( TEST_PROD)
+  Устанавливает промышленное и тестовое числовые значения настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodNumberValue             - числовое значение параметра для промышленных
+                                БД
+  testNumberValue             - числовое значение параметра для тестовых БД
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setNumber(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodNumberValue number
+  , testNumberValue number
+  , valueIndex integer := null
+  , instanceName varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  setNumber(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 1
+    , instanceName      => instanceName
+    , numberValue       => prodNumberValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+  setNumber(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 0
+    , instanceName      => instanceName
+    , numberValue       => testNumberValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке промышленного и тестового числового значения'
+        || ' параметра.'
+      )
+    , true
+  );
+end setNumber;
+
+/* proc: setNumber( USED)
+  Устанавливает используемое в текущей БД числовое значение настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  numberValue                 - числовое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  createForInstanceFlag       - при отсутствии используемого значения задавать
+                                его для использования только в текущем
+                                экземпляре БД
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+  moduleOptionName            - устаревший параметр процедуры, следует
+                                использовать optionShortName с указанием
+                                короткого названия параметра в рамках модуля
+
+  Замечание:
+  - для обеспечения совместимости параметр процедуры optionShortName сделан
+    необязательным и при отсутствии у него значения используется значение из
+    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
+    будет обязательным, а параметр moduleOptionName будет удален;
+*/
+member procedure setNumber(
+  self in opt_option_list_t
+  , optionShortName varchar2 := null
+  , numberValue number
+  , valueIndex integer := null
+  , createForInstanceFlag integer := null
+  , operatorId integer := null
+  , moduleOptionName varchar2 := null
+)
+is
+
+  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
+  isOldProcess boolean;
+
+  -- Id параметра и вид значения при обеспечении совместимости
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные используемого значения
+  vlr opt_value%rowtype;
+
+begin
+  isOldProcess :=
+    oldModuleName is not null
+    and valueIndex is null
+    and createForInstanceFlag is null
+    and (
+      moduleOptionName is not null
+      -- для обеспечения совместимости в случае вызова процедуры без указания
+      -- имен параметров для тестовых значений параметров
+      or optionShortName like '%_Test'
+        and pkg_OptionMain.getOldOptionId(
+          moduleName            => oldModuleName
+          , moduleOptionName    => optionShortName
+          , raiseNotFoundFlag   => 0
+        )
+        is not null
+    )
+  ;
+
+  if isOldProcess then
+    pkg_OptionMain.getOptionInfoOld(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , moduleName        => oldModuleName
+      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
+      , raiseNotFoundFlag => 1
+    );
+    pkg_OptionMain.setValue(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => null
+      , usedOperatorId    => null
+      , valueTypeCode     => pkg_OptionMain.Number_ValueTypeCode
+      , numberValue       => numberValue
+      , valueIndex        => null
+      , operatorId        => operatorId
+    );
+  else
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          =>
+          getOptionId(
+            optionShortName     => optionShortName
+            , raiseNotFoundFlag => 1
+          )
+      , usedOperatorId    => usedOperatorId
+      , usedValueFlag     => 1
+      , raiseNotFoundFlag => 0
+    );
+    setNumber(
+      optionShortName     => optionShortName
+      , prodValueFlag     => vlr.prod_value_flag
+      , instanceName      =>
+          case when vlr.value_id is not null or createForInstanceFlag = 1 then
+            vlr.instance_name
+          end
+      , numberValue       => numberValue
+      , valueIndex        => valueIndex
+      , operatorId        => operatorId
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке используемого числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', createForInstanceFlag=' || createForInstanceFlag
+        || ', moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end setNumber;
+
+/* proc: setString
+  Устанавливает указанное строковое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  stringValue                 - строковое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setString(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , stringValue varchar2
+  , valueIndex integer := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.setValue(
+    optionId                =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+    , stringValue           => stringValue
+    , valueIndex            => valueIndex
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке указанного строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ').'
+      )
+    , true
+  );
+end setString;
+
+/* proc: setString( TEST_PROD)
+  Устанавливает промышленное и тестовое строковые значения настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodStringValue             - строковое значение параметра для промышленных
+                                БД
+  testStringValue             - строковое значение параметра для тестовых БД
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure setString(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodStringValue varchar2
+  , testStringValue varchar2
+  , valueIndex integer := null
+  , instanceName varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  setString(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 1
+    , instanceName      => instanceName
+    , stringValue       => prodStringValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+  setString(
+    optionShortName     => optionShortName
+    , prodValueFlag     => 0
+    , instanceName      => instanceName
+    , stringValue       => testStringValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке промышленного и тестового строковых значений'
+        || ' параметра.'
+      )
+    , true
+  );
+end setString;
+
+/* proc: setString( USED)
+  Устанавливает используемое в текущей БД строковое значение настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  stringValue                 - строковое значение параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                изменении значения параметра, не использующего
+                                список значений, 0 для добавления значения в
+                                начало списка, -1 для добавления значения в
+                                конец списка, если индекс больше числа значений
+                                в списке, то добавляются промежуточные
+                                null-значения, null в случае установки всего
+                                значения ( при этом в случае списка значений
+                                получается список из одного указанного
+                                значения))
+                                ( по умолчанию null)
+  createForInstanceFlag       - при отсутствии используемого значения задавать
+                                его для использования только в текущем
+                                экземпляре БД
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+  moduleOptionName            - устаревший параметр процедуры, следует
+                                использовать optionShortName с указанием
+                                короткого названия параметра в рамках модуля
+
+  Замечание:
+  - для обеспечения совместимости параметр процедуры optionShortName сделан
+    необязательным и при отсутствии у него значения используется значение из
+    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
+    будет обязательным, а параметр moduleOptionName будет удален;
+*/
+member procedure setString(
+  self in opt_option_list_t
+  , optionShortName varchar2 := null
+  , stringValue varchar2
+  , valueIndex integer := null
+  , createForInstanceFlag integer := null
+  , operatorId integer := null
+  , moduleOptionName varchar2 := null
+)
+is
+
+  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
+  isOldProcess boolean;
+
+  -- Id параметра и вид значения при обеспечении совместимости
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные используемого значения
+  vlr opt_value%rowtype;
+
+begin
+  isOldProcess :=
+    oldModuleName is not null
+    and valueIndex is null
+    and createForInstanceFlag is null
+    and (
+      moduleOptionName is not null
+      -- для обеспечения совместимости в случае вызова процедуры без указания
+      -- имен параметров для тестовых значений параметров
+      or optionShortName like '%_Test'
+        and pkg_OptionMain.getOldOptionId(
+          moduleName            => oldModuleName
+          , moduleOptionName    => optionShortName
+          , raiseNotFoundFlag   => 0
+        )
+        is not null
+    )
+  ;
+
+  if isOldProcess then
+    pkg_OptionMain.getOptionInfoOld(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , moduleName        => oldModuleName
+      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
+      , raiseNotFoundFlag => 1
+    );
+    pkg_OptionMain.setValue(
+      optionId            => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => null
+      , usedOperatorId    => null
+      , valueTypeCode     => pkg_OptionMain.String_ValueTypeCode
+      , stringValue       => stringValue
+      , valueIndex        => null
+      , operatorId        => operatorId
+    );
+  else
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          =>
+          getOptionId(
+            optionShortName     => optionShortName
+            , raiseNotFoundFlag => 1
+          )
+      , usedOperatorId    => usedOperatorId
+      , usedValueFlag     => 1
+      , decryptValueFlag  => 0
+      , raiseNotFoundFlag => 0
+    );
+    setString(
+      optionShortName     => optionShortName
+      , prodValueFlag     => vlr.prod_value_flag
+      , instanceName      =>
+          case when vlr.value_id is not null or createForInstanceFlag = 1 then
+            vlr.instance_name
+          end
+      , stringValue       => stringValue
+      , valueIndex        => valueIndex
+      , operatorId        => operatorId
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке используемого строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', createForInstanceFlag=' || createForInstanceFlag
+        || ', moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end setString;
+
+/* proc: setValueList
+  Устанавливает указанный список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueList                   - строка со списком значений параметра
+                                ( по умолчанию null)
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                типа дата ( по умолчанию для дат используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным
+                                указанием времени)
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure setValueList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueList varchar2 := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , decimalChar varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.setValue(
+    optionId                =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , stringValue           => valueList
+    , setValueListFlag      => 1
+    , valueListSeparator    => listSeparator
+    , valueListItemFormat   => valueFormat
+    , valueListDecimalChar  => decimalChar
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке указанного списка значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end setValueList;
+
+/* proc: setValueList( TEST_PROD)
+  Устанавливает промышленный и тестовый список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueList               - строка со списком значений параметра для
+                                промышленных БД
+  testValueList               - строка со списком значений параметра для
+                                тестовых БД
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                типа дата ( по умолчанию для дат используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным
+                                указанием времени)
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure setValueList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueList varchar2
+  , testValueList varchar2
+  , instanceName varchar2 := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , decimalChar varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  setValueList(
+    optionShortName         => optionShortName
+    , prodValueFlag         => 1
+    , instanceName          => instanceName
+    , valueList             => prodValueList
+    , listSeparator         => listSeparator
+    , valueFormat           => valueFormat
+    , decimalChar           => decimalChar
+    , operatorId            => operatorId
+  );
+  setValueList(
+    optionShortName         => optionShortName
+    , prodValueFlag         => 0
+    , instanceName          => instanceName
+    , valueList             => testValueList
+    , listSeparator         => listSeparator
+    , valueFormat           => valueFormat
+    , decimalChar           => decimalChar
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке промышленного и тестового списка значений'
+        || ' параметра.'
+      )
+    , true
+  );
+end setValueList;
+
+/* proc: setValueList( USED)
+  Устанавливает используемый в текущей БД список значений настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueList                   - строка со списком значений параметра
+                                ( по умолчанию null)
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                типа дата ( по умолчанию для дат используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным
+                                указанием времени)
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  createForInstanceFlag       - при отсутствии используемого значения задавать
+                                его для использования только в текущем
+                                экземпляре БД
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - пустая строка в качестве списка значений рассматривается как список из
+    одного значения null;
+*/
+member procedure setValueList(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , valueList varchar2 := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , decimalChar varchar2 := null
+  , createForInstanceFlag integer := null
+  , operatorId integer := null
+)
+is
+
+  -- Данные используемого значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData             => vlr
+    , optionId          =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , usedOperatorId    => usedOperatorId
+    , usedValueFlag     => 1
+    , decryptValueFlag  => 0
+    , raiseNotFoundFlag => 0
+  );
+  setValueList(
+    optionShortName         => optionShortName
+    , prodValueFlag     => vlr.prod_value_flag
+    , instanceName      =>
+        case when vlr.value_id is not null or createForInstanceFlag = 1 then
+          vlr.instance_name
+        end
+    , valueList             => valueList
+    , listSeparator         => listSeparator
+    , valueFormat           => valueFormat
+    , decimalChar           => decimalChar
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке указанного списка значений параметра ('
+        || ' createForInstanceFlag=' || createForInstanceFlag
+        || ').'
+      )
+    , true
+  );
+end setValueList;
+
+
+
+/* group: Дополнительные функции */
+
+/* proc: createOption
+  Создает настроечный параметр без задания значений.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueTypeCode               - код типа значения параметра
+  optionName                  - название параметра
+  valueListFlag               - флаг задания для параметра списка значений
+                                указанного типа ( 1 да, 0 нет ( по умолчанию))
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет ( по умолчанию))
+  testProdSensitiveFlag       - флаг указания для значения параметра типа базы
+                                данных ( тестовая или промышленная), для
+                                которого оно предназначено
+                                ( 1 да, 0 нет ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( по умолчанию только изменение значения в
+                                  случае хранения значений в зашифрованном
+                                  виде, иначе полный доступ)
+  optionDescription           - описание параметра
+                                ( по умолчанию отсутствует)
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure createOption(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , valueTypeCode varchar2
+  , optionName varchar2
+  , valueListFlag integer := null
+  , encryptionFlag integer := null
+  , testProdSensitiveFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionDescription varchar2 := null
+  , operatorId integer := null
+)
+is
+
+  -- Id параметра
+  optionId integer;
+
+begin
+  optionId := pkg_OptionMain.createOption(
+    moduleId                  => moduleId
+    , optionShortName         => optionShortName
+    , valueTypeCode           => valueTypeCode
+    , optionName              => optionName
+    , objectShortName         => objectShortName
+    , objectTypeId            => objectTypeId
+    , valueListFlag           => valueListFlag
+    , encryptionFlag          => encryptionFlag
+    , testProdSensitiveFlag   => testProdSensitiveFlag
+    , accessLevelCode         => accessLevelCode
+    , optionDescription       => optionDescription
+    , operatorId              => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при создании параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end createOption;
+
+/* func: updateOption
+  Изменяет настроечный параметр.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  valueTypeCode               - код типа значения параметра
+                                ( null не изменять ( по умолчанию))
+  valueListFlag               - флаг задания для параметра списка значений
+                                указанного типа ( 1 да, 0 нет,
+                                null не изменять ( по умолчанию))
+  encryptionFlag              - флаг хранения значений параметра в
+                                зашифрованном виде
+                                ( 1 да, 0 нет, null не изменять ( по умолчанию))
+  testProdSensitiveFlag       - флаг указания для значения параметра типа базы
+                                данных ( тестовая или промышленная), для
+                                которого оно предназначено
+                                ( 1 да, 0 нет, null не изменять ( по умолчанию))
+  accessLevelCode             - код уровня доступа к параметру через
+                                пользовательский интерфейс
+                                ( null не изменять)
+                                ( по умолчанию только изменение значения в
+                                  случае encryptionFlag = 1, полный доступ
+                                  в случае encryptionFlag = 0, иначе не
+                                  изменять)
+  optionName                  - название параметра
+                                ( null не изменять ( по умолчанию))
+  optionDescription           - описание параметра
+                                ( null не изменять ( по умолчанию))
+  forceOptionDescriptionFlag  - обновить описание параметра согласно значению
+                                optionDescription даже если оно null
+                                ( 1 да, 0 нет ( по умолчанию))
+  moveProdSensitiveValueFlag  - при изменении значения флага
+                                testProdSensitiveFlag переносить существующие
+                                значения параметра ( общие в промышленные либо
+                                промышленные в общие)
+                                ( 1 да, 0 нет ( выбрасывать исключение))
+                                ( по умолчанию 0)
+  deleteBadValueFlag          - удалять значения, которые не соответствуют
+                                новым данным настроечного параметра
+                                ( 1 да, 0 нет ( выбрасывать исключение))
+                                ( по умолчанию 0)
+  skipIfNoChangeFlag          - не выполнять изменение, если нет фактических
+                                изменений в данных параметра
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Возврат:
+  1 в случае изменения параметра, иначе 0.
+
+  Замечания:
+  - использование deleteBadValueFlag совместно с moveProdSensitiveValueFlag
+    обеспечивает удаление тестовых значений в случае установки
+    для параметра значения testProdSensitiveFlag равным в 0
+    ( в противном случае при наличии тестовых значений было бы выброшено
+      исключение);
+*/
+member function updateOption(
+  optionShortName varchar2
+  , valueTypeCode varchar2 := null
+  , valueListFlag integer := null
+  , encryptionFlag integer := null
+  , testProdSensitiveFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionName varchar2 := null
+  , optionDescription varchar2 := null
+  , forceOptionDescriptionFlag integer := null
+  , moveProdSensitiveValueFlag integer := null
+  , deleteBadValueFlag integer := null
+  , skipIfNoChangeFlag integer := null
+  , operatorId integer := null
+)
+return integer
+is
+
+  -- Флаг изменения параметра
+  changeFlag integer := 0;
+
+  -- Текущие данные параметра
+  orc opt_option_new%rowtype;
+
+  -- Новые данные параметра
+  nrc opt_option_new%rowtype;
+
+begin
+  pkg_OptionMain.lockOption(
+    rowData         => orc
+    , optionId      =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+  );
+  nrc.value_type_code       := coalesce( valueTypeCode, orc.value_type_code);
+  nrc.value_list_flag       := coalesce( valueListFlag, orc.value_list_flag);
+  nrc.encryption_flag       := coalesce( encryptionFlag, orc.encryption_flag);
+  nrc.test_prod_sensitive_flag :=
+    coalesce( testProdSensitiveFlag, orc.test_prod_sensitive_flag)
+  ;
+  nrc.access_level_code     := coalesce(
+    accessLevelCode
+    , case
+        when encryptionFlag = 1 then pkg_OptionMain.Value_AccessLevelCode
+        when encryptionFlag = 0 then pkg_OptionMain.Full_AccessLevelCode
+        else
+          orc.access_level_code
+      end
+  );
+  nrc.option_name           := coalesce( optionName, orc.option_name);
+  nrc.option_description    :=
+    case when
+          optionDescription is not null
+            or forceOptionDescriptionFlag = 1
+        then
+      optionDescription
+    else
+      orc.option_description
+    end
+  ;
+
+  if coalesce( skipIfNoChangeFlag, 0) != 1
+        or orc.value_type_code          != nrc.value_type_code
+        or orc.value_list_flag          != nrc.value_list_flag
+        or orc.encryption_flag          != nrc.encryption_flag
+        or orc.test_prod_sensitive_flag != nrc.test_prod_sensitive_flag
+        or orc.access_level_code        != nrc.access_level_code
+        or orc.option_name              != nrc.option_name
+        or coalesce(
+            orc.option_description != nrc.option_description
+            , orc.option_description is null
+                and nrc.option_description is not null
+              or orc.option_description is not null
+                and nrc.option_description is null
+          )
+      then
+    pkg_OptionMain.updateOption(
+      optionId                      => orc.option_id
+      , valueTypeCode               => nrc.value_type_code
+      , valueListFlag               => nrc.value_list_flag
+      , encryptionFlag              => nrc.encryption_flag
+      , testProdSensitiveFlag       => nrc.test_prod_sensitive_flag
+      , accessLevelCode             => nrc.access_level_code
+      , optionName                  => nrc.option_name
+      , optionDescription           => nrc.option_description
+      , moveProdSensitiveValueFlag  => moveProdSensitiveValueFlag
+      , deleteBadValueFlag          => deleteBadValueFlag
+      , operatorId                  => operatorId
+    );
+    changeFlag := 1;
+  end if;
+  return changeFlag;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при изменении параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end updateOption;
+
+/* proc: updateOption( PROC)
+  Изменяет настроечный параметр.
+  Процедура идентична функции <updateOption> за исключением отсутствия
+  возвращаемого значения.
+*/
+member procedure updateOption(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , valueTypeCode varchar2 := null
+  , valueListFlag integer := null
+  , encryptionFlag integer := null
+  , testProdSensitiveFlag integer := null
+  , accessLevelCode varchar2 := null
+  , optionName varchar2 := null
+  , optionDescription varchar2 := null
+  , forceOptionDescriptionFlag integer := null
+  , moveProdSensitiveValueFlag integer := null
+  , deleteBadValueFlag integer := null
+  , skipIfNoChangeFlag integer := null
+  , operatorId integer := null
+)
+is
+
+  -- Флаг изменения параметра
+  changeFlag integer;
+
+begin
+  changeFlag := updateOption(
+    optionShortName               => optionShortName
+    , valueTypeCode               => valueTypeCode
+    , valueListFlag               => valueListFlag
+    , encryptionFlag              => encryptionFlag
+    , testProdSensitiveFlag       => testProdSensitiveFlag
+    , accessLevelCode             => accessLevelCode
+    , optionName                  => optionName
+    , optionDescription           => optionDescription
+    , forceOptionDescriptionFlag  => forceOptionDescriptionFlag
+    , moveProdSensitiveValueFlag  => moveProdSensitiveValueFlag
+    , deleteBadValueFlag          => deleteBadValueFlag
+    , skipIfNoChangeFlag          => skipIfNoChangeFlag
+    , operatorId                  => operatorId
+  );
+end updateOption;
+
+/* func: setValue
+  Устанавливает значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueTypeCode               - код типа значения параметра
+                                ( по умолчанию определяется по данным параметра)
+  dateValue                   - значение типа дата
+                                ( по умолчанию отсутствует)
+  numberValue                 - числовое значение
+                                ( по умолчанию отсутствует)
+  stringValue                 - строковое значение или строка со списком
+                                значений
+                                ( по умолчанию отсутствует)
+  setValueListFlag            - установить значение согласно строке со списком
+                                значений, переданной в параметре stringValue
+                                ( 1 да, 0 нет ( по умолчанию))
+  listSeparator               - символ, используемый в качестве разделителя в
+                                строке со списком значений
+                                ( по умолчанию используется ";")
+  valueFormat                 - формат элементов в строке со списком значений
+                                типа дата ( по умолчанию для дат используется
+                                "yyyy-mm-dd hh24:mi:ss" с опциональным
+                                указанием времени)
+  decimalChar                 - десятичный разделитель для строки со списком
+                                числовых значений
+                                ( по умолчанию используется точка)
+  skipIfNoChangeFlag          - не выполнять изменение, если нет фактических
+                                изменений в данных значения
+                                ( 1 да, 0 нет ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Возврат:
+  1 в случае изменения значения, иначе 0.
+*/
+member function setValue(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueTypeCode varchar2 := null
+  , dateValue date := null
+  , numberValue number := null
+  , stringValue varchar2 := null
+  , setValueListFlag integer := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , decimalChar varchar2 := null
+  , skipIfNoChangeFlag integer := null
+  , operatorId integer := null
+)
+return integer
+is
+
+  -- Флаг выполнения изменения
+  changeFlag integer := 1;
+
+  -- Id параметра
+  optionId integer;
+
+  -- Данные параметра
+  opt opt_option_new%rowtype;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  optionId := getOptionId(
+    optionShortName     => optionShortName
+    , raiseNotFoundFlag => 1
+  );
+  if skipIfNoChangeFlag = 1 then
+    pkg_OptionMain.lockOption(
+      rowData         => opt
+      , optionId      => optionId
+    );
+    pkg_OptionMain.getValue(
+      rowData             => vlr
+      , optionId          => optionId
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => instanceName
+      , usedOperatorId    => usedOperatorId
+      , decryptValueFlag  => 1
+      , raiseNotFoundFlag => 0
+    );
+    if vlr.value_id is not null
+          and vlr.value_type_code
+            = coalesce( valueTypeCode, opt.value_type_code)
+          and (
+            coalesce( setValueListFlag, 0) = 0
+            or opt.value_list_flag = 1
+          )
+          and (
+            coalesce( vlr.list_separator, listSeparator) is null
+            or vlr.value_type_code != pkg_OptionMain.String_ValueTypeCode
+            or vlr.list_separator = coalesce( listSeparator, ';')
+          )
+          and (
+            coalesce( vlr.date_value, dateValue) is null
+            or vlr.date_value is not null
+              and dateValue is not null
+              and vlr.date_value = dateValue
+          )
+          and (
+            coalesce( vlr.number_value, numberValue) is null
+            or vlr.number_value is not null
+              and numberValue is not null
+              and vlr.number_value = numberValue
+          )
+          and (
+            coalesce( vlr.string_value, stringValue) is null
+            or vlr.string_value is not null
+              and stringValue is not null
+              and (
+                opt.value_list_flag = 0
+                  and vlr.string_value = stringValue
+                or opt.value_list_flag = 1
+                  and vlr.string_value =
+                    pkg_OptionMain.formatValueList(
+                      valueTypeCode           =>
+                          coalesce( valueTypeCode, opt.value_type_code)
+                      , listSeparator         => vlr.list_separator
+                      , valueList             => stringValue
+                      , valueListSeparator    => listSeparator
+                      , valueListItemFormat   => valueFormat
+                      , valueListDecimalChar  => decimalChar
+                      , encryptionFlag        => 0
+                    )
+              )
+          )
+        then
+      changeFlag := 0;
+    end if;
+  end if;
+  if changeFlag = 1 then
+    pkg_OptionMain.setValue(
+      optionId                => optionId
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedOperatorId        => usedOperatorId
+      , valueTypeCode         => valueTypeCode
+      , dateValue             => dateValue
+      , numberValue           => numberValue
+      , stringValue           => stringValue
+      , setValueListFlag      => setValueListFlag
+      , valueListSeparator    => listSeparator
+      , valueListItemFormat   => valueFormat
+      , valueListDecimalChar  => decimalChar
+      , operatorId            => operatorId
+    );
+  end if;
+  return changeFlag;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end setValue;
+
+/* proc: setValue( PROC)
+  Устанавливает значение настроечного параметра.
+  Процедура идентична функции <setValue> за исключением отсутствия
+  возвращаемого значения.
+*/
+member procedure setValue(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueTypeCode varchar2 := null
+  , dateValue date := null
+  , numberValue number := null
+  , stringValue varchar2 := null
+  , setValueListFlag integer := null
+  , listSeparator varchar2 := null
+  , valueFormat varchar2 := null
+  , decimalChar varchar2 := null
+  , skipIfNoChangeFlag integer := null
+  , operatorId integer := null
+)
+is
+
+  -- Флаг изменения параметра
+  changeFlag integer;
+
+begin
+  changeFlag := setValue(
+    optionShortName               => optionShortName
+    , prodValueFlag               => prodValueFlag
+    , instanceName                => instanceName
+    , valueTypeCode               => valueTypeCode
+    , dateValue                   => dateValue
+    , numberValue                 => numberValue
+    , stringValue                 => stringValue
+    , setValueListFlag            => setValueListFlag
+    , listSeparator               => listSeparator
+    , valueFormat                 => valueFormat
+    , decimalChar                 => decimalChar
+    , skipIfNoChangeFlag          => skipIfNoChangeFlag
+    , operatorId                  => operatorId
+  );
+end setValue;
+
+/* proc: deleteAll
+  Удаляет все настроечные параметры, относящиеся к набору параметров.
+*/
+member procedure deleteAll(
+  self in opt_option_list_t
+  , operatorId integer := null
+)
+is
+
+  -- Явное приведение типа добавлено для совместимости с Oracle 10.2
+  cursor optionCur is
+    select
+      t.option_id
+    from
+      table( cast( self.getOptionValue() as opt_option_value_table_t)) t
+    order by
+      1
+  ;
+
+begin
+  for rec in optionCur loop
+    pkg_OptionMain.deleteOption(
+      optionId      => rec.option_id
+      , operatorId  => operatorId
+    );
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении всех параметров.'
+      )
+    , true
+  );
+end deleteAll;
+
+/* proc: deleteOption
+  Удаляет настроечный параметр.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - при удалении параметра автоматически удаляются относящиеся к нему значения;
+*/
+member procedure deleteOption(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.deleteOption(
+    optionId      =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , operatorId  => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end deleteOption;
+
+/* proc: deleteValue
+  Удаляет указанное значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure deleteValue(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.deleteValue(
+    valueId      =>
+        getValueId(
+          optionShortName     => optionShortName
+          , prodValueFlag     => prodValueFlag
+          , instanceName      => instanceName
+          , raiseNotFoundFlag => 1
+        )
+    , operatorId  => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении указанного значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', prodValueFlag=' || prodValueFlag
+        || ', instanceName="' || instanceName || '"'
+        || ').'
+      )
+    , true
+  );
+end deleteValue;
+
+/* proc: deleteValue( USED)
+  Удаляет используемое в текущей БД значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure deleteValue(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.deleteValue(
+    valueId      =>
+        getValueId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+    , operatorId  => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении используемого значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end deleteValue;
+
+
+
+/* group: Функции для использования в SQL */
+
+/* func: getOptionValue
+  Возвращает таблицу параметров с текущими используемыми значениями.
+
+  Возврат:
+  таблица с набором полей, который отличается от полей представления
+  <v_opt_option_value> добавлением поля encrypted_string_value ( при этом
+  значение в поле string_value всегда указывается в незашифрованном виде)
+  ( поля перечислены в типе <opt_option_value_t>).
+
+  Пример использования:
+
+(code)
+
+SQL> select * from table( opt_option_list_t( 'Option').getOptionValue());
+
+(end)
+
+  ( выборка параметров модуля Option)
+*/
+member function getOptionValue
+return opt_option_value_table_t
+pipelined
+is
+
+  -- Таблица с возвращаемыми данными
+  ovt opt_option_value_table_t;
+
+begin
+  pkg_OptionMain.getOptionValue(
+    rowTable              => ovt
+    , moduleId            => self.moduleId
+    , objectShortName     => self.objectShortName
+    , objectTypeId        => self.objectTypeId
+    , usedOperatorId      => self.usedOperatorId
+  );
+  for i in 1 .. ovt.count() loop
+    pipe row( ovt( i));
+  end loop;
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении таблицы параметров с текущими значениями.'
+      )
+    , true
+  );
+end getOptionValue;
+
+/* func: getValue
+  Возвращает таблицу с заданными значениями параметра.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+
+  Возврат:
+  таблица с набором полей, который отличается от полей представления
+  <v_opt_value> добавлением поля encrypted_string_value ( при этом значение
+  в поле string_value всегда указывается в незашифрованном виде) ( поля
+  перечислены в типе <opt_value_t>).
+
+  Пример использования:
+
+(code)
+
+SQL> select * from table( opt_option_list_t( 'Option').getValue('Test1'));
+
+(end)
+
+  ( выборка значений параметра Test1 модуля Option)
+*/
+member function getValue(
+  optionShortName varchar2
+)
+return opt_value_table_t
+pipelined
+is
+
+  cursor dataCur( optionId integer) is
+    select
+      t.*
+    from
+      v_opt_value t
+    where
+      t.option_id = optionId
+    order by
+      t.value_id
+  ;
+
+  vlr opt_value_t;
+
+begin
+  for rec in dataCur(
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+      )
+      loop
+    begin
+      vlr := opt_value_t(
+        value_id                          => rec.value_id
+        , option_id                       => rec.option_id
+        , prod_value_flag                 => rec.prod_value_flag
+        , instance_name                   => rec.instance_name
+        , used_operator_id                => rec.used_operator_id
+        , value_type_code                 => rec.value_type_code
+        , value_list_flag                 => rec.value_list_flag
+        , list_separator                  => rec.list_separator
+        , encryption_flag                 => rec.encryption_flag
+        , storage_value_type_code         => rec.storage_value_type_code
+        , date_value                      => rec.date_value
+        , number_value                    => rec.number_value
+        , string_value                    =>
+            case when
+              rec.encryption_flag = 1 and rec.string_value is not null
+            then
+              pkg_OptionMain.getDecryptValue(
+                stringValue     => rec.string_value
+                , listSeparator => rec.list_separator
+              )
+            else
+              rec.string_value
+            end
+        , encrypted_string_value          =>
+            case when rec.encryption_flag = 1 then
+              rec.string_value
+            end
+        , change_number                   => rec.change_number
+        , change_date                     => rec.change_date
+        , change_operator_id              => rec.change_operator_id
+        , date_ins                        => rec.date_ins
+        , operator_id                     => rec.operator_id
+      );
+
+      pipe row( vlr);
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при обработке записи ('
+            || ' option_id=' || rec.option_id
+            || ', value_id=' || rec.value_id
+            || ').'
+          )
+        , true
+      );
+    end;
+  end loop;
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении таблицы с заданными значениями параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end getValue;
+
+
+
+/* group: Типы объектов */
+
+/* func: mergeObjectType
+  Создает или обновляет тип объекта.
+
+  Параметры:
+  objectTypeShortName         - короткое название типа объекта
+  objectTypeName              - название типа объекта
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Возврат:
+  - флаг внесения изменений ( 0 нет изменений, 1 если изменения внесены)
+
+  Замечания:
+  - считается, что тип объекта относится к модулю, для которого был создан
+    текущий экземпляр объекта opt_option_list_t;
+*/
+member function mergeObjectType(
+  objectTypeShortName varchar2
+  , objectTypeName varchar2
+  , operatorId integer := null
+)
+return integer
+is
+begin
+  return
+    pkg_OptionMain.mergeObjectType(
+      moduleId                => moduleId
+      , objectTypeShortName   => objectTypeShortName
+      , objectTypeName        => objectTypeName
+      , operatorId            => operatorId
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при создании или обновлении типа объекта.'
+      )
+    , true
+  );
+end mergeObjectType;
+
+/* proc: deleteObjectType
+  Удаляет тип объекта.
+
+  Параметры:
+  objectTypeShortName         - короткое название типа объекта
+  operatorId                  - Id оператора, выполняющего операцию ( по
+                                умолчанию текущий)
+
+  Замечания:
+  - считается, что тип объекта относится к модулю, для которого был создан
+    текущий экземпляр объекта opt_option_list_t;
+  - в случае использования типа в актуальных данных выбрасывается исключение;
+  - при отсутствии использования запись удаляется физически, иначе ставится
+    флаг логического удаления;
+*/
+member procedure deleteObjectType(
+  self in opt_option_list_t
+  , objectTypeShortName varchar2
+  , operatorId integer := null
+)
+is
+begin
+  pkg_OptionMain.deleteObjectType(
+    moduleId                => moduleId
+    , objectTypeShortName   => objectTypeShortName
+    , operatorId            => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении типа объекта.'
+      )
+    , true
+  );
+end deleteObjectType;
+
+
+
+/* group: Устаревшие функции */
+
+/* func: getOptionDate
+  Устаревшая функция, следует использовать <getDate> или <getDate( USED)>.
+*/
+member function getOptionDate(
+  moduleOptionName varchar2
+)
+return date
+is
+
+  -- Id параметра и вид значения
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getOptionInfoOld(
+    optionId            => optionId
+    , prodValueFlag     => prodValueFlag
+    , moduleName        => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , raiseNotFoundFlag => 1
+  );
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , optionId              => optionId
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => null
+    , usedOperatorId        => null
+    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+    , valueIndex            => null
+    , raiseNotFoundFlag     => 1
+  );
+  return vlr.date_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении значения параметра типа дата ('
+        || ' moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end getOptionDate;
+
+/* func: getOptionNumber
+  Устаревшая функция, следует использовать <getNumber> или <getNumber( USED)>.
+*/
+member function getOptionNumber(
+  moduleOptionName varchar2
+)
+return number
+is
+
+  -- Id параметра и вид значения
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getOptionInfoOld(
+    optionId            => optionId
+    , prodValueFlag     => prodValueFlag
+    , moduleName        => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , raiseNotFoundFlag => 1
+  );
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , optionId              => optionId
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => null
+    , usedOperatorId        => null
+    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+    , valueIndex            => null
+    , raiseNotFoundFlag     => 1
+  );
+  return vlr.number_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении значения параметра числового типа ('
+        || ' moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end getOptionNumber;
+
+/* func: getOptionString
+  Устаревшая функция, следует использовать <getString> или <getString( USED)>.
+*/
+member function getOptionString(
+  moduleOptionName varchar2
+)
+return varchar2
+is
+
+  -- Id параметра и вид значения
+  optionId integer;
+  prodValueFlag integer;
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getOptionInfoOld(
+    optionId            => optionId
+    , prodValueFlag     => prodValueFlag
+    , moduleName        => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , raiseNotFoundFlag => 1
+  );
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , optionId              => optionId
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => null
+    , usedOperatorId        => null
+    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+    , valueIndex            => null
+    , raiseNotFoundFlag     => 1
+  );
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении значения параметра строкового типа ('
+        || ' moduleOptionName="' || moduleOptionName || '"'
+        || ').'
+      )
+    , true
+  );
+end getOptionString;
+
+/* proc: addOptionDate
+  Устаревшая функция, следует использовать <addDate> или <addDate( TEST_PROD)>.
+*/
+member procedure addOptionDate(
+  self in opt_option_list_t
+  , moduleOptionName varchar2
+  , optionName varchar2
+  , defaultDateValue varchar2 := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValueOld(
+    moduleName          => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , valueTypeCode     => pkg_OptionMain.Date_ValueTypeCode
+    , optionName        => optionName
+    , dateValue         => defaultDateValue
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со значением типа дата'
+        || ' устаревшей функцией.'
+      )
+    , true
+  );
+end addOptionDate;
+
+/* proc: addOptionNumber
+  Устаревшая функция, следует использовать <addNumber> или
+  <addNumber( TEST_PROD)>.
+*/
+member procedure addOptionNumber(
+  self in opt_option_list_t
+  , moduleOptionName varchar2
+  , optionName varchar2
+  , defaultNumberValue varchar2 := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValueOld(
+    moduleName          => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , valueTypeCode     => pkg_OptionMain.Number_ValueTypeCode
+    , optionName        => optionName
+    , numberValue       => defaultNumberValue
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра с числовым значением'
+        || ' устаревшей функцией.'
+      )
+    , true
+  );
+end addOptionNumber;
+
+/* proc: addOptionString
+  Устаревшая функция, следует использовать <addString> или
+  <addString( TEST_PROD)>.
+*/
+member procedure addOptionString(
+  self in opt_option_list_t
+  , moduleOptionName varchar2
+  , optionName varchar2
+  , defaultStringValue varchar2 := null
+)
+is
+begin
+  pkg_OptionMain.addOptionWithValueOld(
+    moduleName          => oldModuleName
+    , moduleOptionName  => moduleOptionName
+    , valueTypeCode     => pkg_OptionMain.String_ValueTypeCode
+    , optionName        => optionName
+    , stringValue       => defaultStringValue
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при добавлении параметра со строковым значением'
+        || ' устаревшей функцией.'
+      )
+    , true
+  );
+end addOptionString;
+
+end;
+/

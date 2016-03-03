@@ -1,0 +1,6 @@
+--sequence: doc_mask_seq
+create sequence doc_mask_seq
+ nomaxvalue
+ nominvalue
+ nocycle
+/

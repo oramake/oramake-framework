@@ -1,0 +1,60 @@
+alter table
+  opt_value
+add constraint
+  opt_value_fk_option_id
+foreign key
+  ( option_id)
+references
+  opt_option_new ( option_id)
+on delete cascade
+/
+
+alter table
+  opt_value
+add constraint
+  opt_value_fk_used_operator_id
+foreign key
+  ( used_operator_id)
+references
+  op_operator ( operator_id)
+/
+
+alter table
+  opt_value
+add constraint
+  opt_value_fk_value_type_code
+foreign key
+  ( value_type_code)
+references
+  opt_value_type ( value_type_code)
+/
+
+alter table
+  opt_value
+add constraint
+  opt_value_fk_storage_value_typ
+foreign key
+  ( storage_value_type_code)
+references
+  opt_value_type ( value_type_code)
+/
+
+alter table
+  opt_value
+add constraint
+  opt_value_fk_change_operator
+foreign key
+  ( change_operator_id)
+references
+  op_operator ( operator_id)
+/
+
+alter table
+  opt_value
+add constraint
+  opt_value_fk_operator_id
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

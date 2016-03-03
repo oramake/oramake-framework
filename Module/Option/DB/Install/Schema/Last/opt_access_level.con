@@ -1,0 +1,9 @@
+alter table
+  opt_access_level
+add constraint
+  opt_access_level_fk_operator
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

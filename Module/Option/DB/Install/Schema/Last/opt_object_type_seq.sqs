@@ -1,0 +1,7 @@
+-- sequence: opt_object_type_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <opt_object_type>.
+create sequence
+  opt_object_type_seq
+nocache
+/

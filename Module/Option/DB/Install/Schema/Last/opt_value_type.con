@@ -1,0 +1,9 @@
+alter table
+  opt_value_type
+add constraint
+  opt_value_type_fk_op_operator
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

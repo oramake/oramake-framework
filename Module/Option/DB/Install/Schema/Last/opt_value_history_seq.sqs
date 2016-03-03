@@ -1,0 +1,6 @@
+-- sequence: opt_value_history_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <opt_value_history>.
+create sequence
+  opt_value_history_seq
+/

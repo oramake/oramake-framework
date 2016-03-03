@@ -1,0 +1,32 @@
+-- table: opt_access_level
+-- Уровни доступа к параметрам через пользовательский интерфейс.
+create table
+  opt_access_level
+(
+  access_level_code               varchar2(10)                        not null
+  , access_level_name             varchar2(100)                       not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_access_level_pk primary key
+    ( access_level_code)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table opt_access_level is
+  'Уровни доступа к параметрам через пользовательский интерфейс [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_access_level.access_level_code is
+  'Код уровня доступа'
+/
+comment on column opt_access_level.access_level_name is
+  'Описание уровня доступа'
+/
+comment on column opt_access_level.date_ins is
+  'Дата добавления записи'
+/
+comment on column opt_access_level.operator_id is
+  'Id оператора, добавившего запись'
+/

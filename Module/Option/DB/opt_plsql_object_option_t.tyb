@@ -1,0 +1,128 @@
+create or replace type body opt_plsql_object_option_t is
+/* db object type body: opt_plsql_object_option_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Открытые объявления */
+
+
+
+/* group: Конструкторы */
+
+/* func: opt_plsql_object_option_t
+  Создает набор настроечных параметров PL/SQL объекта и устанавливает его
+  свойства.
+
+  Параметры:
+  findModuleString            - строка для поиска модуля (
+                                может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+  objectName                  - имя PL/SQL объекта ( пакета, SQL-типа
+                                и т.д.), к которому относятся параметры
+  moduleName                  - название модуля ( например "ModuleInfo")
+  moduleSvnRoot               - путь к корневому каталогу модуля в Subversion
+                                ( начиная с имени репозитария, например
+                                "Oracle/Module/ModuleInfo")
+
+  Замечания:
+  - имя PL/SQL объекта ( objectName) используется как короткое название
+    объекта, к которому относятся параметры ( поле object_short_name таблицы
+    <opt_option_new>);
+  - для определения модуля должен быть задан один из параметров
+    findModuleString, moduleName, moduleSvnRoot и модуль по нему
+    должен определяться однозначно, иначе будет выброшено исключение;
+*/
+constructor function opt_plsql_object_option_t(
+  findModuleString varchar2 := null
+  , objectName varchar2
+  , moduleName varchar2 := null
+  , moduleSvnRoot varchar2 := null
+)
+return self as result
+is
+begin
+
+  -- Инициализация базового класса
+  self.initialize(
+    moduleId                =>
+        pkg_ModuleInfo.getModuleId(
+          findModuleString      => findModuleString
+          , moduleName          => moduleName
+          , svnRoot             => moduleSvnRoot
+          , raiseExceptionFlag  => 1
+        )
+    , objectShortName       => objectName
+    , objectTypeShortName   => pkg_OptionMain.PlsqlObject_ObjTypeSName
+    , objectTypeModuleId    =>
+        pkg_ModuleInfo.getModuleId(
+          svnRoot               => pkg_OptionMain.Module_SvnRoot
+          , raiseExceptionFlag  => 1
+        )
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при создании набора настроечных параметров PL/SQL объекта ('
+      || ' objectName="' || objectName || '"'
+      || ').'
+    , true
+  );
+end opt_plsql_object_option_t;
+
+/* func: opt_plsql_object_option_t( moduleId)
+  Создает набор настроечных параметров PL/SQL объекта и устанавливает его
+  свойства.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относятся параметры
+  objectName                  - имя PL/SQL объекта ( пакета, SQL-типа
+                                и т.д.), к которому относятся параметры
+
+  Замечания:
+  - имя PL/SQL объекта ( objectName) используется как короткое название
+    объекта, к которому относятся параметры ( поле object_short_name таблицы
+    <opt_option_new>);
+*/
+constructor function opt_plsql_object_option_t(
+  moduleId integer
+  , objectName varchar2
+)
+return self as result
+is
+begin
+
+  -- Инициализация базового класса
+  self.initialize(
+    moduleId                => moduleId
+    , objectShortName       => objectName
+    , objectTypeShortName   => pkg_OptionMain.PlsqlObject_ObjTypeSName
+    , objectTypeModuleId    =>
+        pkg_ModuleInfo.getModuleId(
+          svnRoot               => pkg_OptionMain.Module_SvnRoot
+          , raiseExceptionFlag  => 1
+        )
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при создании набора настроечных параметров PL/SQL объекта ('
+        || ' moduleId=' || moduleId
+        || ' objectName="' || objectName || '"'
+        || ').'
+      )
+    , true
+  );
+end opt_plsql_object_option_t;
+
+end;
+/

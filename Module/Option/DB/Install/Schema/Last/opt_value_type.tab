@@ -1,0 +1,32 @@
+-- table: opt_value_type
+-- Типы значений параметров.
+create table
+  opt_value_type
+(
+  value_type_code                 varchar2(10)                        not null
+  , value_type_name               varchar2(100)                       not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_value_type_pk primary key
+    ( value_type_code)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table opt_value_type is
+  'Типы значений параметров [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_value_type.value_type_code is
+  'Код типа значения параметра'
+/
+comment on column opt_value_type.value_type_name is
+  'Название типа значения параметра'
+/
+comment on column opt_value_type.date_ins is
+  'Дата добавления записи'
+/
+comment on column opt_value_type.operator_id is
+  'Id оператора, добавившего запись'
+/

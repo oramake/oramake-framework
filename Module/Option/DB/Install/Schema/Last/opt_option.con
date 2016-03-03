@@ -1,0 +1,7 @@
+alter table opt_option
+   add constraint opt_option_doc_mask_fk foreign key (mask_id)
+      references doc_mask (mask_id);
+
+alter table opt_option
+   add constraint opt_option_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

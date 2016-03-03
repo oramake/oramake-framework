@@ -1,0 +1,181 @@
+-- table: opt_value_history
+-- Значения настроечных параметров ( исторические данные).
+create table
+  opt_value_history
+(
+  value_history_id                integer                             not null
+  , value_id                      integer                             not null
+  , option_id                     integer                             not null
+  , prod_value_flag               number(1,0)
+  , instance_name                 varchar2(30)
+  , used_operator_id              integer
+  , value_type_code               varchar2(10)                        not null
+  , list_separator                varchar2(1)
+  , encryption_flag               number(1)                           not null
+  , storage_value_type_code       varchar2(10)                        not null
+  , date_value                    date
+  , number_value                  number
+  , string_value                  varchar2(4000)
+  , old_option_value_id           integer
+  , old_option_id                 integer
+  , old_option_value_del_date     date
+  , old_option_del_date           date
+  , deleted                       number(1)                           not null
+  , change_number                 integer                             not null
+  , change_date                   date                                not null
+  , change_operator_id            integer                             not null
+  , base_date_ins                 date                                not null
+  , base_operator_id              integer                             not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_value_history_pk primary key
+    ( value_history_id)
+    using index tablespace &indexTablespace
+  , constraint opt_value_history_uk unique(
+      value_id
+      , change_number
+    )
+    using index tablespace &indexTablespace
+  , constraint opt_value_history_ck_prod_val check
+    ( prod_value_flag in ( 0, 1))
+  , constraint opt_value_history_ck_instance check
+    ( instance_name = upper( instance_name))
+  , constraint opt_value_history_ck_st_vl_tp check
+    ( list_separator is null and storage_value_type_code = value_type_code or list_separator is not null and storage_value_type_code = 'STR')
+  , constraint opt_value_history_ck_encrypt_f check
+    ( value_type_code = 'STR' and encryption_flag in ( 0, 1) or encryption_flag = 0)
+  , constraint opt_value_history_ck_value check
+(( storage_value_type_code = 'DATE' or date_value is null)
+and ( storage_value_type_code = 'NUM' or number_value is null)
+and ( storage_value_type_code = 'STR' or string_value is null)
+)
+  , constraint opt_value_history_ck_old_opt check
+(instance_name is null
+  and used_operator_id is null
+  and (
+    deleted = 1
+    or old_option_value_id is not null
+      and old_option_id is not null
+  )
+or (
+  instance_name is not null
+    or used_operator_id is not null
+  )
+  and old_option_value_id is null
+  and old_option_id is null
+  and old_option_value_del_date is null
+  and old_option_del_date is null
+)
+  , constraint opt_value_history_ck_o_ov_d_dt check
+    ( old_option_value_del_date is null or old_option_value_id is not null)
+  , constraint opt_value_history_ck_o_op_d_dt check
+    ( old_option_del_date is null or old_option_id is not null)
+  , constraint opt_value_history_ck_deleted check
+    ( deleted in ( 0, 1))
+  , constraint opt_value_hist_ck_change_num check
+    ( change_number >= 1)
+)
+/
+
+comment on table opt_value_history is
+  'Значения настроечных параметров ( исторические данные) [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_value_history.value_history_id is
+  'Id исторической записи'
+/
+comment on column opt_value_history.value_id is
+  'Id значения'
+/
+comment on column opt_value_history.option_id is
+  'Id параметра'
+/
+comment on column opt_value_history.prod_value_flag is
+  'Флаг использования значения только в промышленных ( либо тестовых) БД ( 1 только в промышленных БД, 0 только в тестовых БД, null без ограничений)'
+/
+comment on column opt_value_history.instance_name is
+  'Имя экземпляра БД, в которой может использоваться значение ( в верхнем регистре, null без ограничений)'
+/
+comment on column opt_value_history.used_operator_id is
+  'Id оператора, для которого может использоваться значение ( null без ограничений)'
+/
+comment on column opt_value_history.value_type_code is
+  'Код типа значения параметра'
+/
+comment on column opt_value_history.list_separator is
+  'Символ, используемый в качестве разделителя в списке значений, сохраненном в поле string_value ( null если список не используется)'
+/
+comment on column opt_value_history.encryption_flag is
+  'Флаг хранения значений параметра в зашифрованном виде ( возможно только для значений строкового типа) ( 1 да, 0 нет)'
+/
+comment on column opt_value_history.storage_value_type_code is
+  'Код типа, используемого для хранения значения параметра ( отличается от типа значения параметра в случае использования списка значений, т.к. список хранится в виде строки)'
+/
+comment on column opt_value_history.date_value is
+  'Значение параметра типа дата'
+/
+comment on column opt_value_history.number_value is
+  'Числовое значение параметра'
+/
+comment on column opt_value_history.string_value is
+  'Строковое значение параметра ( если не задано значение в поле list_separator) либо список значений с разделителем, указанным в поле list_separator ( если оно задано). Значения параметра строкового типа хранятся в списке без изменений, значения типа дата хранятся в формате "yyyy-mm-dd hh24:mi:ss", числа хранятся в формате "tm9" с десятичным разделителем точка.'
+/
+comment on column opt_value_history.old_option_value_id is
+  'Устаревшее поле: Id значения в таблице opt_option_value'
+/
+comment on column opt_value_history.old_option_id is
+  'Устаревшее поле: Id параметра в таблице opt_option'
+/
+comment on column opt_value_history.old_option_value_del_date is
+  'Устаревшее поле: Дата удаления значения из таблицы opt_option_value'
+/
+comment on column opt_value_history.old_option_del_date is
+  'Устаревшее поле: Дата удаления параметра из таблицы opt_option'
+/
+comment on column opt_value_history.deleted is
+  'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'
+/
+comment on column opt_value_history.change_number is
+  'Порядковый номер изменения записи ( начиная с 1)'
+/
+comment on column opt_value_history.change_date is
+  'Дата изменения записи'
+/
+comment on column opt_value_history.change_operator_id is
+  'Id оператора, изменившего запись'
+/
+comment on column opt_value_history.base_date_ins is
+  'Дата добавления записи в исходной таблице'
+/
+comment on column opt_value_history.base_operator_id is
+  'Id оператора, добавившего запись в исходной таблице'
+/
+comment on column opt_value_history.date_ins is
+  'Дата добавления записи'
+/
+comment on column opt_value_history.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: opt_value_history_ix_old_opt_v
+-- Обеспечивает поиск значения по устаревшему Id значения параметра.
+create index
+  opt_value_history_ix_old_opt_v
+on
+  opt_value_history (
+    old_option_value_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: opt_value_history_ix_old_opt
+-- Обеспечивает поиск значения по устаревшему Id параметра.
+create index
+  opt_value_history_ix_old_opt
+on
+  opt_value_history (
+    old_option_id
+  )
+tablespace &indexTablespace
+/

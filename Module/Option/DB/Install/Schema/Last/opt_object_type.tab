@@ -1,0 +1,50 @@
+-- table: opt_object_type
+-- Типы объектов
+-- ( актуальные данные, включая логически удаленные записи).
+create table
+  opt_object_type
+(
+  object_type_id                  integer                             not null
+  , module_id                     integer                             not null
+  , object_type_short_name        varchar2(50)                        not null
+  , object_type_name              varchar2(100)                       not null
+  , deleted                       number(1)           default 0       not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_object_type_pk primary key
+    ( object_type_id)
+    using index tablespace &indexTablespace
+  , constraint opt_object_type_uk unique
+    ( module_id, object_type_short_name)
+    using index tablespace &indexTablespace
+  , constraint opt_object_type_ck_deleted check
+    ( deleted in ( 0, 1))
+)
+/
+
+
+
+comment on table opt_object_type is
+  'Типы объектов ( актуальные данные, включая логически удаленные записи) [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_object_type.object_type_id is
+  'Id типа объекта'
+/
+comment on column opt_object_type.module_id is
+  'Id модуля, к которому относится тип объекта'
+/
+comment on column opt_object_type.object_type_short_name is
+  'Короткое название типа объекта ( уникальное в рамках модуля)'
+/
+comment on column opt_object_type.object_type_name is
+  'Название типа объекта'
+/
+comment on column opt_object_type.deleted is
+  'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'
+/
+comment on column opt_object_type.date_ins is
+  'Дата добавления записи'
+/
+comment on column opt_object_type.operator_id is
+  'Id оператора, добавившего запись'
+/

@@ -1,0 +1,24 @@
+-- table: opt_option
+-- Данные по настроечным параметрам в устаревшем виде
+-- ( таблица временно сохранена для совместимости, будет удалена).
+create table opt_option  (
+   option_id            integer                         not null,
+   option_name          varchar2(250)                   not null,
+   option_short_name    varchar2(200)                   not null,
+   is_global            number(1,0)                    default 1 not null,
+   link_global_local    integer,
+   mask_id              integer,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint opt_option_pk primary key (option_id)
+  , constraint opt_option_ck_is_global check
+    ( is_global = 1)
+  , constraint opt_option_ck_is_link_global_l check
+    ( link_global_local is null)
+)
+/
+
+
+comment on table opt_option is
+  'Данные по настроечным параметрам в устаревшем виде ( таблица временно сохранена для совместимости, будет удалена) [ SVN root: Oracle/Module/Option]'
+/

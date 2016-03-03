@@ -1,0 +1,141 @@
+-- table: opt_option_history
+-- Ќастроечные параметры программных модулей ( исторические данные).
+create table
+  opt_option_history
+(
+  option_history_id               integer                             not null
+  , option_id                     integer                             not null
+  , module_id                     integer                             not null
+  , object_short_name             varchar2(100)
+  , object_type_id                integer
+  , option_short_name             varchar2(50)                        not null
+  , value_type_code               varchar2(10)                        not null
+  , value_list_flag               number(1,0)                         not null
+  , encryption_flag               number(1,0)                         not null
+  , test_prod_sensitive_flag      number(1,0)                         not null
+  , access_level_code             varchar2(10)                        not null
+  , option_name                   varchar2(250)                       not null
+  , option_description            varchar2(1000)
+  , old_option_short_name         varchar2(250)                       not null
+  , old_mask_id                   integer
+  , old_option_name_test          varchar2(250)
+  , deleted                       number(1)                           not null
+  , change_number                 integer                             not null
+  , change_date                   date                                not null
+  , change_operator_id            integer                             not null
+  , base_date_ins                 date                                not null
+  , base_operator_id              integer                             not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_option_history_pk primary key
+    ( option_history_id)
+    using index tablespace &indexTablespace
+  , constraint opt_option_history_uk unique(
+      option_id
+      , change_number
+    )
+    using index tablespace &indexTablespace
+  , constraint opt_option_hist_ck_object_type check
+    ( object_short_name is null and object_type_id is null
+or object_short_name is not null and object_type_id is not null)
+  , constraint opt_option_hist_ck_val_list_fg check
+    ( value_list_flag in ( 0, 1))
+  , constraint opt_option_hist_ck_encrypt_fg check
+    ( value_type_code = 'STR' and encryption_flag in ( 0, 1) or encryption_flag = 0)
+  , constraint opt_option_hist_ck_test_prod_s check
+    ( test_prod_sensitive_flag in ( 0, 1))
+  , constraint opt_option_hist_ck_deleted check
+    ( deleted in ( 0, 1))
+  , constraint opt_option_hist_ck_chg_num check
+    ( change_number >= 1)
+)
+/
+
+comment on table opt_option_history is
+  'Ќастроечные параметры программных модулей ( исторические данные) [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_option_history.option_history_id is
+  'Id исторической записи'
+/
+comment on column opt_option_history.option_id is
+  'Id параметра'
+/
+comment on column opt_option_history.module_id is
+  'Id модул€, к которому относитс€ параметр'
+/
+comment on column opt_option_history.object_short_name is
+  ' ороткое название объекта модул€ ( уникальное в рамках модул€), к которому относитс€ параметр ( null если не требуетс€ разделени€ параметров по объектам либо параметр относитс€ ко всему модулю)'
+/
+comment on column opt_option_history.object_type_id is
+  'Id типа объекта'
+/
+comment on column opt_option_history.option_short_name is
+  ' ороткое название параметра ( уникальное в рамках модул€ либо в рамках объекта модул€, если заполнено поле object_short_name)'
+/
+comment on column opt_option_history.value_type_code is
+  ' од типа значени€ параметра'
+/
+comment on column opt_option_history.value_list_flag is
+  '‘лаг задани€ дл€ параметра списка значений указанного типа ( 1 да, 0 нет)'
+/
+comment on column opt_option_history.encryption_flag is
+  '‘лаг хранени€ значений параметра в зашифрованном виде ( возможно только дл€ значений строкового типа) ( 1 да, 0 нет)'
+/
+comment on column opt_option_history.test_prod_sensitive_flag is
+  '‘лаг указани€ дл€ значени€ параметра типа базы данных ( тестова€ или промышленна€), дл€ которого оно предназначено ( 1 да, 0 нет)'
+/
+comment on column opt_option_history.access_level_code is
+  ' од уровн€ доступа к параметру через пользовательский интерфейс'
+/
+comment on column opt_option_history.option_name is
+  'Ќазвание параметра'
+/
+comment on column opt_option_history.option_description is
+  'ќписание параметра'
+/
+comment on column opt_option_history.old_option_short_name is
+  '”старевшее поле:  ороткое название параметра в таблице opt_option'
+/
+comment on column opt_option_history.old_mask_id is
+  '”старевшее поле: Id маски дл€ значени€ параметра'
+/
+comment on column opt_option_history.old_option_name_test is
+  '”старевшее поле: Ќазвание тестового параметра в таблице opt_option'
+/
+comment on column opt_option_history.deleted is
+  '‘лаг логического удалени€ записи ( 0 - существующа€, 1 - удалена)'
+/
+comment on column opt_option_history.change_number is
+  'ѕор€дковый номер изменени€ записи ( начина€ с 1)'
+/
+comment on column opt_option_history.change_date is
+  'ƒата изменени€ записи'
+/
+comment on column opt_option_history.change_operator_id is
+  'Id оператора, изменившего запись'
+/
+comment on column opt_option_history.base_date_ins is
+  'ƒата добавлени€ записи в исходной таблице'
+/
+comment on column opt_option_history.base_operator_id is
+  'Id оператора, добавившего запись в исходной таблице'
+/
+comment on column opt_option_history.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column opt_option_history.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: opt_option_history_ix_obj_type
+-- »ндекс дл€ внешнего ключа.
+create index
+  opt_option_history_ix_obj_type
+on
+  opt_option_history (
+    object_type_id
+  )
+tablespace &indexTablespace
+/

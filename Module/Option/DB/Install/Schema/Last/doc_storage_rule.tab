@@ -1,0 +1,15 @@
+--table: doc_storage_rule
+create table doc_storage_rule  (
+   storage_rule_id      integer                         not null,
+   storage_rule_name    varchar2(50)                    not null,
+   fn_get_by_content    varchar2(50)                    not null,
+   fn_get_by_property   varchar2(50)                    not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint doc_storage_rule_pk primary key (storage_rule_id)
+);
+
+comment on table doc_storage_rule is
+  'Устаревшая таблица, будет удалена [ SVN root: Oracle/Module/Option]'
+/
+
