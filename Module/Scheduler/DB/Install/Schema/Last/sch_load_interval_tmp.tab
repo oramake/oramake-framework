@@ -1,0 +1,42 @@
+-- table: sch_load_interval_tmp
+-- Интервалы расписания батча для загрузки.
+create global temporary table
+  sch_load_interval_tmp
+(
+  load_schedule_number           integer
+  , interval_type_code           varchar2(10)                         not null
+  , min_value                    number(2,0)                          not null
+  , max_value                    number(2,0)                          not null
+  , step                         number(2,0)                          not null
+  , constraint sch_load_interval_tmp_pk primary key
+    (
+      load_schedule_number
+      , interval_type_code
+      , min_value
+      , step
+    )
+)
+on commit delete rows
+/
+
+
+comment on table sch_load_interval_tmp is
+  'Интервалы расписания батча для загрузки [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_load_interval_tmp.load_schedule_number is
+  'Порядковый номер расписания батча'
+/
+comment on column sch_load_interval_tmp.interval_type_code is
+  'Код типа интервала'
+/
+comment on column sch_load_interval_tmp.min_value is
+  'Минимальное значение'
+/
+comment on column sch_load_interval_tmp.max_value is
+  'Максимальное значение'
+/
+comment on column sch_load_interval_tmp.step is
+  'Шаг'
+/
+
+

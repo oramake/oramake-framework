@@ -1,0 +1,53 @@
+-- table: sch_module_role_privilege
+-- ѕрава на все пакетные задани€ указанных модулей, выдаваемые через роли.
+create table sch_module_role_privilege(
+  module_role_privilege_id        integer                             not null
+  , module_id                     integer                             not null
+  , role_id                       integer                             not null
+  , privilege_code                varchar2(10)                        not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint sch_module_role_privilege_pk primary key
+    ( module_role_privilege_id)
+    using index tablespace &indexTablespace
+  , constraint sch_module_role_privilege_uk unique
+    ( module_id, role_id, privilege_code)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table sch_module_role_privilege is
+  'ѕрава на все пакетные задани€ указанных модулей, выдаваемые через роли [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_module_role_privilege.module_role_privilege_id is
+  'Id записи'
+/
+comment on column sch_module_role_privilege.module_id is
+  'Id модул€, к которому относ€тс€ пакетные задани€'
+/
+comment on column sch_module_role_privilege.role_id is
+  'Id роли'
+/
+comment on column sch_module_role_privilege.privilege_code is
+  ' од привилегии на пакетное задание'
+/
+comment on column sch_module_role_privilege.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column sch_module_role_privilege.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: sch_module_role_privilege_ix_r
+-- »ндекс дл€ внешнего ключа.
+create index
+  sch_module_role_privilege_ix_r
+on
+  sch_module_role_privilege (
+    role_id
+  )
+/

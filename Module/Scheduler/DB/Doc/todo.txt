@@ -1,0 +1,35 @@
+Title: Доработки
+
+
+
+group: Общие
+
+[*] Переименовать интерфейсную функцию <pkg_Scheduler.findModule> в getModule.
+
+[*] При ошибке job "Перезапуск пакетов..."
+"...Не завершились в отведенное время следующие пакеты.."
+записывать в скобках отведённое время
+
+[+] Решить проблему с существованием неиспользуемых job.
+
+[+] Добавить интерфейсные функции <pkg_Schedule.activateBatch( moduleName,
+    batchShortNameMask)> <pkg_Schedule.deactivateBatch( moduleName,
+    batchShortNameMask)>, <pkg_Scheduler.reactivateBatch( moduleName,
+    batchShortNameMask) - активирует батчи, которые были деактивированы только при
+    установке данного модуля с ограниением по времени.  Использовать pkg_Scheduler в
+    реализации oms-deactivate-batch, oms-activate-batch , oms-reactivate-batch.
+    Добавить функцию executeBatch( batchShortNameMask), устанавливающую дату
+    выполнения батча, ожидающего завершения работы батчей и опционально
+    возвращающую лог выполнения.
+
+[+] Ставить метку в динамическом SQL для job'ов, чтобы проще идентифицировать
+    выполняемые батчи в отчётах DBA ( возможно это увеличит нагрузку на Library
+    Caсhe).
+
+
+
+group: Завершение доработок
+
+[*] Удалить объекты, связанные с типом батча ( таблица sch_batch_type и др.)
+    после прекращения использования типа батча в OMS ( скрипт
+    OmsInternal/exec-batch-operation.sql).

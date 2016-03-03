@@ -1,0 +1,7 @@
+alter table sch_schedule
+   add constraint sch_schedule_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_schedule
+   add constraint sch_schedule_sch_batch_fk foreign key (batch_id)
+      references sch_batch (batch_id);

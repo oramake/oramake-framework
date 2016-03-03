@@ -1,0 +1,3 @@
+alter table sch_interval_type
+   add constraint sch_interval_type_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

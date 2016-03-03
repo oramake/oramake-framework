@@ -1,0 +1,88 @@
+-- table: sch_job
+-- Задания.
+create table sch_job(
+  job_id                   integer                                    not null
+  , job_short_name         varchar2(100)                              not null
+  , public_flag            number(1,0)                default 0       not null
+  , module_id              integer                                    not null
+  , batch_short_name       varchar2(30)
+  , job_name               varchar2(255)                              not null
+  , description            varchar2(4000)
+  , job_what               varchar2(4000)                             not null
+  , date_ins               date                       default sysdate not null
+  , operator_id            integer                                    not null
+  , date_del               date
+  , operator_id_del        integer
+  , constraint sch_job_pk primary key (
+      job_id
+    ) using index tablespace &indexTablespace
+  , constraint sch_job_ck_public check (
+      public_flag = 1
+      and batch_short_name is null
+      or
+      public_flag = 0
+    )
+)
+/
+
+-- index: sch_job_ux_short_name
+-- Уникальный индекс для идентификации job
+create unique index
+  sch_job_ux_short_name
+on
+  sch_job (
+    job_short_name
+    , module_id
+    , batch_short_name
+  )
+tablespace &indexTablespace
+/
+
+
+comment on table sch_job is
+  'Задания [ SVN root: Oracle/Module/Scheduler]'
+/
+
+
+comment on column sch_job.job_id is
+  'Id задания ( job)'
+/
+comment on column sch_job.job_short_name is
+  'Короткое наименование задания'
+/
+comment on column sch_job.module_id is
+  'Id модуля ( ModuleInfo)'
+/
+comment on column sch_job.public_flag is
+  'Флаг видимости job для других модулей ( 0 - job может использоваться только батчами своего модуля, 1 - job может использоваться в батчах других модулей'
+/
+comment on column sch_job.batch_short_name is
+  'Короткое наименование пакетного задания ( батча)'
+/
+comment on column sch_job.job_name is
+  'Наименование задания ( на русском языке)'
+/
+comment on column sch_job.description is
+  'Описание задания'
+/
+comment on column sch_job.job_what is
+  'PL/SQL-код задания'
+/
+comment on column sch_job.date_ins is
+  'Дата добавления записи'
+/
+comment on column sch_job.operator_id is
+  'Id оператора, добавившего запись'
+/
+comment on column sch_job.date_del is
+  'Дата удаления запииси'
+/
+comment on column sch_job.operator_id_del is
+  'Id оператора, удалившего запись'
+/
+
+
+
+
+
+

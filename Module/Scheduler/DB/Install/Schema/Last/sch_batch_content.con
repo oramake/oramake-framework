@@ -1,0 +1,15 @@
+alter table sch_batch_content
+   add constraint sch_batch_content_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_batch_content
+   add constraint sch_batch_content_operator_fk2 foreign key (operator_id_del)
+      references op_operator (operator_id);
+
+alter table sch_batch_content
+   add constraint sch_batch_content_sch_batch_fk foreign key (batch_id)
+      references sch_batch (batch_id);
+
+alter table sch_batch_content
+   add constraint sch_batch_content_sch_job_fk foreign key (job_id)
+      references sch_job (job_id);

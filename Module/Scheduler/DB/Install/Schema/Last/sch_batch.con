@@ -1,0 +1,26 @@
+alter table sch_batch
+   add constraint sch_batch_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_batch
+   add constraint sch_batch_op_operator_fk2 foreign key (operator_id_del)
+      references op_operator (operator_id);
+
+alter table sch_batch
+   add constraint sch_batch_sch_batch_type_fk foreign key (batch_type_id)
+      references sch_batch_type (batch_type_id);
+
+
+alter table
+  sch_batch
+add constraint
+  sch_batch_mod_module_fk
+foreign key (
+  module_id
+)
+references
+  mod_module
+(
+  module_id
+)
+/

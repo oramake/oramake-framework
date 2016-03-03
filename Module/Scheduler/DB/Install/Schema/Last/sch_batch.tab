@@ -1,0 +1,87 @@
+-- table: sch_batch
+-- Пакетные задания ( батчи).
+create table sch_batch  (
+   batch_id                       integer                             not null
+   , batch_short_name             varchar2(30)                        not null
+   , module_id                    integer                             not null
+   , batch_name_rus               varchar2(255)                       not null
+   , batch_name_eng               varchar2(255)                       not null
+   , batch_type_id                integer                             not null
+   , retrial_count                integer
+   , retrial_timeout              interval day to second
+   , oracle_job_id                number
+   , nls_language                 varchar2(40)
+   , nls_territory                varchar2(40)
+   , retrial_number               integer
+   , date_ins                     date                default sysdate not null
+   , operator_id                  integer                             not null
+   , date_del                     date
+   , operator_id_del              integer
+   , constraint sch_batch_pk primary key (batch_id)
+   , constraint sch_batch_uk_batch_short_name unique (batch_short_name)
+   , constraint sch_batch_ck_retrial check (
+       coalesce( retrial_count, 0) >= 0
+       and coalesce( retrial_timeout, interval '0' second) >= interval '0' second
+     )
+)
+/
+
+create unique index sch_batch_ux_oracle_job_id on sch_batch (
+   oracle_job_id asc
+)
+/
+
+
+comment on table sch_batch is
+  'Пакетные задания ( батчи) [ SVN root: Oracle/Module/Scheduler]'
+/
+
+comment on column sch_batch.batch_id is
+  'Id пакетного задания ( батча)'
+/
+comment on column sch_batch.batch_short_name is
+  'Короткое уникальное наименование пакетного задания ( батча)'
+/
+comment on column sch_batch.module_id is
+  'Id модуля, к которому относится пакетно задание ( батч)'
+/
+comment on column sch_batch.batch_name_rus is
+  'Наименование батча ( пакетного задания) на русском языке'
+/
+comment on column sch_batch.batch_name_eng is
+  'Наименование батча ( пакетного задания) на английском языке'
+/
+comment on column sch_batch.batch_type_id is
+  'Id типа пакетного задания ( поле оставлено для обратной совместимости)'
+/
+comment on column sch_batch.retrial_count is
+  'Количество попыток повторного выполнения пакетного задания'
+/
+comment on column sch_batch.retrial_timeout is
+  'Интервал следующего повторного выполнения пакетного задания'
+/
+comment on column sch_batch.oracle_job_id is
+  'Id job из таблицы dba_jobs'
+/
+comment on column sch_batch.nls_language is
+  'Значение NLS_LANGUAGE для job ( по-умолчанию "AMERICAN")'
+/
+comment on column sch_batch.nls_territory is
+  'Значение NLS_TERRITORY для job ( по-умолчанию берётся из сессии, в котором активирован батч)'
+/
+comment on column sch_batch.retrial_number is
+  'Номер попытки повторного выполнения'
+/
+comment on column sch_batch.date_ins is
+  'Дата добавления записи'
+/
+comment on column sch_batch.operator_id is
+  'Id оператора, добавившего запись'
+/
+comment on column sch_batch.date_del is
+  'Дата удаления записи'
+/
+comment on column sch_batch.operator_id_del is
+  'Id оператора, удалившего запись'
+/
+

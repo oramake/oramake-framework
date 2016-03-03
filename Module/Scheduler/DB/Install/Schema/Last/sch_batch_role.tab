@@ -1,0 +1,40 @@
+-- table: sch_batch_role
+-- Роли, назначенные батчам
+create table sch_batch_role  (
+   batch_role_id        integer                         not null,
+   batch_id             integer                         not null,
+   privilege_code       varchar2(10)                    not null,
+   role_id              integer                         not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_batch_role_pk primary key (batch_role_id),
+   constraint sch_batch_role_uk unique (batch_id, privilege_code, role_id)
+);
+
+--index: sch_batch_role_ix_role_id
+create index sch_batch_role_ix_role_id on sch_batch_role (
+   role_id asc
+);
+
+comment on table sch_batch_role is
+  'Роли, назначенные батчам [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_batch_role.batch_role_id is
+  'Id назначения роли батчу'
+/
+comment on column sch_batch_role.batch_id is
+  'Id батча'
+/
+comment on column sch_batch_role.privilege_code is
+  'Код привилегии ( ссылка на sch_privilege)'
+/
+comment on column sch_batch_role.role_id is
+  'Id роли ( AccessOperator)'
+/
+comment on column sch_batch_role.date_ins is
+  'Дата создания записи'
+/
+comment on column sch_batch_role.operator_id is
+  'Id оператора, создавшего запись'
+/
+

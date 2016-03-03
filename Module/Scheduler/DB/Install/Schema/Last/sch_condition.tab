@@ -1,0 +1,47 @@
+-- table: sch_condition
+-- Условия выполнения элементов содержания батчей
+create table sch_condition  (
+   condition_id         integer                         not null,
+   batch_content_id     integer                         not null,
+   check_batch_content_id integer                         not null,
+   result_id            integer                         not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_condition_pk primary key (condition_id)
+);
+
+--index: sch_condition_ix_batch_content
+create index sch_condition_ix_batch_content on sch_condition (
+   batch_content_id asc
+);
+
+--index: sch_condition_ix_check_batch
+create index sch_condition_ix_check_batch on sch_condition (
+   check_batch_content_id asc
+);
+
+comment on table sch_condition is
+  'Условия выполнения элементов содержания батчей [ SVN root: Oracle/Module/Scheduler]'
+/
+
+comment on column sch_condition.condition_id is
+  'Id условия'
+/
+comment on column sch_condition.batch_content_id is
+  'Id элемента содержания батча, для которого задаётся условие'
+/
+comment on column sch_condition.check_batch_content_id is
+  'Id элемента содержания батча, результат которого проверяется'
+/
+comment on column sch_condition.result_id is
+  'Id результата проверяемого задания ( sch_result)'
+/
+comment on column sch_condition.date_ins is
+  'Дата добавления записи'
+/
+comment on column sch_condition.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+

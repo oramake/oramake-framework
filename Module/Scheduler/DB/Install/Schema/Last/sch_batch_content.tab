@@ -1,0 +1,43 @@
+-- table: sch_batch_content
+-- Содержание батча.
+create table sch_batch_content(
+   batch_content_id               integer                         not null,
+   batch_id                       integer                         not null,
+   job_id                         integer                         not null,
+   order_by                       integer             default 0 not null,
+   date_ins                       date                default sysdate not null,
+   operator_id                    integer                         not null,
+   date_del                       date,
+   operator_id_del                integer,
+   constraint sch_batch_content_pk primary key (batch_content_id)
+);
+
+-- index: sch_batch_content_ix_batch_id
+-- Индекс для доступа по id батча
+create index sch_batch_content_ix_batch_id on sch_batch_content (
+   batch_id asc
+)
+/
+
+comment on table sch_batch_content is
+  'Содержание батча [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_batch_content.batch_id is
+  'Id батча'
+/
+comment on column sch_batch_content.job_id is
+  'Id job'
+/
+comment on column sch_batch_content.order_by is
+  'Порядковый номер элемента содержания'
+/
+comment on column sch_batch_content.date_ins is
+  'Дата создания записи'
+/
+comment on column sch_batch_content.date_del is
+  'Дата удаления записи'
+/
+comment on column sch_batch_content.operator_id_del is
+  'Id оператора, удалившего запись'
+/
+

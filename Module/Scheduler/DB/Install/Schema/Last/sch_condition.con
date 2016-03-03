@@ -1,0 +1,15 @@
+alter table sch_condition
+   add constraint sch_condition_batch_content_fk foreign key (batch_content_id)
+      references sch_batch_content (batch_content_id);
+
+alter table sch_condition
+   add constraint sch_condition_batch_cont_fk2 foreign key (check_batch_content_id)
+      references sch_batch_content (batch_content_id);
+
+alter table sch_condition
+   add constraint sch_condition_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_condition
+   add constraint scn_condition_sch_result_fk foreign key (result_id)
+      references sch_result (result_id);

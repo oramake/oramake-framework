@@ -1,0 +1,39 @@
+alter table
+  sch_module_role_privilege
+add constraint
+  sch_module_role_privilege_fk_m
+foreign key
+  ( module_id)
+references
+  mod_module ( module_id)
+/
+
+alter table
+  sch_module_role_privilege
+add constraint
+  sch_module_role_privilege_fk_r
+foreign key
+  ( role_id)
+references
+  op_role ( role_id)
+/
+
+alter table
+  sch_module_role_privilege
+add constraint
+  sch_module_role_privilege_fk_p
+foreign key
+  ( privilege_code)
+references
+  sch_privilege ( privilege_code)
+/
+
+alter table
+  sch_module_role_privilege
+add constraint
+  sch_module_role_privilege_fk_o
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/

@@ -1,0 +1,32 @@
+-- table: sch_privilege
+-- ѕривилегии на работу с пакетными задани€ми.
+create table
+  sch_privilege
+(
+  privilege_code                  varchar2(10)                        not null
+  , privilege_name                varchar2(100)                       not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint sch_privilege_pk primary key
+    ( privilege_code)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table sch_privilege is
+  'ѕривилегии на работу с пакетными задани€ми [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_privilege.privilege_code is
+  ' од привилегии'
+/
+comment on column sch_privilege.privilege_name is
+  'Ќаименование привилегии'
+/
+comment on column sch_privilege.date_ins is
+  'ƒата добавлени€ записи'
+/
+comment on column sch_privilege.operator_id is
+  'Id оператора, добавившего запись'
+/

@@ -1,0 +1,22 @@
+alter table sch_job
+   add constraint sch_job_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_job
+   add constraint sch_job_op_operator_fk2 foreign key (operator_id_del)
+      references op_operator (operator_id);
+
+
+alter table
+  sch_job
+add constraint
+  sch_job_mod_module_fk
+foreign key (
+  module_id
+)
+references
+  mod_module
+(
+  module_id
+)
+/

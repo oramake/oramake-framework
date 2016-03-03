@@ -1,0 +1,6 @@
+-- sequence: sch_module_role_privilege_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_module_role_privilege>.
+create sequence
+  sch_module_role_privilege_seq
+/

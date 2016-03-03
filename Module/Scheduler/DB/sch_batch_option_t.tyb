@@ -1,0 +1,160 @@
+create or replace type body sch_batch_option_t is
+/* db object type body: sch_batch_option_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Закрытые объявления */
+
+
+
+/* proc: initialize
+  Инициализирует набор параметров пакетного задания.
+
+  Параметры:
+  batchShortName              - короткое название пакетного задания
+  moduleId                    - Id модуля, к которому относится пакетное задание
+*/
+member procedure initialize(
+  batchShortName varchar2
+  , moduleId integer
+)
+is
+begin
+
+  -- Инициализация базового класса
+  -- ( конструкция "( self as opt_option_list_t).initialize(" не применяется
+  -- для обеспечения совместимости с Oracle 10.2)
+  self.initialize(
+    moduleId                => moduleId
+    , objectShortName       => batchShortName
+    , objectTypeShortName   => pkg_SchedulerMain.Batch_OptionObjTypeSName
+    , objectTypeModuleId    => pkg_SchedulerMain.getModuleId()
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при инициализации набора параметров пакетного задания ('
+      || ' batchShortName="' || batchShortName || '"'
+      || ', moduleId=' || moduleId
+      || ').'
+    , true
+  );
+end initialize;
+
+
+
+/* group: Открытые объявления */
+
+
+
+/* group: Конструкторы */
+
+/* func: sch_batch_option_t( BATCH_MODULE)
+  Создает объект для набора параметров пакетного задания.
+
+  Параметры:
+  batchShortName              - короткое название пакетного задания
+  moduleId                    - Id модуля, к которому относится пакетное задание
+*/
+constructor function sch_batch_option_t(
+  batchShortName varchar2
+  , moduleId integer
+)
+return self as result
+is
+begin
+  initialize(
+    batchShortName      => batchShortName
+    , moduleId          => moduleId
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при объекта.'
+    , true
+  );
+end sch_batch_option_t;
+
+/* func: sch_batch_option_t( BATCH)
+  Создает объект для набора параметров пакетного задания.
+
+  Параметры:
+  batchShortName              - короткое название пакетного задания
+
+  Замечания:
+  - для успешного выполнения запись с данными пакетного задания должна
+    присутствовать в таблице <sch_batch>;
+*/
+constructor function sch_batch_option_t(
+  batchShortName varchar2
+)
+return self as result
+is
+
+  -- Данные пакетного задания
+  btr sch_batch%rowtype;
+
+begin
+  pkg_SchedulerMain.getBatch( btr, batchShortName => batchShortName);
+  initialize(
+    batchShortName      => btr.batch_short_name
+    , moduleId          => btr.module_id
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при создании объекта для набора параметров пакетного задания ('
+      || ' batchShortName="' || batchShortName || '"'
+      || ').'
+    , true
+  );
+end sch_batch_option_t;
+
+/* func: sch_batch_option_t( BATCH_ID)
+  Создает объект для набора параметров пакетного задания.
+
+  Параметры:
+  batchId                     - Id пакетного задания
+
+  Замечания:
+  - для успешного выполнения запись с данными пакетного задания должна
+    присутствовать в таблице <sch_batch>;
+*/
+constructor function sch_batch_option_t(
+  batchId integer
+)
+return self as result
+is
+
+  -- Данные пакетного задания
+  btr sch_batch%rowtype;
+
+begin
+  pkg_SchedulerMain.getBatch( btr, batchId => batchId);
+  initialize(
+    batchShortName      => btr.batch_short_name
+    , moduleId          => btr.module_id
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+      -- не используем logger, т.к. он может быть еще не инициализирован
+    , 'Ошибка при создании объекта для набора параметров пакетного задания ('
+      || ' batchId=' || batchId
+      || ').'
+    , true
+  );
+end sch_batch_option_t;
+
+end;
+/

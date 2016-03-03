@@ -1,0 +1,23 @@
+--table: sch_schedule
+create table sch_schedule  (
+   schedule_id          integer                         not null,
+   schedule_name_rus    varchar2(150)                   not null,
+   schedule_name_eng    varchar2(150)                   not null,
+   batch_id             integer                         not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_schedule_pk primary key (schedule_id)
+);
+
+--index: sch_schedule_ix_batch_id
+create index sch_schedule_ix_batch_id on sch_schedule (
+   batch_id asc
+);
+
+comment on column sch_schedule.schedule_name_rus is
+  'Ќаименование расписани€ на русском €зыке'
+/
+comment on column sch_schedule.schedule_name_eng is
+  'Ќаименование расписани€ на английском €зыке'
+/
+

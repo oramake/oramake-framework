@@ -1,0 +1,6 @@
+-- sequence: sch_schedule_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_schedule>.
+create sequence
+  sch_schedule_seq
+/

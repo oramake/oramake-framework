@@ -1,0 +1,10 @@
+--table: sch_interval_type
+create table sch_interval_type  (
+   interval_type_code   varchar2(10)                    not null,
+   interval_type_name_rus varchar2(50)                    not null,
+   interval_type_name_eng varchar2(50)                    not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_interval_type_pk primary key (interval_type_code)
+)
+organization index;

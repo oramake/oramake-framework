@@ -1,0 +1,6 @@
+-- sequence: sch_result_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_result>.
+create sequence
+  sch_result_seq
+/

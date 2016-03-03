@@ -1,0 +1,9 @@
+--table: sch_result
+create table sch_result  (
+   result_id            integer                         not null,
+   result_name_rus      varchar2(100)                   not null,
+   result_name_eng      varchar2(100)                   not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_result_pk primary key (result_id)
+);

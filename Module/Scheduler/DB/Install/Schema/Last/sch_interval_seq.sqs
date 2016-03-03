@@ -1,0 +1,6 @@
+-- sequence: sch_interval_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_interval>.
+create sequence
+  sch_interval_seq
+/

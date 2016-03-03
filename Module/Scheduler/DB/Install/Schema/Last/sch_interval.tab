@@ -1,0 +1,39 @@
+--table: sch_interval
+create table sch_interval  (
+   interval_id          integer                         not null,
+   schedule_id          integer                         not null,
+   interval_type_code   varchar2(10)                    not null,
+   min_value            number(2,0)                     not null,
+   max_value            number(2,0)                     not null,
+   step                 number(2,0)                    default 1 not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_interval_pk primary key (interval_id),
+   constraint sch_interval_ck_min_max check (interval_type_code = 'MI' and min_value >= 0 and max_value <= 59
+or interval_type_code = 'HH' and min_value >= 0 and max_value <= 23
+or interval_type_code = 'DD'
+and ( min_value >= 1 and max_value <= 31 or min_value = -1 and max_value = -1)
+or interval_type_code = 'DW' and min_value >= 1 and max_value <= 7
+or interval_type_code = 'MM' and min_value >= 1 and max_value <= 12)
+);
+
+--index: sch_interval_ix_schedule_id
+create index sch_interval_ix_schedule_id on sch_interval (
+   schedule_id asc
+);
+
+
+comment on column sch_interval.interval_type_code is
+  'Код типа интервала'
+/
+comment on column sch_interval.min_value is
+  'Минимальное значение'
+/
+comment on column sch_interval.max_value is
+  'Максимальное значение'
+/
+comment on column sch_interval.step is
+  'Шаг'
+/
+
+

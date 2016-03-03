@@ -1,0 +1,6 @@
+-- sequence: sch_batch_type_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_batch_type>.
+create sequence
+  sch_batch_type_seq
+/

@@ -1,0 +1,34 @@
+-- table: sch_load_condition_tmp
+-- Условия выполнения заданий ( job) для загрузки.
+create global temporary table
+  sch_load_condition_tmp
+(
+  order_by                        integer                             not null
+  , check_order_by                integer                             not null
+  , result_id                     integer                             not null
+  , constraint sch_load_condition_tmp_pk primary key
+    (
+      order_by
+      , check_order_by
+      , result_id
+    )
+)
+on commit delete rows
+/
+
+
+
+comment on table sch_load_condition_tmp is
+  'Условия выполнения заданий ( job) для загрузки [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_load_condition_tmp.order_by is
+  'Номер задания'
+/
+comment on column sch_load_condition_tmp.check_order_by is
+  'Номер проверяемого задания'
+/
+comment on column sch_load_condition_tmp.result_id is
+  'Id результата проверяемого задания'
+/
+
+

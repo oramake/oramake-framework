@@ -1,0 +1,29 @@
+-- table: sch_load_schedule_tmp
+-- Расписание батча для загрузки.
+create global temporary table
+  sch_load_schedule_tmp
+(
+  load_schedule_number            integer                              not null
+  , schedule_name_rus             varchar2(150)                        not null
+  , schedule_name_eng             varchar2(150)                        not null
+  , constraint sch_load_schedule_tmp_pk primary key
+    ( load_schedule_number)
+)
+on commit delete rows
+/
+
+
+
+comment on table sch_load_schedule_tmp is
+  'Расписание батча для загрузки [ SVN root: Oracle/Module/Scheduler]'
+/
+comment on column sch_load_schedule_tmp.load_schedule_number is
+  'Порядковый номер расписания'
+/
+comment on column sch_load_schedule_tmp.schedule_name_rus is
+  'Наименование расписания на русском языке'
+/
+comment on column sch_load_schedule_tmp.schedule_name_eng is
+  'Наименование расписания на английском языке'
+/
+

@@ -1,0 +1,6 @@
+-- sequence: sch_job_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <sch_job>.
+create sequence
+  sch_job_seq
+/

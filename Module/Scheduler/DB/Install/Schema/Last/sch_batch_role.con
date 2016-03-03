@@ -1,0 +1,15 @@
+alter table sch_batch_role
+   add constraint sch_batch_role_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_batch_role
+   add constraint sch_batch_role_op_role_fk foreign key (role_id)
+      references op_role (role_id);
+
+alter table sch_batch_role
+   add constraint sch_batch_role_privelege_fk foreign key (privilege_code)
+      references sch_privilege (privilege_code);
+
+alter table sch_batch_role
+   add constraint sch_batch_role_sch_batch_fk foreign key (batch_id)
+      references sch_batch (batch_id);

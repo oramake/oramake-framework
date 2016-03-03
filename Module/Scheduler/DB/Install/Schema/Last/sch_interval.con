@@ -1,0 +1,11 @@
+alter table sch_interval
+   add constraint sch_interval_interval_type_fk foreign key (interval_type_code)
+      references sch_interval_type (interval_type_code);
+
+alter table sch_interval
+   add constraint sch_interval_op_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);
+
+alter table sch_interval
+   add constraint sch_interval_sch_schedule_fk foreign key (schedule_id)
+      references sch_schedule (schedule_id);

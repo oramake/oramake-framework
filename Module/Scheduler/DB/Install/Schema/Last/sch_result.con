@@ -1,0 +1,3 @@
+alter table sch_result
+   add constraint sch_result_sch_operator_fk foreign key (operator_id)
+      references op_operator (operator_id);

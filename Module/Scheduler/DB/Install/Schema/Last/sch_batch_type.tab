@@ -1,0 +1,9 @@
+--table: sch_batch_type
+create table sch_batch_type  (
+   batch_type_id        integer                         not null,
+   batch_type_name_rus  varchar2(100)                   not null,
+   batch_type_name_eng  varchar2(100)                   not null,
+   date_ins             date                           default sysdate not null,
+   operator_id          integer                         not null,
+   constraint sch_batch_type_pk primary key (batch_type_id)
+);
