@@ -1,0 +1,3 @@
+alter table CDR_DAY_TYPE
+  add constraint CDR_DATE_TYPE_OP_OPERATOR_FK foreign key (OPERATOR_ID)
+  references OP_OPERATOR (OPERATOR_ID);

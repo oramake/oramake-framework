@@ -1,0 +1,42 @@
+title: Установка
+
+
+group: Общие замечания
+
+Параметры установки:
+
+LOAD_USERID                   - Пользователь для загрузки ( формат: [userName[/password]][@dbName] )
+
+LOAD_USERDI2                  - схема в пользовательской БД
+
+LOAD_OPERATORID               - Оператор для загрузки ( формат: operatorName[/password] )
+
+
+
+group: Первоначальная установка
+
+Порядок установки:
+
+- установка в основную БД
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- установка в пользовательскую схему ( БД, соединяющуюся по линку)
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- выдача прав пользователю, под которым работает линк из пользовательской БД
+
+(code)
+
+$ make grant LOAD_USERID=userName/password@dbName TO_USERNAME=??? LOAD_OPERATORID=operatorName/password
+
+(end)

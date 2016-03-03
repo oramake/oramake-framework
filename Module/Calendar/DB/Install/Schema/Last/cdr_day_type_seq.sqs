@@ -1,0 +1,6 @@
+-- sequence: cdr_day_type_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <cdr_day_type>.
+create sequence
+  cdr_day_type_seq
+/

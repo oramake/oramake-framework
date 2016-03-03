@@ -1,0 +1,11 @@
+--table: CDR_DAY_TYPE
+--Таблица CDR_DAY_TYPE
+
+create table CDR_DAY_TYPE
+(
+  	DAY_TYPE_ID   INTEGER not null
+  , DAY_TYPE_NAME VARCHAR2(100) not null
+  , DATE_INS      DATE default sysdate not null
+  , OPERATOR_ID   INTEGER not null
+  , constraint CDR_DAY_TYPE_PK primary key (DAY_TYPE_ID)
+);

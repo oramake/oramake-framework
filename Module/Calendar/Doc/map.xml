@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>Calendar</name>
+  <description>Модуль для работы с календарём (учёт рабочих и выходных дней)</description>
+  <version>1.4.0</version>
+  <prefix>cdr</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/Calendar</path>
+  <initialPath>Oracle/Module/Calendar@1</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table>cdr_day</table>
+      <table>cdr_day_type</table>
+      <package>pkg_Calendar</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>
