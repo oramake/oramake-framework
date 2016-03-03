@@ -1,0 +1,150 @@
+create or replace type body dsn_data_sync_t is
+/* db object type body: dsn_data_sync_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Закрытые объявления */
+
+/* proc: initialize
+  Инициализирует экземпляр объекта.
+  Процедура должна в обязательном порядке вызываться при создании экземпляра
+  производного класса.
+
+  Параметры:
+  tableList                   - список интерфейсных таблиц
+                                ( формат см. <tableList>)
+  mlogList                    - список логов материализованных представлений
+                                интерфейсных таблиц
+                                ( формат см. <mlogList>)
+                                ( по умолчанию отсутствует)
+  sourceSchema                - имя схемы по умолчанию для исходных
+                                представлений
+                                ( по умолчанию отсутствует)
+*/
+member procedure initialize(
+  tableList cmn_string_table_t
+  , mlogList cmn_string_table_t := null
+  , sourceSchema varchar2 := null
+)
+is
+begin
+  self.tableList        := tableList;
+  self.mlogList         := mlogList;
+  self.sourceSchema     := sourceSchema;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при инициализации экземпляра объекта.'
+    , true
+  );
+end initialize;
+
+
+
+/* group: Открытые объявления */
+
+/* proc: refresh
+  Обновляет данные в интерфейсных таблицах.
+
+  Параметры:
+  forTableName                - обновление только указанной таблицы
+                                ( имя таблицы без учета регистра)
+                                ( по умолчанию без ограничений)
+  createMViewFlag             - создавать материализованное представление для
+                                обновления таблиц, которые должны обновляться
+                                с помощью м-представления , если оно
+                                отсутствует либо его невозможно использовать
+                                для обновления
+                                ( 1 да, 0 нет ( по умолчанию), игнорируется в
+                                  в случае указания forceCreateMViewFlag равным
+                                  1)
+  forceCreateMViewFlag        - безусловно создавать ( пересоздавать)
+                                материализованное представление для обновления
+                                таблиц, которые должны обновляться
+                                с помощью м-представления
+                                ( 1 да, 0 нет ( по умолчанию))
+  continueAfterErrorFlag      - продолжать обработку остальных таблиц в случае
+                                ошибки при обновлении
+                                ( 1 да, 0 нет ( по умолчанию))
+*/
+member procedure refresh(
+  self in dsn_data_sync_t
+  , forTableName varchar2 := null
+  , createMViewFlag integer := null
+  , forceCreateMViewFlag integer := null
+  , continueAfterErrorFlag integer := null
+)
+is
+begin
+  pkg_DataSync.refresh(
+    tableList                 => tableList
+    , sourceSchema            => sourceSchema
+    , forTableName            => forTableName
+    , createMViewFlag         => createMViewFlag
+    , forceCreateMViewFlag    => forceCreateMViewFlag
+    , continueAfterErrorFlag  => continueAfterErrorFlag
+  );
+end refresh;
+
+/* proc: dropRefreshMView
+  Удаляет материализованные представления, созданные для обновления
+  интерфейсных таблиц (  таблица при удалении м-представления сохраняется).
+
+  Параметры:
+  forTableName                - обработка только указанной таблицы
+                                ( имя таблицы без учета регистра)
+                                ( по умолчанию без ограничений)
+  ignoreNotExistsFlag         - игнорировать отсутствие материализованного
+                                представления для удаления
+                                ( 1 игнорировать, 0 выбрасывать ошибку
+                                  ( по умолчанию))
+  continueAfterErrorFlag      - продолжать обработку остальных таблиц в случае
+                                ошибки при удалении материализованного
+                                представления
+*/
+member procedure dropRefreshMView(
+  self in dsn_data_sync_t
+  , forTableName varchar2 := null
+  , ignoreNotExistsFlag integer := null
+  , continueAfterErrorFlag integer := null
+)
+is
+begin
+  pkg_DataSync.dropRefreshMView(
+    tableList                 => tableList
+    , forTableName            => forTableName
+    , ignoreNotExistsFlag     => ignoreNotExistsFlag
+    , continueAfterErrorFlag  => continueAfterErrorFlag
+  );
+end dropRefreshMView;
+
+/* proc: createMLog
+  Создает необходимые логи материализованных представлений.
+
+  Параметры:
+  forTableName                - создавать лог только для указанной таблицы
+                                ( имя таблицы без учета регистра)
+                                ( по умолчанию без ограничений)
+  recreateFlag                - флаг пересоздания лога, если он существует
+                                ( 1 да, 0 нет ( по умолчанию))
+*/
+member procedure createMLog(
+  self in dsn_data_sync_t
+  , forTableName varchar2 := null
+  , recreateFlag integer := null
+)
+is
+begin
+  pkg_DataSync.createMLog(
+    mlogList            => mlogList
+    , forTableName      => forTableName
+    , recreateFlag      => recreateFlag
+  );
+end createMLog;
+
+end;
+/
