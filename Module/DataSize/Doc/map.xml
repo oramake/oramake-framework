@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.2</map_version>
+  <name>DataSize</name>
+  <description>Модуль для анализа использования пространства на диске</description>
+  <prefix>dsz</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path></path>
+  <db>
+    <database>
+      <instance></instance>
+      <table>dsz_header</table>
+      <table>dsz_segment</table>
+      <table>dsz_segment_group_tmp</table>
+      <package>pkg_DataSize</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Common</module>
+    <module>Mail<module>
+    <module>TaskHandler<module>
+    <module>AccessOperator<module>
+    <module>Logging<module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

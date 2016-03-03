@@ -1,0 +1,8 @@
+alter table dsz_segment
+  add constraint dsz_segment_dsz_header_fk foreign key(
+    header_id
+  )
+  references dsz_header(
+    header_id
+  )
+/

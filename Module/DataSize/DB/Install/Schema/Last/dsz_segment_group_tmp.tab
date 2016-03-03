@@ -1,0 +1,23 @@
+prompt * creating table dsz_segment_group_tmp...
+
+-- table: dsz_segment_group_tmp
+-- Временная таблица для подсчёта итогов
+create global temporary table dsz_segment_group_tmp(
+  segment_id			integer not null,
+  owner           		varchar2(30),
+  segment_name    		varchar2(81),
+  partition_name  		varchar2(30),
+  segment_type    		varchar2(18),
+  tablespace_name 		varchar2(30),
+  old_bytes				number,
+  new_bytes				number,
+  delta				number not null,
+  constraint dsz_segment_group_tmp_pk primary key( segment_id )
+)
+on commit preserve rows
+/
+comment on table dsz_segment_group_tmp is
+'Временная таблица для подсчёта итогов
+[ SVN root: Oracle/Module/DataSize ]
+'
+/

@@ -1,0 +1,120 @@
+prompt * creating table dsz_segment...
+
+-- table: dsz_segment
+-- Данные по сегментам ( на основе dba_segments )
+create table dsz_segment(
+  segment_id 			integer not null,
+  header_id			      integer not null,
+  owner           		varchar2(30),
+  segment_name    		varchar2(81),
+  partition_name  		varchar2(30),
+  segment_type    		varchar2(18),
+  tablespace_name 		varchar2(30),
+  header_file     		number,
+  header_block    		number,
+  bytes           		number,
+  blocks          		number,
+  extents         		number,
+  initial_extent  		number,
+  next_extent     		number,
+  min_extents     		number,
+  max_extents     		number,
+  pct_increase    		number,
+  freelists       		number,
+  freelist_groups 		number,
+  relative_fno    		number,
+  buffer_pool     		varchar2(7),
+  date_ins				date default sysdate not null,
+  constraint dsz_segment_pk primary key( 
+    segment_id
+  )
+  using index tablespace &indexTablespace   
+)
+/
+-- index: dsz_segment_ix_header
+-- Индекс для доступа по заголовку
+create index dsz_segment_ix_header on dsz_segment(
+  header_id
+  , owner 
+  , segment_name
+  , tablespace_name
+  , partition_name
+  , segment_type
+)
+tablespace &indexTablespace
+/
+comment on table dsz_segment is
+'Данные по сегментам ( на основе dba_segments )
+[ SVN root: Oracle/Module/DataSize ]
+'
+/
+comment on column dsz_segment.segment_id is
+'Id записи ( первичный ключ таблицы )'
+/
+comment on column dsz_segment.header_id is
+'Id заголовка( ссылка на <dsz_header> ) )'
+/
+comment on column dsz_segment.date_ins is
+'Дата вставки записи'
+/
+comment on column dsz_segment.owner is
+'Поле, в которое записывается dba_segments.owner'
+/
+comment on column dsz_segment.segment_name is
+'Поле, в которое записывается dba_segments.segment_name'
+/
+comment on column dsz_segment.partition_name is
+'Поле, в которое записывается dba_segments.partition_name'
+/
+comment on column dsz_segment.segment_type is
+'Поле, в которое записывается dba_segments.segment_type'
+/
+comment on column dsz_segment.tablespace_name is
+'Поле, в которое записывается dba_segments.tablespace_name'
+/
+comment on column dsz_segment.header_file is
+'Поле, в которое записывается dba_segments.header_file'
+/
+comment on column dsz_segment.header_block is
+'Поле, в которое записывается dba_segments.header_block'
+/
+comment on column dsz_segment.bytes is
+'Поле, в которое записывается dba_segments.bytes'
+/
+comment on column dsz_segment.blocks is
+'Поле, в которое записывается dba_segments.blocks'
+/
+comment on column dsz_segment.extents is
+'Поле, в которое записывается dba_segments.extents'
+/
+comment on column dsz_segment.initial_extent is
+'Поле, в которое записывается dba_segments.initial_extent'
+/
+comment on column dsz_segment.next_extent is
+'Поле, в которое записывается dba_segments.next_extent'
+/
+comment on column dsz_segment.min_extents is
+'Поле, в которое записывается dba_segments.min_extents'
+/
+comment on column dsz_segment.max_extents is
+'Поле, в которое записывается dba_segments.max_extents'
+/
+comment on column dsz_segment.pct_increase is
+'Поле, в которое записывается dba_segments.pct_increase'
+/
+comment on column dsz_segment.freelists is
+'Поле, в которое записывается dba_segments.freelists'
+/
+comment on column dsz_segment.freelist_groups is
+'Поле, в которое записывается dba_segments.freelist_groups'
+/
+comment on column dsz_segment.relative_fno is
+'Поле, в которое записывается dba_segments.relative_fno'
+/
+comment on column dsz_segment.buffer_pool is
+'Поле, в которое записывается dba_segments.buffer_pool'
+/
+-- sequence: dsz_segment_seq
+-- Последовательность для генерации id для <dsz_segment>
+create sequence dsz_segment_seq
+/

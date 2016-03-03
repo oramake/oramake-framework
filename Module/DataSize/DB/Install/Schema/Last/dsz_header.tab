@@ -1,0 +1,34 @@
+prompt * creating table dsz_header...
+
+-- table: dsz_header
+-- «аголовок данных по занимаемому пространству
+create table dsz_header(
+  header_id			      integer not null,
+  operator_id			integer not null,
+  date_ins				date default sysdate not null,
+  constraint dsz_header_pk primary key( header_id )
+    using index tablespace &indexTablespace   
+)
+/
+comment on table dsz_header is
+'«аголовок данных по занимаемому пространству
+[ SVN root: Oracle/Module/DataSize ]
+'
+/
+comment on column dsz_header.header_id is 
+'Id заголовка данных.'
+/
+comment on column dsz_header.operator_id is
+'ќператор, создавший запись'
+/
+comment on column dsz_header.date_ins is
+'ƒата вставки записи'
+/
+-- index: dsz_header_ix_date_ins
+-- »ндекс дл€ доступа по date_ins
+create unique index dsz_header_ux_date_ins on dsz_header(
+  date_ins
+) tablespace &indexTablespace
+/
+create sequence dsz_header_seq
+/  

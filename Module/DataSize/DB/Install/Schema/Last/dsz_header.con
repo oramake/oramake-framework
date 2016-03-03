@@ -1,0 +1,8 @@
+alter table dsz_header 
+  add constraint dsz_header_op_operator_fk foreign key(
+    operator_id
+  )
+  references op_operator( 
+    operator_id
+  )
+/
