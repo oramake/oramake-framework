@@ -849,7 +849,7 @@ uninstallLoadTarget = \
       $(foreach m, *.typ *.vw *.pks *.trg *.tyb *.pkb, \
         $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/$(m)) \
       ) \
-			$(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/PublicJob/*.sql) \
+      $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/PublicJob/*.sql) \
     ,) \
   ) \
   $(addsuffix .$(ru2), \

@@ -373,8 +373,9 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
-    $(wildcard $(addprefix Install/Schema/Last/, *.vw *.trg)) \
-    $(wildcard *.typ *.pks *.tyb *.pkb) \
+    $(wildcard Install/Schema/Last/*.vw) \
+    $(wildcard Install/Schema/Last/*.trg) \
+    $(wildcard *.pk[s,b])                \
   )                                      \
   $(addsuffix .$(lu2),                  \
   )                                      \
@@ -418,22 +419,11 @@ load-clean: load-clean.oms
 # При первоначальной установке модуля в БД должно указываться значение "Last".
 INSTALL_VERSION  =
 
-# build var: NO_ACCESSOPERATOR
-# Флаг отсутствия в БД модуля AccessOperator.
-# Возможные значения:
-# 1 - отсутствует ( при этом не создаются внешние ключи на таблицу op_operator)
-# 0 - присутствует ( по умолчанию)
-#
-NO_ACCESSOPERATOR =
-
 # Список дополнительных параметров установки, используемых в модуле.
 # Обеспечивает сохранение в логе установки значений дополнительных параметров
 # ( в случае наличия у них непустых значений).
 # Формат: список имен параметров с пробелом в качестве разделителя.
-installAddonOptionList = \
-  BATCH_WAIT \
-  JOB_QUEUE_PROCESSES \
-  NO_ACCESSOPERATOR \
+installAddonOptionList =
 
 
 # Список объектов для обязательной проверки блокировок перед установкой и
