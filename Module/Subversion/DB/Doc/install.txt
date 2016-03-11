@@ -1,0 +1,69 @@
+title: Установка
+
+Реализуется с помощью целей сборки модуля из make-целей <Установка модуля в БД>.
+Для корректной установки должна быть установлена актуальная версия OMS
+( см. <Версия OMS-файлов>).
+
+Параметры установки:
+INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
+                                первоначальной установке или номер при
+                                обновлении)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
+LOAD_USERID                   - основной пользователь для установки в БД
+                                ( формат: username/password@dbName)
+
+
+
+group: Первоначальная установка
+( <Версии::1.0.0>)
+
+Предварительные требования:
+
+- в БД должна быть настроена поддержка Java;
+- установка модуля TextCreate, версии 1.3.0;
+
+Команды для установки ( "???" нужно заменить на реальные значения):
+
+(code)
+
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+При установке могут возникать ошибки,
+которые следует игнорировать:
+(code)
+  ORA-29552: verification warning: java.lang.NoClassDefFoundError:
+  ORA-29552: предупреждение проверки достоверности: java.lang.NoClassDefFoundError
+(end code)
+
+
+
+group: Выдача прав на использование модуля
+
+(code)
+
+make grant LOAD_USERID=???/???@??? TO_USERNAME=??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: Установка тестовых объектов
+
+Предварительные требования:
+
+- установка модуля TestUtility
+  ( <http://srvsvn/repo/Oracle/Module/TestUtility/Trunk/Doc/DB/AutoGen/index.html>);
+
+Порядок установки:
+
+- установка в основную схему модуля;
+
+(code)
+
+make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+

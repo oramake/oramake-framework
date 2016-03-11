@@ -1,0 +1,55 @@
+-- table: svn_file_tmp
+-- Список файлов из SVN.
+create global temporary table
+  svn_file_tmp
+(
+  file_tmp_id                     integer                             not null
+  , svn_path                      varchar2(4000)                      not null
+  , file_name                     varchar2(4000)                      not null
+  , directory_flag                number(1,0)                         not null
+  , revision                      integer                             not null
+  , author                        varchar2(100)                       not null
+  , last_modification             timestamp with local time zone  not null
+  , file_size                     integer                             not null
+  , constraint svn_file_tmp_pk primary key
+    ( file_tmp_id)
+  , constraint svn_file_tmp_uk unique(
+      svn_path
+    )
+  , constraint svn_file_tmp_ck_path check(
+      svn_path not like '/%'
+    )
+)
+on commit delete rows
+/
+
+
+
+comment on table svn_file_tmp is
+  'Список файлов из SVN [ SVN root: Exchange/Module/SVNSearcher]'
+/
+comment on column svn_file_tmp.file_tmp_id is
+  'Id файла из SVN'
+/
+comment on column svn_file_tmp.svn_path is
+  'Относительный путь к файлу в SVN ( разделитель "/")'
+/
+comment on column svn_file_tmp.file_name is
+  'Имя файла ( директории)'
+/
+comment on column svn_file_tmp.directory_flag is
+  'Флаг директории ( 1 - это директория, 0 - файл)'
+/
+comment on column svn_file_tmp.revision is
+  'Номер ревизии ( правки) в SVN'
+/
+comment on column svn_file_tmp.author is
+  'Автор из SVN'
+/
+comment on column svn_file_tmp.last_modification is
+  'Дата/время последнего изменения файла в SVN'
+/
+comment on column svn_file_tmp.file_size is
+  'Размер файла'
+/
+
