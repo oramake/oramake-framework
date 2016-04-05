@@ -6,13 +6,6 @@
 @oms-set-indexTablespace.sql
 
 
--- SQL-типы
-@oms-run sch_log_t.typ
-@oms-run sch_log_table_t.typ
-@oms-run sch_batch_log_info_t.typ
-@oms-run sch_batch_log_info_t.tyb
-
-
 -- Таблицы
 
 @oms-run sch_batch.tab

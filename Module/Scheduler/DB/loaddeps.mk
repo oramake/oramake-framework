@@ -29,10 +29,26 @@
 #
 
 
+sch_log_table_t.typ.$(lu): \
+  sch_log_t.typ.$(lu) \
+
+
+sch_batch_log_info_t.tyb.$(lu): \
+  sch_batch_log_info_t.typ.$(lu) \
+
+
+pkg_Scheduler.pks.$(lu): \
+  sch_log_table_t.typ.$(lu) \
+
+
 pkg_Scheduler.pkb.$(lu): \
   pkg_Scheduler.pks.$(lu) \
   pkg_SchedulerMain.pks.$(lu) \
   Install/Schema/Last/v_sch_role_privilege.vw.$(lu) \
+
+
+pkg_SchedulerMain.pks.$(lu): \
+  sch_batch_log_info_t.typ.$(lu) \
 
 
 pkg_SchedulerMain.pkb.$(lu): \

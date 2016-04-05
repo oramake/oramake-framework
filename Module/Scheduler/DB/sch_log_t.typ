@@ -1,3 +1,5 @@
+@oms-drop-type sch_log_t
+
 /* dbtype: sch_log_t
 */
 create or replace type
