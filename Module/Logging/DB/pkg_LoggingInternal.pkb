@@ -519,7 +519,12 @@ is
 
   pragma autonomous_transaction;
 
+  truncMessageText varchar2(4000);
+
 begin
+  -- обрезание текста до 4000 символов в отдельную переменную во избежании ошибки
+  -- ORA-01461: can bind a LONG value only for insert into a LONG column
+  truncMessageText := substr( messageText, 1, 4000);
   insert into
     lg_log
   (
@@ -546,7 +551,7 @@ begin
         when pkg_Logging.Trace_LevelCode then
           Debug_MessageTypeCode
       end
-    , substr( messageText, 1, 4000)
+    , truncMessageText
   );
   commit;
 exception when others then
