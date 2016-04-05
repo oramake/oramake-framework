@@ -1,0 +1,6 @@
+-- sequence: svn_file_tmp_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <svn_file_tmp>.
+create sequence
+  svn_file_tmp_seq
+/

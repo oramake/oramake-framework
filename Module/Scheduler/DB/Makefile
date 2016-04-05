@@ -45,13 +45,6 @@ include $(omsModuleDir)/init.mk
 # group: Общие цели
 #
 
-# Отключаем сохранение информации об устанавливаемых файлах модуля, т.к.
-# для этого используются объекты модуля, которые могут быть в инвалидном
-# состоянии во время выполнения установки.
-#
-OMS_SAVE_FILE_INSTALL_INFO = 0
-
-
 # target: all
 # Целиком собирает проект.
 
@@ -439,7 +432,7 @@ load-clean: load-clean.oms
 #
 
 # build var: INSTALL_VERSION
-# Версия модуля для устновки в БД.
+# Версия модуля для установки в БД.
 # При первоначальной установке модуля в БД должно указываться значение "Last".
 INSTALL_VERSION  =
 
@@ -856,7 +849,7 @@ uninstallLoadTarget = \
       $(foreach m, *.typ *.vw *.pks *.trg *.tyb *.pkb, \
         $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/$(m)) \
       ) \
-			$(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/PublicJob/*.sql) \
+      $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/PublicJob/*.sql) \
     ,) \
   ) \
   $(addsuffix .$(ru2), \

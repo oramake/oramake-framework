@@ -1,0 +1,176 @@
+Format: 1.5
+
+
+Title: Subversion
+SubTitle: Версия 1.0.0
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Classes
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Пакеты  {
+
+   Group: pkg_Subversion  {
+
+      File: Спецификация  (no auto-title, pkg_Subversion.pks)
+      File: Реализация  (no auto-title, pkg_Subversion.pkb)
+      }  # Group: pkg_Subversion
+
+   Group: Test  {
+
+      Group: pkg_SubversionTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_SubversionTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_SubversionTest.pkb)
+         }  # Group: pkg_SubversionTest
+
+      }  # Group: Test
+
+   }  # Group: Пакеты
+
+Group: Java-исходники  {
+
+   File: Subversion  (no auto-title, Subversion.jav)
+   }  # Group: Java-исходники
+
+Group: Java  {
+
+   Group: Библиотеки  {
+
+      Group: 1.0.0  {
+
+         Group: svnkit-1.3.8  {
+
+            File: svnkit  (Java/UsedLib/1.0.0/svnkit-1.3.8/readme.txt)
+            }  # Group: svnkit-1.3.8
+
+         }  # Group: 1.0.0
+
+      }  # Group: Библиотеки
+
+   }  # Group: Java
+
+Group: Скрипты  {
+
+   Group: Do  {
+
+      File: delete-ctx-preference  (no auto-title, Do/delete-ctx-preference.sql)
+      }  # Group: Do
+
+   Group: Install  {
+
+      Group: Grant  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
+            }  # Group: Last
+
+         }  # Group: Grant
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: svn_file_tmp  (no auto-title, Install/Schema/Last/svn_file_tmp.tab)
+            File: svn_file_tmp_seq  (no auto-title, Install/Schema/Last/svn_file_tmp_seq.sqs)
+            }  # Group: Last
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   Group: Java  {
+
+      File: drop-java-lib  (no auto-title, Java/drop-java-lib.sh)
+      File: load-java-lib  (no auto-title, Java/load-java-lib.sh)
+      }  # Group: Java
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: get-file  (no auto-title, Test/get-file.sql)
+      File: get-file-list  (no auto-title, Test/get-file-list.sql)
+      }  # Group: Test
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Table Index: Таблицы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Constant Index: Константы
+      Variable Index: Переменные
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Group: Закрытые объявления  {
+
+      Variable internal Index: Переменные
+      }  # Group: Закрытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+

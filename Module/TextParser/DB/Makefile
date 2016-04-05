@@ -29,6 +29,8 @@ include $(omsModuleDir)/init.mk
   install-load          \
   install-save-info     \
   install-schema        \
+  install-test          \
+  test                  \
   uninstall             \
   uninstall-after       \
   uninstall-before      \
@@ -112,25 +114,6 @@ set-version: set-version.oms
 # рекомендуется обновить версию OMS-файлов, входящих в состав
 # модуля с помощью <oms-update-module>.
 #
-# Пример:
-# (code)
-#
-# $ make show-oms-version
-# make[1]: Entering directory `/cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk/DB'
-# OMS files version: 1.5.2 ( rev. 638, 2010-08-12)
-# make[1]: Leaving directory `/cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk/DB'
-#
-# $ oms-load --version
-# oms-load (OMS) 1.5.2
-# SVN Version Information:
-#  Module root     : Oracle/Module/OraMakeSystem
-#  File revision   : 648
-#  File change date: 2010-08-13 15:32:51 +0400
-# (end code)
-#
-# Версия OMS старше, чем версия файлов модуля CredilogicMView.
-# Модуль можно устанавливать. Но для разработки
-# рекомендуется обновить версию OMS-файлов модуля.
 
 show-oms-version: show-oms-version.oms
 
@@ -551,9 +534,9 @@ installDataDir = \
 #   в противном случае берутся скрипты run.sql, *.dat, run-after.sql;
 #
 # Пример:
-# - для получения скриптов из каталогов Install/Data/*/RFInfoP в соответствии
+# - для получения скриптов из каталогов Install/Data/*/DbName1 в соответствии
 #   с номером устанавливаемой версии нужно прописать
-#   $(call getInstallDataFile,RFInfoP)
+#   $(call getInstallDataFile,DbName1)
 #
 getInstallDataFile = \
   $(filter-out %/revert.sql, \
@@ -590,6 +573,28 @@ install-data: install-data.oms
 
 
 
+# build var: BATCH_MASK
+# Список масок для ограничения устанавливаемых пакетных заданий. Представляет
+# собой список ( через запятую) масок коротких наименований пакетных заданий.
+# ( можно использовать спецсимволы "*" и "?").
+#
+# Пример: для загрузки пакетных
+# заданий ClearOldLog и CheckBatchExecution маска дожна быть равна
+# "ClearOldLog,CheckBatchExecution".
+BATCH_MASK =
+
+# build var: SKIP_BATCH_MASK
+# Список масок для исключения устанавливаемых пакетных заданий. Представляет
+# собой список ( через запятую) масок коротких наименований пакетных заданий.
+# ( можно использовать спецсимволы "*" и "?").
+#
+# Пример: для исключения пакетных
+# заданий, начинающихся с Check, маска должна быть равна "Check*".
+#
+# Маски BATCH_MASK, SKIP_BATCH_MASK можно использовать одновременно с
+# FILE_MASK, SKIP_FILE_MASK.
+SKIP_BATCH_MASK =
+
 # build var: SKIP_CHECK_JOB
 # Флаг пропуска проверки корректности ( компиляции) PL/SQL-блоков заданий
 # модуля Scheduler ( "1" не проверять, по умолчанию проверять).
@@ -611,23 +616,21 @@ UPDATE_OPTION_VALUE =
 # build var: UPDATE_SCHEDULE
 # Флаг обновления расписания запуска пакетных заданий модуля Scheduler согласно
 # указанному в спецификации ( "1" обновлять, по умолчанию не обновлять ( при
-# этом расписание в спецификации используется только для нового пакетного
-# задания)). В понятие расписание входит число повторных попыток и интервал
-# между повторениями выполнения батчей. Определение того, является ли пакетное
-# задание новым в случае разных файлов для одного и того же пакетного задания (
-# batch.xml и batch-config.xml) реализовано в модуле Scheduler.
+# этом расписание в спецификации используется только при создании пакетного
+# задания)). В понятие В понятие расписание входит число повторных попыток и
+# интервал между повторениями выполнения батчей.
 UPDATE_SCHEDULE =
 
 # Скрипты для загрузки пакетных заданий и их параметров в БД.
 installBatchTarget = \
-  $(addsuffix .$(ru), \
+  $(addsuffix .$(lu), \
     $(wildcard Install/Batch/Last/*.job.sql) \
     $(wildcard Install/Batch/Last/*/*.job.sql) \
     $(wildcard Install/Batch/Last/*/batch.xml) \
   ) \
-  $(addsuffix .$(ru2), \
+  $(addsuffix .$(lu2), \
   ) \
-  $(addsuffix .$(ru3), \
+  $(addsuffix .$(lu3), \
   ) \
 
 
@@ -728,12 +731,12 @@ endif
 
 # Скрипты для запуска тестирования
 testTarget = \
-  $(addsuffix .$(lu), \
+  $(addsuffix .$(ru), \
     $(wildcard Test/$(testScript)) \
   ) \
-  $(addsuffix .$(lu2), \
+  $(addsuffix .$(ru2), \
   ) \
-  $(addsuffix .$(lu3), \
+  $(addsuffix .$(ru3), \
   ) \
 
 

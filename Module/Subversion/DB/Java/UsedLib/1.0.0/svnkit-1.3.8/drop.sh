@@ -1,0 +1,12 @@
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/antlr-runtime-3.4.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/commons-logging-1.1.3.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/jna-3.4.0.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/sequence-library-1.0.2.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/sqljet-1.1.2.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/svnkit-1.3.8.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/svnkit-cli-1.3.8.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/svnkit-javahl16-1.3.8-sources.jar.asc $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/svnkit-javahl16-1.3.8.jar $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/svnkit-javahl16-1.3.8.jar.asc $(oms-connect-info --userid $1)
+DB/Java/drop-java-lib.sh DB/Java/UsedLib/svnkit-1.3.8/trilead-ssh2-1.0.0-build215.jar $(oms-connect-info --userid $1)
+

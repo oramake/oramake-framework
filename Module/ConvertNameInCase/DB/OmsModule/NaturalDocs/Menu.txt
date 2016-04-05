@@ -83,6 +83,15 @@ Group: Скрипты  {
 
          }  # Group: Data
 
+      Group: Grant  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
+            }  # Group: Last
+
+         }  # Group: Grant
+
       Group: Schema  {
 
          Group: Last  {

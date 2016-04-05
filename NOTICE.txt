@@ -1,0 +1,6 @@
+Oramake Framework
+Copyright 2007-2016 Ivan Petrovskiy
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+

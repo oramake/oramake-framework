@@ -114,27 +114,6 @@ set-version: set-version.oms
 # рекомендуется обновить версию OMS-файлов, входящих в состав
 # модуля с помощью <oms-update-module>.
 #
-# Пример:
-# (code)
-#
-# LysyonokE@msk-dit-1432-1 /cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk
-# $ make show-oms-version
-# make[1]: Entering directory `/cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk/DB'
-# OMS files version: 1.5.2 ( rev. 638, 2010-08-12)
-# make[1]: Leaving directory `/cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk/DB'
-#
-# LysyonokE@msk-dit-1432-1 /cygdrive/c/svn/DWH/Module/CredilogicMView/Trunk
-# $ oms-load --version
-# oms-load (OMS) 1.5.2
-# SVN Version Information:
-#  Module root     : Oracle/Module/OraMakeSystem
-#  File revision   : 648
-#  File change date: 2010-08-13 15:32:51 +0400
-# (end code)
-#
-# Версия OMS старше, чем версия файлов модуля CredilogicMView.
-# Модуль можно устанавливать. Но для разработки
-# рекомендуется обновить версию OMS-файлов модуля.
 
 show-oms-version: show-oms-version.oms
 
@@ -609,9 +588,9 @@ installDataDir = \
 #   в противном случае берутся скрипты run.sql, *.dat, run-after.sql;
 #
 # Пример:
-# - для получения скриптов из каталогов Install/Data/*/RFInfoP в соответствии
+# - для получения скриптов из каталогов Install/Data/*/DbName1 в соответствии
 #   с номером устанавливаемой версии нужно прописать
-#   $(call getInstallDataFile,RFInfoP)
+#   $(call getInstallDataFile,DbName1)
 #
 getInstallDataFile = \
   $(filter-out %/revert.sql, \
