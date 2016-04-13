@@ -854,6 +854,29 @@ end batchTraceOn;
 
 /* group: Слежение за процессами */
 
+/* func: formatLargeNumber
+  Преобразование большого числа в строку ( с разделителями для лучшей
+  читаемости).
+
+  Параметры:
+  numberValue                 - числовое значение
+*/
+function formatLargeNumber(
+  numberValue number
+)
+return varchar2
+is
+-- formatLargeNumber
+begin
+  return
+    to_char(
+       numberValue
+       , 'FM999G999G999G999G999'
+       , 'NLS_NUMERIC_CHARACTERS=''. '''
+     )
+  ;
+end formatLargeNumber;
+
 /* proc: batchBegin
   Процедура, вызываемая в начале работы батча.
 
@@ -1819,6 +1842,10 @@ is
     currentOsMemory number;
   begin
     currentOsMemory := getOsMemory();
+    logger.info(
+      'Память процесса ORACLE.EXE ( байт): '
+      || formatLargeNumber( currentOsMemory)
+    );
     if currentOsMemory > osMemoryThreshold then
       messageText := messageText ||
 'Превышение порога памяти процесса операционной системы.
