@@ -122,6 +122,29 @@ function getCurrentUserName(
 )
 return varchar2;
 
+/* pfunc: getOperator
+  Получение данных по операторам.  В настоящее время *не реализовано* ( является
+  заглушкой для других модулей).
+
+  Параметры:
+  operatorName                - ФИО оператора
+                                ( поиск по like без учета регистра)
+                                ( по умолчанию без ограничений)
+  maxRowCount                 - максимальное число возвращаемых поиском записей
+                                ( по умолчанию без ограничений)
+
+  Возврат ( курсор):
+  operator_id                 - Id оператора
+  operator_name               - ФИО оператора
+
+  ( <body::getOperator>)
+*/
+function getOperator(
+  operatorName varchar2 := null
+  , maxRowCount integer := null
+)
+return sys_refcursor;
+
 /* pfunc: isRole(operatorId)
   Проверяет наличие роли у оператора.
 

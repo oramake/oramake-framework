@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: AccessOperator
-SubTitle: Версия 3.12.0
+SubTitle: Версия 3.12.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -107,6 +107,7 @@ Group: Скрипты  {
             File: op_role_seq  (no auto-title, Install/Schema/Last/op_role_seq.sqs)
             File: v_op_operator  (no auto-title, Install/Schema/Last/v_op_operator.vw)
             File: v_op_operator_role  (no auto-title, Install/Schema/Last/v_op_operator_role.vw)
+            File: v_op_role  (no auto-title, Install/Schema/Last/v_op_role.vw)
             }  # Group: Last
 
          }  # Group: Schema

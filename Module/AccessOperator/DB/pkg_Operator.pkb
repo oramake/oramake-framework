@@ -346,6 +346,43 @@ begin
   return currentOperatorName;
 end getCurrentUserName;
 
+/* func: getOperator
+  Получение данных по операторам.  В настоящее время *не реализовано* ( является
+  заглушкой для других модулей).
+
+  Параметры:
+  operatorName                - ФИО оператора
+                                ( поиск по like без учета регистра)
+                                ( по умолчанию без ограничений)
+  maxRowCount                 - максимальное число возвращаемых поиском записей
+                                ( по умолчанию без ограничений)
+
+  Возврат ( курсор):
+  operator_id                 - Id оператора
+  operator_name               - ФИО оператора
+*/
+function getOperator(
+  operatorName varchar2 := null
+  , maxRowCount integer := null
+)
+return sys_refcursor
+is
+begin
+  raise_application_error(
+    pkg_Error.IllegalArgument
+    , 'Not implemented'
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    ,  'Ошибка при получении данных по операторам ('
+      || ' operatorName="' || operatorName || '"'
+      || ', maxRowCount=' || maxRowCount
+      || ').'
+    , true
+  );
+end getOperator;
+
 /* ifunc: isRole
   Проверяет наличие роли у оператора.
 
