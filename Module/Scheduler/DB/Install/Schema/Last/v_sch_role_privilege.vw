@@ -51,7 +51,7 @@ from
     , cast( null as date) as date_ins
     , cast( null as integer) as operator_id
   from
-    op_role rl
+    v_op_role rl
     cross join
       (
       select
@@ -69,16 +69,16 @@ from
     left outer join sch_batch b
       on b.module_id = md.module_id
   where
-    rl.short_name in (
+    rl.role_short_name in (
         'AllBatchAdmin'
         , 'AdminAllBatch' || opt.local_role_suffix
       )
-    or rl.short_name = 'ExecuteAllBatch' || opt.local_role_suffix
+    or rl.role_short_name = 'ExecuteAllBatch' || opt.local_role_suffix
       and pr.privilege_code in (
           'READ'
           , 'EXEC'
         )
-    or rl.short_name = 'ShowAllBatch' || opt.local_role_suffix
+    or rl.role_short_name = 'ShowAllBatch' || opt.local_role_suffix
       and pr.privilege_code = 'READ'
   ) d
 /

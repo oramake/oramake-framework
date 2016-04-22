@@ -961,7 +961,7 @@ from
     , vb.retrial_number
     , vb.date_ins
     , vb.operator_id
-    , op.operator_name_rus as operator_name
+    , op.operator_name
     , vb.job
     , vb.last_date
     , vb.this_date
@@ -1234,7 +1234,7 @@ is
       , s.schedule_name_rus as schedule_name
       , s.date_ins
       , s.operator_id
-      , op.operator_name_rus as operator_name
+      , op.operator_name
     from sch_schedule s
     inner join op_operator op
       on op.operator_id = s.operator_id
@@ -1500,7 +1500,7 @@ is
       , i.step
       , i.date_ins
       , i.operator_id
-      , op.operator_name_rus as operator_name
+      , op.operator_name
     from sch_interval i
     inner join sch_interval_type it
       on it.interval_type_code = i.interval_type_code
@@ -1568,7 +1568,7 @@ is
       , l.message_text
       , l.date_ins
       , l.operator_id
-      , op.operator_name_rus as operator_name
+      , op.operator_name
     from v_sch_batch_root_log l
     inner join sch_message_type m
       on m.message_type_code = l.message_type_code
@@ -1633,7 +1633,7 @@ begin
     , l.log_level
     , l.date_ins
     , l.operator_id
-    , op.operator_name_rus as operator_name
+    , op.operator_name
   from
   (
     select
@@ -2390,14 +2390,14 @@ is
       , b.role_id
       , r.short_name as role_short_name
       , p.privilege_name
-      , r.role_name_rus as role_name
+      , r.role_name
       , b.date_ins
       , b.operator_id
-      , op.operator_name_rus as operator_name
+      , op.operator_name
     from sch_batch_role b
     inner join sch_privilege p
       on p.privilege_code = b.privilege_code
-    inner join op_role r
+    inner join v_op_role r
       on r.role_id = b.role_id
     inner join op_operator op
       on op.operator_id = b.operator_id
@@ -2584,7 +2584,7 @@ from
     , md.module_name
     , t.privilege_code
     , t.role_id
-    , r.short_name as role_short_name
+    , r.role_short_name
     , p.privilege_name
     , r.role_name
     , t.date_ins
@@ -2612,7 +2612,7 @@ from
       on md.module_id = t.module_id
     inner join sch_privilege p
       on p.privilege_code = t.privilege_code
-    inner join op_role r
+    inner join v_op_role r
       on r.role_id = t.role_id
     inner join op_operator op
       on op.operator_id = t.operator_id
@@ -2804,14 +2804,14 @@ begin
   open rc for
     select
       t.role_id
-      , coalesce( t.role_name, t.role_name_rus) as role_name
+      , t.role_name
     from
-      op_role t
+      v_op_role t
     where
       searchStr is null
-      or upper( t.short_name) like upper( searchStr)
+      or upper( t.role_short_name) like upper( searchStr)
       or upper( t.role_name) like upper( searchStr)
-      or upper( t.role_name_rus) like upper( searchStr)
+      or upper( t.role_name_en) like upper( searchStr)
       or upper( t.description) like upper( searchStr)
     order by
       role_name

@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Scheduler
-SubTitle: Версия 4.3.4
+SubTitle: Версия 4.3.4.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -57,39 +57,27 @@ Group: О модуле  {
 
 Group: Объектные типы  {
 
-   Group: Install  {
+   Group: sch_batch_log_info_t  {
 
-      Group: Schema  {
-
-         Group: Last  {
-
-            Group: sch_batch_log_info_t  {
-
-               File: Спецификация  (no auto-title, Install/Schema/Last/sch_batch_log_info_t.typ)
-               File: Реализация  (no auto-title, Install/Schema/Last/sch_batch_log_info_t.tyb)
-               }  # Group: sch_batch_log_info_t
-
-            Group: sch_log_t  {
-
-               File: Спецификация  (no auto-title, Install/Schema/Last/sch_log_t.typ)
-               }  # Group: sch_log_t
-
-            Group: sch_log_table_t  {
-
-               File: Спецификация  (no auto-title, Install/Schema/Last/sch_log_table_t.typ)
-               }  # Group: sch_log_table_t
-
-            }  # Group: Last
-
-         }  # Group: Schema
-
-      }  # Group: Install
+      File: Спецификация  (no auto-title, sch_batch_log_info_t.typ)
+      File: Реализация  (no auto-title, sch_batch_log_info_t.tyb)
+      }  # Group: sch_batch_log_info_t
 
    Group: sch_batch_option_t  {
 
       File: Спецификация  (no auto-title, sch_batch_option_t.typ)
       File: Реализация  (no auto-title, sch_batch_option_t.tyb)
       }  # Group: sch_batch_option_t
+
+   Group: sch_log_t  {
+
+      File: Спецификация  (no auto-title, sch_log_t.typ)
+      }  # Group: sch_log_t
+
+   Group: sch_log_table_t  {
+
+      File: Спецификация  (no auto-title, sch_log_table_t.typ)
+      }  # Group: sch_log_table_t
 
    }  # Group: Объектные типы
 
