@@ -52,7 +52,7 @@ begin
         null
       from
         v_op_operator_role opr
-        inner join op_role rl
+        inner join v_op_role rl
           on rl.role_id = opr.role_id
         cross join
           (
@@ -68,7 +68,7 @@ begin
           ) opt
       where
         opr.operator_id = checkOperatorId
-        and rl.short_name in (
+        and rl.role_short_name in (
           'GlobalOptionAdmin'
           , case when opt.local_role_suffix is not null then
               'OptAdminAllOption' || opt.local_role_suffix
@@ -1424,7 +1424,7 @@ begin
   return
     pkg_Operator.getOperator(
       operatorName  => operatorName
-      , rowCount    => maxRowCount
+      , maxRowCount    => maxRowCount
     )
   ;
 exception when others then

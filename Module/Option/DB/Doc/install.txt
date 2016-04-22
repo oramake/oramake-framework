@@ -60,6 +60,25 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 3.1.0.1
+(<Версии::3.1.0.1 ( 2016-04-21)>)
+
+Предварительные требования:
+
+- установка модуля AccessOperator версии не ранее 3.12.1;
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: Первоначальная установка
 
 Предварительные требования:
