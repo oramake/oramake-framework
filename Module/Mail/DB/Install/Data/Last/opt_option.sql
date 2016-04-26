@@ -15,11 +15,6 @@ begin
     , optionName => 'Имя или ip smtp-сервера для отправки факсов'
     , defaultStringValue => '&faxSenderSmtp'
   );
-  optionList.addOptionString(
-    moduleOptionName => pkg_MailInternal.DebtInfoSmtp_OptionName
-    , optionName => 'Имя или ip smtp-сервера для рассылки информации о задолженности'
-    , defaultStringValue => 'mail.prosrochka-info.ru'
-  );
 end;
 /
 commit;
