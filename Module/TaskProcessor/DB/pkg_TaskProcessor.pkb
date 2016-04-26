@@ -311,11 +311,11 @@ begin
             null
           from
             v_op_operator_role opr
-            inner join op_role rl
+            inner join v_op_role rl
               on rl.role_id = opr.role_id
           where
             opr.operator_id = operatorId
-            and rl.short_name = tt.access_role_short_name
+            and rl.role_short_name = tt.access_role_short_name
           )
       )
     order by

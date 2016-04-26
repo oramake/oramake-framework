@@ -11,5 +11,5 @@ alter table tp_task_type add constraint
 foreign key
   ( access_role_short_name)
 references
-  op_role( short_name)
+  op_role( role_short_name)
 ;

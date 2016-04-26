@@ -1,45 +1,46 @@
 begin
 merge into
-  op_role d
+  v_op_role d
 using
   (
   select
-    pkg_TaskProcessorBase.Administrator_RoleName as short_name
+    pkg_TaskProcessorBase.Administrator_RoleName as role_short_name
     , 'Полный доступ к модулю TaskProcessor' as role_name
     , 'TaskProcessor administrator' as role_name_en
     , 'Полный доступ к модулю TaskProcessor, используемому для организации выполнения заданий прикладных модулей.' as description
   from dual
   minus
   select
-    t.role_id
-    , t.short_name
+    t.role_short_name
     , t.role_name
     , t.role_name_en
     , t.description
   from
-    op_role t
+    v_op_role t
   where
-    t.short_name = pkg_TaskProcessorBase.Administrator_RoleName
+    t.role_short_name = pkg_TaskProcessorBase.Administrator_RoleName
   ) s
 on
   (
-  d.short_name = s.short_name
+  d.role_short_name = s.role_short_name
   )
 when not matched then insert
   (
   role_id
-  , short_name
+  , role_short_name
   , role_name
   , role_name_en
   , description
+  , operator_id
   )
 values
   (
-  s.role_id
-  , s.short_name
+  op_role_seq.nextval
+  , s.role_short_name
   , s.role_name
   , s.role_name_en
   , s.description
+  , pkg_Operator.getCurrentUserId()
   )
 when matched then update set
   d.role_name             = s.role_name
