@@ -1,4 +1,6 @@
-create or replace type dsn_data_sync_t force
+@oms-drop-type dsn_data_sync_t
+
+create or replace type dsn_data_sync_t
 authid current_user
 as object
 (
