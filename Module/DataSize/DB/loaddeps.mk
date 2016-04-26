@@ -31,3 +31,7 @@
 pkg_DataSize.pkb.$(lu):                 \
   pkg_DataSize.pks.$(lu)                \
 
+
+Install/Schema/Last/dsz_header_bi_define.trg.$(lu): \
+  pkg_DataSize.pks.$(lu)                \
+
