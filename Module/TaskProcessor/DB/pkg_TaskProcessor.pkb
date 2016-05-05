@@ -1039,7 +1039,7 @@ from
     , ts.error_message
     , t.date_ins as file_date_ins
     , t.operator_id as file_operator_id
-    , op.operator_name_rus as file_operator_name
+    , op.operator_name as file_operator_name
   from
     tp_file t
     inner join tp_task ts
