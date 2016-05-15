@@ -136,6 +136,7 @@ Options:
   -s, --spec-file-name FILE_NAME
                               specification file name
                               ( by default, defined automatically using body file name)
+  --skip-delete-temp          skip deleting temporary files
   -h, --help                  show this help
    --version                  print version
 END
