@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application name="Scheduler" defaultDatasource="" projectPackage="oracle">
+  <modules>
+   <module id="Batch" name="Пакетное задание" nameEn="Batch">
+   		<db package="pkg_Scheduler">
+			<find parameters="DATA_SOURCE,BATCH_ID,BATCH_SHORT_NAME,BATCH_NAME,BATCH_TYPE_ID,LAST_DATE_FROM,LAST_DATE_TO,RETRIAL_COUNT" />
+			<update parameters="DATA_SOURCE,BATCH_ID,BATCH_NAME,RETRIAL_COUNT,RETRIAL_TIMEOUT" />
+		</db>
+		<record primaryKey="BATCH_ID">
+			<field id="BATCH_ID" type="Integer" name="ID" nameEn="ID"  />
+			<field id="BATCH_SHORT_NAME" type="String" name="Код" nameEn="Code" like="FIRST"/>
+			<field id="BATCH_NAME" type="String" name="Наименование" nameEn="Name" like="FIRST"/>
+			<field id="DATA_SOURCE" type="String" name="Источник данных" />
+
+			<field id="BATCH_TYPE_ID" type="Integer" name="Тип батча" nameEn="Type"  />
+			<field id="BATCH_TYPE_NAME" type="String"  name="Тип батча" nameEn="Type"  />
+			<field id="LAST_DATE_FROM" type="Date" name="Дата последнего запуска от" />
+			<field id="LAST_DATE_TO" type="Date" name="Дата последнего запуска до"/>
+			<field id="RETRIAL_COUNT" type="Integer" name="Количество попыток" nameEn="Retrial Count"  />
+			
+			
+			<field id="RETRIAL_TIMEOUT" type="String" name="Интервал попытки" nameEn="Retrial Timeout"  />
+
+			<field id="ORACLE_JOB_ID" type="Integer" />
+			<field id="RETRIAL_NUMBER" type="Integer" />
+			<field id="DATE_INS" type="Date" />
+			<field id="OPERATOR_ID" type="Integer" />
+			<field id="OPERATOR_NAME" type="String" />
+			<field id="JOB" type="Integer" />
+			<field id="LAST_DATE" type="Date" />
+			<field id="THIS_DATE" type="Date" />
+			<field id="NEXT_DATE" type="Date" />
+			<field id="TOTAL_TIME" type="Integer" />
+			<field id="FAILURES" type="Integer" />
+			<field id="IS_JOB_BROKEN" type="Integer" />
+			<field id="SID" type="Integer" />
+			<field id="SERIAL" type="Integer" />
+			<field id="ROOT_LOG_ID" type="Integer" />
+			<field id="LAST_START_DATE" type="Date" />
+			<field id="LAST_LOG_DATE" type="Date" />
+			<field id="RESULT_NAME" type="String" />
+			<field id="ERROR_JOB_COUNT" type="Integer" />
+			<field id="ERROR_COUNT" type="Integer" />
+			<field id="WARNING_COUNT" type="Integer" />
+			<field id="DURATION" type="Integer" />
+		</record>
+		<roles>
+			<role>SchShowBatch</role>
+		</roles>
+		<forms>
+			<form-list presenter="on">
+				<field id="BATCH_ID"  />
+				<field id="BATCH_NAME"  />
+				<field id="BATCH_SHORT_NAME" />
+				<field id="BATCH_TYPE_NAME" />
+				<field id="RETRIAL_COUNT"  />
+				<field id="RETRIAL_TIMEOUT"  />
+				<field id="ORACLE_JOB_ID" name="Oracle Job ID" nameEn="Oracle Job ID" />
+				<field id="RETRIAL_NUMBER" name="Номер текущей попытки" nameEn="Retrial Number" />
+				<field id="DATE_INS" name="Создан" nameEn="Created" />
+				<field id="OPERATOR_NAME" name="Оператор" nameEn="Operator" />
+
+				<field id="JOB" name="Oracle Job ID (реальный)" nameEn="Real Oracle Job ID" />
+				<field id="LAST_DATE" name="Дата последнего запуска" nameEn="Last Date" />
+				<field id="THIS_DATE" name="Дата текущего запуска" nameEn="This Date" />
+				<field id="NEXT_DATE" name="Дата следующего запуска" nameEn="Next Date" />
+				<field id="TOTAL_TIME" name="Общее время выполнения, с" nameEn="Total Time, sec" />
+				<field id="FAILURES" name="Число повторных попыток" nameEn="Failures" />
+				<field id="IS_JOB_BROKEN" name="Oracle Job в статусе ошибки" nameEn="Is Job Broken" />
+				<field id="SID" name="ID сессии" nameEn="SID" />
+				<field id="SERIAL" name="Номер сессии" nameEn="Serial#" />
+				<field id="ROOT_LOG_ID" name="ID корневой записи в лог" nameEn="Root Log ID" />
+				<field id="LAST_START_DATE" name="Дата начала записи последнего лога" nameEn="Last Start Date" />
+				<field id="LAST_LOG_DATE" name="Последняя дата записи в лог" nameEn="Last Log Date" />
+				<field id="RESULT_NAME" name="Результат" nameEn="Batch Result" />
+
+				<field id="ERROR_JOB_COUNT" name="Job-ов в статусе ошибки" nameEn="Error Job Count" />
+				<field id="ERROR_COUNT" name="Ошибок" nameEn="Error Count" />
+				<field id="WARNING_COUNT" name="Предупреждений" nameEn="Warning Count" />
+				<field id="DURATION" name="Длительность выполнения, с" nameEn="Duration, sec" />
+			</form-list>
+			<form-detail>
+				<field id="DATA_SOURCE" widget="JepComboBoxField"  mandatoryWorkstates="SEARCH" editableWorkstates="SEARCH"/>
+				<field id="BATCH_ID" visibleWorkstates="SEARCH,VIEW_DETAILS" widget="JepNumberField" />
+				<field id="BATCH_SHORT_NAME" visibleWorkstates="SEARCH,VIEW_DETAILS" widget="JepTextField" />
+				<field id="BATCH_NAME" visibleWorkstates="EDIT,SEARCH,VIEW_DETAILS" mandatoryWorkstates="EDIT" widget="JepTextField" />
+				<field id="BATCH_TYPE_ID" visibleWorkstates="SEARCH" widget="JepComboBoxField" />
+				<field id="LAST_DATE_FROM" visibleWorkstates="SEARCH" widget="JepDateField" />
+				<field id="LAST_DATE_TO" visibleWorkstates="SEARCH" widget="JepDateField" />
+				<field id="RETRIAL_COUNT" visibleWorkstates="EDIT,SEARCH,VIEW_DETAILS" mandatoryWorkstates="EDIT" widget="JepNumberField" />
+				
+				<field id="RETRIAL_TIMEOUT" visibleWorkstates="EDIT,SEARCH,VIEW_DETAILS" widget="JepTextField" />
+			</form-detail>
+		</forms>
+		<toolbar presenter="on" view="on">
+			<button id="ACTIVATE_BATCH" enableWorkstates="SELECTED,VIEW_DETAILS" image="activateBatch.gif" event="activateBatch()" text="activateBatch" name="Активировать батч" nameEn="Activate Batch" />
+			<button id="DEACTIVATE_BATCH" enableWorkstates="SELECTED,VIEW_DETAILS" image="deactivateBatch.gif" event="deactivateBatch()" text="deactivateBatch" name="Деактивировать батч" nameEn="Deactivate Batch" />
+
+			<separator id="EXECUTE_BATCH_SEPARATOR_ID"  />
+			<button id="EXECUTE_BATCH" enableWorkstates="SELECTED,VIEW_DETAILS" image="executeBatch.gif" event="executeBatch()" text="executeBatch" name="Выполнить батч" nameEn="Execute Batch" />
+			<button id="ABORT_BATCH" enableWorkstates="SELECTED,VIEW_DETAILS" image="abortBatch.gif" event="abortBatch()" text="executeBatch" name="Остановить батч" nameEn="Abort Batch" />
+		</toolbar>
+		<module id="Schedule" name="Расписание" nameEn="Timeschedule">
+			<db package="pkg_Scheduler">
+				<find parameters="DATA_SOURCE,BATCH_ID,SCHEDULE_ID" />
+				<create parameters="DATA_SOURCE,BATCH_ID,SCHEDULE_NAME" />
+				<update parameters="DATA_SOURCE,SCHEDULE_ID,SCHEDULE_NAME" />
+			</db>
+			<record primaryKey="SCHEDULE_ID">
+				<field id="SCHEDULE_ID" type="Integer" name="ID" nameEn="ID"  />
+				<field id="BATCH_ID" type="Integer" />
+				<field id="SCHEDULE_NAME" type="String" name="Наименование" nameEn="Schedule Name"  />
+				<field id="DATE_INS" type="Date" name="Создано" nameEn="Created" />
+				<field id="OPERATOR_ID" type="Integer"  name="Оператор" nameEn="Operator" />
+				<field id="OPERATOR_NAME" type="String"  name="Оператор" nameEn="Operator"/>
+			</record>
+			<forms>
+				<form-list presenter="on">
+				  <field id="SCHEDULE_ID" />
+				  <field id="SCHEDULE_NAME" />
+				  <field id="DATE_INS"  />
+				  <field id="OPERATOR_NAME" />
+				</form-list>
+				<form-detail>
+				  <field id="SCHEDULE_ID" visibleWorkstates="VIEW_DETAILS" widget="JepNumberField" />
+				  <field id="SCHEDULE_NAME" widget="JepTextField" mandatoryWorkstates="EDIT,CREATE"  />
+				</form-detail>
+			</forms>
+			<roles>
+				<role>SchShowSchedule</role>
+			</roles>
+			<toolbar presenter="on" view="on">
+			</toolbar>
+		  
+			<module id="Interval" name="Интервал" nameEn="Interval">
+			  <db package="pkg_Scheduler">
+				<create parameters="DATA_SOURCE,SCHEDULE_ID,INTERVAL_TYPE_CODE,MIN_VALUE,MAX_VALUE,STEP" />
+				<find parameters="DATA_SOURCE,SCHEDULE_ID,INTERVAL_ID" />
+				<update parameters="DATA_SOURCE,INTERVAL_ID,INTERVAL_TYPE_CODE,MIN_VALUE,MAX_VALUE,STEP" />
+			  </db>
+			  <record primaryKey="INTERVAL_ID">
+				<field id="INTERVAL_ID" type="Integer" name="ID" nameEn="ID"  />
+				<field id="SCHEDULE_ID" type="Integer" />
+				<field id="INTERVAL_TYPE_CODE" type="String" name="Тип интервала" nameEn="Interval Type"  />
+				<field id="INTERVAL_TYPE_NAME" type="String" name="Тип интервала" nameEn="Interval Type" />
+				<field id="MIN_VALUE" type="Integer" name="От" nameEn="Min Value"  />
+				<field id="MAX_VALUE" type="Integer" name="До" nameEn="Max Value"  />
+				<field id="STEP" type="Integer" name="Шаг интервала" nameEn="Step"  />
+				<field id="DATE_INS" type="Date"  name="Создан" nameEn="Created" />
+				<field id="OPERATOR_ID" type="Integer" />
+				<field id="OPERATOR_NAME" type="String" name="Оператор" nameEn="Operator"  />
+			  </record>
+			  <forms>
+				<form-list presenter="on">
+				  <field id="INTERVAL_ID" name="ID" nameEn="ID" />
+				  <field id="INTERVAL_TYPE_NAME" />
+				  <field id="MIN_VALUE" name="От" nameEn="Min Value" />
+				  <field id="MAX_VALUE" name="До" nameEn="Max Value" />
+				  <field id="STEP" name="Шаг интервала" nameEn="Step" />
+
+				  <field id="DATE_INS" />
+				  <field id="OPERATOR_NAME"/>
+				</form-list>
+				<form-detail>
+				  <field id="INTERVAL_ID" visibleWorkstates="VIEW_DETAILS" widget="JepNumberField" />
+				  <field id="INTERVAL_TYPE_CODE" widget="JepComboBoxField"  mandatoryWorkstates="EDIT,CREATE" />
+				  <field id="MIN_VALUE"  widget="JepNumberField" />
+				  <field id="MAX_VALUE" widget="JepNumberField" />
+				  <field id="STEP" widget="JepNumberField"  mandatoryWorkstates="EDIT,CREATE" />
+				</form-detail>
+			  </forms>
+			  <roles>
+				<role>SchShowSchedule</role>
+			  </roles>
+			  <toolbar presenter="on" view="on">
+			  </toolbar>
+			</module>
+		</module>
+		
+		<module id="RootLog"  name="Лог" nameEn="RootLog">
+			<roles>
+				<role>SchShowLog</role>
+			</roles>
+			<db package="pkg_Scheduler">
+				<find parameters="DATA_SOURCE,BATCH_ID" />
+			</db>
+			<forms>
+				<form-list presenter="on">
+				  <field id="LOG_ID"/>
+				  <field id="DATE_INS" />
+				  <field id="MESSAGE_TEXT" />
+				  <field id="MESSAGE_TYPE_NAME"/>
+				  <field id="OPERATOR_NAME"/>
+				</form-list>
+			</forms>
+			<record primaryKey="LOG_ID">
+				<field id="LOG_ID" type="Integer" name="ID" nameEn="ID" />
+				<field id="DATE_INS" type="Date" name="Создан" nameEn="Created" />
+				<field id="MESSAGE_TYPE_NAME" type="String"  name="Тип сообщения" nameEn="Message Type" />
+				<field id="MESSAGE_TEXT" type="String" name="Текст сообщения" nameEn="Message Text" />
+				<field id="OPERATOR_NAME" type="String"  name="Оператор" nameEn="Operator" />
+			</record>
+			<toolbar presenter="on" view="on">
+			</toolbar>
+			
+			<module id="DetailedLog" name="Детализация лога" nameEn="Detailed Log">
+				<roles>
+					<role>SchShowLog</role>
+				</roles>
+				<db package="pkg_Scheduler">
+					<find parameters="DATA_SOURCE,PARENT_LOG_ID" />
+				</db>
+				<forms>
+					<form-list presenter="on">
+						<field id="LOG_ID" name="ID" nameEn="ID" />
+						<field id="PARENT_LOG_ID" name="ID корневого лога" nameEn="Parent Log ID" />
+						<field id="DATE_INS" name="Дата вставки" nameEn="Created" />
+						<field id="MESSAGE_TEXT" name="Текст сообщения" nameEn="Message Text" />
+						<field id="MESSAGE_VALUE" name="Значение сообщения" nameEn="Message Value" />
+						<field id="MESSAGE_TYPE_NAME" name="Тип сообщения" nameEn="Message Type" />
+						<field id="OPERATOR_NAME" name="Оператор" nameEn="Operator" />
+					</form-list>
+				</forms>
+				<record primaryKey="LOG_ID">
+					<field id="LOG_ID" type="Integer" />
+					<field id="PARENT_LOG_ID" type="Integer" />
+					<field id="DATE_INS" type="Date" />
+					<field id="MESSAGE_TEXT" type="String" />
+					<field id="MESSAGE_VALUE" type="String" />
+
+					<field id="MESSAGE_TYPE_NAME" type="String" />
+					<field id="OPERATOR_NAME" type="String" />
+				</record>
+				<toolbar presenter="on" view="on">
+				</toolbar>
+			</module>
+		</module>
+		
+		<module id="BatchRole" name="Батч-роль" nameEn="Batch - Role">
+		  <db package="pkg_Scheduler">
+			<create parameters="DATA_SOURCE,BATCH_ID,PRIVILEGE_CODE,ROLE_ID" />
+			<find parameters="DATA_SOURCE,BATCH_ROLE_ID,BATCH_ID" />
+		  </db>
+		  <record primaryKey="BATCH_ROLE_ID">
+			<field id="BATCH_ROLE_ID" type="Integer" name="ID" nameEn="ID" />
+			<field id="BATCH_ID" type="Integer" />
+			<field id="PRIVILEGE_CODE" type="String" name="Привилегия" nameEn="Privilege"  />
+			<field id="ROLE_ID" type="Integer" name="Роль" nameEn="Role"  />
+			<field id="ROLE_SHORT_NAME" type="String" name="Краткое наименование роли" nameEn="Role Short Name " />
+			<field id="PRIVILEGE_NAME" type="String" name="Привилегия" nameEn="Privilege"  />
+			<field id="ROLE_NAME" type="String" name="Роль" nameEn="Role"  />
+
+			<field id="DATE_INS" type="Date" />
+			<field id="OPERATOR_ID" type="Integer" />
+			<field id="OPERATOR_NAME" type="String" />
+		  </record>
+		  <forms>
+			<form-list presenter="on">
+			  <field id="BATCH_ROLE_ID" />
+			  <field id="PRIVILEGE_CODE" name="Код привилегии" nameEn="Privilege Code" />
+			  <field id="ROLE_SHORT_NAME" />
+			  <field id="PRIVILEGE_NAME"/>
+			  <field id="ROLE_NAME" name="Роль" nameEn="Role" />
+			  <field id="DATE_INS" name="Создано" nameEn="Created" />
+			  <field id="OPERATOR_NAME" name="Оператор" nameEn="Operator" />
+
+			</form-list>
+			<form-detail>
+			  <field id="PRIVILEGE_CODE" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+			  <field id="ROLE_ID" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+			</form-detail>
+		  </forms>
+
+		  <roles>
+			<role>SchShowBatchRole</role>
+		  </roles>
+		  <toolbar presenter="on" view="on">
+		  </toolbar>
+		</module>
+		
+		
+		<module id="Option" name="Параметр" nameEn="Option" >
+		  <roles>
+			<role>SchShowBatchOption</role>
+		  </roles>
+		  <db package="pkg_Scheduler">
+			<find parameters="DATA_SOURCE,OPTION_ID,BATCH_ID" />
+			<create parameters="DATA_SOURCE,BATCH_ID,OPTION_SHORT_NAME,VALUE_TYPE_CODE,VALUE_LIST_FLAG,ENCRYPTION_FLAG,TEST_PROD_SENSITIVE_FLAG,OPTION_NAME,OPTION_DESCRIPTION,OPTION_VALUE,STRING_LIST_SEPARATOR" />
+			<update parameters="DATA_SOURCE,BATCH_ID,OPTION_ID,VALUE_TYPE_CODE,VALUE_LIST_FLAG,ENCRYPTION_FLAG,TEST_PROD_SENSITIVE_FLAG,OPTION_NAME,OPTION_DESCRIPTION" />
+		  </db>
+		  <record primaryKey="OPTION_ID">
+			<field id="DATA_SOURCE" type="String" name="Источник данных" />
+			<field id="OPTION_ID" type="Integer" name="Идентификатор параметра" />
+			<field id="BATCH_ID" type="Integer" />
+
+			<field id="OPTION_SHORT_NAME" type="String" name="Короткое название параметра" like="contains"/>
+			<field id="OPTION_NAME" type="String" name="Название параметра" like="contains"/>
+			<field id="OPTION_DESCRIPTION" type="String" name="Описание параметра" like="contains"/>
+			<field id="STRING_VALUE" type="String" name="Значение параметра" like="contains"/>
+			<field id="DATE_VALUE" type="Date" name="Дата" />
+			<field id="NUMBER_VALUE" type="Integer" name="Число" />
+			<field id="VALUE_TYPE_CODE" type="String" name="Тип значения параметра" />
+			<field id="VALUE_TYPE_NAME" type="String" name="Тип значения параметра" />
+			<field id="VALUE_LIST_FLAG" type="Boolean" name="Признак хранения в параметре списка значений" />
+			<field id="LIST_SEPARATOR" type="String" name="Разделитель в списке значений" />
+			<field id="ENCRYPTION_FLAG" type="Boolean" name="Признак шифрования значения" />
+			<field id="TEST_PROD_SENSITIVE_FLAG" type="Boolean" name="Признак значения для тестовой БД" />
+			<field id="STRING_LIST_SEPARATOR" type="String" name="Символ – разделитель списка значений" />
+			<field id="ACCESS_LEVEL_NAME" type="String" name="Наименование уровня доступа" />
+			<field id="VALUE_INDEX" type="String" name="Индекс значения в списке" />
+		  </record>
+		  <forms>
+			<form-detail>
+				<field id="DATA_SOURCE" widget="JepComboBoxField" mandatoryWorkstates="true" visibleWorkstates="!EDIT"/>
+				<field id="OPTION_ID" widget="JepNumberField" visibleWorkstates="EDIT,VIEW_DETAILS"  mandatoryWorkstates="EDIT" editableWorkstates="!EDIT"/>
+
+				<field id="OPTION_SHORT_NAME" widget="JepTextField" mandatoryWorkstates="CREATE" visibleWorkstates="!EDIT" />
+				<field id="VALUE_TYPE_CODE" widget="JepComboBoxField" mandatoryWorkstates="!SEARCH"/>
+				<field id="VALUE_LIST_FLAG" widget="JepCheckBoxField"  />
+				<field id="ENCRYPTION_FLAG" widget="JepCheckBoxField"  mandatoryWorkstates="EDIT"/>
+				<field id="TEST_PROD_SENSITIVE_FLAG" widget="JepCheckBoxField" />
+				<field id="OPTION_NAME" widget="JepTextField" mandatoryWorkstates="!SEARCH"/>
+				<field id="OPTION_DESCRIPTION" widget="JepTextField" />
+				<field id="STRING_VALUE" widget="JepTextField"/>
+				<field id="DATE_VALUE" widget="JepDateField" />
+				<field id="NUMBER_VALUE" widget="JepNumberField" />
+				<field id="STRING_LIST_SEPARATOR" widget="JepTextField" visibleWorkstates="CREATE"/>
+				<field id="VALUE_INDEX" widget="JepTextField" visibleWorkstates="EDIT"/>
+			</form-detail>
+			<form-list presenter="on">
+				<field id="OPTION_ID" />
+				<field id="OPTION_NAME" />
+				<field id="OPTION_SHORT_NAME" />
+				<field id="VALUE_TYPE_NAME" />
+				<field id="STRING_VALUE" name="Строка" />
+				<field id="DATE_VALUE" />
+				<field id="NUMBER_VALUE" />
+				<field id="VALUE_LIST_FLAG"/>
+				<field id="LIST_SEPARATOR"/>
+				<field id="ENCRYPTION_FLAG"/>
+				<field id="TEST_PROD_SENSITIVE_FLAG"/>
+				<field id="ACCESS_LEVEL_NAME"/>
+			</form-list>
+		  </forms>
+		  <toolbar view="on" presenter="on">
+		  </toolbar>
+		  
+		  
+			<module id="Value" name="Значение Параметра" nameEn="Value" >
+				<roles>
+					<role>SchShowBatchOption</role>
+				</roles>
+				<db datasource="">
+					<find parameters="DATA_SOURCE,VALUE_ID, OPTION_ID, BATCH_ID" />
+					<create parameters="DATA_SOURCE,BATCH_ID, OPTION_ID, PROD_VALUE_FLAG,INSTANCE_NAME,STRING_LIST_SEPARATOR,DATE_VALUE,STRING_VALUE,NUMBER_VALUE" />
+					<update parameters="DATA_SOURCE,BATCH_ID, VALUE_ID,DATE_VALUE,STRING_VALUE,NUMBER_VALUE,VALUE_INDEX" />
+				</db>
+				<record primaryKey="VALUE_ID">
+					<field id="VALUE_ID" type="Integer" name="ID значения параметра" />
+					<field id="OPTION_ID" type="Integer" name="Идентификатор параметра" />
+					<field id="BATCH_ID" type="Integer" />
+
+					<field id="USED_VALUE_FLAG" type="Boolean" name="Признак текущего значения" />
+					<field id="PROD_VALUE_FLAG" type="Boolean" name="Признак использования в промышленных БД" />
+					<field id="INSTANCE_NAME" type="String" name="Имя экземпляра БД" />
+					<field id="VALUE_TYPE_CODE" type="String" name="Код типа значения параметра" />
+					<field id="VALUE_TYPE_NAME" type="String" name="Тип значения параметра" />
+					<field id="STRING_VALUE" type="String" name="Значение параметра"/>
+					<field id="DATE_VALUE" type="Date" name="Дата" />
+					<field id="NUMBER_VALUE" type="Integer" name="Число" />
+					<field id="ENCRYPTION_FLAG" type="Boolean" name="Признак шифрования значения" />
+					<field id="LIST_SEPARATOR" type="String" name="Разделитель в списке значений" />
+
+					<field id="STRING_LIST_SEPARATOR" type="String" name="Символ – разделитель списка значений" />
+					<field id="VALUE_INDEX" type="String" name="Индекс значения в списке" />
+
+				</record>
+				<forms>
+					<form-detail>
+						<field id="PROD_VALUE_FLAG" widget="JepTextField"  visibleWorkstates="CREATE"/>
+						<field id="INSTANCE_NAME" widget="JepTextField" visibleWorkstates="CREATE" />
+						<field id="STRING_LIST_SEPARATOR" widget="JepTextField" visibleWorkstates="CREATE"/>
+						<field id="DATE_VALUE" widget="JepDateField"/>
+						<field id="NUMBER_VALUE" widget="JepNumberField"/>
+						<field id="STRING_VALUE" widget="JepTextField"/>
+						<field id="VALUE_INDEX" widget="JepTextField" visibleWorkstates="EDIT"/>
+					</form-detail>
+					<form-list presenter="on">
+						<field id="VALUE_ID" />
+						<field id="OPTION_ID" />
+						<field id="USED_VALUE_FLAG"  />
+						<field id="PROD_VALUE_FLAG"  />
+						<field id="INSTANCE_NAME" />
+						<field id="VALUE_TYPE_CODE" />
+						<field id="VALUE_TYPE_NAME" />
+						<field id="STRING_VALUE" />
+						<field id="DATE_VALUE" />
+						<field id="NUMBER_VALUE"/>
+						<field id="ENCRYPTION_FLAG"/>
+						<field id="LIST_SEPARATOR" />
+					</form-list>
+				</forms>
+				<toolbar view="on" presenter="on">
+				</toolbar>
+			</module>
+		</module>
+		
+	</module>
+
+    <module id="ModuleRolePrivilege" name="Права на пакетные задания модулей" >
+      <db package="pkg_Scheduler">
+        <create parameters="DATA_SOURCE,MODULE_ID,PRIVILEGE_CODE,ROLE_ID" />
+        <find parameters="DATA_SOURCE,MODULE_ID,MODULE_ROLE_PRIVILEGE_ID,PRIVILEGE_CODE,ROLE_ID" />
+      </db>
+      <forms>
+        <form-list presenter="on">
+          <field id="MODULE_ROLE_PRIVILEGE_ID" name="ID" nameEn="ID" />
+          <field id="MODULE_NAME" name="Модуль" />
+          <field id="PRIVILEGE_CODE" name="Код привилегии" nameEn="Privilege Code" />
+          <field id="ROLE_SHORT_NAME" name="Краткое наименование роли" nameEn="Role Short Name" />
+          <field id="PRIVILEGE_NAME" name="Привилегия" nameEn="Privilege" />
+          <field id="ROLE_NAME" name="Роль" nameEn="Role" />
+          <field id="DATE_INS" name="Создано" nameEn="Created" />
+          <field id="OPERATOR_NAME" name="Оператор" nameEn="Operator" />
+        </form-list>
+        <form-detail>
+          <field id="DATA_SOURCE" widget="JepComboBoxField" mandatoryWorkstates="CREATE,SEARCH" />
+          <field id="MODULE_ROLE_PRIVILEGE_ID" widget="JepNumberField" visibleWorkstates="SEARCH" />
+          <field id="MODULE_ID" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+          <field id="PRIVILEGE_CODE" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+          <field id="ROLE_ID" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+        </form-detail>
+      </forms>
+      <record primaryKey="MODULE_ROLE_PRIVILEGE_ID">
+	    <field id="DATA_SOURCE" type="String" name="Источник данных" />
+        <field id="MODULE_ROLE_PRIVILEGE_ID" type="Integer" name="ID" nameEn="ID"  />
+        <field id="MODULE_ID" type="Integer" name="Модуль" />
+        <field id="MODULE_NAME" type="String" />
+        <field id="PRIVILEGE_CODE" type="String" name="Привилегия" nameEn="Privilege"  />
+        <field id="ROLE_ID" type="Integer" name="Роль" nameEn="Role"  />
+        <field id="ROLE_SHORT_NAME" type="String" />
+        <field id="PRIVILEGE_NAME" type="String" />
+        <field id="ROLE_NAME" type="String" />
+        <field id="DATE_INS" type="Date" />
+        <field id="OPERATOR_NAME" type="String" />
+      </record>
+      <roles>
+        <role>SchShowModuleRolePrivilege</role>
+      </roles>
+      <toolbar view="on" presenter="on">
+      </toolbar>
+    </module>
+
+  </modules>
+</application>
