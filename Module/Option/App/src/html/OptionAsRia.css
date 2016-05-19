@@ -1,0 +1,178 @@
+.gwt-Image { 
+  cursor: hand;
+}
+
+.messageBar{
+  background: orange;
+  width: 100%;
+  text-align: center;
+}
+
+.link{
+  cursor: hand;
+  color: blue;
+  font-size: 10px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/** Add css rules here for your application. */
+.sendButton {
+  display: block;
+  font-size: 16pt;
+}
+
+/** Most GWT widgets already have a style name defined */
+.gwt-DialogBox {
+  width: 400px;
+}
+
+.dialogVPanel {
+  margin: 5px;
+}
+
+.serverResponseLabelError {
+  color: red;
+}
+
+/** Set ids using widget.getElement().setId("idOfElement") */
+#closeButton {
+  margin: 15px 6px 6px;
+}
+
+/** Перекрытие стиля GXT gxt-all.css */
+.x-form-empty-field {
+  color: gray;
+  font-style: italic;  
+}  
+
+.p-fieldlist-checker {
+  width: 18px;
+  height: 18px;
+  background-position: 2px 0px;
+  background-image: url(../images/default/grid/row-check-sprite.gif);
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+ 
+.p-fieldlist-checker-on {
+  background-position: -23px 0px;
+}
+
+.p-checkbox-view {
+  width: 18px;
+  height: 18px;
+  background-position: 0px 0px;
+  background-image: url(../images/default/grid/row-check-sprite.gif);
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+.p-checkbox-view-checked {
+  background-position: -25px 0px;
+}
+
+/** Смещение вниз текста поля детальной формы для состояния просмотра */
+.x-form-item .x-form-item-label {
+  padding: 2px;
+}
+
+/* Видимость панели регистрации/выхода. */
+.x-entrance-bar-panel {
+  visibility: visible;
+}
+
+/* Disabled text element */
+.x-item-disabled {
+  color: black;
+}
+.x-item-disabled * {
+  color: black !important;
+}
+
+/* Disabled toolbar buttons for IE */
+.x-toolbar .x-item-disabled *{
+  cursor: default;
+  filter: alpha(opacity=30);
+}
+
+#loading {
+  position: absolute;
+  left: 45%;
+  top: 40%;
+  margin-left: -45px;
+  background: white;
+  z-index: 20001;
+  border: 1px solid #ccc;
+  font-family: arial,helvetica,tahoma,sans-serif;
+}
+
+#loading .loading-indicator {
+  background: white;
+  color: #444;
+  font: bold 13px tahoma, arial, helvetica;
+  padding: 10px 10px 40px 10px;
+}
+
+#loading .loading-indicator img {
+  margin-right: 8px;
+  float: left;
+}
+
+#loading-msg {
+  font: normal 10px arial, tahoma, sans-serif;
+}
+
+#loading .loading-indicator div {
+  float: left;
+}
+
+/* Main container for Test Build Message */
+div.testBuildMessage {
+  padding: 10px;
+  z-index: 99999;
+  color: #fff;
+  font-size: 12px;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+}
+
+/* Notification container for Test Build Message */
+div.testBuildMessage div.testBuildMessage-notification {
+  background-color: #6690C9;
+  opacity: .85;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=85)"; 
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=85); 
+  zoom: 1;
+  width: 235px;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-family: Tahoma, Arial, Helvetica, sans-serif;
+  font-size: 1em;
+  text-align: left;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  min-height: 20px;
+}
+
+/* Styles for Test Build error  */
+div.testBuildMessage div.testBuildMessage-notification.error {
+  background: #ed6060;
+  color: #fff;
+}
+
+/* Styles for Test Build header  */
+div.testBuildMessage div.testBuildMessage-notification div.testBuildMessage-header {
+  font-weight: bold;
+}
+
+/* Styles for Test Build closer */
+div.testBuildMessage div.testBuildMessage-notification div.testBuildMessage-close {
+  z-index: 99;
+  float: right;
+  font-weight: bold;
+  font-size: 1em;
+  cursor:  pointer;
+}

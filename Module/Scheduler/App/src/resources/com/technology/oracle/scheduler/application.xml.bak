@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<application>
+  <display-name>Scheduler</display-name>
+  <module>
+    <web>
+      <web-uri>scheduler.war</web-uri>
+      <context-root>Scheduler</context-root>
+    </web>
+  </module>
+  <module>
+    <ejb>lib/scheduler-ejb.jar</ejb>
+  </module>
+  <module>
+    <ejb>lib/jepria-ejb.jar</ejb>
+  </module>
+</application>

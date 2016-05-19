@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module rename-to="Value">
+  <inherits name="com.technology.oracle.optionasria.main.OptionAsRia"/>
+  <source path="client"/>
+  <source path="shared"/>
+</module>

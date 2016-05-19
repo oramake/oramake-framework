@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<application>
+  <display-name>OptionAsRia</display-name>
+  <module>
+    <web>
+      <web-uri>optionasria.war</web-uri>
+      <context-root>OptionAsRia</context-root>
+    </web>
+  </module>
+  <module>
+    <ejb>lib/optionasria-ejb.jar</ejb>
+  </module>
+  <module>
+    <ejb>lib/jepria-ejb.jar</ejb>
+  </module>
+</application>

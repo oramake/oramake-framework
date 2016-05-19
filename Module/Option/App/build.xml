@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="build-and-deploy" name="Jep Module Building">
+    <taskdef resource="net/sf/antcontrib/antlib.xml"/>
+    <property file="build.properties"/>
+    <property name="J2EE_HOME" value="${OC4J_HOME}/j2ee/home"/>
+    <property name="JEP_RIA" value="${COMMON_HOME}/Module/JepRia/${JEP_RIA_VERSION}/App"/>
+    <property name="JEP_RIA_REPORT" value="${COMMON_HOME}/Module/JepRiaReport/${JEP_RIA_REPORT_VERSION}/App"/>
+    <property name="JEP_REPORT_COMPILER" value="${COMMON_HOME}/Module/JrCompiler/${JEP_REPORT_COMPILER_VERSION}/App"/>
+    <property name="JAVA_DOC_DIR" value="../Doc/App/AutoGen"/>
+    <property name="JAR_TEMP" value="build-lib"/>
+    <property name="LOG_LEVEL" value="info"/>
+    <!-- Общие наборы файлов -->
+    <path id="libs">
+        <pathelement location="${GWT_HOME}/gwt-user.jar"/>
+        <pathelement location="${GWT_HOME}/gwt-dev.jar"/>
+        <pathelement location="${GWT_LOG_HOME}/gwt-log.jar"/>
+        <pathelement location="${GXT_HOME}/gxt.jar"/>
+        <pathelement location="${GXT_HOME}/resources/chart/open-flash-chart.swf"/>
+        <pathelement location="${GXT_HOME}/resources/flash/swfobject.js"/>
+        <pathelement location="${LOG4J_HOME}/log4j.jar"/>
+        <pathelement location="${COMMONS-FILEUPLOAD_HOME}/commons-fileupload.jar"/>
+        <pathelement location="${J2EE_HOME}/lib/servlet.jar"/>
+        <pathelement location="${J2EE_HOME}/lib/ejb30.jar"/>
+        <pathelement location="${J2EE_HOME}/lib/oc4j-internal.jar"/>
+        <pathelement location="${OC4J_HOME}/jdbc/lib/ojdbc14dms.jar"/>
+        <pathelement location="${GWT_HOME}/gwt-servlet.jar"/>
+        <pathelement location="${JEP_RIA}/lib/jepria.jar"/>
+        <pathelement location="${JEP_RIA}/lib/jepria-ejb.jar"/>
+        <pathelement location="${JASPER_REPORTS_HOME}/dist/jasperreports.jar"/>
+        <pathelement location="${JASPER_REPORTS_HOME}/lib/iText-2.1.0.jar"/>
+        <pathelement location="${JEP_RIA_REPORT}/lib/jepriareport.jar"/>
+    </path>
+    <path id="gwt-libs">
+        <pathelement location="${GWT_HOME}/gwt-user.jar"/>
+        <pathelement location="${GWT_HOME}/gwt-dev.jar"/>
+        <pathelement location="${GWT_LOG_HOME}/gwt-log.jar"/>
+    </path>
+    <fileset dir="build" id="class-common-jar">
+        <include name="**/shared/service/*.class"/>
+        <include name="**/server/ejb/*.class"/>
+        <exclude name="**/*Bean*.class"/>
+    </fileset>
+    <fileset dir="src/java" id="src-common-jar">
+        <include name="**/*Text.properties"/>
+        <include name="**/*Text_??.properties"/>
+    </fileset>
+    <fileset dir="build" id="class-ejb-jar">
+        <include name="**/*Bean*.class"/>
+    </fileset>
+    <fileset dir="build" id="class-web-jar">
+        <include name="**/shared/*Constant.class"/>
+        <include name="**/shared/field/*.class"/>
+        <include name="**/shared/record/*.class"/>
+        <include name="**/server/"/>
+        <exclude name="**/server/ejb/"/>
+    </fileset>
+    <!-- Объявление таска по созданию структуры модуля -->
+    <target name="declare">
+        <taskdef classname="com.technology.jep.anttask.creator.navigation.NavigationGenerator" name="navigationgenerator"/>
+        <taskdef classname="com.technology.jep.anttask.creator.ApplicationStructureCreator" name="applicationstructurecreator"/>
+        <taskdef classname="com.technology.jep.anttask.version.ApplicationVersionIndicator" name="applicationversionindicator"/>
+        <taskdef classname="com.technology.jep.anttask.check.ProductionBuildChecker" name="productionbuildchecker"/>
+        <taskdef classname="com.technology.jep.anttask.switcher.ProductionModeSwitcher" name="productionmodeswitcher"/>
+    </target>
+    <target depends="declare" name="create-structure">
+        <applicationstructurecreator commonHome="${COMMON_HOME}" riaVersion="${JEP_RIA_VERSION}"/>
+    </target>
+    <target depends="declare" name="create-navigation">
+        <navigationgenerator/>
+    </target>
+    <!-- Инициализация переменных модуля	-->
+    <target depends="declare" name="init">
+        <for param="file">
+            <path>
+                <fileset dir="src/java" includes="**/main/*.gwt.xml"/>
+            </path>
+            <sequential>
+                <propertyregex input="@{file}" override="false" property="MODULE_NAME" regexp=".*\\([^\.]*)\.gwt.xml" replace="\1"/>
+                <propertyregex input="@{file}" override="false" property="MODULE_NAME_IN_PACKAGE" regexp=".*\\([^\.]*)\\main\\${MODULE_NAME}.gwt.xml" replace="\1"/>
+                <propertyregex input="@{file}" override="false" property="PROJECT_NAME_IN_PACKAGE" regexp=".*\\([^\.]*)\\${MODULE_NAME_IN_PACKAGE}\\main\\${MODULE_NAME}.gwt.xml" replace="\1"/>
+                <echo message="MODULE_NAME: ${MODULE_NAME}"/>
+                <echo message="MODULE_NAME_IN_PACKAGE: ${MODULE_NAME_IN_PACKAGE}"/>
+                <echo message="PROJECT_NAME_IN_PACKAGE: ${PROJECT_NAME_IN_PACKAGE}"/>
+                <property name="MODULE_PACKAGE" value="com/technology/${PROJECT_NAME_IN_PACKAGE}/${MODULE_NAME_IN_PACKAGE}"/>
+                <property name="RESOURCE_HOME" value="src/resources/${MODULE_PACKAGE}"/>
+            </sequential>
+        </for>
+    </target>
+    <!-- Создание файла лога -->
+    <target depends="init" name="start-log">
+        <mkdir dir="log"/>
+        <tstamp>
+            <format pattern="yyyyMMdd_HHmmss" property="timestamp"/>
+        </tstamp>
+        <dirname file="." property="pdir"/>
+        <basename file="${pdir}" property="version"/>
+        <record loglevel="${LOG_LEVEL}" name="log/${timestamp}-${MODULE_NAME}-${version}-${PROJECT_NAME_IN_PACKAGE}.txt"/>
+    </target>
+    <!-- Последовательность действий во многом обусловлена решением проблемы циклических	-->
+    <!-- зависимостей между главным клиентским модулем и его подмодулями.					-->
+    <target depends="all-text-encode, java-compile, all-gwt-compile, compile-jasper-reports" name="encode-and-compile"/>
+    <!-- Обработка текстовых ресурсов всех модулей -->
+    <target depends="start-log" name="all-text-encode">
+        <antcall target="for-each-client-module">
+            <param name="action" value="client-module-text-encode"/>
+        </antcall>
+    </target>
+    <!-- Итератор по всем модулям -->
+    <target name="for-each-client-module">
+        <for param="file">
+            <path>
+                <fileset dir="src/java/${MODULE_PACKAGE}" includes="**/*.gwt.xml"/>
+            </path>
+            <sequential>
+                <propertyregex input="@{file}" override="yes" property="client.module.name" regexp=".*\\([^\.]*)\.gwt.xml" replace="\1"/>
+                <propertyregex input="@{file}" override="yes" property="client.module.package.name" regexp=".*\\([^\.]*)\\${client.module.name}.gwt.xml" replace="\1"/>
+                <antcall target="${action}"/>
+            </sequential>
+        </for>
+    </target>
+    <!-- Обработка текстовых ресурсов модуля -->
+    <target name="client-module-text-encode">
+        <echo>client.module.name = ${client.module.name}</echo>
+        <outofdate>
+            <sourcefiles>
+                <fileset dir="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text" includes="*.properties"/>
+            </sourcefiles>
+            <targetfiles path="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text/${client.module.name}Text.java"/>
+            <sequential>
+                <!-- Для Java -->
+                <echo>Text resources is out of date</echo>
+                <native2ascii dest="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text" encoding="UTF-8" ext=".target_properties" includes="**/*_Source.properties" src="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text"/>
+                <!-- Без удаления иногда возникают проблемы во время 'move' -->
+                <delete file="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text/${client.module.name}Text.properties"/>
+                <move file="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text/${client.module.name}Text_Source.target_properties" tofile="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text/${client.module.name}Text.properties"/>
+                <!-- Для Gwt -->
+                <java classname="com.google.gwt.i18n.tools.I18NSync">
+                    <classpath>
+                        <pathelement location="src/java"/>
+                        <path refid="gwt-libs"/>
+                    </classpath>
+                    <arg value="-out"/>
+                    <arg value="src/java"/>
+                    <arg value="com.technology.${PROJECT_NAME_IN_PACKAGE}.${MODULE_NAME_IN_PACKAGE}.${client.module.package.name}.shared.text.${client.module.name}Text"/>
+                </java>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="all-text-encode" name="production-builder-check">
+        <productionbuildchecker commonHome="${COMMON_HOME}" moduleName="${MODULE_NAME}" packageName="${PROJECT_NAME_IN_PACKAGE}" property="productionBuildCheck" riaVersion="${JEP_RIA_VERSION}"/>
+        <!-- Если непонятно почему сборка не соответствует продукционной, то соответствующее сообщение можно получить из свойства productionBuildCheckerError -->
+        <!-- <echo message="${productionBuildCheckerError}" /> -->
+    </target>
+    <!-- Java-компиляция -->
+    <target depends="production-builder-check" name="java-compile">
+        <mkdir dir="build"/>
+        <javac debug="on" destdir="build" encoding="utf-8" includeantruntime="false" srcdir="src/java" target="1.5">
+            <classpath refid="libs"/>
+        </javac>
+    </target>
+    <!-- Получение количества ядер процессора на текущей машине -->
+    <target depends="all-text-encode, java-compile" name="wmic">
+        <exec executable="wmic" failonerror="false" outputproperty="wmic" resolveexecutable="true">
+            <arg value="cpu"/>
+            <arg value="get"/>
+            <arg value="NumberOfCores"/>
+            <arg value="/value"/>
+        </exec>
+        <propertyregex defaultvalue="Error" input="${wmic}" override="true" property="NumberOfProcessorCores" regexp="([^NumberOfCores=*])" select="\1"/>
+        <delete file="TempWmicBatchFile.bat"/>
+    </target>
+    <!-- Gwt-компиляция -->
+    <!-- Делается сразу для всех клиентских модулей	-->
+    <target depends="wmic" name="all-gwt-compile">
+        <outofdate>
+            <sourcefiles>
+                <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/client/**/*.java"/>
+                <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/shared/**/*.java"/>
+                <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/*.gwt.xml"/>
+                <fileset file="${JEP_RIA}/lib/jepria.jar"/>
+            </sourcefiles>
+            <targetfiles path="build-gwt/${MODULE_NAME}/${MODULE_NAME}.nocache.js"/>
+            <sequential>
+                <delete includeemptydirs="true" quiet="true">
+                    <fileset dir="build-gwt"/>
+                </delete>
+                <java classname="com.google.gwt.dev.Compiler" failonerror="true" fork="true" maxmemory="256m">
+                    <classpath>
+                        <pathelement location="src/java"/>
+                        <pathelement location="build"/>
+                        <path refid="libs"/>
+                    </classpath>
+                    <arg value="-localWorkers"/>
+                    <arg value="${NumberOfProcessorCores}"/>
+                    <arg value="-war"/>
+                    <arg value="build-gwt"/>
+                    <!-- <arg value="-draftCompile" /> -->
+                    <!-- <arg value="-compileReport" /> -->
+                    <arg value="com.technology.${PROJECT_NAME_IN_PACKAGE}.${MODULE_NAME_IN_PACKAGE}.main.${MODULE_NAME}"/>
+                    <arg value="-style"/>
+                    <arg value="obfuscated"/>
+                </java>
+                <!-- Файлы, необходимые для работы графики -->
+                <copy file="${GXT_HOME}/resources/chart/open-flash-chart.swf" todir="build-gwt/${MODULE_NAME}/gxt/chart"/>
+                <copy file="${GXT_HOME}/resources/flash/swfobject.js" todir="build-gwt/${MODULE_NAME}/gxt/flash"/>
+            </sequential>
+        </outofdate>
+    </target>
+    <target name="check-report-exists" unless="file.exists">
+        <available file="${RESOURCE_HOME}/report" property="file.exists"/>
+    </target>
+    <target depends="check-report-exists, start-log" if="${file.exists}" name="compile-jasper-reports">
+        <outofdate>
+            <sourcefiles>
+                <fileset dir="${RESOURCE_HOME}/report" includes="**/*.jrxml"/>
+            </sourcefiles>
+            <mapper from="*.jrxml" to="*.jasper" type="glob"/>
+            <sequential>
+                <java classname="com.technology.jep.jrcompiler.JRCompiler" fork="true" jvm="${OC4J_HOME}/jdk/bin/java">
+                    <classpath>
+                        <path location="${JEP_REPORT_COMPILER}/lib/jrcompiler.jar"/>
+                        <path location="${JASPER_REPORTS_HOME}/lib/jfreechart-1.0.12.jar"/>
+                        <path location="${JASPER_REPORTS_HOME}/lib/groovy-all-1.5.5.jar"/>
+                        <path location="${GXT_HOME}/gxt.jar"/>
+                        <path location="${GWT_HOME}/gwt-servlet.jar"/>
+                        <path location="${JEP_RIA}/lib/jepria.jar"/>
+                        <path location="${JEP_RIA_REPORT}/lib/jepriareport.jar"/>
+                        <path location="${JASPER_REPORTS_HOME}/lib/spring-beans-2.5.5.jar"/>
+                        <path location="${JASPER_REPORTS_HOME}/lib/spring-core-2.5.5.jar"/>
+                    </classpath>
+                    <arg value="${RESOURCE_HOME}/report"/>
+                </java>
+            </sequential>
+        </outofdate>
+    </target>
+    <!-- Создание коллекции шрифтов -->
+    <target depends="start-log" name="check-fonts-exists" unless="fonts.exists">
+        <available file="${RESOURCE_HOME}/fonts" property="fonts.exists"/>
+    </target>
+    <target depends="check-fonts-exists" if="${fonts.exists}" name="fonts-jar">
+        <outofdate>
+            <sourcefiles>
+                <fileset dir="${RESOURCE_HOME}/fonts/" includes="${MODULE_NAME_IN_PACKAGE}-fonts.xml, jasperreports_extension.properties, *.ttf"/>
+            </sourcefiles>
+            <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-fonts.jar"/>
+            <sequential>
+                <jar destfile="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-fonts.jar">
+                    <fileset dir="${RESOURCE_HOME}/fonts/" includes="${MODULE_NAME_IN_PACKAGE}-fonts.xml, jasperreports_extension.properties, *.ttf"/>
+                </jar>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="encode-and-compile" name="common-jar">
+        <outofdate>
+            <sourcefiles>
+                <fileset refid="class-common-jar"/>
+                <fileset refid="src-common-jar"/>
+                <fileset dir="./src/java/" includes="log4j.properties"/>
+            </sourcefiles>
+            <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-common.jar"/>
+            <sequential>
+                <jar destfile="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-common.jar">
+                    <fileset refid="class-common-jar"/>
+                    <fileset refid="src-common-jar"/>
+                    <fileset dir="./src/java/" includes="log4j.properties"/>
+                </jar>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="encode-and-compile" name="ejb-jar">
+        <outofdate>
+            <sourcefiles>
+                <fileset refid="class-ejb-jar"/>
+            </sourcefiles>
+            <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-ejb.jar"/>
+            <sequential>
+                <jar destfile="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-ejb.jar">
+                    <fileset refid="class-ejb-jar"/>
+                </jar>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="encode-and-compile" name="web-jar">
+        <outofdate>
+            <sourcefiles>
+                <fileset refid="class-web-jar"/>
+            </sourcefiles>
+            <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-web.jar"/>
+            <sequential>
+                <jar destfile="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-web.jar">
+                    <fileset refid="class-web-jar"/>
+                </jar>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="web-jar" name="war">
+        <outofdate>
+            <sourcefiles>
+                <fileset file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-web.jar"/>
+                <fileset file="src/html/*.css"/>
+                <fileset file="src/html/*.jsp"/>
+                <fileset file="src/resources/${MODULE_PACKAGE}/web/web.xml"/>
+                <fileset file="build-gwt/${MODULE_NAME}/*.*"/>
+            </sourcefiles>
+            <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}.war"/>
+            <sequential>
+                <mkdir dir="temp-war"/>
+                <copy todir="temp-war/WEB-INF/lib">
+                    <fileset dir="${OC4J_HOME}/jakarta-taglibs/jstl-1.1/lib" includes="jstl.jar,        standard.jar"/>
+                </copy>
+                <copy file="${OC4J_HOME}/jakarta-taglibs/jstl-1.1/tld/c.tld" todir="temp-war/WEB-INF/tld"/>
+                <copy file="${GWT_HOME}/gwt-servlet.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy file="${GWT_LOG_HOME}/gwt-log.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy file="${COMMONS-FILEUPLOAD_HOME}/commons-fileupload.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy file="${COMMONS-IO_HOME}/commons-io.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy file="${GXT_HOME}/gxt.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy file="${GXT_HOME}/resources/css/gxt-all.css" todir="temp-war/css"/>
+                <copy todir="temp-war/images">
+                    <fileset dir="${GXT_HOME}/resources/images"/>
+                    <fileset dir="${JEP_RIA}/src/java/com/technology/jep/jepria/client/ui/toolbar/images"/>
+                    <fileset dir="${JEP_RIA}/src/resources/images"/>
+                </copy>
+                <copy file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-web.jar" todir="temp-war/WEB-INF/lib"/>
+                <copy todir="temp-war/css">
+                    <fileset file="src/html/*.css"/>
+                </copy>
+                <copy todir="temp-war">
+                    <fileset file="src/html/*.jsp"/>
+                </copy>
+                <copy file="src/resources/${MODULE_PACKAGE}/web/web.xml" todir="temp-war/WEB-INF"/>
+                <copy todir="temp-war">
+                    <fileset dir="build-gwt"/>
+                </copy>
+                <copy todir="temp-war/WEB-INF/lib">
+                    <fileset dir="${OC4J_HOME}/jakarta-struts/lib" includes="commons-digester.jar,          commons-logging.jar,          commons-collections.jar,          commons-beanutils.jar,          commons-fileupload.jar,          commons-lang.jar,          commons-validator.jar"/>
+                </copy>
+                <copy failonerror="false" todir="temp-war/resources/${MODULE_PACKAGE}/report">
+                    <fileset dir="${RESOURCE_HOME}/report"/>
+                </copy>
+                <copy failonerror="false" todir="temp-war/resources/${MODULE_PACKAGE}/images">
+                    <fileset dir="${RESOURCE_HOME}/images"/>
+                </copy>
+                <jar basedir="temp-war" destfile="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}.war"/>
+                <delete dir="temp-war"/>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="war, fonts-jar, common-jar, ejb-jar" name="ear">
+        <outofdate>
+            <sourcefiles>
+                <fileset dir="${RESOURCE_HOME}" includes="application.xml, orion-application.xml"/>
+                <fileset dir="${JEP_RIA}/lib" includes="jepria.jar"/>
+                <fileset dir="${JEP_RIA}/lib" includes="jepria-ejb.jar"/>
+                <fileset dir="${JEP_RIA_REPORT}/lib" includes="jepriareport.jar"/>
+                <fileset dir="${JAR_TEMP}" includes="${MODULE_NAME_IN_PACKAGE}-common.jar, ${MODULE_NAME_IN_PACKAGE}-ejb.jar"/>
+                <fileset file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}.war"/>
+                <fileset file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-fonts.jar"/>
+            </sourcefiles>
+            <targetfiles path="lib/${MODULE_NAME_IN_PACKAGE}.ear"/>
+            <sequential>
+                <mkdir dir="temp-ear"/>
+                <copy todir="temp-ear/META-INF">
+                    <fileset dir="${RESOURCE_HOME}" includes="application.xml, orion-application.xml"/>
+                </copy>
+                <copy todir="temp-ear/lib">
+                    <fileset dir="${LOG4J_HOME}" includes="log4j.jar"/>
+                    <fileset dir="${JEP_RIA}/lib" includes="jepria.jar"/>
+                    <fileset dir="${JEP_RIA}/lib" includes="jepria-ejb.jar"/>
+                    <fileset dir="${JEP_RIA_REPORT}/lib" includes="jepriareport.jar"/>
+                    <fileset dir="${JEP_RIA_REPORT}/lib" includes="commons-digester-1.7.jar"/>
+                    <fileset dir="${JASPER_REPORTS_HOME}/dist" includes="jasperreports.jar"/>
+                    <fileset dir="${JAR_TEMP}" includes="${MODULE_NAME_IN_PACKAGE}-common.jar, ${MODULE_NAME_IN_PACKAGE}-ejb.jar"/>
+                </copy>
+                <copy todir="temp-ear">
+                    <fileset file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}.war"/>
+                </copy>
+                <copy todir="temp-ear/lib">
+                    <fileset dir="${JASPER_REPORTS_HOME}/lib" includes="spring-core-2.5.5.jar,       spring-beans-2.5.5.jar,       jfreechart-1.0.12.jar,       groovy-all-1.5.5.jar,       jcommon-1.0.15.jar,       iText-2.1.0.jar,       commons-digester-1.7.jar"/>
+                </copy>
+                <copy failonerror="false" todir="temp-ear/lib">
+                    <fileset dir="${JAR_TEMP}" includes="${MODULE_NAME_IN_PACKAGE}-fonts.jar"/>
+                </copy>
+                <jar basedir="temp-ear" destfile="lib/${MODULE_NAME_IN_PACKAGE}.ear"/>
+                <delete dir="temp-ear"/>
+            </sequential>
+        </outofdate>
+    </target>
+    <target depends="ear, release-doc" name="build-and-deploy">
+        <java fork="yes" jar="${J2EE_HOME}/admin_client.jar">
+            <arg value="deployer:oc4j:${DEPLOYMENT_PATH}"/>
+            <arg value="${LOGIN}"/>
+            <arg value="${PASSWORD}"/>
+            <arg value="-deploy"/>
+            <arg value="-file"/>
+            <arg value="lib/${MODULE_NAME_IN_PACKAGE}.ear"/>
+            <arg value="-deploymentName"/>
+            <arg value="${MODULE_NAME_IN_PACKAGE}"/>
+            <arg value="-bindAllWebApps"/>
+        </java>
+    </target>
+    <target depends="start-log" name="deploy">
+        <java fork="yes" jar="${J2EE_HOME}/admin_client.jar">
+            <arg value="deployer:oc4j:${DEPLOYMENT_PATH}"/>
+            <arg value="${LOGIN}"/>
+            <arg value="${PASSWORD}"/>
+            <arg value="-deploy"/>
+            <arg value="-file"/>
+            <arg value="lib/${MODULE_NAME_IN_PACKAGE}.ear"/>
+            <arg value="-deploymentName"/>
+            <arg value="${MODULE_NAME_IN_PACKAGE}"/>
+            <arg value="-bindAllWebApps"/>
+        </java>
+        <dirname file="." property="pdir"/>
+        <basename file="${pdir}" property="VERSION"/>
+        <applicationversionindicator antSaveFileInstallInfo="${ANT_SAVE_FILE_INSTALL_INFO}" deploymentPath="${DEPLOYMENT_PATH}" loadOperatorId="${LOAD_OPERATORID}" moduleName="${MODULE_NAME}" packageName="${PROJECT_NAME_IN_PACKAGE}" port="${PORT}" version="${VERSION}"/>
+    </target>
+    <target depends="start-log" name="doc">
+        <javadoc Doctitle="${MODULE_NAME} API Reference" Windowtitle="${MODULE_NAME} JavaDoc" access="private" additionalparam="-notimestamp" charset="UTF-8" destdir="${JAVA_DOC_DIR}" docencoding="UTF-8" encoding="UTF-8" includenosourcepackages="true" overview="src/java/${MODULE_PACKAGE}/overview.html" packagenames="*" sourcepath="src/java;test/java">
+            <classpath refid="libs"/>
+        </javadoc>
+    </target>
+    <target depends="production-builder-check" if="${productionBuildCheck}" name="release-doc">
+        <antcall target="doc"/>
+    </target>
+    <target name="client-module-clean">
+        <echo>client.module.name = ${client.module.name}</echo>
+        <delete includeemptydirs="true" quiet="true">
+            <fileset dir="src/java/${MODULE_PACKAGE}/${client.module.package.name}/shared/text" includes="**/${client.module.name}.target_properties"/>
+        </delete>
+    </target>
+    <target depends="start-log" name="clean">
+        <delete includeemptydirs="true" quiet="true">
+            <fileset dir="build"/>
+            <fileset dir="build-gwt"/>
+            <fileset dir="${JAR_TEMP}"/>
+            <fileset dir="temp-war"/>
+            <fileset dir="temp-ear"/>
+        </delete>
+        <antcall target="for-each-client-module">
+            <param name="action" value="client-module-clean"/>
+        </antcall>
+    </target>
+    <!-- Переключение текущего приложения в режим продукционной сборки -->
+    <target depends="start-log" name="production">
+        <productionmodeswitcher moduleName="${MODULE_NAME}" packageName="${PROJECT_NAME_IN_PACKAGE}" productionMode="true"/>
+    </target>
+    <!-- Переключение текущего приложения в режим разработческой сборки -->
+    <target depends="start-log" name="debug">
+        <productionmodeswitcher moduleName="${MODULE_NAME}" packageName="${PROJECT_NAME_IN_PACKAGE}" productionMode="false"/>
+    </target>
+</project>
