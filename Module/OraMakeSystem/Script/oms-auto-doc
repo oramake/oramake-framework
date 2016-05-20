@@ -104,7 +104,7 @@ OMS_VERSION=1.7.3
 #
 omsSvnRoot='Oracle/Module/OraMakeSystem'
 fileRevisionValue='$Revision:: 2132                     $'
-fileChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
 fileRevision=${fileRevisionValue:12:25}
 fileChangeDate=${fileChangeDateValue:8:26}
 

@@ -4,11 +4,7 @@ Title: Установка
 
 group: Требования
 
-- установленный Cygwin
-
-  Стандартный набор пакетов Cygwin и описание установки находится в
-  SVN по пути Common/External/Cygwin ( нужно использовать тэг 1.7.9-1-2 либо
-  более поздний).
+- установленный Cygwin ( версия 1.7.9-1)
 
   Проверка
 (start code)
@@ -37,20 +33,6 @@ Copyright (C) 2011 The Apache Software Foundation.
 
   В более ранних версиях встречаются ошибки, позднее устраненные Oracle
   ( например, ошибки при загрузке файлов с помощью SQL*Loader).
-
-  Дистрибутив для установки
-  версии 11.2.0.2:
-  - \\smskexb3\install\!DT\Oracle 11.2.0.2 Client_x32\p10098816_112020_WINNT_3of6.zip
-
-  Дистрибутивы для установки
-  версии 11.1.0.7:
-  - \\smskexb3\Install\!DT\Oracle 11g 32-bit\win32_11gR1_client.zip
-  - \\smskexb3\Install\!DT\Oracle 11g 32-bit\p6890831_111070_Win32.zip
-
-  Дистрибутивы для установки
-  версии 9.2.0.8:
-  - \\smskexb3\Install\!DT\Oracle 9.2 NT\Disk[1-3]
-  - \\smskexb3\Install\!DT\Oracle 9.2 NT\p4547809_92080_WINNT.zip
 
   Проверка ( из консоли Cygwin)
 
@@ -87,47 +69,30 @@ Username:
 
 group: Установка
 
-- получить последний релиз из SVN
-  ( Oracle/Module/OraMakeSystem/Tag/x.x.x или
-    по устаревшему расположению
-    Common/Oracle/OraMakeSystem/Tag/x.x.x для
-    тегов до 1.5.2 включительно
-  );
-
 - в bash ( Cygwin Terminal) в корневом каталоге проекта выполнить
 
   $ make install
 
-Пример ( установка версии 1.3.0):
+Пример ( установка версии 1.7.3):
 
 (start code)
-
-$ cd /tmp
-
-$ svn co -q svn://srvbl08/Common/Oracle/OraMakeSystem/Tag/1.3.0 oms
-
-$ cd oms
 
 $ make install
 
 $ oms-create-module --version
-oms-create-module (OMS) 1.3.0
+oms-create-module (OMS) 1.7.3
 SVN Version Information:
-  Module root     : Common/Oracle/OracleMakeSystem
-  File revision   : 347
-  File change date: 2008-09-25 14:31:50 +0400
-
-$ cd ..
-
-$ rm -rf /tmp/oms
+  Module root     : Oracle/Module/OraMakeSystem
+  File revision   : 2132
+  File change date: 2014-07-08 18:40:00 +0300
+  oms-common.sh revision    : 2132
+  oms-common.sh change date : 2014-07-08 18:40:00 +0300
 
 (end)
 
 
 
 Требования к БД при использовании:
-- в БД должен быть установлен модуль ModuleInfo
-  ( SVN Root: Oracle/Module/ModuleInfo) для сохранения информации об установке
-  модулей;
-- в БД должен быть установлен модуль Scheduler
-  ( SVN Root: Oracle/Module/Scheduler) для возможности загрузки батчей;
+- в БД должен быть установлен модуль ModuleInfo для сохранения информации об
+  установке модулей;
+- в БД должен быть установлен модуль Scheduler для возможности загрузки батчей;

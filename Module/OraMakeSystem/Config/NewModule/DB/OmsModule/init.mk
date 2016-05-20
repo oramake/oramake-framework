@@ -5,7 +5,7 @@
 # SVN Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
 # $Revision: 2132 $
-# $LastChangedDate:: 2014-07-08 19:40:00 +0400 #$
+# $LastChangedDate:: 2014-07-08 18:40:00 +0300 #$
 
 # Версия OMS-шаблона
 OMS_VERSION=1.7.3

@@ -58,7 +58,7 @@ commonRevisionValue='$Revision:: 2132                     $'
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла ( автоматически обновляется
 # Subversion).
-commonChangeDateValue='$Date:: 2014-07-08 19:40:00 +0400 #$'
+commonChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
 
 
 # var: commonRevision

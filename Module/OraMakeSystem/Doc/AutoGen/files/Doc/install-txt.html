@@ -13,7 +13,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 <div id=Content><div class="CSection"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Установка"></a>Установка</h1><div class=CBody><!--START_ND_SUMMARY--><div class=Summary><div class=STitle>Summary</div><div class=SBorder><table border=0 cellspacing=0 cellpadding=0 class=STable><tr class="SMain"><td class=SEntry><a href="#Установка" >Установка</a></td><td class=SDescription></td></tr><tr class="SGroup SIndent1"><td class=SEntry><a href="#Установка.Требования" >Требования</a></td><td class=SDescription></td></tr><tr class="SGroup SIndent1"><td class=SEntry><a href="#Установка.Установка" >Установка</a></td><td class=SDescription></td></tr></table></div></div><!--END_ND_SUMMARY--></div></div></div>
 
-<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.Требования"></a>Требования</h3><div class=CBody><ul><li>установленный Cygwin</li></ul><p>Стандартный набор пакетов Cygwin и описание установки находится в SVN по пути Common/External/Cygwin ( нужно использовать тэг 1.7.9-1-2 либо более поздний).</p><p>Проверка</p><blockquote><pre>$ bash --version
+<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.Требования"></a>Требования</h3><div class=CBody><ul><li>установленный Cygwin ( версия 1.7.9-1)</li></ul><p>Проверка</p><blockquote><pre>$ bash --version
 GNU bash, version 4.1.10(4)-release (i686-pc-cygwin)
 Copyright (C) 2009 Free Software Foundation, Inc.
 ...
@@ -28,7 +28,7 @@ svn, version 1.7.1 (r1186859)
    compiled Oct 20 2011, 17:36:22
 
 Copyright (C) 2011 The Apache Software Foundation.
-...</pre></blockquote><ul><li>использование последних пропатченных версий клиента Oracle ( поддерживаются версии 11.2.0.2 ( рекомендуемая), а также 11.1.0.7 и 9.2.0.8)</li></ul><p>В более ранних версиях встречаются ошибки, позднее устраненные Oracle ( например, ошибки при загрузке файлов с помощью SQL*Loader).</p><p>Дистрибутив для установки версии 11.2.0.2:</p><ul><li>\\smskexb3\install\!DT\Oracle 11.2.0.2 Client_x32\p10098816_112020_WINNT_3of6.zip</li></ul><p>Дистрибутивы для установки версии 11.1.0.7:</p><ul><li>\\smskexb3\Install\!DT\Oracle 11g 32-bit\win32_11gR1_client.zip</li><li>\\smskexb3\Install\!DT\Oracle 11g 32-bit\p6890831_111070_Win32.zip</li></ul><p>Дистрибутивы для установки версии 9.2.0.8:</p><ul><li>\\smskexb3\Install\!DT\Oracle 9.2 NT\Disk[1-3]</li><li>\\smskexb3\Install\!DT\Oracle 9.2 NT\p4547809_92080_WINNT.zip</li></ul><p>Проверка ( из консоли Cygwin)</p><blockquote><pre>$ sqlplus /nolog
+...</pre></blockquote><ul><li>использование последних пропатченных версий клиента Oracle ( поддерживаются версии 11.2.0.2 ( рекомендуемая), а также 11.1.0.7 и 9.2.0.8)</li></ul><p>В более ранних версиях встречаются ошибки, позднее устраненные Oracle ( например, ошибки при загрузке файлов с помощью SQL*Loader).</p><p>Проверка ( из консоли Cygwin)</p><blockquote><pre>$ sqlplus /nolog
 
 SQL*Plus: Release 11.2.0.2.0 Production on Mon Oct 1 12:32:10 2012
 
@@ -42,24 +42,16 @@ Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
 Username:</pre></blockquote><ul><li>для работы с сетевыми папками следует воспользоваться обходными решениями ( см.&nbsp; <a href="bugs-txt.html#Ошибки.Используемыеобходныерешения" class=LGroup id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Ошибки::Используемые обходные решения</a>);</li></ul></div></div></div>
 
-<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.Установка"></a>Установка</h3><div class=CBody><ul><li>получить последний релиз из SVN ( Oracle/Module/OraMakeSystem/Tag/x.x.x или по устаревшему расположению Common/Oracle/OraMakeSystem/Tag/x.x.x для тегов до 1.5.2 включительно );</li><li>в bash ( Cygwin Terminal) в корневом каталоге проекта выполнить</li></ul><p>$ make install</p><h4 class=CHeading>Пример ( установка версии 1.3.0)</h4><blockquote><pre>$ cd /tmp
-
-$ svn co -q svn://srvbl08/Common/Oracle/OraMakeSystem/Tag/1.3.0 oms
-
-$ cd oms
-
-$ make install
+<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.Установка"></a>Установка</h3><div class=CBody><ul><li>в bash ( Cygwin Terminal) в корневом каталоге проекта выполнить</li></ul><p>$ make install</p><h4 class=CHeading>Пример ( установка версии 1.7.3)</h4><blockquote><pre>$ make install
 
 $ oms-create-module --version
-oms-create-module (OMS) 1.3.0
+oms-create-module (OMS) 1.7.3
 SVN Version Information:
-  Module root     : Common/Oracle/OracleMakeSystem
-  File revision   : 347
-  File change date: 2008-09-25 14:31:50 +0400
-
-$ cd ..
-
-$ rm -rf /tmp/oms</pre></blockquote><h4 class=CHeading>Требования к БД при использовании</h4><ul><li>в БД должен быть установлен модуль ModuleInfo ( SVN Root: Oracle/Module/ModuleInfo) для сохранения информации об установке модулей;</li><li>в БД должен быть установлен модуль Scheduler ( SVN Root: Oracle/Module/Scheduler) для возможности загрузки батчей;</li></ul></div></div></div>
+  Module root     : Oracle/Module/OraMakeSystem
+  File revision   : 2132
+  File change date: 2014-07-08 18:40:00 +0300
+  oms-common.sh revision    : 2132
+  oms-common.sh change date : 2014-07-08 18:40:00 +0300</pre></blockquote><h4 class=CHeading>Требования к БД при использовании</h4><ul><li>в БД должен быть установлен модуль ModuleInfo для сохранения информации об установке модулей;</li><li>в БД должен быть установлен модуль Scheduler для возможности загрузки батчей;</li></ul></div></div></div>
 
 </div><!--Content-->
 
