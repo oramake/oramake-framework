@@ -2,10 +2,11 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2132 $
-# $LastChangedDate:: 2014-07-08 18:40:00 +0300 #$
+# $Revision:: 2133 $
+# $Date:: 2014-07-09 10:34:20 +0400 #$
+#
 
 # Версия OMS-шаблона
 OMS_VERSION=1.7.3

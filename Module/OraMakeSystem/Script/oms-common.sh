@@ -20,11 +20,9 @@
 #
 # fileRevisionValue           - строка с номером последней правки, в которой
 #                               был изменен файл основного скрипта
-#                               ( автоматически обновляется Subversion)
 #
 # fileChangeDateValue         - строка с датой последнего изменения файла
-#                               основного скрипта ( автоматически
-#                               обновляется Subversion)
+#                               основного скрипта
 #
 
 
@@ -51,19 +49,17 @@ omsSvnRoot='Oracle/Module/OraMakeSystem'
 omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
-# Строка с номером последней правки, в которой был изменен файл ( автоматически
-# обновляется Subversion).
-commonRevisionValue='$Revision:: 2132                     $'
+# Строка с номером последней правки, в которой был изменен файл
+commonRevisionValue='$Revision:: 2133 $'
 
 # var: commonChangeDateValue
-# Строка с последней датой изменения файла ( автоматически обновляется
-# Subversion).
-commonChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
+# Строка с последней датой изменения файла
+commonChangeDateValue='$Date:: 2014-07-09 10:34:20 +0400 #$'
 
 
 # var: commonRevision
 # Номер последней правки, в которой был изменен файл.
-commonRevision=$(( ${commonRevisionValue:12:25} ))
+commonRevision=$(( ${commonRevisionValue:12:${#commonRevisionValue}-13} ))
 
 # var: commonChangeDate
 # Дата последнего изменения файла.
@@ -129,7 +125,7 @@ scriptName=${0##*/}
 # Номер последней правки, в которой был изменен файл основного скрипта.
 # Значение определяется по переменной <fileRevisionValue>, которая должна
 # быть объявлена и инициализирована в основном скрипте.
-scriptRevision=$(( ${fileRevisionValue:12:25} ))
+scriptRevision=$(( ${fileRevisionValue:12:${#fileRevisionValue}-13} ))
 
 # var: scriptChangeDate
 # Дата последнего изменения файла основного скрипта.
@@ -559,7 +555,7 @@ showVersion()
 {
   cat <<END
 $scriptName (OMS) $OMS_VERSION
-SVN Version Information:
+OMS Version Information:
   Module root               : $omsSvnRoot
   File revision             : $scriptRevision
   File change date          : $scriptChangeDate

@@ -218,14 +218,12 @@
 OMS_VERSION=1.7.3
 
 # var: fileRevisionValue
-# Строка с номером последней правки, в которой был изменен файл ( автоматически
-# обновляется Subversion).
-fileRevisionValue='$Revision:: 2132                     $'
+# Строка с номером последней правки, в которой был изменен файл
+fileRevisionValue='$Revision:: 2133 $'
 
 # var: fileChangeDate
-# Строка с последней датой изменения файла ( автоматически обновляется
-# Subversion).
-fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
+# Строка с последней датой изменения файла
+fileChangeDateValue='$Date:: 2014-07-09 10:34:20 +0400 #$'
 
 
 

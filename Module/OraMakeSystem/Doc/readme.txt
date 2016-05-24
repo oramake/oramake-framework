@@ -61,7 +61,7 @@ A      Makefile
 
 $ oms-create-module --version
 oms-create-module (OMS) 1.4.1
-SVN Version Information:
+OMS Version Information:
   Module root     : Common/Oracle/OracleMakeSystem
   File revision   : 445
   File change date: 2009-02-06 10:10:48 +0300

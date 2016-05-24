@@ -49,13 +49,11 @@
 OMS_VERSION=1.7.3
 
 # var: fileRevisionValue
-# Строка с номером последней правки, в которой был изменен файл ( автоматически
-# обновляется Subversion).
+# Строка с номером последней правки, в которой был изменен файл
 fileRevisionValue='$Revision:: 2132                     $'
 
 # var: fileChangeDateValue
-# Строка с последней датой изменения файла ( автоматически обновляется
-# Subversion).
+# Строка с последней датой изменения файла
 fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
 
 
@@ -194,11 +192,12 @@ getRevision()
     revision=`\
       grep \
         --max-count=1 \
-        -e '^# $Revision: [[:digit:]]\+ \$[[:space:]]*$' \
+        -e '^# $Revision:\{1,2\} [[:digit:]]\+ \$[[:space:]]*$' \
         "$rootPath/$moduleOmsDir/common.mk"
       `
     if [[ "$?" == 0 ]]; then
       revision="${revision:13}"
+      revision="${revision# }"
       revision="${revision%% *}"
     else
       revision=""
@@ -597,7 +596,9 @@ updateModule()
     fi
   done
                                         # Выводит результат обновления
-  printUpdateResult
+  if (( ! isDryRun)); then
+    printUpdateResult
+  fi
 }
 
 

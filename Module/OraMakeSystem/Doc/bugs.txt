@@ -28,24 +28,6 @@ Title: ќшибки
     метки командой "make load-clean") и после очередной успешной загрузки
     исходного файла файл-метка будет создан с правильным именем.
 
-[!] ѕри выполнении скриптов в bash может возникать ошибка при копировании стека
-
-(code)
-
-$ make install LOAD_USERID=information/xxx@RFINFOP INSTALL_VERSION=2.1.1 LOAD_OPERATORID=BorisovA/xxx
-
-start log: OmsModule/Load/Log/Install/20100927_124329-Employee-2.1.1-rfinfop.txt
-/usr/local/share/oms/SqlScript/oms-check-lock.sql: -> information@rfinfop ...
-  18061 [main] bash 3364 child_copy: stack write copy failed, 0x22CB60..0x230000, done 0, windows pid 2280084, Win32 error 5
-  18061 [main] bash 3364 child_copy: stack write copy failed, 0x22CB60..0x230000, done 0, windows pid 2280084, Win32 error 5
-/usr/local/bin/oms-load: fork: No error
-Connected.
-oms-load: SQL*Plus finished with error ( code 128).
-make[1]: *** [oms-check-lock.sql.information@rfinfop.run] Error 11
-make: *** [all] Error 2
-
-(end)
-
 [!] ѕри невозможности построить ни один из пунктов меню индексов в
 меню документации, при автогенерации меню
 индекс "¬се вместе" может перемещатьс€ в начало меню.

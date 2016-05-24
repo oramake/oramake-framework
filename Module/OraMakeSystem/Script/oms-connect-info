@@ -37,7 +37,7 @@ OMS_VERSION=1.7.3
 omsSvnRoot='Oracle/Module/OraMakeSystem'
 fileRevisionValue='$Revision:: 2132                     $'
 fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
-fileRevision=${fileRevisionValue:12:25}
+fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
 # Имя программы ( скрипта) для получения пароля
@@ -125,7 +125,7 @@ show_version()
 {
   cat <<END
 oms-connect-info (OMS) $OMS_VERSION
-SVN Version Information:
+OMS Version Information:
   Module root     : $omsSvnRoot
   File revision   : $fileRevision
   File change date: $fileChangeDate

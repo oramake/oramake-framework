@@ -2,10 +2,10 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2133 $
-# $LastChangedDate:: 2014-07-09 10:34:20 +0400 #$
+# $Revision:: 2133 $
+# $Date:: 2014-07-09 10:34:20 +0400 #$
 #
 
 # Версия OMS-шаблона
@@ -277,11 +277,11 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 2133                     $$
+omsRevisionValue    := \$$Revision:: 2133 $$
 
 omsRevision          := $(strip $(shell           \
   omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:25}"               \
+  echo "$${omsRevisionValue:12:$${\#omsRevisionValue}-13}" \
   ))
 
 # Дата последнего изменения файла в OMS

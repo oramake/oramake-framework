@@ -25,7 +25,7 @@ usedLibDir 					= UsedLib
 	gendoc						\
 	gendoc-clean			\
 	set-oms-version		\
-	
+
 
 
 # group: Общие цели
@@ -37,7 +37,7 @@ usedLibDir 					= UsedLib
 
 all:								\
 	gendoc						\
-	
+
 
 
 # target: clean
@@ -45,7 +45,7 @@ all:								\
 
 clean:							\
 	gendoc-clean			\
-	
+
 
 
 # group: Установка
@@ -70,6 +70,8 @@ install:
 	&& rm -rf "$(shareDir)"								\
 	&& mkdir -p "$(shareDir)"							\
 	&& tar --create --file=- 							\
+				--exclude=.gitattributes 				\
+				--exclude=.gitignore 						\
 				--exclude=.svn 									\
 				--exclude=*~ 										\
 				--exclude=*.swp 								\
@@ -84,7 +86,7 @@ install:
 uninstall:
 	-@rm $(DESTDIR)/bin/$(scriptPrefix)-*[^~];	\
 	rm -rf "$(shareDir)"
-	
+
 
 
 # group: Генерация документации
@@ -97,7 +99,7 @@ GENDOC_DIR = Doc/AutoGen
 
 # build var: GENDOC_FLAGS
 # Дополнительные параметры генерации документации.
-GENDOC_FLAGS 	=	
+GENDOC_FLAGS 	=
 
 # Строка запуска утилиты генерации
 gendocRun	= $(usedLibDir)/NaturalDocs/NaturalDocs/NaturalDocs
@@ -140,7 +142,7 @@ gendoc:
             -hl off\
             )																			\
 	|| exit 0																\
-	
+
 
 
 # target: gendoc-clean
@@ -154,7 +156,7 @@ gendoc-clean:
 			index.html menu.html							\
 	);																		\
 	rm -rf $(gendocCacheDir)/*						\
-	
+
 
 
 # group: Установка значения версии
@@ -166,17 +168,31 @@ gendoc-clean:
 # Параметр должен указываться при вызове <set-oms-version>.
 OMS_VERSION=
 
+# build var: OMS_VERSION_REVISION
+# Новое значение для номера ревизии версии OMS.
+# Параметр может указываться при вызове <set-oms-version>, по умолчанию номер
+# ревизии рассчитывается на основе текущего времени ( число минут, прошедших с
+# 1970-01-01 00:00:00 UTC).
+OMS_VERSION_REVISION=
+
 # target: set-oms-version
-# Устанавливает новое значение версии OMS в файлах.
-# Установка нового значения версии должно выполняться и фиксироваться
-# непосредственно перед фиксацией новой версии в Tag.
+# Устанавливает новое значение версии OMS в файлах, а также обновляет значения
+# номера ревизии OMS и даты изменения файла.
 #
 # Пример:
 # $ make set-oms-version OMS_VERSION=1.2.0
 
 set-oms-version:
 	@if [[ -n "$(OMS_VERSION)" ]]; then \
+		versionDate="$$(date '+%Y-%m-%d %T %z')"; \
+		versionRevision="$(OMS_VERSION_REVISION)"; \
+		if [[ -z "$(versionRevision)" ]]; then \
+			sinceSecond="$$(date +%s)"; \
+			versionRevision="$$(( sinceSecond / 60 ))"; \
+		fi; \
 	  sed --in-place \
+			-e "s/\$$Revision:: [0-9]\\+ \\+\\$$/\$$Revision:: $$versionRevision \$$/" \
+			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
 	    -e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
 	    $(scriptDir)/*[^~] \
 	    $(configDir)/NewModule/DB/OmsModule/init.mk \

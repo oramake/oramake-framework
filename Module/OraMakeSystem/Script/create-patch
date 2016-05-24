@@ -33,7 +33,7 @@ OMS_VERSION=1.7.3
 omsSvnRoot='Oracle/Module/OraMakeSystem'
 fileRevisionValue='$Revision:: 306                      $'
 fileChangeDateValue='$Date:: 2008-07-02 14:39:12 +0400 #$'
-fileRevision=${fileRevisionValue:12:25}
+fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
 # Исполняемый файл Subversion
@@ -106,7 +106,7 @@ show_version()
 {
   cat <<END
 create-patch (OMS) $OMS_VERSION
-SVN Version Information:
+OMS Version Information:
   Module root     : $omsSvnRoot
   File revision   : $fileRevision
   File change date: $fileChangeDate

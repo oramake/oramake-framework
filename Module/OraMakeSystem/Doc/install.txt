@@ -81,7 +81,7 @@ $ make install
 
 $ oms-create-module --version
 oms-create-module (OMS) 1.7.3
-SVN Version Information:
+OMS Version Information:
   Module root     : Oracle/Module/OraMakeSystem
   File revision   : 2132
   File change date: 2014-07-08 18:40:00 +0300
