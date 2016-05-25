@@ -1,21 +1,16 @@
 # makefile: Инициализация OMS
 
-# Ниже указана версия OMS-шаблона, на основе которого был создан файл.
-#
-# OMS Version Information:
-# OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 2133 $
-# $Date:: 2014-07-09 10:34:20 +0400 #$
-#
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
-
 
 
 #
 # group: Константы
 #
+
+# build var: OMS_VERSION
+# Версия OMS-файлов, входящих в состав модуля.
+OMS_VERSION=1.7.3
+
+
 
 #
 # group: Спецсимволы
@@ -40,6 +35,56 @@ rrb   := )
 # build var: tab
 # Табуляция.
 tab := $(empty)	$(empty)
+
+
+
+#
+# group: Общие параметры
+#
+
+# build var: OMS_INSTALL_DATA_DIR
+# Путь к каталогу с установленными файлами OMS.
+export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+
+
+
+
+# Выделяет из номер ревизии из ключевой строки.
+#
+# Параметры:
+# (1)     - строка с номером ревизии вида "$Revision:: N $", где N номер
+#           ревизии
+#
+# Возврат:
+# строка с номером ревизии.
+#
+getRevisionFromKeyword = $(strip $(shell \
+    keyString='$(1)'; \
+    echo "$${keyString:12:$${\#keyString}-13}" \
+  ))
+
+
+
+# Выделяет дату из ключевой строки.
+#
+# Параметры:
+# (1)     - строка с датой вида
+#           "$Date:: yyyy-mm-dd hh24:mi:ss tzhtzm $"
+#
+# Возврат:
+# строка с датой вида "yyyy-mm-dd hh24:mi:ss tzhtzm"
+#
+getDateFromKeyword = $(strip $(shell \
+    keyString='$(1)'; \
+    echo "$${keyString:9:25}" \
+  ))
+
+
+# Включаем файл локальной инициализации
+include $(OMS_INSTALL_DATA_DIR)/Config/local.mk
+
+# Включаем пользовательские настройки OMS
+include $(OMS_INSTALL_DATA_DIR)/Config/localCustom.mk
 
 
 
@@ -424,33 +469,6 @@ getProductionDbNameInternal = $(strip $(if $(1), \
         $(getProductionDbName_AllProdList) \
     ),$(1)) \
   ,))
-
-# build var: getProductionDbName_TestDbList
-# Список тестовых БД для функции <getProductionDbName>.
-# Имена должны указываться в нижнем регистре, при этом в том же по порядку
-# слове переменной <getProductionDbName_ProdDbList> должно быть указано
-# имя промышленной БД для данной тестовой БД.
-#
-getProductionDbName_TestDbList = \
-  TestDb
-
-# build var: getProductionDbName_ProdDbList
-# Промышленные БД для тестовых БД, указанных в списке
-# <getProductionDbName_TestDbList>.
-# Имена БД должны быть указаны с учетом регистра символов в соответствии
-# с общепринятым написанием имени конкретной БД ( например, первая буква
-# имени в верхнем регистре и т.д.).
-#
-getProductionDbName_ProdDbList = \
-  ProdDb
-
-# build var: getProductionDbName_ExtraDbList
-# Промышленные БД, отсутствующие в списке <getProductionDbName_ProdDbList>
-# ( для которых нет тестовых БД).
-# Имена БД указываются с учетом регистра ( аналогично
-# <getProductionDbName_ProdDbList>).
-#
-getProductionDbName_ExtraDbList = \
 
 # Список всех промышленных БД.
 getProductionDbName_AllProdList = \

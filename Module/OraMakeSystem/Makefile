@@ -195,9 +195,11 @@ set-oms-version:
 			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
 	    -e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
 	    $(scriptDir)/*[^~] \
+	    $(configDir)/local.mk \
 	    $(configDir)/NewModule/DB/OmsModule/init.mk \
 	    $(configDir)/NewModule/DB/OmsModule/common.mk \
 	  && unix2dos \
+	    $(configDir)/local.mk \
 	    $(configDir)/NewModule/DB/OmsModule/init.mk \
 	    $(configDir)/NewModule/DB/OmsModule/common.mk \
 	    2>/dev/null \

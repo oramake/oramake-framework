@@ -130,21 +130,28 @@ Group: SQL-скрипты  {
 
    }  # Group: SQL-скрипты
 
-Group: Шаблон модуля  {
+Group: Настройки  {
 
-   Group: О модуле  {
+   File: Настройки OMS  (Config/localCustom.mk)
+   File: Локальная инициализация OMS  (Config/local.mk)
 
-      File: Описание  (Config/NewModule/DB/Doc/readme.txt)
-      File: Установка  (Config/NewModule/DB/Doc/install.txt)
-      File: Ошибки  (Config/NewModule/DB/Doc/bugs.txt)
-      File: Доработки  (Config/NewModule/DB/Doc/todo.txt)
-      File: Сборка  (Config/NewModule/DB/Makefile)
-      File: Версии  (Config/NewModule/DB/Doc/version.txt)
-      }  # Group: О модуле
+   Group: Шаблон модуля  {
 
-   File: Инициализация OMS  (Config/NewModule/DB/OmsModule/init.mk)
-   File: Сборка OMS  (Config/NewModule/DB/OmsModule/common.mk)
-   }  # Group: Шаблон модуля
+      Group: О модуле  {
+
+         File: Описание  (Config/NewModule/DB/Doc/readme.txt)
+         File: Установка  (Config/NewModule/DB/Doc/install.txt)
+         File: Ошибки  (Config/NewModule/DB/Doc/bugs.txt)
+         File: Доработки  (Config/NewModule/DB/Doc/todo.txt)
+         File: Сборка  (Config/NewModule/DB/Makefile)
+         File: Версии  (Config/NewModule/DB/Doc/version.txt)
+         }  # Group: О модуле
+
+      File: Инициализация OMS  (Config/NewModule/DB/OmsModule/init.mk)
+      File: Сборка OMS  (Config/NewModule/DB/OmsModule/common.mk)
+      }  # Group: Шаблон модуля
+
+   }  # Group: Настройки
 
 Group: Индекс  {
 

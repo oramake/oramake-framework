@@ -8,9 +8,6 @@
 # $Date:: 2014-07-09 10:34:20 +0400 #$
 #
 
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
-
 
 
 # Строка для фиктивного изменения файла ( для получения новой правки для OMS,
@@ -277,20 +274,14 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 2133 $$
+omsRevisionKeyword    := \$$Revision:: 2133 $$
 
-omsRevision          := $(strip $(shell           \
-  omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:$${\#omsRevisionValue}-13}" \
-  ))
+omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateValue  := \$$Date:: 2014-07-09 10:34:20 +0400 #$$
+omsChangeDateKeyword  := \$$Date:: 2014-07-09 10:34:20 +0400 #$$
 
-omsChangeDate      := $(strip $(shell             \
-  omsChangeDateValue='$(omsChangeDateValue)';     \
-  echo "$${omsChangeDateValue:8:11}"              \
-  ))
+omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
 
 
@@ -1090,7 +1081,7 @@ load-start-log.oms:
 				&& usedOmsRevision=$${omsLoadVersion#*File revision*: } \
 				&& usedOmsRevision=$${usedOmsRevision%% *} \
 				&& usedOmsChangeDate=$${omsLoadVersion#*File change date*: } \
-				&& usedOmsChangeDate=$${usedOmsChangeDate:0:10} \
+				&& usedOmsChangeDate=$${usedOmsChangeDate:0:25} \
 				&& echo "installed OMS version : $$usedOmsVersion ( rev. $$usedOmsRevision, $$usedOmsChangeDate)" \
 				; } \
 			&& echo "" \
