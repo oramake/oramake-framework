@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: AccessOperator
-SubTitle: Версия 3.12.1
+SubTitle: Версия 3.14.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -56,6 +56,12 @@ Group: О модуле  {
    }  # Group: О модуле
 
 Group: Пакеты  {
+
+   Group: pkg_AccessOperator  {
+
+      File: Спецификация  (no auto-title, pkg_AccessOperator.pks)
+      File: Реализация  (no auto-title, pkg_AccessOperator.pkb)
+      }  # Group: pkg_AccessOperator
 
    Group: pkg_Operator  {
 

@@ -28,6 +28,10 @@
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
 
+pkg_AccessOperator.pkb.$(lu):                 \
+  pkg_AccessOperator.pks.$(lu)
+
+
 pkg_Operator.pkb.$(lu):                 \
   pkg_Operator.pks.$(lu) \
   Install/Schema/Last/v_op_operator_role.vw.$(lu)
