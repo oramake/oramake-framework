@@ -31,68 +31,107 @@
 #   должна вернуть пароль ( через stdout) либо завершиться с ошибкой ( с #
 #   ненулевым кодом завершения).
 
+
+
+# group: Переменные
+
+
+
+# group: Информация о версии
+
+# var: OMS_VERSION
 # Версия программы
 OMS_VERSION=1.7.3
-                                        # Информация о версии файла из SVN
-omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 2132                     $'
-fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
-fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
-fileChangeDate=${fileChangeDateValue:8:26}
 
+# var: fileRevisionValue
+# Строка с номером последней правки, в которой был изменен файл
+fileRevisionValue='$Revision:: 2135 $'
+
+# var: fileChangeDateValue
+# Строка с последней датой изменения файла
+fileChangeDateValue='$Date:: 2016-05-27 10:00:00 +0300 #$'
+
+
+
+# Подключение общих констант и функций
+source oms-common.sh || exit 11
+
+
+
+# group: Настроечные параметры
+
+
+# var: GET_PASSWORD
 # Имя программы ( скрипта) для получения пароля
 GET_PASSWORD="get-password"
 
+# var: GET_PASSWORD_ALIAS
 # Алиас программы получения пароля
 GET_PASSWORD_ALIAS="get-password.bat"
 
+# var: getPasswordCmd
 # Полный путь к программе получения пароля
 getPasswordCmd=""
 
+
+
+# group: Параметры вызова
+
+# var: defaultDbName
 # Имя БД по умолчанию
 defaultDbName=""
 
+# var: ignoreAbsentPassword
 # Игнорировать отсутствие пароля
 ignoreAbsentPassword=1
 
+# var: isOutUserId
 # Вывод параметров подклчюения в формате userName[/passwd]@db
 isOutUserId=0
 
+# var: isOutOperatorId
 # Вывод параметров оператора формате operatorId[/passwd]
 isOutOperatorId=0
 
+# var: userId
 # Пользователь для подключения
 userId=""
 
-# Имя пользователя
-userName=""
-
-# Пароль пользователя для подключения
-userPassword=""
-
-# Имя БД
-dbName=""
-
+# var: operatorId
 # Оператор для подключения
 operatorId=""
 
+
+
+# group: Параметры выполнения
+
+# var: userName
+# Имя пользователя
+userName=""
+
+# var: userPassword
+# Пароль пользователя для подключения
+userPassword=""
+
+# var: dbName
+# Имя БД
+dbName=""
+
+# var: operatorName
 # Имя оператора
 operatorName=""
 
+# var: operatorPassword
 # Пароль оператора для подключения
 operatorPassword=""
 
 
 
-
-# Код ошибки из-за неверных агрументов.
-E_ARG_ERROR=10
-
-# Код ошибки обработки
-E_PROCESS_ERROR=11
+# group: Функции
 
 
-#
+
+# func: usage
 # Выводит информацию об использовании.
 #
 usage()
@@ -118,44 +157,68 @@ END
 
 
 
+# func: parseOption
+# Разбор аргументов командной строки.
 #
-# Выводит информацию о версии.
+# Параметры:
+# ...                         - аргументы командной строки
 #
-show_version()
+parseOption()
 {
-  cat <<END
-oms-connect-info (OMS) $OMS_VERSION
-OMS Version Information:
-  Module root     : $omsSvnRoot
-  File revision   : $fileRevision
-  File change date: $fileChangeDate
-END
+  while [ $# != 0 ]; do
+    case $1 in
+      --default-db)
+        defaultDbName="$2"; shift;
+        logDebug3 "Set defaultDbName: '$defaultDbName'"
+        ;;
+      -h | --help)
+        usage
+        exitScript
+        ;;
+      --ignore-absent-password)
+        ignoreAbsentPassword=1;
+        logDebug3 "Set ignoreAbsentPassword: '$ignoreAbsentPassword'"
+        ;;
+      --operatorid)
+        operatorId="$2"; shift;
+        logDebug3 "Set operatorId: '$operatorId'"
+        ;;
+      --out-operatorid)
+        isOutOperatorId=1;
+        logDebug3 "Set isOutOperatorId: '$isOutOperatorId'"
+        ;;
+      --out-userid)
+        isOutUserId=1;
+        logDebug3 "Set isOutUserId: '$isOutUserId'"
+        ;;
+      --userid)
+        userId="$2"; shift;
+        logDebug3 "Set userId: '$userId'"
+        ;;
+      --version)
+        showVersion
+        exitScript
+        ;;
+      -* | --*)
+        exitArgError "Illegal option: \"$1\"."
+        ;;
+      *)
+        exitArgError "Illegal argument: \"$1\"."
+        ;;
+    esac
+    shift
+  done
+
+  if (( ! $isOutUserId && ! $isOutOperatorId )); then
+    if [[ -n "$operatorId" && -z "$userId" && -z "$defaultDbName" ]]; then
+      isOutOperatorId=1;
+    fi
+  fi
 }
 
 
 
-#
-# Выводит сообщение об ошибке в вызове, описание аргументов и завершает
-# выполнение.
-#
-arg_error()
-{
-  echo "`basename $0`: $1" >&2
-  exit $E_ARG_ERROR;
-}
-
-
-
-#
-# Выводит сообщение об ошибке и завершает выполнение.
-#
-exitError()
-{
-  echo "`basename $0`: $1" >&2
-  exit $E_PROCESS_ERROR
-}
-
-
+# func: parseConnectString
 # Разбирает строку соединения.
 #
 # Параметры:
@@ -198,6 +261,7 @@ parseConnectString()
 
 
 
+# func: getDefaultUserName
 # Определяет имя пользователя по умолчанию для БД.
 #
 # Параметры:
@@ -217,6 +281,7 @@ getDefaultUserName()
 
 
 
+# func: getPassword
 # Пытается получить пароль для URL с помощью вызова внешней программы.
 #
 # Параметры:
@@ -248,13 +313,13 @@ getPassword()
 
 
 
-#
+# func: outUserId
 # Определяет и выводит параметры подключения к Oracle.
 #
 outUserId()
 {
   if [[ -z "$defaultDbName" && -z "$userId" ]]; then
-    arg_error "Not set connection userid or db."
+    exitArgError "Not set connection userid or db."
   fi
                                         # Разбираем параметры пользователя
   parseConnectString "$userId" "user"
@@ -263,7 +328,7 @@ outUserId()
   fi
                                         # Обрабатываем имя БД
   if [[ -z "$dbName" ]]; then
-    arg_error "Not set connection database."
+    exitArgError "Not set connection database."
   fi
                                         # Переводим в нижний регистр
   dbName="`echo "$dbName" | tr "[:upper:]" "[:lower:]"`"
@@ -273,7 +338,7 @@ outUserId()
     getDefaultUserName "$dbName"
   fi
   if [[ -z "$userName" ]]; then
-    arg_error "Not set connection user."
+    exitArgError "Not set connection user."
   fi
                                         # Переводим в нижний регистр
   userName="`echo "$userName" | tr "[:upper:]" "[:lower:]"`"
@@ -292,13 +357,13 @@ outUserId()
 
 
 
-#
+# func: outOperatorId
 # Определяет и выводит параметры регистрации оператора в Oracle.
 #
 outOperatorId()
 {
   if [[ -z "$operatorId" ]]; then
-    arg_error "Not set operatorid."
+    exitArgError "Not set operatorid."
   fi
                                         # Выделение имени и пароля
   operatorName=${operatorId%%/*};
@@ -322,59 +387,18 @@ outOperatorId()
 
 
 
-#
-# Разбор агрументов командной строки.
-#
-while [ $# != 0 ]
-do
-  case $1 in
-    --default-db)
-      defaultDbName="$2"; shift;
-      ;;
-    -h | --help)
-      usage; exit 0;
-      ;;
-    --ignore-absent-password)
-      ignoreAbsentPassword=1;
-      ;;
-    --operatorid)
-      operatorId="$2"; shift;
-      ;;
-    --out-operatorid)
-      isOutOperatorId=1;
-      ;;
-    --out-userid)
-      isOutUserId=1;
-      ;;
-    --userid)
-      userId="$2"; shift;
-      ;;
-    --version)
-      show_version; exit 0;
-      ;;
-    -* | --*)
-      arg_error "Illegal option: \"$1\"."
-      ;;
-    *)
-      arg_error "Illegal argument: \"$1\"."
-      ;;
-  esac
-  shift
-done
+# Разбор параметров
+parseOption "$@"
 
-if (( ! $isOutUserId && ! $isOutOperatorId )); then
-  if [[ -n "$operatorId" && -z "$userId" && -z "$defaultDbName" ]]; then
-    isOutOperatorId=1;
-  fi
-fi
-                                        # Обработка и вывод результата
+# Обработка и вывод результата
 if (( $isOutUserId || ! $isOutOperatorId )); then
   outUserId
 fi
 if (( $isOutOperatorId )); then
   outOperatorId
 fi
-                                        # Возвращаем результат выполнения
+
+# Возвращаем результат выполнения
 if [[ $? != 0 ]] ; then
-  exit $E_PROCESS_ERROR
+  exitError
 fi

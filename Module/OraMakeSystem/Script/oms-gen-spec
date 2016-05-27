@@ -61,7 +61,7 @@ fileChangeDateValue='$Date:: 2015-03-04 16:03:30 +0300 #$'
 
 
 # Подключение общих констант и функций
-. oms-common.sh || exit 11
+source oms-common.sh || exit 11
 
 
 
