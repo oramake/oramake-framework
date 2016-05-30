@@ -22,14 +22,13 @@
 #
 # Замечания:
 # - при отсутствии имени пользователя для подключения используется пользователь
-#   по умолчанию для БД;
-# - при отсутствия переданного в параметрах пароля, для его получения
-#   будет вызвана программа "get-password" ( "get-password.bat") в случае ее
-#   доступности в системе. При этом в качестве параметра ей передается URL
-#   подключения ( в виде "oracle://userName@dbName" либо
-#   "http://$operatorName@info" для получения пароля оператора), а она #
-#   должна вернуть пароль ( через stdout) либо завершиться с ошибкой ( с #
-#   ненулевым кодом завершения).
+#   по умолчанию для БД ( определяется в функции
+#   <custom.sh::cspGetDefaultUserName>);
+# - при отсутствии переданного в параметре --userid пароля пользователя БД для
+#   его получения будет вызвана функция <custom.sh::cspGetUserPassword>;
+# - при отсутствии переданного в параметре --operatorid пароля оператора для
+#   его получения будет вызвана функция <custom.sh::cspGetOperatorPassword>;
+#
 
 
 
@@ -56,22 +55,8 @@ fileChangeDateValue='$Date:: 2016-05-27 10:00:00 +0300 #$'
 # Подключение общих констант и функций
 source oms-common.sh || exit 11
 
-
-
-# group: Настроечные параметры
-
-
-# var: GET_PASSWORD
-# Имя программы ( скрипта) для получения пароля
-GET_PASSWORD="get-password"
-
-# var: GET_PASSWORD_ALIAS
-# Алиас программы получения пароля
-GET_PASSWORD_ALIAS="get-password.bat"
-
-# var: getPasswordCmd
-# Полный путь к программе получения пароля
-getPasswordCmd=""
+# Подключение пользовательских настроечных функций
+source ${configDir}/custom.sh || exit 12
 
 
 
@@ -261,58 +246,6 @@ parseConnectString()
 
 
 
-# func: getDefaultUserName
-# Определяет имя пользователя по умолчанию для БД.
-#
-# Параметры:
-# $1                    - имя БД ( в нижнем регистре)
-#
-# Возврат:
-# userName              - имя пользователя
-getDefaultUserName()
-{
-  local user=""
-  case "$1" in
-    testdb?                 ) user="main";;
-    *                       ) user="operation";;
-  esac
-  userName="$user"
-}
-
-
-
-# func: getPassword
-# Пытается получить пароль для URL с помощью вызова внешней программы.
-#
-# Параметры:
-# $1                    - URL для которого нужен пароль.
-#
-# Возврат:
-# password              - пароль ( если неудача, то пустой)
-getPassword()
-{
-  password=""
-                                        # Определяем программу получения пароля
-  if [[ -z "$getPasswordCmd" ]]; then
-    getPasswordCmd=`which $GET_PASSWORD 2>/dev/null`
-    if (( $? )); then
-      getPasswordCmd=`which $GET_PASSWORD_ALIAS 2>/dev/null`
-      if (( $? )); then
-        getPasswordCmd=" "
-      fi
-    fi
-  fi
-  if [[ -x "$getPasswordCmd" ]]; then
-                                        # Запрашиваем пароль
-    password=`$getPasswordCmd "$1"`
-    if (( $? )); then
-      password=""
-    fi
-  fi
-}
-
-
-
 # func: outUserId
 # Определяет и выводит параметры подключения к Oracle.
 #
@@ -335,7 +268,7 @@ outUserId()
 
                                         # Обрабатываем имя пользователя
   if [[ -z "$userName" ]]; then
-    getDefaultUserName "$dbName"
+    cspGetDefaultUserName "$dbName"
   fi
   if [[ -z "$userName" ]]; then
     exitArgError "Not set connection user."
@@ -344,8 +277,7 @@ outUserId()
   userName="`echo "$userName" | tr "[:upper:]" "[:lower:]"`"
                                         # Пытаемся получить пароль
   if [[ -z "$userPassword" ]]; then
-    getPassword "oracle://$userName@$dbName"
-    userPassword=$password
+    cspGetUserPassword "$dbName" "$userName"
   fi
                                         # Вывод результата
   if [[ -n "$userPassword" ]]; then
@@ -374,8 +306,7 @@ outOperatorId()
   fi
                                         # Пытаемся получить пароль
   if [[ -z "$operatorPassword" ]]; then
-    getPassword "http://$operatorName@info"
-    operatorPassword=$password
+    cspGetOperatorPassword "$operatorName"
   fi
                                         # Вывод результата
   if [[ -n "$operatorPassword" ]]; then

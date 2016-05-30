@@ -441,13 +441,13 @@ getDbName = $(strip $(call lower, \
 # Возвращает имя промышленной БД.
 #
 # Для определения имени промышленной БД, в списке тестовых БД
-# ( <getProductionDbName_TestDbList>) выполняется поиск по указанному имени БД
+# ( <cspGetProductionDbName_TestDbList>) выполняется поиск по указанному имени БД
 # и в случае нахождения совпадения ( без учета регистра) вместо переданного
-# имени возвращается имя промышленной БД из <getProductionDbName_ProdDbList>,
+# имени возвращается имя промышленной БД из <cspGetProductionDbName_ProdDbList>,
 # находящееся в той же позиции в списке, что и найденное совпадение. Также
 # в случае, если исходное имя является именем промышленной БД ( проверяется
 # совпадение без учета регистра с именами, указанными в
-# <getProductionDbName_ProdDbList> и <getProductionDbName_ExtraDbList>), то
+# <cspGetProductionDbName_ProdDbList> и <cspGetProductionDbName_ExtraDbList>), то
 # возвращается точное ( с учетом регистра) имя этой промышленной БД. Если не
 # удалось определить имя промышленной БД, то возвращается пустая строка.
 #
@@ -463,28 +463,28 @@ getProductionDbName = $(call \
 
 getProductionDbNameInternal = $(strip $(if $(1), \
   $(call nullif,$(call translateWord,$(1), \
-      $(getProductionDbName_TestDbList) \
+      $(cspGetProductionDbName_TestDbList) \
         $(call lower,$(getProductionDbName_AllProdList)), \
-      $(getProductionDbName_ProdDbList) \
+      $(cspGetProductionDbName_ProdDbList) \
         $(getProductionDbName_AllProdList) \
     ),$(1)) \
   ,))
 
 # Список всех промышленных БД.
 getProductionDbName_AllProdList = \
-  $(sort $(getProductionDbName_ExtraDbList) $(getProductionDbName_ProdDbList))
+  $(sort $(cspGetProductionDbName_ExtraDbList) $(cspGetProductionDbName_ProdDbList))
 
 # Проверяем корректность задания списков трансляции имен БД
-ifneq ($(words $(getProductionDbName_TestDbList)),$(words $(getProductionDbName_ProdDbList)))
+ifneq ($(words $(cspGetProductionDbName_TestDbList)),$(words $(cspGetProductionDbName_ProdDbList)))
 
-tmpVar := $(error В переменных getProductionDbName_TestDbList и getProductionDbName_ProdDbList указано различное число имен)
+tmpVar := $(error В переменных cspGetProductionDbName_TestDbList и cspGetProductionDbName_ProdDbList указано различное число имен)
 
 endif
 
 # Проверяем корректность задания имен промышленных БД
 ifneq ($(words $(getProductionDbName_AllProdList)),$(words $(sort $(call lower,$(getProductionDbName_AllProdList)))))
 
-tmpVar := $(error Имя одной и той же БД в переменных getProductionDbName_ProdDbList и getProductionDbName_ExtraDbList отличается регистром символов)
+tmpVar := $(error Имя одной и той же БД в переменных cspGetProductionDbName_ProdDbList и cspGetProductionDbName_ExtraDbList отличается регистром символов)
 
 endif
 

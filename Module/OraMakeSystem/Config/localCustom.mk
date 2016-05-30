@@ -1,36 +1,45 @@
-# makefile: Настройки OMS
+# makefile: Настройки сборки
+#
+# Настроечные функции и константы для make, которые могут модифицироваться в
+# пользовательской версии.
+#
+# Соглашения по именованию:
+# - используемые из других скриптов имена ( функций, переменных) должны
+#   начинаться с префикса "csp" ( "custom public");
+# - остальные имена должны начинаться с префикса "csl" ( "custom local");
+#
 
 
 
 #
-# group: Разбор строки подключения
+# group: Определение имени промышленной БД
 #
 
 
-# build var: getProductionDbName_TestDbList
+# build var: cspGetProductionDbName_TestDbList
 # Список тестовых БД для функции <getProductionDbName>.
 # Имена должны указываться в нижнем регистре, при этом в том же по порядку
-# слове переменной <getProductionDbName_ProdDbList> должно быть указано
+# слове переменной <cspGetProductionDbName_ProdDbList> должно быть указано
 # имя промышленной БД для данной тестовой БД.
 #
-getProductionDbName_TestDbList = \
-  TestDb
+cspGetProductionDbName_TestDbList = \
+  testdb
 
-# build var: getProductionDbName_ProdDbList
+# build var: cspGetProductionDbName_ProdDbList
 # Промышленные БД для тестовых БД, указанных в списке
-# <getProductionDbName_TestDbList>.
+# <cspGetProductionDbName_TestDbList>.
 # Имена БД должны быть указаны с учетом регистра символов в соответствии
 # с общепринятым написанием имени конкретной БД ( например, первая буква
 # имени в верхнем регистре и т.д.).
 #
-getProductionDbName_ProdDbList = \
+cspGetProductionDbName_ProdDbList = \
   ProdDb
 
-# build var: getProductionDbName_ExtraDbList
-# Промышленные БД, отсутствующие в списке <getProductionDbName_ProdDbList>
+# build var: cspGetProductionDbName_ExtraDbList
+# Промышленные БД, отсутствующие в списке <cspGetProductionDbName_ProdDbList>
 # ( для которых нет тестовых БД).
 # Имена БД указываются с учетом регистра ( аналогично
-# <getProductionDbName_ProdDbList>).
+# <cspGetProductionDbName_ProdDbList>).
 #
-getProductionDbName_ExtraDbList = \
+cspGetProductionDbName_ExtraDbList = \
 

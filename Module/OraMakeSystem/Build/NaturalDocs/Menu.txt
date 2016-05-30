@@ -132,7 +132,8 @@ Group: SQL-скрипты  {
 
 Group: Настройки  {
 
-   File: Настройки OMS  (Config/localCustom.mk)
+   File: Настройки сборки  (no auto-title, Config/localCustom.mk)
+   File: Настройки скриптов  (no auto-title, Config/custom.sh)
    File: Локальная инициализация OMS  (Config/local.mk)
 
    Group: Шаблон модуля  {
