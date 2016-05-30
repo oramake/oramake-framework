@@ -97,14 +97,14 @@
 # var: OMS_VERSION
 # Версия программы
 #
-OMS_VERSION=1.7.3
+OMS_VERSION=1.8.0
 
 #
 # Информация о версии файла из SVN
 #
 omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 2132                     $'
-fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
+fileRevisionValue='$Revision:: 24409882 $'
+fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 

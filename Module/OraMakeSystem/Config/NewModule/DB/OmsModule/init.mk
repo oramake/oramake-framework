@@ -8,7 +8,7 @@
 
 # build var: OMS_VERSION
 # Версия OMS-файлов, входящих в состав модуля.
-OMS_VERSION=1.7.3
+OMS_VERSION=1.8.0
 
 
 

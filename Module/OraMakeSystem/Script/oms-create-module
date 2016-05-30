@@ -49,15 +49,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=1.7.3
+OMS_VERSION=1.8.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 2132                     $'
+fileRevisionValue='$Revision:: 24409882 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2014-07-08 18:40:00 +0300 #$'
+fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 
 
 
