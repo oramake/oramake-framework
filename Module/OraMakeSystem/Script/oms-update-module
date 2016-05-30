@@ -409,7 +409,7 @@ patchFile()
   if (( isUseSubversion)) ; then
     patchOption="$patchOption --no-backup-if-mismatch"
   fi
-  for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff`
+  for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
     patchRevision="${patchFile:1:7}"
     patchRevision="${patchRevision##*-}"
