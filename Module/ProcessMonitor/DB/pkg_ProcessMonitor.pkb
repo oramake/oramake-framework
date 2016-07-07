@@ -1869,8 +1869,18 @@ is
   procedure checkPga
   is
     headerFlag boolean := false;
+    sessionMessage varchar2(32767);
+    totalPgaMemory number;
   begin
     logger.debug( 'checkPga');
+    select
+      sum( pga_memory)
+    into
+      totalPgaMemory
+    from
+      v_prm_session_memory
+    ;
+    logger.info( 'Суммарная память PGA по сессиям: ' || formatLargeNumber( totalPgaMemory));
     for sessionMemory in (
       select
         *
@@ -1882,15 +1892,8 @@ is
         pga_memory desc
     )
     loop
-      if not headerFlag then
-        messageText := messageText || chr(13) || chr(10) || '
-Превышение порога памяти ( PGA) внутренними процессами Oracle: '
-|| formatMemorySize( pgaMemoryThreshold) || ' байт'
-        ;
-        headerFlag := true;
-      end if;
-      messageText := messageText || chr(13) || chr(10) || '
-Sid: ' || to_char( sessionMemory.sid) || '
+      sessionMessage :=
+'Sid: ' || to_char( sessionMemory.sid) || '
 Serial#: ' || to_char( sessionMemory.serial#) || '
 Объём PGA: ' || formatMemorySize( sessionMemory.pga_memory) || ' байт'
         ||
@@ -1908,6 +1911,17 @@ program: ' || sessionMemory.program
         || '
 logon_time: ' || to_char( sessionMemory.logon_time, 'dd.mm.yyyy hh24:mi:ss')
       ;
+      logger.debug( sessionMessage);
+      if sessionMemory.pga_memory > pgaMemoryThreshold then
+        if not headerFlag then
+          messageText := messageText || chr(13) || chr(10) || '
+Превышение порога памяти ( PGA) внутренними процессами Oracle: '
+|| formatMemorySize( pgaMemoryThreshold) || ' байт' || chr(13) || chr(10)
+|| 'Суммарная занимаемая память PGA: ' || formatLargeNumber( totalPgaMemory) || ' байт';
+          headerFlag := true;
+        end if;
+        messageText := messageText || chr(13) || chr(10) || sessionMessage;
+      end if;
     end loop;
   exception when others then
     raise_application_error(
