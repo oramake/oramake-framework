@@ -23,3 +23,8 @@ and descendant_rec.goods_link_flag is null
 
     ( получили "descendant_rec.goods_link_flag" вместо ожидаемого
     "rec.descendant_goods_link_flag").
+
+[!] В функции <pkg_TestUtility.compareRowCount( func, cursor)> возникает ошибка
+    в случае наличия в курсоре неименованных колонок, например "select 1 from
+    dual".
+
