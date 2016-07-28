@@ -54,17 +54,17 @@ grant select, references on tp_task_type to &toUserName
 create or replace synonym &toUserName..tp_task_type for tp_task_type
 /
 
-grant select on v_tp_active_task to &toUserName
+grant select, merge view on v_tp_active_task to &toUserName
 /
 create or replace synonym &toUserName..v_tp_active_task for v_tp_active_task
 /
 
-grant select on v_tp_task to &toUserName
+grant select, merge view on v_tp_task to &toUserName
 /
 create or replace synonym &toUserName..v_tp_task for v_tp_task
 /
 
-grant select on v_tp_task_type to &toUserName
+grant select, merge view on v_tp_task_type to &toUserName
 /
 create or replace synonym &toUserName..v_tp_task_type for v_tp_task_type
 /
