@@ -560,6 +560,7 @@ installDataTarget = \
     $(call getInstallDataFile) \
   ) \
   $(addsuffix .$(lu2), \
+    $(call getInstallDataFile,AccessOperatorDb) \
   ) \
   $(addsuffix .$(lu3), \
   ) \

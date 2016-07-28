@@ -4,7 +4,8 @@ merge into
 using
   (
   select
-    pkg_TaskProcessorBase.Administrator_RoleName as role_short_name
+    'TaskProcessorAdministrator' -- pkg_TaskProcessorBase.Administrator_RoleName
+      as role_short_name
     , 'Полный доступ к модулю TaskProcessor' as role_name
     , 'TaskProcessor administrator' as role_name_en
     , 'Полный доступ к модулю TaskProcessor, используемому для организации выполнения заданий прикладных модулей.' as description
@@ -18,7 +19,8 @@ using
   from
     v_op_role t
   where
-    t.role_short_name = pkg_TaskProcessorBase.Administrator_RoleName
+    t.role_short_name =
+      'TaskProcessorAdministrator' -- pkg_TaskProcessorBase.Administrator_RoleName
   ) s
 on
   (
