@@ -17,6 +17,11 @@ grant execute on pkg_TaskProcessor to &toUserName
 create or replace synonym &toUserName..pkg_TaskProcessor for pkg_TaskProcessor
 /
 
+grant execute on pkg_TaskProcessorBase to &toUserName
+/
+create or replace synonym &toUserName..pkg_TaskProcessorBase for pkg_TaskProcessorBase
+/
+
 
 
 grant select, update on tp_file to &toUserName
