@@ -306,6 +306,7 @@ dir(
     , java.text.ParseException
     , com.enterprisedt.net.ftp.FTPException
 {
+  updateJavaUtilLoggingLevel();
   logTrace( "dir: start...");
   int etype = entryType != null ? entryType.intValue() : 0;
   int nFound = 0;
