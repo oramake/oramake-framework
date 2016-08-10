@@ -96,6 +96,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_Error.pkb)
       }  # Group: pkg_Error
 
+   Group: Test  {
+
+      Group: pkg_CommonTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_CommonTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_CommonTest.pkb)
+         }  # Group: pkg_CommonTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -135,6 +145,11 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 

@@ -1,42 +1,116 @@
 -- script: Install/Grant/Last/run.sql
--- Выдает права на использование модуля всем пользователям.
--- Реализовано с помощью выдачи прав пользователю public и создания публичных
--- синонимов.
--- 
+-- Выдает права на использование модуля.
+--
+-- Параметры:
+-- toUserName                 - имя пользователя, которому выдаются права
+--                              ( "public" для выдачи прав всем пользователям)
+--
 -- Замечания:
---   - для успешного выполнения скрипта требуются права на создание
---     публичных синонимов;
+--   - для успешного выполнения скрипта для "public" требуются права на
+--    создание публичных синонимов;
+--
 
 
 
-grant select on cmn_sequence to public
-/
-create or replace public synonym cmn_sequence for cmn_sequence
-/
+declare
 
-grant select, insert, delete, update on cmn_string_uid_tmp to public
-/
-create or replace public synonym cmn_string_uid_tmp for cmn_string_uid_tmp
-/
+  toUserName varchar2(30) := '&1';
+
+  -- Список прав на объекты в формате "<object_name>[:<privs_list>]", где
+  -- object_name        - имя объекта, на который выдаются права
+  -- privs_list         - список прав ( через запятую), по умолчанию
+  --                      "execute" для объектов в именем "pkg_%" и
+  --                      "select" для остальных объектов
+  --
+  type PrivsListT is table of varchar2(1000);
+
+  privsList PrivsListT := PrivsListT(
+    'cmn_sequence'
+    , 'cmn_string_uid_tmp: select, insert, delete, update'
+    , 'cmn_string_table_t: execute'
+    , 'pkg_Common'
+    , 'pkg_Error'
+    , 'str_concat: execute'
+  );
+
+  -- Признак выдачи прав для всех пользователей
+  isToPublic boolean := upper( toUserName) = 'PUBLIC';
+
+  -- Индекс текущего объекта в списке
+  i pls_integer := privsList.first();
+
+  -- Имя объекта
+  objectName varchar2(30);
+
+  -- Права, выдаваемые на объект
+  objectPrivs varchar2(1000);
 
 
 
-grant execute on cmn_string_table_t to public
-/
-create or replace public synonym cmn_string_table_t for cmn_string_table_t
-/
+  /*
+    Выполняет SQL с DDL-командой.
+  */
+  procedure execSql(
+    sqlText varchar2
+  )
+  is
+  begin
+    execute immediate sqlText;
+  exception when others then
+    raise_application_error(
+      pkg_ModuleInfoInternal.ErrorStackInfo_Error
+      , 'Ошибка при выполнеии SQL:' || chr(10) || sqlText
+      , true
+    );
+  end execSql;
 
-grant execute on pkg_Common to public
-/
-create or replace public synonym pkg_Common for pkg_Common
-/
 
-grant execute on pkg_Error to public
-/
-create or replace public synonym pkg_Error for pkg_Error
-/
 
-grant execute on str_concat to public
-/
-create or replace public synonym str_concat for str_concat
+begin
+  dbms_output.put_line(
+    'granted to ' || toUserName || ':'
+  );
+  while i is not null loop
+    begin
+      objectName :=
+        trim( substr( privsList( i), 1, instr( privsList( i) || ':', ':') - 1))
+      ;
+      objectPrivs := coalesce(
+        trim( substr( privsList( i), instr( privsList( i) || ':', ':') + 1))
+        , case when objectName like 'pkg_%' then
+            'execute'
+          else
+            'select'
+          end
+      );
+      execSql(
+        'grant ' || objectPrivs || ' on ' || objectName || ' to ' || toUserName
+      );
+      if isToPublic then
+        execSql(
+          'create or replace public synonym ' || objectName
+          || ' for ' || objectName
+        );
+      else
+        execSql(
+          'create or replace synonym ' || toUserName || '.' || objectName
+          || ' for ' || objectName
+        );
+      end if;
+      dbms_output.put_line(
+        rpad( objectName, 30) || ' : ' || objectPrivs
+      );
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , 'Ошибка при выдаче прав "' || privsList( i) || '" ('
+          || ' objectName="' || objectName || '"'
+          || ' , objectPrivs="' || objectPrivs || '"'
+          || ').'
+        , true
+      );
+    end;
+    i := privsList.next( i);
+  end loop;
+end;
 /

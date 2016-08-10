@@ -70,9 +70,15 @@ group: Первоначальная установка
 
 (code)
 
-$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs
+$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? GRANT_SCRIPT=sys-privs TO_USERNAME=???
 
 (end)
+
+( в случае, если у пользователя, под которым выдаются права, нет прав на
+использование модуля ModuleInfo, то нужно отключить сохранение информации об
+установке в ModuleInfo, дополнив команду строкой
+"  OMS_SAVE_FILE_INSTALL_INFO=0 SKIP_FILE_MASK=*/oms-save-grant-info.sql"
+)
 
 - установка объектов модуля
 
@@ -84,7 +90,7 @@ $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@???
 
 - выдача прав на использование модуля
 
-Команда для выдачи прав на объекты модуля для всех пользователей
+Команда для выдачи прав на использование модуля всем пользователям
 ( у пользователя, в схему которого установлен модуль, должна быть системная
 привилегия "CREATE PUBLIC SYNONYM"):
 
@@ -94,16 +100,25 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? TO_USERNAME=public
 
 (end)
 
+( для выдачи прав только конкретному пользователю его нужно указать в
+  TO_USERNAME вместо public)
+
 - выдача дополнительных прав через ACL
 
-Команда для добавления smtp-сервера по-умолчанию в acl-лист ( актуально для 11
-версии Oracle):
+Команда для добавления smtp-сервера по-умолчанию в ACL-лист ( в TO_USERNAME
+указывается пользователь, в схему которого будет установлен модуль):
 
 (code)
 
-$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@<TNS> GRANT_SCRIPT=acl-grant TO_USERNAME=<ОсновнойПользователь>
+$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? GRANT_SCRIPT=acl-grant TO_USERNAME=???
 
 (end)
+
+( в случае, если у пользователя, под которым выдаются права, нет прав на
+использование модуля ModuleInfo, то нужно отключить сохранение информации об
+установке в ModuleInfo, дополнив команду строкой
+"  OMS_SAVE_FILE_INSTALL_INFO=0 SKIP_FILE_MASK=*/oms-save-grant-info.sql"
+)
 
 Для успешного выполнения функции <pkg_Common.getIpAddress> в Oracle 11 и выше
 также требуется выдача дополнительных прав через ACL.
