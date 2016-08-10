@@ -31,7 +31,9 @@
     <infrastructure></infrastructure>
   </diagram>
   <depend>
-    <module></module>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
+    <module>Oracle/Module/TaskHandler</module>
     <link></link>
   </depend>
   <image></image>
