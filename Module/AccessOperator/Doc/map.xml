@@ -33,6 +33,8 @@
     <infrastructure></infrastructure>
   </diagram>
   <depend>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
     <module></module>
     <link></link>
   </depend>
