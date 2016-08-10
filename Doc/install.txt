@@ -1,15 +1,15 @@
 совместимость в БД Oracle - 11.1.0.7
 
 
-Последовательность установки модулей:
+Последовательность первоначальной установки модулей:
 
-- ModuleInfo
+- ModuleInfo ( с указанием NO_ACCESSOPERATOR=1)
 
 - Common
 
-- AccessOperator
-
 - Logging
+
+- AccessOperator
 
 - DynamicSql
 
