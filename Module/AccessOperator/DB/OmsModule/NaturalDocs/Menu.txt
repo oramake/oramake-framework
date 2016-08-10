@@ -73,11 +73,6 @@ Group: Пакеты  {
 
 Group: Скрипты  {
 
-   Group: Do  {
-
-      File: set-next-date  (no auto-title, Do/set-next-date.sql)
-      }  # Group: Do
-
    Group: Install  {
 
       Group: Data  {
@@ -96,20 +91,20 @@ Group: Скрипты  {
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-            File: op_group  (no auto-title, Install/Schema/Last/op_group.tab)
             File: op_group  (no auto-title, Install/Schema/Last/op_group.con)
-            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.tab)
+            File: op_group  (no auto-title, Install/Schema/Last/op_group.tab)
             File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.con)
+            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.tab)
             File: op_group_seq  (no auto-title, Install/Schema/Last/op_group_seq.sqs)
-            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.tab)
             File: op_operator  (no auto-title, Install/Schema/Last/op_operator.con)
-            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.tab)
+            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.tab)
             File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.con)
-            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.tab)
+            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.tab)
             File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.con)
+            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.tab)
             File: op_operator_seq  (no auto-title, Install/Schema/Last/op_operator_seq.sqs)
-            File: op_role  (no auto-title, Install/Schema/Last/op_role.tab)
             File: op_role  (no auto-title, Install/Schema/Last/op_role.con)
+            File: op_role  (no auto-title, Install/Schema/Last/op_role.tab)
             File: op_role_seq  (no auto-title, Install/Schema/Last/op_role_seq.sqs)
             File: v_op_operator  (no auto-title, Install/Schema/Last/v_op_operator.vw)
             File: v_op_operator_role  (no auto-title, Install/Schema/Last/v_op_operator_role.vw)
