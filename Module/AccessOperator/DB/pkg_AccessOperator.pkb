@@ -37,8 +37,10 @@ function mergeRole(
 )
 return integer
 is
+
   -- Количество изменённых записей
   changed integer;
+
 -- mergeRole
 begin
   merge into
@@ -49,9 +51,9 @@ begin
     roleShortName as role_short_name
     , roleName as role_name
     , roleNameEn as role_name_en
-    , description
+    , description as description
   from
-    op_role
+    dual
   minus
   select
     role_short_name
