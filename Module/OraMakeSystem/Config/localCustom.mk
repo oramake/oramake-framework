@@ -23,7 +23,7 @@
 # имя промышленной БД для данной тестовой БД.
 #
 cspGetProductionDbName_TestDbList = \
-  testdb
+  testdb testdb2 testdb3
 
 # build var: cspGetProductionDbName_ProdDbList
 # Промышленные БД для тестовых БД, указанных в списке
@@ -33,7 +33,7 @@ cspGetProductionDbName_TestDbList = \
 # имени в верхнем регистре и т.д.).
 #
 cspGetProductionDbName_ProdDbList = \
-  ProdDb
+  ProdDb ProdDb  ProdDb2
 
 # build var: cspGetProductionDbName_ExtraDbList
 # Промышленные БД, отсутствующие в списке <cspGetProductionDbName_ProdDbList>
@@ -42,4 +42,6 @@ cspGetProductionDbName_ProdDbList = \
 # <cspGetProductionDbName_ProdDbList>).
 #
 cspGetProductionDbName_ExtraDbList = \
+  ProdDb3 \
+  ProdDb4
 
