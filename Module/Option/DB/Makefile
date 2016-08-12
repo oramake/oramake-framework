@@ -309,9 +309,9 @@ LOAD_OPERATORID := $(ORACLE_OPERATOR)
 # build var: LOCAL_DB_DIR
 # Имя подкаталога для загрузки локальных скриптов, относящихся к определенной
 # БД.
-# Определяется автоматически на основе значения параметра <LOAD_DB>
-# ( <LOAD_USERID>).
-LOCAL_DB_DIR = $(call getProductionDbName,$(LOAD_DB))
+# Определяется автоматически на основе значения параметра <LOAD_DB9>
+# ( <LOAD_USERID9>).
+LOCAL_DB_DIR = $(call getProductionDbName,$(LOAD_DB9))
 
 # Обеспечиваем корректное значение переменной
 override LOCAL_DB_DIR := $(call getLocalDbDir,$(LOCAL_DB_DIR))
@@ -320,10 +320,10 @@ override LOCAL_DB_DIR := $(call getLocalDbDir,$(LOCAL_DB_DIR))
 # Расположение подкаталога для загрузки локальных скриптов, относящихся к
 # определенному пользователю БД ( формат: dbDirName/userDirName).
 # Определяется автоматически на основе значения параметров <LOCAL_DB_DIR> и
-# <LOAD_USERID>.
+# <LOAD_USERID9>.
 #
 LOCAL_USER_DIR = \
-  $(addsuffix /$(call getUserName,$(LOAD_USERID)),$(LOCAL_DB_DIR))
+  $(addsuffix /$(call getUserName,$(LOAD_USERID9)),$(LOCAL_DB_DIR))
 
 # Обеспечиваем корректное значение переменной
 override LOCAL_USER_DIR := $(call getLocalUserDir,$(LOCAL_USER_DIR))
@@ -576,9 +576,9 @@ getInstallDataFile = \
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
-    $(call getInstallDataFile,Local/$(LOCAL_USER_DIR)) \
   ) \
   $(addsuffix .$(lu2), \
+    $(call getInstallDataFile,AccessOperatorDb) \
   ) \
   $(addsuffix .$(lu3), \
   ) \

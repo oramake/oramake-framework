@@ -1,128 +1,163 @@
+-- script: Install/Data/Last/AccessOperatorDb/op_role.sql
+-- Создает роли, используемые модулем.
+--
+-- Замечания:
+--  - при создании ролей используются настройки, задаваемые скриптом
+--    <Install/Data/Last/Custom/set-optDbRoleSuffixList.sql>;
+--
+
+prompt get local roles config...
+
+@Install/Data/Last/Custom/set-optDbRoleSuffixList.sql
+
+
+
+prompt refresh roles...
+
 declare
 
-  cursor localRoleCur is
+  cursor localRoleCur(
+        productionDbName varchar2
+        , localRoleSuffix varchar2
+      )
+      is
     select
-      db.column_value as db_name
-      , pr.column_value as privilege_name
-      , 'Opt' || pr.column_value || 'AllOption' || db.column_value
-        as short_name
+      pr.column_value as privilege_name
+      , 'Opt' || pr.column_value || 'AllOption' || localRoleSuffix
+        as role_short_name
       , 'Параметр: '
         || case pr.column_value
               when 'Admin'    then 'Администрирование'
               when 'Show'     then 'Просмотр'
            end
-        || ' всех параметров ' || db.column_value
+        || ' всех параметров ' || productionDbName
         as role_name
       , 'Option: '
         || case pr.column_value
               when 'Admin'    then 'Administration of'
               when 'Show'     then 'View'
            end
-        || ' all options ' || db.column_value
+        || ' all options ' || productionDbName
         as role_name_en
       , 'Доступ к '
         || case pr.column_value
               when 'Admin'    then 'администрированию'
               when 'Show'     then 'просмотру'
            end
-        || ' всех параметров модулей в ' || db.column_value
+        || ' всех параметров модулей в ' || productionDbName
         as description
     from
       table( cmn_string_table_t(
-          -- все промышленные БД, в которые устанавливается модуль
-          'DbName1'
-          , 'DbName2'
-          , 'DbName3'
-        )) db
-      cross join table( cmn_string_table_t(
-          'Admin'
-          , 'Show'
-        )) pr
+        'Admin'
+        , 'Show'
+      )) pr
     order by
-      1, 2
+      1
   ;
 
-  -- Число добавленный ролей
-  nCreated integer := 0;
-
-  -- Число ранее созданных ролей
-  nExists integer := 0;
+  -- Число изменений
+  nChanged integer := 0;
 
 
 
   /*
-    Добавляет роль в случае ее отсутствия.
+    Добавление или обновление роли.
   */
-  procedure addRole(
-    shortName varchar2
+  procedure mergeRole(
+    roleShortName varchar2
     , roleName varchar2
     , roleNameEn varchar2
     , description varchar2
-    , oldShortName varchar2 := null
   )
   is
 
-    cursor roleCur is
-      select
-        t.*
-      from
-        op_role t
-      where
-        t.short_name in ( oldShortName, shortName)
-      order by
-        nullif( t.short_name, oldShortName) nulls first
-    ;
-
-    rec roleCur%rowtype;
+    changedFlag integer;
 
   begin
-    open roleCur;
-    fetch roleCur into rec;
-    close roleCur;
-    if rec.role_id is null then
-      rec.role_id := pkg_AccessOperator.createRole(
-        shortName     => shortName
-        , roleName    => roleName
-        , roleNameEn  => roleNameEn
-        , description => description
-        , operatorId  => pkg_Operator.getCurrentUserId()
-      );
+    changedFlag := pkg_AccessOperator.mergeRole(
+      roleShortName   => roleShortName
+      , roleName      => roleName
+      , roleNameEn    => roleNameEn
+      , description   => description
+    );
+    if changedFlag = 1 then
       dbms_output.put_line(
-        'role created: ' || shortName || ' ( role_id=' || rec.role_id || ')'
+        'changed role: ' || roleShortName
       );
-      nCreated := nCreated + 1;
+      nChanged := nChanged + 1;
     else
-      if coalesce( rec.short_name != shortName
-              , coalesce( rec.short_name, shortName) is not null)
-          or coalesce( rec.role_name != roleName
-              , coalesce( rec.role_name, roleName) is not null)
-          or coalesce( rec.role_name_en != roleNameEn
-              , coalesce( rec.role_name_en, roleNameEn) is not null)
-          or coalesce( rec.description != description
-              , coalesce( rec.description, description) is not null)
-          then
-        pkg_AccessOperator.updateRole(
-          roleId        => rec.role_id
-          , shortName   => shortName
-          , roleName    => roleName
-          , roleNameEn  => roleNameEn
-          , description => description
-          , operatorId  => pkg_Operator.getCurrentUserId()
-        );
-        dbms_output.put_line(
-          'role updated: ' || shortName || ' ( role_id=' || rec.role_id || ')'
+      dbms_output.put_line(
+        'checked role: ' || roleShortName
+      );
+    end if;
+  end mergeRole;
+
+
+
+  /*
+    Обновляет локальные роли.
+  */
+  procedure refreshLocalRole
+  is
+
+    prodDbName varchar2(100);
+    roleSuffix varchar2(100);
+
+    nRow pls_integer := 0;
+
+  begin
+    dbms_output.put_line(
+      'local roles:'
+    );
+    loop
+      fetch :optDbRoleSuffixList into prodDbName, roleSuffix;
+      exit when :optDbRoleSuffixList%notfound;
+      nRow := nRow + 1;
+      if trim( prodDbName) is null then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Не задан production_db_name ('
+            || ' nRow=' || nRow
+            || ').'
         );
       end if;
-      nExists := nExists + 1;
-    end if;
-  end addRole;
+      if trim( roleSuffix) is null then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Не задан local_role_suffix ('
+            || ' nRow=' || nRow
+            || ', production_db_name="' || prodDbName || '"'
+            || ').'
+        );
+      end if;
+      for rec in localRoleCur(
+            productionDbName    => trim( prodDbName)
+            , localRoleSuffix   => trim( roleSuffix)
+          )
+          loop
+        mergeRole(
+          roleShortName => rec.role_short_name
+          , roleName    => rec.role_name
+          , roleNameEn  => rec.role_name_en
+          , description => rec.description
+        );
+      end loop;
+    end loop;
+    close :optDbRoleSuffixList;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , 'Ошибка при обновлении локальных ролей.'
+      , true
+    );
+  end refreshLocalRole;
 
 
 
 -- main
 begin
-  addRole(
-    shortName     => 'OptShowOption'
+  mergeRole(
+    roleShortName     => 'OptShowOption'
     , roleName    =>
         'Параметр: Доступ к форме «Параметр»'
     , roleNameEn  =>
@@ -131,8 +166,8 @@ begin
         'Пользователь с данной ролью имеет доступ к форме «Параметр»'
   );
 
-  addRole(
-    shortName     => 'GlobalOptionAdmin'
+  mergeRole(
+    roleShortName     => 'GlobalOptionAdmin'
     , roleName    =>
         'Параметр: Администрирование всех параметров'
     , roleNameEn  =>
@@ -141,8 +176,8 @@ begin
         'Пользователь с данной ролью имеет права на администрирование параметров модулей во всех БД'
   );
 
-  addRole(
-    shortName     => 'OptShowAllOption'
+  mergeRole(
+    roleShortName     => 'OptShowAllOption'
     , roleName    =>
         'Параметр: Просмотр всех параметров'
     , roleNameEn  =>
@@ -151,18 +186,10 @@ begin
         'Пользователь с данной ролью имеет право на просмотр параметров модулей во всех БД'
   );
 
-  for rec in localRoleCur loop
-    addRole(
-      shortName     => rec.short_name
-      , roleName    => rec.role_name
-      , roleNameEn  => rec.role_name_en
-      , description => rec.description
-    );
-  end loop;
+  refreshLocalRole();
 
   dbms_output.put_line(
-    'roles created: ' || nCreated
-    || ' ( already exists: ' || nExists || ')'
+    'roles changed: ' || nChanged
   );
   commit;
 end;

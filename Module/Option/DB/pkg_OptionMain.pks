@@ -42,9 +42,14 @@ Module_SvnRoot constant varchar2(30) := 'Oracle/Module/Option';
   Option.
 
   Пример:
-  в БД DbNameP параметр имеет значение "DbName", в результате права на
-  все параметры, созданные в БД DbNameP, можно выдать с помощью
-  ролей "OptAdminAllOptionDbName" и "OptShowAllOptionDbName".
+  в БД ProdDb параметр имеет значение "Prod", в результате права на
+  все параметры, созданные в БД ProdDb, можно выдать с помощью
+  ролей "OptAdminAllOptionProd" и "OptShowAllOptionProd".
+
+  Замечания:
+  - настройки, определяющие БД, для которых создаются роли указаного вида,
+    и используемый для каждой БД суффикс роли, задаются в скрипте
+    <Install/Data/Last/Custom/set-optDbRoleSuffixList.sql>;
 */
 LocalRoleSuffix_OptionSName constant varchar2(50) := 'LocalRoleSuffix';
 

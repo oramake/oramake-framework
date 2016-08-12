@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Option
-SubTitle: Версия 3.1.0.1
+SubTitle: Версия 3.3.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -140,6 +140,16 @@ Group: Скрипты  {
       Group: Data  {
 
          Group: Last  {
+
+            Group: AccessOperatorDb  {
+
+               File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
+               }  # Group: AccessOperatorDb
+
+            Group: Custom  {
+
+               File: set-optDbRoleSuffixList  (no auto-title, Install/Data/Last/Custom/set-optDbRoleSuffixList.sql)
+               }  # Group: Custom
 
             File: opt_option  (no auto-title, Install/Data/Last/opt_option.sql)
             }  # Group: Last

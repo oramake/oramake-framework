@@ -10,6 +10,10 @@ LOAD_OPERATORID               - логин и пароль оператора, выполн€ющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основна€ схема дл€ установки
                                 ( формат: username/password@dbName)
+LOAD_USERID2                  - пользователь, под которым создаютс€ роли
+                                дл€ модул€ AccessOperator
+                                ( формат: username/password@dbName)
+
 
 ƒополнительные параметры:
 PRODUCTION_DB_NAME            - может быть использован дл€ €вного задани€
@@ -60,6 +64,20 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 3.3.0
+
+ѕор€док установки:
+
+- установка в основную схему
+
+(code)
+
+$ make install INSTALL_VERSION=3.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 3.1.0.1
 (<¬ерсии::3.1.0.1 ( 2016-04-21)>)
 
@@ -82,10 +100,12 @@ make install INSTALL_VERSION=3.1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???
 group: ѕервоначальна€ установка
 
 ѕредварительные требовани€:
-- установка модул€ Common ( Oracle/Module/Common);
-- установка модул€ DynamicSql ( Oracle/Module/DynamicSql);
-- установка модул€ ModuleInfo ( Oracle/Module/ModuleInfo);
-- установка модул€ AccessOperator ( Oracle/Module/AccessOperator);
+- установка модул€ ModuleInfo;
+- установка модул€ Common;
+- установка модул€ AccessOperator
+  ( при этом в Ѕƒ, в которой будут создаватьс€ роли ( указываемой
+    LOAD_USERID2), верси€ модул€ должна быть не ниже 3.14.0);
+- установка модул€ DynamicSql;
 - выдача пользователю, в схему которого будет устанавливатьс€ модуль, прав на
   пакет dbms_crypto:
 
@@ -99,11 +119,21 @@ SQL> grant execute on sys.dbms_crypto to &userName;
     выполнена, но при попытке шифровани€/дешифровани€ значений параметров будет
     возникать ошибка)
 
- оманда дл€ первоначальной установки текущей версии модул€:
+ѕор€док установки:
+
+- установка в основную схему
 
 (code)
 
 $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- создание ролей дл€ модул€ AccessOperator
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
