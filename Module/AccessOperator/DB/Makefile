@@ -328,35 +328,7 @@ LOCAL_USER_DIR = \
 # Обеспечиваем корректное значение переменной
 override LOCAL_USER_DIR := $(call getLocalUserDir,$(LOCAL_USER_DIR))
 
-# build var: LOCAL_SCHEMA_DIR2
-# Подкаталог с локальными объектами для загрузки в схему LOAD_USERID2.
-# Определяется автоматически на основе значения параметра LOAD_USERID2
-# ( формат dbName/userName).
-#
-LOCAL_SCHEMA_DIR2 := \
-  $(call getProductionDbName,$(LOAD_DB2))
 
-# Обеспечиваем корректное значение переменной
-override LOCAL_SCHEMA_DIR2 := $(call getLocalDbDir,$(LOCAL_SCHEMA_DIR2))
-
-# build var: LOCAL_SCHEMA_DIR3
-# Подкаталог с локальными объектами для загрузки в схему LOAD_USERID3.
-# Определяется автоматически на основе значения параметра LOAD_USERID3
-# ( формат dbName/userName).
-#
-LOCAL_SCHEMA_DIR3 := \
-  $(call getProductionDbName,$(LOAD_DB3))/$(call getUserName,$(LOAD_USERID3))
-
-# Обеспечиваем корректное значение переменной
-override LOCAL_SCHEMA_DIR3 := $(call getLocalUserDir,$(LOCAL_SCHEMA_DIR3))
-
-# build var: LOCAL_SCHEMA_DIR4
-# Подкаталог с локальными объектами для загрузки в схему LOAD_USERID4.
-# Определяется автоматически на основе значения параметра LOAD_USERID4
-# ( формат dbName/userName).
-#
-LOCAL_SCHEMA_DIR4 := \
-  $(call getProductionDbName,$(LOAD_DB4))/$(call getUserName,$(LOAD_USERID4))
 
 # build var: SQL_DEFINE
 # Список значений для переменных SQL*Plus.
@@ -401,26 +373,14 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
-    $(wildcard Install/Schema/Last/*.vw)  \
+    $(wildcard Install/Schema/Last/*.vw) \
+    $(wildcard Install/Schema/Last/*.trg) \
     $(wildcard *.typ *.pks *.tyb *.pkb) \
-    $(wildcard Install/Schema/Last/*.trg)  \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard Local/$(LOCAL_SCHEMA_DIR2)/*.pk[s,b])  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.vw)  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.trg)  \
-    $(wildcard Install/Data/Last/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu3),                  \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)      \
-  )   \
-  $(addsuffix .$(lu4),                  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR4)/*.trg)  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR4)/*.vw)  \
-    $(wildcard Local/$(LOCAL_SCHEMA_DIR4)/*.pks)  \
-    $(wildcard Local/$(LOCAL_SCHEMA_DIR4)/*.pkb)  \
-  )                                    \
+  )                                      \
 
 # Список параметров для загружаемых файлов.
 #
@@ -500,20 +460,12 @@ installBeforeTarget =                          \
     $(installBeforeOmsAction)                  \
   )                                            \
   $(addsuffix .$(ru2),                        \
-    $(if $(INSTALL_VERSION), \
-      $(wildcard Install/Config/Local/before-action.sql)      \
-      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/before-action.sql),) \
     $(installBeforeOmsAction)                  \
   )                                            \
   $(addsuffix .$(ru3),                        \
     $(installBeforeOmsAction)                  \
   )                                            \
-  $(addsuffix .$(ru4),                        \
-    $(if $(INSTALL_VERSION), \
-      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/before-action.sql),) \
-      $(wildcard Install/Config/Local/$(LOCAL_SCHEMA_DIR4)/before-action.sql)      \
-    $(installBeforeOmsAction)                  \
-  )                                            \
+
 
 
 # target: install-before
@@ -528,15 +480,11 @@ installSchemaTarget =                   \
   $(addsuffix .$(lu),                    \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
   )                                      \
-  $(addsuffix .$(lu2),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)  \
+  $(addsuffix .$(lu2),                  \
   )                                      \
-  $(addsuffix .$(lu3),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)  \
+  $(addsuffix .$(lu3),                  \
   )                                      \
-  $(addsuffix .$(lu4),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/run.sql)  \
-  )                                      \
+
 
 
 # target: install-schema
@@ -612,14 +560,10 @@ installDataTarget = \
     $(call getInstallDataFile) \
   ) \
   $(addsuffix .$(lu2), \
-    $(wildcard Install/Data/Last/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
   ) \
   $(addsuffix .$(lu3), \
   ) \
-  $(addsuffix .$(lu4), \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/run.sql)      \
-  ) \
+
 
 
 # target: install-data
@@ -633,7 +577,7 @@ install-data: install-data.oms
 
 # build var: BATCH_MASK
 # Список масок для ограничения устанавливаемых пакетных заданий. Представляет
-# собой список ( через запятую) масок коротких наименований пакетных заданий.
+# собой список ( через запятую) масок коротких наименований пакетных заданий
 # ( можно использовать спецсимволы "*" и "?").
 #
 # Пример: для загрузки пакетных
@@ -643,7 +587,7 @@ BATCH_MASK =
 
 # build var: SKIP_BATCH_MASK
 # Список масок для исключения устанавливаемых пакетных заданий. Представляет
-# собой список ( через запятую) масок коротких наименований пакетных заданий.
+# собой список ( через запятую) масок коротких наименований пакетных заданий
 # ( можно использовать спецсимволы "*" и "?").
 #
 # Пример: для исключения пакетных
@@ -674,25 +618,25 @@ UPDATE_OPTION_VALUE =
 # build var: UPDATE_SCHEDULE
 # Флаг обновления расписания запуска пакетных заданий модуля Scheduler согласно
 # указанному в спецификации ( "1" обновлять, по умолчанию не обновлять ( при
-# этом расписание в спецификации используется только при создании пакетного
-# задания)). В понятие В понятие расписание входит число повторных попыток и
-# интервал между повторениями выполнения батчей.
+# этом расписание в спецификации используется только для нового пакетного
+# задания)). В понятие расписание входит число повторных попыток и интервал
+# между повторениями выполнения батчей. Определение того, является ли пакетное
+# задание новым в случае разных файлов для одного и того же пакетного задания (
+# batch.xml и batch-config.xml) реализовано в модуле Scheduler.
 UPDATE_SCHEDULE =
 
 # Скрипты для загрузки пакетных заданий и их параметров в БД.
 installBatchTarget = \
-  $(addsuffix .$(ru), \
+  $(addsuffix .$(lu), \
+    $(wildcard Install/Batch/Last/*.job.sql) \
+    $(wildcard Install/Batch/Last/*/*.job.sql) \
+    $(wildcard Install/Batch/Last/*/batch.xml) \
   ) \
-  $(addsuffix .$(ru2), \
+  $(addsuffix .$(lu2), \
   ) \
-  $(addsuffix .$(ru3), \
+  $(addsuffix .$(lu3), \
   ) \
-  $(addsuffix .$(ru5), \
-	  $(wildcard Install/Batch/Last/*.job.sql) \
-	  $(wildcard Install/Batch/Last/*/*.job.sql) \
-	  $(wildcard Install/Batch/Last/*/batch.xml) \
-          $(wildcard Install/Batch/Last/*/batch_config.xml) \
-  )
+
 
 
 # target: install-batch
@@ -722,18 +666,9 @@ installAfterTarget =                          \
   )                                            \
   $(addsuffix .$(ru2),                        \
     $(installAfterOmsAction)                  \
-    $(wildcard Install/Config/Local/after-action.sql)      \
-    $(if $(INSTALL_VERSION), \
-      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/after-action.sql),) \
   )                                            \
   $(addsuffix .$(ru3),                        \
     $(installAfterOmsAction)                  \
-  )                                            \
-  $(addsuffix .$(ru4),                        \
-    $(installAfterOmsAction)                  \
-    $(if $(INSTALL_VERSION), \
-      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/after-action.sql),) \
-      $(wildcard Install/Config/Local/$(LOCAL_SCHEMA_DIR4)/after-action.sql)      \
   )                                            \
 
 
@@ -776,13 +711,7 @@ installTestTarget = \
   ) \
   $(addsuffix .$(lu3), \
   ) \
-  $(addsuffix .$(lu4), \
-    $(wildcard \
-      $(addprefix Test/Local/$(LOCAL_SCHEMA_DIR4)/, \
-        *.typ *.pks *.tyb *.pkb \
-      ) \
-    ) \
-  ) \
+
 
 
 # target: install-test
@@ -813,9 +742,7 @@ testTarget = \
   ) \
   $(addsuffix .$(ru3), \
   ) \
-  $(addsuffix .$(ru4), \
-    $(wildcard Test/Local/$(LOCAL_SCHEMA_DIR4)/$(testScript)) \
-  ) \
+
 
 
 # target: test
@@ -883,13 +810,8 @@ uninstallSchemaTarget = \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/revert.sql) \
   ) \
   $(addsuffix .$(ru3), \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/revert.sql)  \
-  ) \
-  $(addsuffix .$(ru4), \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/revert.sql)  \
   ) \
 
 
@@ -1028,13 +950,8 @@ grantTarget =                           \
     $(wildcard Install/Grant/$(grantVersion)/$(grantScript)) \
   )                                     \
   $(addsuffix .$(ru2),                  \
-    $(wildcard Install/Grant/$(grantVersion)/Local/$(LOCAL_SCHEMA_DIR2)/$(grantScript)) \
   )                                     \
   $(addsuffix .$(ru3),                  \
-    $(wildcard Install/Grant/$(grantVersion)/Local/$(LOCAL_SCHEMA_DIR3)/$(grantScript)) \
-  )                                     \
-  $(addsuffix .$(ru4),                  \
-    $(wildcard Install/Grant/$(grantVersion)/Local/$(LOCAL_SCHEMA_DIR4)/$(grantScript)) \
   )                                     \
 
 
