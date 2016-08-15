@@ -18,20 +18,8 @@
   <db>
     <database>
       <instance></instance>
-      <table>doc_mask</table>
-      <table>doc_storage_rule</table>
-      <table>opt_access_level</table>
-      <table>opt_check_type</table>
-      <table>opt_format</table>
-      <table>opt_option</table>
-      <table>opt_option_history</table>
-      <table>opt_option_new</table>
-      <table>opt_option_value</table>
-      <table>opt_value</table>
-      <table>opt_value_history</table>
-      <table>opt_value_type</table>
-      <package>pkg_Option</package>
-      <package>pkg_OptionMain</package>
+      <table></table>
+      <package></package>
     </database>
   </db>
   <app>

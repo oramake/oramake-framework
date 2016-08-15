@@ -37,4 +37,4 @@
 @oms-run opt_value_seq.sqs
 
 -- Функции
-@oms-run opt_getLocalCryptoKey.prc
+@oms-run Install/Schema/Last/Custom/opt_getLocalCryptoKey.prc
