@@ -13,3 +13,5 @@
 @oms-run drop-old-object.sql
 @oms-run drop-old-column.sql
 @oms-run rename-object.sql
+
+@oms-run recreate-option-uk.sql

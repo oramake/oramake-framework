@@ -180,11 +180,15 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Custom  {
+
+               File: opt_getLocalCryptoKey  (no auto-title, Install/Schema/Last/Custom/opt_getLocalCryptoKey.prc)
+               }  # Group: Custom
+
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: opt_access_level  (no auto-title, Install/Schema/Last/opt_access_level.tab)
             File: opt_access_level_bi_define  (no auto-title, Install/Schema/Last/opt_access_level_bi_define.trg)
-            File: opt_getLocalCryptoKey  (no auto-title, Install/Schema/Last/opt_getLocalCryptoKey.prc)
             File: opt_object_type  (no auto-title, Install/Schema/Last/opt_object_type.tab)
             File: opt_object_type_bi_define  (no auto-title, Install/Schema/Last/opt_object_type_bi_define.trg)
             File: opt_object_type_seq  (no auto-title, Install/Schema/Last/opt_object_type_seq.sqs)

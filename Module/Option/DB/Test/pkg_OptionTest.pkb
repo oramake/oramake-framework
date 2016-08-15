@@ -5093,6 +5093,44 @@ where
           'Определен Id ранее логически удаленного типа объекта'
     );
 
+    -- возможность создание параметров, отличающихся лишь типом объектов
+    nChanged := opt.mergeObjectType(
+      objectTypeShortName => 'ftpServer'
+      , objectTypeName    => 'FTP-сервер'
+    );
+    ob1 := opt_option_list_t(
+      moduleName            => Exp_ModuleName
+      , objectShortName     => 'company.com'
+      , objectTypeShortName => 'smtpServer'
+    );
+    ob1.addString(
+      optionShortName       => 'Login'
+      , optionName          => 'Логин'
+      , stringValue         => 'smtpUser'
+    );
+    ob2 := opt_option_list_t(
+      moduleName            => Exp_ModuleName
+      , objectShortName     => 'company.com'
+      , objectTypeShortName => 'ftpServer'
+    );
+    ob2.addString(
+      optionShortName       => 'Login'
+      , optionName          => 'Логин'
+      , stringValue         => 'ftpUser'
+    );
+    checkOptionValue(
+      optionShortName         => 'Login'
+      , objectShortName       => 'company.com'
+      , objectTypeId          => ob1.getObjectTypeId()
+      , stringValue           => 'smtpUser'
+    );
+    checkOptionValue(
+      optionShortName         => 'Login'
+      , objectShortName       => 'company.com'
+      , objectTypeId          => ob2.getObjectTypeId()
+      , stringValue           => 'ftpUser'
+    );
+
     pkg_TestUtility.endTest();
   exception when others then
     raise_application_error(
