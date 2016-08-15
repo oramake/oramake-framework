@@ -304,6 +304,7 @@ begin
   end if;
   pkg_OptionMain.updateOption(
     optionId                      => optionId
+    , optionShortName             => rec.option_short_name
     , valueTypeCode               => valueTypeCode
     , valueListFlag               => valueListFlag
     , encryptionFlag              => encryptionFlag

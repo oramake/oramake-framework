@@ -440,8 +440,8 @@ return integer,
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
-  Id параметра либо null, если параметр не найден и значение raiseNotFoundFlag
-  равно 0.
+  Id параметра либо null, если параметр не
+  найден и значение raiseNotFoundFlag равно 0.
 
   ( <body::getOptionId>)
 */
@@ -1938,6 +1938,8 @@ member procedure createOption(
 
   Параметры:
   optionShortName             - короткое название параметра
+  newOptionShortName          - новое короткое название параметра
+                                ( null не изменять ( по умолчанию))
   valueTypeCode               - код типа значения параметра
                                 ( null не изменять ( по умолчанию))
   valueListFlag               - флаг задания для параметра списка значений
@@ -1993,6 +1995,7 @@ member procedure createOption(
 */
 member function updateOption(
   optionShortName varchar2
+  , newOptionShortName varchar2 := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
   , encryptionFlag integer := null
@@ -2018,6 +2021,7 @@ return integer,
 member procedure updateOption(
   self in opt_option_list_t
   , optionShortName varchar2
+  , newOptionShortName varchar2 := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
   , encryptionFlag integer := null

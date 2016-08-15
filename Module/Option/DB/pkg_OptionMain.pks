@@ -350,6 +350,7 @@ return integer;
 
   Параметры:
   optionId                    - Id параметра
+  optionShortName             - короткое название параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
                                 указанного типа ( 1 да, 0 нет)
@@ -386,6 +387,7 @@ return integer;
 */
 procedure updateOption(
   optionId integer
+  , optionShortName varchar2
   , valueTypeCode varchar2
   , valueListFlag integer
   , encryptionFlag integer

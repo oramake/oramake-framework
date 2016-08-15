@@ -832,6 +832,7 @@ end createOption;
 
   Параметры:
   optionId                    - Id параметра
+  optionShortName             - короткое название параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
                                 указанного типа ( 1 да, 0 нет)
@@ -866,6 +867,7 @@ end createOption;
 */
 procedure updateOption(
   optionId integer
+  , optionShortName varchar2
   , valueTypeCode varchar2
   , valueListFlag integer
   , encryptionFlag integer
@@ -1139,7 +1141,8 @@ begin
   update
     opt_option d
   set
-    d.value_type_code             = valueTypeCode
+    d.option_short_name           = optionShortName
+    , d.value_type_code           = valueTypeCode
     , d.value_list_flag           = valueListFlag
     , d.encryption_flag           = encryptionFlag
     , d.test_prod_sensitive_flag  = testProdSensitiveFlag

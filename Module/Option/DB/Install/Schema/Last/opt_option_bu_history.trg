@@ -12,28 +12,6 @@ declare
 
 begin
 
-  -- Проверка неизменности уникального ключа
-  if :new.module_id <> :old.module_id
-      or coalesce(
-          :new.object_short_name != :old.object_short_name
-          , coalesce( :new.object_short_name, :old.object_short_name)
-            is not null
-        )
-      or coalesce(
-          :new.object_type_id != :old.object_type_id
-          , coalesce( :new.object_type_id, :old.object_type_id)
-            is not null
-        )
-      or :new.option_short_name <> :old.option_short_name
-      then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , 'Запрещено изменять значения полей уникального ключа'
-        || ' ( module_id, object_short_name, option_short_name)'
-        || ' и поле object_type_id.'
-    );
-  end if;
-
   -- Используем текущего оператора если Id оператора не был задан явно
   if not updating( 'change_operator_id') or :new.change_operator_id is null
       then

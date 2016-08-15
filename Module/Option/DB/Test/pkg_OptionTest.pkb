@@ -3091,6 +3091,30 @@ where
           || ' Некорректный результат при отсутствии значения'
     );
 
+    -- Переименование параметра
+    opt.updateOption(
+      optionShortName               => 'FlexibleData'
+      , newOptionShortName          => 'FlexibleDataNew'
+    );
+    pkg_TestUtility.compareChar(
+      actualString        =>
+          opt.getOptionId( 'FlexibleData' , raiseNotFoundFlag => 0)
+      , expectedString    => null
+      , failMessageText   =>
+          'Возвращен Id переименованного параметра FlexibleData'
+    );
+    checkOptionValue(
+      optionShortName         => 'FlexibleDataNew'
+      , testProdSensitiveFlag => 1
+      , dateValue             => DATE '2015-01-01'
+    );
+
+    -- ... обратное переименование
+    opt.updateOption(
+      optionShortName               => 'FlexibleDataNew'
+      , newOptionShortName          => 'FlexibleData'
+    );
+
     -- Удаляем параметр
     opt.deleteOption(
       optionShortName               => 'FlexibleData'

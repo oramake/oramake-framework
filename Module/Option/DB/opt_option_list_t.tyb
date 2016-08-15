@@ -3429,6 +3429,8 @@ end createOption;
 
   Параметры:
   optionShortName             - короткое название параметра
+  newOptionShortName          - новое короткое название параметра
+                                ( null не изменять ( по умолчанию))
   valueTypeCode               - код типа значения параметра
                                 ( null не изменять ( по умолчанию))
   valueListFlag               - флаг задания для параметра списка значений
@@ -3482,6 +3484,7 @@ end createOption;
 */
 member function updateOption(
   optionShortName varchar2
+  , newOptionShortName varchar2 := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
   , encryptionFlag integer := null
@@ -3516,6 +3519,7 @@ begin
           , raiseNotFoundFlag => 1
         )
   );
+  nrc.option_short_name     := coalesce( newOptionShortName, optionShortName);
   nrc.value_type_code       := coalesce( valueTypeCode, orc.value_type_code);
   nrc.value_list_flag       := coalesce( valueListFlag, orc.value_list_flag);
   nrc.encryption_flag       := coalesce( encryptionFlag, orc.encryption_flag);
@@ -3544,6 +3548,7 @@ begin
   ;
 
   if coalesce( skipIfNoChangeFlag, 0) != 1
+        or orc.option_short_name        != nrc.option_short_name
         or orc.value_type_code          != nrc.value_type_code
         or orc.value_list_flag          != nrc.value_list_flag
         or orc.encryption_flag          != nrc.encryption_flag
@@ -3560,6 +3565,7 @@ begin
       then
     pkg_OptionMain.updateOption(
       optionId                      => orc.option_id
+      , optionShortName             => nrc.option_short_name
       , valueTypeCode               => nrc.value_type_code
       , valueListFlag               => nrc.value_list_flag
       , encryptionFlag              => nrc.encryption_flag
@@ -3580,6 +3586,9 @@ exception when others then
     , logger.errorStack(
         'Ошибка при изменении параметра ('
         || ' optionShortName="' || optionShortName || '"'
+        || case when newOptionShortName != optionShortName then
+            ', newOptionShortName="' || newOptionShortName || '"'
+          end
         || ').'
       )
     , true
@@ -3594,6 +3603,7 @@ end updateOption;
 member procedure updateOption(
   self in opt_option_list_t
   , optionShortName varchar2
+  , newOptionShortName varchar2 := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
   , encryptionFlag integer := null
@@ -3615,6 +3625,7 @@ is
 begin
   changeFlag := updateOption(
     optionShortName               => optionShortName
+    , newOptionShortName          => newOptionShortName
     , valueTypeCode               => valueTypeCode
     , valueListFlag               => valueListFlag
     , encryptionFlag              => encryptionFlag
