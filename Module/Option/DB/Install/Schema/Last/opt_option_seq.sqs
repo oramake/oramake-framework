@@ -1,6 +1,6 @@
 -- sequence: opt_option_seq
 -- ѕоследовательность дл€ заполнени€ первичного ключа таблицы
--- <opt_option_new> и пол€ old_option_id таблицы <opt_value>.
+-- <opt_option>.
 create sequence
   opt_option_seq
 /

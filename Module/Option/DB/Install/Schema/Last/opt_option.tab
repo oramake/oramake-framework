@@ -1,24 +1,140 @@
 -- table: opt_option
--- Данные по настроечным параметрам в устаревшем виде
--- ( таблица временно сохранена для совместимости, будет удалена).
-create table opt_option  (
-   option_id            integer                         not null,
-   option_name          varchar2(250)                   not null,
-   option_short_name    varchar2(200)                   not null,
-   is_global            number(1,0)                    default 1 not null,
-   link_global_local    integer,
-   mask_id              integer,
-   date_ins             date                           default sysdate not null,
-   operator_id          integer                         not null,
-   constraint opt_option_pk primary key (option_id)
-  , constraint opt_option_ck_is_global check
-    ( is_global = 1)
-  , constraint opt_option_ck_is_link_global_l check
-    ( link_global_local is null)
+-- Настроечные параметры программных модулей
+-- ( актуальные данные, включая логически удаленные записи).
+create table
+  opt_option
+(
+  option_id                       integer                             not null
+  , module_id                     integer                             not null
+  , object_short_name             varchar2(100)
+  , object_type_id                integer
+  , option_short_name             varchar2(50)                        not null
+  , value_type_code               varchar2(10)                        not null
+  , value_list_flag               number(1)                           not null
+  , encryption_flag               number(1)                           not null
+  , test_prod_sensitive_flag      number(1)                           not null
+  , access_level_code             varchar2(10)                        not null
+  , option_name                   varchar2(250)                       not null
+  , option_description            varchar2(1000)
+  , deleted                       number(1)           default 0       not null
+  , change_number                 integer             default 1       not null
+  , change_date                   date                default sysdate not null
+  , change_operator_id            integer                             not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint opt_option_pk primary key
+    ( option_id)
+    using index tablespace &indexTablespace
+  , constraint opt_option_uk unique
+    ( module_id, object_short_name, option_short_name)
+    using index tablespace &indexTablespace
+  , constraint opt_option_ck_object_type_id check
+    ( object_short_name is null and object_type_id is null
+or object_short_name is not null and object_type_id is not null)
+  , constraint opt_option_ck_value_list_flag check
+    ( value_list_flag in ( 0, 1))
+  , constraint opt_option_ck_encryption_flag check
+    ( value_type_code = 'STR' and encryption_flag in ( 0, 1) or encryption_flag = 0)
+  , constraint opt_option_ck_test_prod_sensit check
+    ( test_prod_sensitive_flag in ( 0, 1))
+  , constraint opt_option_ck_deleted check
+    ( deleted in ( 0, 1))
+  , constraint opt_option_ck_change_number check
+    ( change_number >= 1)
 )
 /
 
 
+
 comment on table opt_option is
-  'Данные по настроечным параметрам в устаревшем виде ( таблица временно сохранена для совместимости, будет удалена) [ SVN root: Oracle/Module/Option]'
+  'Настроечные параметры программных модулей ( актуальные данные, включая логически удаленные записи) [ SVN root: Oracle/Module/Option]'
+/
+comment on column opt_option.option_id is
+  'Id параметра'
+/
+comment on column opt_option.module_id is
+  'Id модуля, к которому относится параметр'
+/
+comment on column opt_option.object_short_name is
+  'Короткое название объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)'
+/
+comment on column opt_option.object_type_id is
+  'Id типа объекта'
+/
+comment on column opt_option.option_short_name is
+  'Короткое название параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)'
+/
+comment on column opt_option.value_type_code is
+  'Код типа значения параметра'
+/
+comment on column opt_option.value_list_flag is
+  'Флаг задания для параметра списка значений указанного типа ( 1 да, 0 нет)'
+/
+comment on column opt_option.encryption_flag is
+  'Флаг хранения значений параметра в зашифрованном виде ( возможно только для значений строкового типа) ( 1 да, 0 нет)'
+/
+comment on column opt_option.test_prod_sensitive_flag is
+  'Флаг указания для значения параметра типа базы данных ( тестовая или промышленная), для которого оно предназначено ( 1 да, 0 нет)'
+/
+comment on column opt_option.access_level_code is
+  'Код уровня доступа к параметру через пользовательский интерфейс'
+/
+comment on column opt_option.option_name is
+  'Название параметра'
+/
+comment on column opt_option.option_description is
+  'Описание параметра'
+/
+comment on column opt_option.deleted is
+  'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'
+/
+comment on column opt_option.change_number is
+  'Порядковый номер изменения записи ( начиная с 1)'
+/
+comment on column opt_option.change_date is
+  'Дата изменения записи'
+/
+comment on column opt_option.change_operator_id is
+  'Id оператора, изменившего запись'
+/
+comment on column opt_option.date_ins is
+  'Дата добавления записи'
+/
+comment on column opt_option.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+-- index: opt_option_ix_object_type_id
+-- Индекс для внешнего ключа.
+create index
+  opt_option_ix_object_type_id
+on
+  opt_option (
+    object_type_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: opt_option_ix_up_obj_s_name
+-- Индекс для эффективного поиска в функции <pkg_Option.findOption>.
+create index
+  opt_option_ix_up_obj_s_name
+on
+  opt_option (
+    upper( object_short_name)
+  )
+tablespace &indexTablespace
+/
+
+-- index: opt_option_ix_up_opt_s_name
+-- Индекс для эффективного поиска в функции <pkg_Option.findOption>.
+create index
+  opt_option_ix_up_opt_s_name
+on
+  opt_option (
+    upper( option_short_name)
+  )
+tablespace &indexTablespace
 /

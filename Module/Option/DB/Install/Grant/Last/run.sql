@@ -22,11 +22,6 @@ for
   opt_plsql_object_option_t
 /
 
-grant select on v_opt_option to &toUserName
-/
-create or replace synonym &toUserName..v_opt_option for v_opt_option
-/
-
 grant select on v_opt_option_value to &toUserName
 /
 create or replace synonym &toUserName..v_opt_option_value for v_opt_option_value

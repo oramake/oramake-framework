@@ -1,3 +1,0 @@
-alter table doc_storage_rule
-   add constraint doc_storage_rule_operator_fk foreign key (operator_id)
-      references op_operator (operator_id);

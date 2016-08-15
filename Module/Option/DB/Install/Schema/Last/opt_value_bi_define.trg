@@ -8,13 +8,7 @@ begin
 
   -- Определяем значение первичного ключа
   if :new.value_id is null then
-    select
-      opt_option_value_seq.nextval
-    into
-      :new.value_id
-    from
-      dual
-    ;
+    :new.value_id := opt_value_seq.nextval;
   end if;
 
   -- Id оператора, добавившего запись

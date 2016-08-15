@@ -5,7 +5,7 @@ add constraint
 foreign key
   ( option_id)
 references
-  opt_option_new ( option_id)
+  opt_option ( option_id)
 on delete cascade
 /
 

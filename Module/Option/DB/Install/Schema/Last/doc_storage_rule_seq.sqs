@@ -1,6 +1,0 @@
---sequence: doc_storage_rule_seq
-create sequence doc_storage_rule_seq
- nomaxvalue
- nominvalue
- nocycle
-/

@@ -19,7 +19,7 @@ drop view v_opt_object_type
 /
 drop view v_opt_option_value
 /
-drop view v_opt_option_new
+drop view v_opt_option
 /
 drop view v_opt_option_history
 /
@@ -35,7 +35,7 @@ drop table opt_value
 /
 drop table opt_option_history
 /
-drop table opt_option_new
+drop table opt_option
 /
 drop table opt_access_level
 /
@@ -65,35 +65,7 @@ drop sequence opt_option_seq
 /
 drop sequence opt_option_history_seq
 /
-drop sequence opt_option_value_seq
+drop sequence opt_value_seq
 /
 drop sequence opt_value_history_seq
-/
-
-
-
--- Устаревшие объекты
-
--- Представления
-drop view v_opt_option
-/
-drop view v_opt_option_new2old
-/
-drop view v_opt_option_new2old_diff
-/
-
--- Таблицы
-drop table opt_option_value
-/
-drop table opt_option
-/
-drop table doc_mask
-/
-drop table doc_storage_rule
-/
-
--- Последовательности
-drop sequence doc_mask_seq
-/
-drop sequence doc_storage_rule_seq
 /

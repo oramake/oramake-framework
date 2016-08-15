@@ -1,19 +1,52 @@
+-- trigger: opt_option_bi_define
+-- Инициализация полей таблицы <opt_option> при добавлении записи.
 create or replace trigger opt_option_bi_define
- before insert
- on opt_option
- for each row
+  before insert
+  on opt_option
+  for each row
 begin
-if :new.Option_ID is null then          --Определяем значение первичного ключа.
-  select opt_Option_Seq.nextval into :new.Option_ID from dual;
-end if;
 
-if :new.Operator_ID is null then        --Оператор, создавший строку.
-  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
-end if;
+  -- Определяем значение первичного ключа
+  if :new.option_id is null then
+    select
+      opt_option_seq.nextval
+    into
+      :new.option_id
+    from
+      dual
+    ;
+  end if;
 
-if :new.Date_Ins is null then           --Определяем дату создания строки.
-  :new.Date_Ins := SysDate;
-end if;
-  
-end;--trigger;
+  -- Id оператора, добавившего запись
+  if :new.operator_id is null then
+    :new.operator_id :=
+      coalesce( :new.change_operator_id, pkg_Operator.getCurrentUserId())
+    ;
+  end if;
+
+  -- Определяем дату добавления записи
+  if :new.date_ins is null then
+    :new.date_ins := sysdate;
+  end if;
+
+  -- Запись действующая по умолчанию
+  if :new.deleted is null then
+    :new.deleted := 0;
+  end if;
+
+  -- Определяем номер изменения
+  if :new.change_number is null then
+    :new.change_number := 1;
+  end if;
+
+  -- Определяем время изменения строки
+  if :new.change_date is null then
+    :new.change_date := :new.date_ins;
+  end if;
+
+  -- Оператор, изменивший строку
+  if :new.change_operator_id is null then
+    :new.change_operator_id := :new.operator_id;
+  end if;
+end;
 /

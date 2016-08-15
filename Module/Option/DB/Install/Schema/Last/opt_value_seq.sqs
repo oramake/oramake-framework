@@ -1,0 +1,9 @@
+-- sequence: opt_value_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <opt_value>.
+create sequence
+  opt_value_seq
+nomaxvalue
+nominvalue
+nocycle
+/

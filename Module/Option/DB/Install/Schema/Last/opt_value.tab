@@ -16,10 +16,6 @@ create table
   , date_value                    date
   , number_value                  number
   , string_value                  varchar2(4000)
-  , old_option_value_id           integer
-  , old_option_id                 integer
-  , old_option_value_del_date     date
-  , old_option_del_date           date
   , deleted                       number(1)           default 0       not null
   , change_number                 integer             default 1       not null
   , change_date                   date                default sysdate not null
@@ -31,9 +27,6 @@ create table
     using index tablespace &indexTablespace
   , constraint opt_value_uk unique
     ( option_id, prod_value_flag, instance_name, used_operator_id)
-    using index tablespace &indexTablespace
-  , constraint opt_value_uk_old_opt_value_id unique
-    ( old_option_value_id)
     using index tablespace &indexTablespace
   , constraint opt_value_ck_prod_value_flag check
     ( prod_value_flag in ( 0, 1))
@@ -48,27 +41,6 @@ create table
 and ( storage_value_type_code = 'NUM' or number_value is null)
 and ( storage_value_type_code = 'STR' or string_value is null)
 )
-  , constraint opt_value_ck_old_option check
-(instance_name is null
-  and used_operator_id is null
-  and (
-    deleted = 1
-    or old_option_value_id is not null
-      and old_option_id is not null
-  )
-or (
-  instance_name is not null
-    or used_operator_id is not null
-  )
-  and old_option_value_id is null
-  and old_option_id is null
-  and old_option_value_del_date is null
-  and old_option_del_date is null
-)
-  , constraint opt_value_ck_old_ov_del_dt check
-    ( old_option_value_del_date is null or old_option_value_id is not null)
-  , constraint opt_value_ck_old_op_del_dt check
-    ( old_option_del_date is null or old_option_id is not null)
   , constraint opt_value_ck_deleted check
     ( deleted in ( 0, 1))
   , constraint opt_value_ck_change_number check
@@ -117,18 +89,6 @@ comment on column opt_value.number_value is
 comment on column opt_value.string_value is
   'Строковое значение параметра ( если не задано значение в поле list_separator) либо список значений с разделителем, указанным в поле list_separator ( если оно задано). Значения параметра строкового типа хранятся в списке без изменений, значения типа дата хранятся в формате "yyyy-mm-dd hh24:mi:ss", числа хранятся в формате "tm9" с десятичным разделителем точка.'
 /
-comment on column opt_value.old_option_value_id is
-  'Устаревшее поле: Id значения в таблице opt_option_value'
-/
-comment on column opt_value.old_option_id is
-  'Устаревшее поле: Id параметра в таблице opt_option'
-/
-comment on column opt_value.old_option_value_del_date is
-  'Устаревшее поле: Дата удаления значения из таблицы opt_option_value'
-/
-comment on column opt_value.old_option_del_date is
-  'Устаревшее поле: Дата удаления параметра из таблицы opt_option'
-/
 comment on column opt_value.deleted is
   'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'
 /
@@ -146,17 +106,4 @@ comment on column opt_value.date_ins is
 /
 comment on column opt_value.operator_id is
   'Id оператора, добавившего запись'
-/
-
-
-
--- index: opt_value_ix_old_option_id
--- Обеспечивает поиск значения по устаревшему Id параметра.
-create index
-  opt_value_ix_old_option_id
-on
-  opt_value (
-    old_option_id
-  )
-tablespace &indexTablespace
 /

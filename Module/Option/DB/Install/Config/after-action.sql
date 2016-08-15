@@ -1,13 +1,13 @@
---script: Install/Config/after-action.sql
---Действия, выполняемые после установки обновления модуля.
+-- script: Install/Config/after-action.sql
+-- Действия, выполняемые после установки обновления модуля.
 --
---Выполянемые действия:
+-- Выполянемые действия:
 --  - восстанавливает ранее отключенный запуск заданий через dbms_job
 --    ( вызывает <Install/Config/resume-batches.sql>);
 --
---Замечания:
+-- Замечания:
 --  - при первоначальной установке модуля ( INSTALL_VERSION=Last) скрипт не
 --    выполняется;
 --
 
-@@resume-batches.sql "v_opt_save_job_queue"
+@oms-run resume-batches.sql "v_opt_save_job_queue"

@@ -16,9 +16,6 @@ create table
   , access_level_code             varchar2(10)                        not null
   , option_name                   varchar2(250)                       not null
   , option_description            varchar2(1000)
-  , old_option_short_name         varchar2(250)                       not null
-  , old_mask_id                   integer
-  , old_option_name_test          varchar2(250)
   , deleted                       number(1)                           not null
   , change_number                 integer                             not null
   , change_date                   date                                not null
@@ -92,15 +89,6 @@ comment on column opt_option_history.option_name is
 /
 comment on column opt_option_history.option_description is
   'Описание параметра'
-/
-comment on column opt_option_history.old_option_short_name is
-  'Устаревшее поле: Короткое название параметра в таблице opt_option'
-/
-comment on column opt_option_history.old_mask_id is
-  'Устаревшее поле: Id маски для значения параметра'
-/
-comment on column opt_option_history.old_option_name_test is
-  'Устаревшее поле: Название тестового параметра в таблице opt_option'
 /
 comment on column opt_option_history.deleted is
   'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'

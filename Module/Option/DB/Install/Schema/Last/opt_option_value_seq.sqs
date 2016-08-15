@@ -1,9 +1,0 @@
--- sequence: opt_option_value_seq
--- Последовательность для заполнения первичного ключа таблицы
--- <opt_value>, а также поля old_option_value_id.
-create sequence
-  opt_option_value_seq
-nomaxvalue
-nominvalue
-nocycle
-/

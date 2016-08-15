@@ -23,10 +23,6 @@ from
     , h.date_value
     , h.number_value
     , h.string_value
-    , h.old_option_value_id
-    , h.old_option_id
-    , h.old_option_value_del_date
-    , h.old_option_del_date
     , h.deleted
     , h.change_number
     , h.change_date
@@ -54,10 +50,6 @@ from
     , t.date_value
     , t.number_value
     , t.string_value
-    , t.old_option_value_id
-    , t.old_option_id
-    , t.old_option_value_del_date
-    , t.old_option_del_date
     , t.deleted
     , t.change_number
     , t.change_date
@@ -113,18 +105,6 @@ comment on column v_opt_value_history.number_value is
 /
 comment on column v_opt_value_history.string_value is
   'Строковое значение параметра ( если не задано значение в поле list_separator) либо список значений с разделителем, указанным в поле list_separator ( если оно задано). Значения параметра строкового типа хранятся в списке без изменений, значения типа дата хранятся в формате "yyyy-mm-dd hh24:mi:ss", числа хранятся в формате "tm9" с десятичным разделителем точка.'
-/
-comment on column v_opt_value_history.old_option_value_id is
-  'Устаревшее поле: Id значения в таблице opt_option_value'
-/
-comment on column v_opt_value_history.old_option_id is
-  'Устаревшее поле: Id параметра в таблице opt_option'
-/
-comment on column v_opt_value_history.old_option_value_del_date is
-  'Устаревшее поле: Дата удаления значения из таблицы opt_option_value'
-/
-comment on column v_opt_value_history.old_option_del_date is
-  'Устаревшее поле: Дата удаления параметра из таблицы opt_option'
 /
 comment on column v_opt_value_history.deleted is
   'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'

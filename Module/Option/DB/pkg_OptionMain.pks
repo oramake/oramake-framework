@@ -55,6 +55,22 @@ LocalRoleSuffix_OptionSName constant varchar2(50) := 'LocalRoleSuffix';
 
 
 
+/* group: Роли модуля AccessOperator */
+
+/* const: Admin_RoleSName
+  Краткое наименование роли
+  "Администрирование всех параметров"
+*/
+Admin_RoleSName constant varchar2(50) := 'GlobalOptionAdmin';
+
+/* const: Show_RoleSName
+  Краткое наименование роли
+  "Просмотр всех параметров"
+*/
+Show_RoleSName constant varchar2(50) := 'OptShowAllOption';
+
+
+
 /* group: Уровни доступа через интерфейс */
 
 /* const: Full_AccessLevelCode
@@ -99,16 +115,6 @@ String_ValueTypeCode constant varchar2(10) := 'STR';
   Короткое название типа объекта "PL/SQL объект".
 */
 PlsqlObject_ObjTypeSName constant varchar2(50) := 'plsql_object';
-
-
-
-/* group: Устаревшие объекты */
-
-/* iconst: OldTestOption_Suffix
-  Стандартный суффикс, с помощью которого строится короткое название тестового
-  параметра ( option_short_name) в устаревшей таблице opt_option.
-*/
-OldTestOption_Suffix varchar2(10) := 'Test';
 
 
 
@@ -242,62 +248,6 @@ function getDecryptValue(
 )
 return varchar2;
 
-/* pfunc: getOldOptionId
-  Получение id опции из устаревшей таблицы <opt_option> по имени модуля и
-  короткому наименованию, которые используются для формирования значения
-  option_short_name.
-  Функция создана вместо ранее существовавшей в пакете pkg_Option внутренней
-  функции getOptionId и отличается от нее:
-  - добавлением параметра raiseNotFoundFlag;
-  - выполнением поиска по opt_option вместо v_opt_option, что обеспечивает
-    успешное выполнение при отсутствии ранее заданного значения;
-
-  Параметры:
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                значения ( 1 да ( по умолчанию), 0 нет)
-
-  ( <body::getOldOptionId>)
-*/
-function getOldOptionId(
-  moduleName varchar2
-  , moduleOptionName varchar2
-  , raiseNotFoundFlag integer := null
-)
-return integer;
-
-/* pproc: getOptionInfoOld
-  Возвращает Id настроечного параметра и флаг указания для параметра типа БД
-  по названию из устаревшей таблицы.
-
-  Параметры:
-  optionId                    - Id параметра ( из таблицы <opt_option_new>)
-                                ( возврат)
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-                                ( возврат)
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Замечания:
-  - если параметр не найден и значение raiseNotFoundFlag равно 0, то в
-    параметрах optionId и prodValueFlag возвращается null;
-
-  ( <body::getOptionInfoOld>)
-*/
-procedure getOptionInfoOld(
-  optionId out integer
-  , prodValueFlag out integer
-  , moduleName varchar2
-  , moduleOptionName varchar2
-  , raiseNotFoundFlag integer := null
-);
-
 /* pfunc: getOptionId
   Возвращает Id настроечного параметра.
 
@@ -310,8 +260,8 @@ procedure getOptionInfoOld(
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
-  Id параметра ( из таблицы <opt_option_new>) либо null, если параметр не
-  найден и значение raiseNotFoundFlag равно 0.
+  Id параметра либо null, если параметр не найден и значение raiseNotFoundFlag
+  равно 0.
 
   ( <body::getOptionId>)
 */
@@ -337,7 +287,7 @@ return integer;
   ( <body::lockOption>)
 */
 procedure lockOption(
-  rowData out nocopy opt_option_new%rowtype
+  rowData out nocopy opt_option%rowtype
   , optionId integer
 );
 
@@ -371,23 +321,10 @@ procedure lockOption(
                                 ( по умолчанию отсутствует)
   optionId                    - Id создаваемого параметра
                                 ( по умолчанию формируется автоматически)
-  oldOptionShortName          - короткое название параметра в таблице
-                                opt_option
-                                ( по умолчанию формируется автоматически)
-  oldMaskId                   - Id маски для значения параметра
-                                ( по умолчанию формируется автоматически)
-  oldOptionNameTest           - название тестового параметра в таблице
-                                opt_option
-                                ( по умолчанию отсутствует)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
   Id параметра.
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option с тем же значением
-    option_id;
 
   ( <body::createOption>)
 */
@@ -404,9 +341,6 @@ function createOption(
   , accessLevelCode varchar2 := null
   , optionDescription varchar2 := null
   , optionId integer := null
-  , oldOptionShortName varchar2 := null
-  , oldMaskId integer := null
-  , oldOptionNameTest varchar2 := null
   , operatorId integer := null
 )
 return integer;
@@ -439,11 +373,6 @@ return integer;
                                 новым данным настроечного параметра
                                 ( 1 да, 0 нет ( выбрасывать исключение))
                                 ( по умолчанию 0)
-  oldOptionNameTest           - название тестового параметра в таблице
-                                opt_option
-                                ( используется только при внутренней
-                                  синхронизации изменений)
-                                ( по умолчанию текущее значение)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Замечания:
@@ -466,7 +395,6 @@ procedure updateOption(
   , optionDescription varchar2
   , moveProdSensitiveValueFlag integer := null
   , deleteBadValueFlag integer := null
-  , oldOptionNameTest varchar2 := null
   , operatorId integer := null
 );
 
@@ -689,34 +617,16 @@ procedure lockValue(
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
-  oldOptionValueDelDate       - дата удаления значения из таблицы
-                                opt_option_value
-                                ( по умолчанию отсутствует)
-  oldOptionDelDate            - дата удаления значения из таблицы
-                                opt_option
-                                ( по умолчанию отсутствует)
   ignoreTestProdSensitiveFlag - при создании значения не проверять его
                                 соответствие текущему значению флага
                                 test_prod_sensitive_flag параметра
                                 ( 1 да, 0 нет ( выбрасывать исключение при
                                   расхождении))
                                 ( по умолчанию 0)
-  fillIdFromOldFlag           - использовать в качестве Id создаваемой записи
-                                ( value_id) значение oldOptionValueId если
-                                оно задано
-                                ( 1 да ( по умолчанию), 0 нет)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
   Id значения параметра.
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
 
   ( <body::createValue>)
 */
@@ -734,12 +644,7 @@ function createValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
-  , oldOptionValueDelDate date := null
-  , oldOptionDelDate date := null
   , ignoreTestProdSensitiveFlag integer := null
-  , fillIdFromOldFlag integer := null
   , operatorId integer := null
 )
 return integer;
@@ -782,15 +687,7 @@ return integer;
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
   operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
 
   ( <body::updateValue>)
 */
@@ -805,8 +702,6 @@ procedure updateValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
   , operatorId integer := null
 );
 
@@ -859,15 +754,9 @@ procedure updateValue(
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
   - для установки значения в зависимости от его наличия используется либо
     функция <createValue> либо процедура <updateValue>;
 
@@ -887,8 +776,6 @@ procedure setValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
   , operatorId integer := null
 );
 
@@ -898,10 +785,6 @@ procedure setValue(
   Параметры:
   valueId                     - Id значения параметра
   operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    удаляются записи из устаревших таблиц opt_option_value и opt_option;
 
   ( <body::deleteValue>)
 */
@@ -913,36 +796,6 @@ procedure deleteValue(
 
 
 /* group: Дополнительные функции */
-
-/* pproc: addOptionWithValueOld
-  Добавляет настроечный параметр со значением в устаревшие таблицы, если он не
-  был создан ранее.
-
-  Параметры:
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  dateValue                   - значение типа дата
-                                ( по умолчанию отсутствует)
-  numberValue                 - числовое значение
-                                ( по умолчанию отсутствует)
-  stringValue                 - строковое значение
-                                ( по умолчанию отсутствует)
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  ( <body::addOptionWithValueOld>)
-*/
-procedure addOptionWithValueOld(
-  moduleName varchar2
-  , moduleOptionName varchar2
-  , valueTypeCode varchar2
-  , optionName varchar2
-  , dateValue date := null
-  , numberValue number := null
-  , stringValue varchar2 := null
-  , operatorId integer := null
-);
 
 /* pproc: addOptionWithValue
   Добавляет настроечный параметр со значением, если он не был создан ранее.
@@ -1073,85 +926,6 @@ procedure getOptionValue(
   , objectShortName varchar2 := null
   , objectTypeId integer := null
   , usedOperatorId integer := null
-);
-
-
-
-/* group: Поддержка устаревших объектов */
-
-/* pfunc: getSaveValueHistoryFlag
-  Возвращает текущее значение флага сохранения истории при изменении
-  записей в <opt_value>.
-
-  ( <body::getSaveValueHistoryFlag>)
-*/
-function getSaveValueHistoryFlag
-return integer;
-
-/* pfunc: getCopyOld2NewChangeFlag
-  Возвращает текущее значение флага копирования изменений, вносимых в
-  устаревшие таблицы, в новые таблицы.
-
-  ( <body::getCopyOld2NewChangeFlag>)
-*/
-function getCopyOld2NewChangeFlag
-return integer;
-
-/* pproc: onOldBeforeStatement
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> перед
-  выполнением DML.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-
-  ( <body::onOldBeforeStatement>)
-*/
-procedure onOldBeforeStatement(
-  tableName varchar2
-  , statementType varchar2
-);
-
-/* pproc: onOldAfterRow
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> при
-  выполнении DML после изменения каждой записи.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-  newRowId                    - Id изменяемой записи ( новое значение)
-  oldRowId                    - Id изменяемой записи ( старое значение)
-  oldOptionShortName          - короткое название опции ( передается
-                                только в случае удаления из opt_option)
-
-  Замечания:
-  - в качестве значения параметров newRowId и oldRowId для таблицы opt_option
-    указывается option_id, для таблицы opt_option_value указывается
-    option_value_id;
-
-  ( <body::onOldAfterRow>)
-*/
-procedure onOldAfterRow(
-  tableName varchar2
-  , statementType varchar2
-  , newRowId integer
-  , oldRowId integer
-  , oldOptionShortName varchar2 := null
-);
-
-/* pproc: onOldAfterStatement
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> после
-  выполнения DML.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-
-  ( <body::onOldAfterStatement>)
-*/
-procedure onOldAfterStatement(
-  tableName varchar2
-  , statementType varchar2
 );
 
 end pkg_OptionMain;

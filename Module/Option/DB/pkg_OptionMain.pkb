@@ -5,12 +5,6 @@ create or replace package body pkg_OptionMain is
 
 /* group: Константы */
 
-/* iconst: OldTestOptionName_Suffix
-  Стандартный суффикс, с помощью которого строится название тестового
-  параметра в устаревшей таблице opt_option.
-*/
-OldTestOptionName_Suffix varchar2(10) := ' (тест)';
-
 /* iconst: ListSeparator_Default
   Символ, используемый по умолчанию в качестве разделителя в списке значений
   параметра строкового типа, а тажке для списка значений параметра числового
@@ -65,85 +59,7 @@ currentUsedOperatorId integer := null;
 
 
 
-/* group: Поддержка устаревших объектов */
-
-/* itype: IdListT
-  Список Id записей.
-*/
-type IdListT is table of integer;
-
-/* itype: OptionSNameListT
-  Список коротких названий записей.
-*/
-type OptionSNameListT is table of opt_option.option_short_name%type;
-
-/* iconst: BatchLoader_ModuleName
-  Имя модуля BatchLoader.
-*/
-BatchLoader_ModuleName constant varchar2(50) := 'BatchLoader';
-
-/* iconst: Scheduler_SvnRoot
-  Путь в SVN к корневому каталогу модуля Scheduler.
-*/
-Scheduler_SvnRoot constant varchar2(100) := 'Oracle/Module/Scheduler';
-
-/* iconst: Batch_ObjectTypeShortName
-  Короткое название типа объекта для пакетных заданий модуля Scheduler.
-*/
-Batch_ObjectTypeShortName constant varchar2(30) := 'batch';
-
-/* ivar: isCopyNew2OldChange
-  Признак копирования изменений, вносимых в новые таблицы, в устаревшие
-  таблицы.
-*/
-isCopyNew2OldChange boolean := true;
-
-/* ivar: isCopyOld2NewChange
-  Признак копирования изменений, вносимых в устаревшие таблицы, в новые
-  таблицы.
-*/
-isCopyOld2NewChange boolean := true;
-
-/* ivar: isSkipCheckNew2OldSync
-  Признак пропуска проверки отсутствие расхождений между значениями параметров
-  в новых и устаревших таблицах при выполнении процедуры <checkNew2OldSync>
-  ( по умолчанию не пропускать).
-*/
-isSkipCheckNew2OldSync boolean := false;
-
-/* ivar: onChangeTableName
-  Имя таблицы, над которой выполняется DML ( OPT_OPTION / OPT_OPTION_VALUE).
-*/
-onChangeTableName varchar2(30);
-
-/* ivar: onChangeStatementType
-  Тип DML, выполняемого над таблицей ( INSERT / UPDATE / DELETE).
-*/
-onChangeStatementType varchar2(30);
-
-/* ivar: onChangeIdList
-  Список Id измененных записей.
-*/
-onChangeIdList IdListT;
-
-/* ivar: onDeleteOptionSNameList
-  Список значений названий параметров ( поле option_short_name) для удаляемых
-  из <opt_option> записей.
-*/
-onDeleteOptionSNameList OptionSNameListT;
-
-/* ivar: schedulerExistsInfo
-  Информация по наличии модуля Scheduler в своей схеме
-  ( null неизвестно, 0 отсутствует, 1 присутствует без поля module_id,
-    2 присутствует с полем module_id)
-*/
-schedulerExistsInfo number(1) := null;
-
-
-
 /* group: Функции */
-
-procedure checkNew2OldSync;
 
 /* func: getCurrentUsedOperatorId
   Возвращает текущий установленный Id оператора, для которого может
@@ -401,7 +317,7 @@ is
         select
           1 - min( t.deleted) as used_flag
         from
-          opt_option_new t
+          opt_option t
         where
           t.object_type_id = d.object_type_id
         )
@@ -552,812 +468,6 @@ exception when others then
   );
 end getDecryptValue;
 
-/* func: getOldOptionId
-  Получение id опции из устаревшей таблицы <opt_option> по имени модуля и
-  короткому наименованию, которые используются для формирования значения
-  option_short_name.
-  Функция создана вместо ранее существовавшей в пакете pkg_Option внутренней
-  функции getOptionId и отличается от нее:
-  - добавлением параметра raiseNotFoundFlag;
-  - выполнением поиска по opt_option вместо v_opt_option, что обеспечивает
-    успешное выполнение при отсутствии ранее заданного значения;
-
-  Параметры:
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                значения ( 1 да ( по умолчанию), 0 нет)
-*/
-function getOldOptionId(
-  moduleName varchar2
-  , moduleOptionName varchar2
-  , raiseNotFoundFlag integer := null
-)
-return integer
-is
-
-  -- Id опции
-  optionId v_opt_option.option_id%type;
-
-  -- Короткое наименование опции
-  optionShortName v_opt_option.option_short_name%type
-    -- функция getOptionShortName( moduleName, moduleOptionName) в pkg_Option
-    := moduleName || '.' || moduleOptionName
-  ;
-
--- getOldOptionId
-begin
-  select
-    option_id
-  into
-    optionId
-  from
-    opt_option
-  where
-    option_short_name = optionShortName
-  ;
-  return
-    optionId
-  ;
-exception when others then
-  if raiseNotFoundFlag = 0 and sqlcode = pkg_Error.NoDataFound then
-    logger.clearErrorStack();
-    return null;
-  else
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка получения id опции ('
-          || ' moduleName="' || moduleName || '"'
-          || ', moduleOptionName="' || moduleOptionName || '"'
-          || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-          || ')'
-        )
-      , true
-    );
-  end if;
-end getOldOptionId;
-
-/* proc: getOptionInfoOld
-  Возвращает Id настроечного параметра и флаг указания для параметра типа БД
-  по названию из устаревшей таблицы.
-
-  Параметры:
-  optionId                    - Id параметра ( из таблицы <opt_option_new>)
-                                ( возврат)
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-                                ( возврат)
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Замечания:
-  - если параметр не найден и значение raiseNotFoundFlag равно 0, то в
-    параметрах optionId и prodValueFlag возвращается null;
-*/
-procedure getOptionInfoOld(
-  optionId out integer
-  , prodValueFlag out integer
-  , moduleName varchar2
-  , moduleOptionName varchar2
-  , raiseNotFoundFlag integer := null
-)
-is
-
-  -- Короткое наименование опции
-  optionShortName v_opt_option.option_short_name%type
-    -- функция getOptionShortName( moduleName, moduleOptionName) в pkg_Option
-    := moduleName || '.' || moduleOptionName
-  ;
-
-begin
-  select
-    min( opn.option_id) as option_id
-    , min(
-        case when opn.test_prod_sensitive_flag = 1 then
-          case when
-              moduleOptionName like '%_' || OldTestOption_Suffix
-            then 0
-            else 1
-          end
-        end
-      )
-      as prod_value_flag
-  into optionId, prodValueFlag
-  from
-    opt_option_new opn
-  where
-    opn.old_option_short_name =
-      (
-      select
-        case when
-          opt.option_short_name like '%_' || OldTestOption_Suffix
-        then
-          substr(
-            opt.option_short_name, 1, length( opt.option_short_name) - 4
-          )
-        else
-          opt.option_short_name
-        end
-        as prod_option_short_name
-      from
-        opt_option opt
-      where
-        opt.option_short_name = optionShortName
-      )
-    and opn.deleted = 0
-  ;
-  if optionId is null and coalesce( raiseNotFoundFlag, 1) != 0 then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Настроечный параметр не найден.'
-    );
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении Id параметра по устаревшему названию ('
-        || ' moduleName="' || moduleName || '"'
-        || ', moduleOptionName="' || moduleOptionName || '"'
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getOptionInfoOld;
-
-/* iproc: insertOptionOld( BASE)
-  Добавляет запись для настроечного параметра в устаревшую таблицу <opt_option>.
-
-  Параметры:
-  rowData                     - данные записи ( возврат)
-  oldOptionShortName          - короткое название параметра в таблице
-                                opt_option
-  storageValueTypeCode        - код типа для хранения значения параметра
-  oldOptionName               - название параметра в таблице opt_option
-  optionId                    - Id добавляемой записи
-                                ( по умолчанию формируется автоматически)
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - значение переменной isCopyOld2NewChange при выполнении процедуры не
-    изменяется;
-*/
-procedure insertOptionOld(
-  rowData out nocopy opt_option%rowtype
-  , oldOptionShortName varchar2
-  , storageValueTypeCode varchar2
-  , oldOptionName varchar2
-  , optionId integer := null
-  , operatorId integer
-)
-is
-
-
-
-  /*
-    Заполнение полей записи.
-  */
-  procedure fillData
-  is
-  begin
-    rowData.option_id := optionId;
-    rowData.option_short_name := oldOptionShortName;
-    rowData.option_name := oldOptionName;
-    rowData.is_global := 1;
-    rowData.mask_id :=
-      case storageValueTypeCode
-        when Date_ValueTypeCode    then 4
-        when Number_ValueTypeCode  then 1
-        when String_ValueTypeCode  then 3
-      end
-    ;
-    rowData.operator_id := operatorId;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при заполнении полей записи.'
-        )
-      , true
-    );
-  end fillData;
-
-
-
-  /*
-    Вставка записи в opt_option.
-  */
-  procedure insertRecord
-  is
-  begin
-    insert into
-      opt_option
-    values
-      rowData
-    returning
-      option_id
-      , date_ins
-    into
-      rowData.option_id
-      , rowData.date_ins
-    ;
-    logger.trace(
-      'insertOptionOld: opt_option inserted: option_id=' || rowData.option_id
-    );
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при вставке записи в opt_option ('
-          || ' option_short_name="' || rowData.option_short_name || '"'
-          || ', mask_id=' || rowData.mask_id
-          || ').'
-        )
-      , true
-    );
-  end insertRecord;
-
-
-
--- insertOptionOld
-begin
-  fillData();
-  insertRecord();
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении записи в устаревшую таблицу opt_option ('
-        || ' oldOptionShortName="' || oldOptionShortName || '"'
-        || ', storageValueTypeCode="' || storageValueTypeCode || '"'
-        || ').'
-      )
-    , true
-  );
-end insertOptionOld;
-
-/* iproc: insertOptionOld
-  Добавляет запись для настроечного параметра в устаревшую таблицу <opt_option>.
-
-  Параметры:
-  rowData                     - данные записи ( возврат)
-  moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
-  objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
-                                ( в таблице opt_option_new)
-  storageValueTypeCode        - код типа для хранения значения параметра
-  optionName                  - название параметра
-                                ( в таблице opt_option_new)
-  testOptionFlag              - флаг добавления тестового параметра
-                                ( 1 да, 0 нет)
-  optionId                    - Id добавляемой записи
-                                ( по умолчанию формируется автоматически)
-  prodOldOptionShortName      - короткое название промышленного параметра в
-                                таблице opt_option
-                                ( по умолчанию формируется автоматически)
-  operatorId                  - Id оператора
-*/
-procedure insertOptionOld(
-  rowData out nocopy opt_option%rowtype
-  , moduleId integer
-  , objectShortName varchar2
-  , objectTypeId integer
-  , optionShortName varchar2
-  , storageValueTypeCode varchar2
-  , optionName varchar2
-  , testOptionFlag integer
-  , optionId integer := null
-  , prodOldOptionShortName varchar2 := null
-  , operatorId integer
-)
-is
-
-  -- Старое значение признака копирования в новые таблицы
-  isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
-  -- Значения полей добавляемой записи
-  oldOptionShortName opt_option.option_short_name%type;
-  oldOptionName opt_option.option_name%type;
-
-
-  /*
-    Заполнение полей записи.
-  */
-  procedure fillData
-  is
-  begin
-    if prodOldOptionShortName is null then
-      select
-        md.module_name
-        || case when objectShortName is not null then
-            '.' || objectShortName
-          end
-        || '.'
-        || optionShortName
-        || case when testOptionFlag = 1 then
-            OldTestOption_Suffix
-          end
-      into oldOptionShortName
-      from
-        v_mod_module md
-        left outer join opt_object_type ot
-          on ot.object_type_id = objectTypeId
-      where
-        md.module_id = moduleId
-      ;
-      oldOptionName :=
-        optionName
-        || case when testOptionFlag = 1 then
-            OldTestOptionName_Suffix
-          end
-      ;
-    else
-      oldOptionShortName :=
-        prodOldOptionShortName
-        || case when testOptionFlag = 1 then
-            OldTestOption_Suffix
-          end
-      ;
-    end if;
-    oldOptionName :=
-      optionName
-      || case when testOptionFlag = 1 then
-          OldTestOptionName_Suffix
-        end
-    ;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при заполнении полей записи.'
-        )
-      , true
-    );
-  end fillData;
-
-
-
--- insertOptionOld
-begin
-
-  -- Исключаем обратное копирование изменений триггерами
-  isCopyOld2NewChange := false;
-
-  fillData();
-  insertOptionOld(
-    rowData                 => rowData
-    , oldOptionShortName    => oldOptionShortName
-    , storageValueTypeCode  => storageValueTypeCode
-    , oldOptionName         => oldOptionName
-    , optionId              => optionId
-    , operatorId            => operatorId
-  );
-
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-exception when others then
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении записи в устаревшую таблицу opt_option ('
-        || ' moduleId=' || moduleId
-        || ', objectShortName="' || objectShortName || '"'
-        || ', objectTypeId=' || objectTypeId
-        || ', optionShortName="' || optionShortName || '"'
-        || ', storageValueTypeCode="' || storageValueTypeCode || '"'
-        || ').'
-      )
-    , true
-  );
-end insertOptionOld;
-
-/* iproc: updateOptionOld
-  Обновляет данные параметра в записях устаревшей таблицы <opt_option>.
-
-  Параметры:
-  optionId                    - Id параметра ( в таблице opt_option_new)
-  testProdSensitiveFlag       - флаг указания для значения параметра типа базы
-                                данных ( тестовая или промышленная), для
-                                которого оно предназначено
-                                ( 1 да, 0 нет)
-  storageValueTypeCode        - код типа для хранения значения параметра
-  optionName                  - название параметра
-                                ( в таблице opt_option_new)
-  oldMaskId                   - Id маски для значения параметра
-*/
-procedure updateOptionOld(
-  optionId integer
-  , testProdSensitiveFlag integer
-  , storageValueTypeCode varchar2
-  , optionName varchar2
-  , oldMaskId integer
-)
-is
-
-  -- Старое значение признака копирования в новые таблицы
-  isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
-
-
-  /*
-    Изменяет данные параметра.
-  */
-  procedure updateOptionData(
-    prodValueFlag integer
-  )
-  is
-  begin
-    update
-      opt_option d
-    set
-      d.mask_id = oldMaskId
-      , d.option_name =
-        optionName
-        || case when prodValueFlag = 0 then OldTestOptionName_Suffix end
-    where
-      d.option_id in
-        (
-        select distinct
-          vlh.old_option_id
-        from
-          v_opt_value_history vlh
-        where
-          vlh.old_option_value_del_date is null
-          and vlh.deleted = 0
-          and vlh.value_id in
-            (
-            select
-              vl.value_id
-            from
-              opt_value vl
-            where
-              vl.option_id = optionId
-              and vl.deleted = 0
-              and (
-                vl.prod_value_flag = prodValueFlag
-                or prodValueFlag is null
-                  and vl.prod_value_flag is null
-              )
-              and vl.storage_value_type_code = storageValueTypeCode
-              -- возможность задания значений для конкретной БД / оператора не
-              -- поддерживается для устаревших объектов
-              and vl.instance_name is null
-              and vl.used_operator_id is null
-            )
-        )
-      or nullif( prodValueFlag, 1) is null
-        and d.option_id = optionId
-    ;
-    logger.trace(
-      'updateOptionOld: opt_option updated:'
-      || ' for new option_id=' || optionId
-      || ', prodValueFlag=' || prodValueFlag
-      || ': ' || sql%rowcount || ' rows'
-    );
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при изменении названия параметра ('
-          || ' prodValueFlag=' || prodValueFlag
-          || ').'
-        )
-      , true
-    );
-  end updateOptionData;
-
-
-
--- updateOptionOld
-begin
-
-  -- Исключаем обратное копирование изменений триггерами
-  isCopyOld2NewChange := false;
-
-  updateOptionData( prodValueFlag => nullif( testProdSensitiveFlag, 0));
-  if testProdSensitiveFlag = 1 then
-    updateOptionData( prodValueFlag => 0);
-  end if;
-
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-exception when others then
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при обновлении данных параметра'
-        || ' в устаревшей таблице opt_option ('
-        || ' optionId=' || optionId
-        || ', testProdSensitiveFlag=' || testProdSensitiveFlag
-        || ', storageValueTypeCode="' || storageValueTypeCode || '"'
-        || ').'
-      )
-    , true
-  );
-end updateOptionOld;
-
-/* iproc: setOldDelDate
-  Устанавливает даты удаления записей из устаревших таблиц.
-
-  Параметры:
-  valueId                     - Id значения
-  valueHistoryId              - Id исторической записи ( null если обновление
-                                нужно выполнить в таблице opt_value)
-  oldOptionValueDelDate       - устанавливаемая дата удаления из
-                                opt_option_value
-                                ( по умолчанию не менять)
-  oldOptionDelDate            - устанавливаемая дата удаления из opt_option
-                                ( по умолчанию не менять)
-
-  Замечания:
-  - в случае обновления таблицы opt_option исключается создание новой
-    исторической записи;
-*/
-procedure setOldDelDate(
-  valueId integer
-  , valueHistoryId integer
-  , oldOptionValueDelDate date := null
-  , oldOptionDelDate date := null
-)
-is
-
-  -- Текущее значение флага сохранения истории значений
-  oldSaveValueHistoryFlag integer := saveValueHistoryFlag;
-
-begin
-  if valueHistoryId is not null then
-    update
-      opt_value_history t
-    set
-      t.old_option_value_del_date =
-          coalesce( oldOptionValueDelDate, t.old_option_value_del_date)
-      , t.old_option_del_date =
-          coalesce( oldOptionDelDate, t.old_option_del_date)
-    where
-      t.value_history_id = valueHistoryId
-      and t.value_id = valueId
-    ;
-  else
-    saveValueHistoryFlag := 0;
-    update
-      opt_value t
-    set
-      t.old_option_value_del_date =
-          coalesce( oldOptionValueDelDate, t.old_option_value_del_date)
-      , t.old_option_del_date =
-          coalesce( oldOptionDelDate, t.old_option_del_date)
-    where
-      t.value_id = valueId
-    ;
-    saveValueHistoryFlag := oldSaveValueHistoryFlag;
-  end if;
-  logger.trace(
-    'setOldDelDate:'
-    || case when valueHistoryId is not null then
-        ' opt_value_history updated:'
-        || ' value_history_id=' || valueHistoryId
-        || ','
-      else
-        ' opt_value updated ( without save history):'
-      end
-    || ' value_id=' || valueId
-    || case when oldOptionValueDelDate is not null then
-        ', old_option_value_del_date='
-        || to_char( oldOptionValueDelDate, 'dd.mm.yyyy hh24:mi:ss')
-      end
-    || case when oldOptionDelDate is not null then
-        ', old_option_del_date='
-        || to_char( oldOptionDelDate, 'dd.mm.yyyy hh24:mi:ss')
-      end
-  );
-exception when others then
-  saveValueHistoryFlag := oldSaveValueHistoryFlag;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при установке дат удаления записей из устаревших таблиц ('
-        || ' value_id=' || valueId
-        || ', value_history_id=' || valueHistoryId
-        || ').'
-      )
-    , true
-  );
-end setOldDelDate;
-
-/* iproc: deleteOptionOld( BASE)
-  Удаляет записи из устаревшей таблицы opt_option.
-
-  Параметры:
-  oldOptionId                 - Id удаляемой записи
-*/
-procedure deleteOptionOld(
-  oldOptionId integer
-)
-is
-
-  -- Старое значение признака копирования в новые таблицы
-  isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
--- deleteOptionOld
-begin
-
-  -- Исключаем обратное копирование изменений триггерами
-  isCopyOld2NewChange := false;
-
-  delete
-    opt_option d
-  where
-    d.option_id = oldOptionId
-  ;
-  if sql%rowcount = 0 then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , 'Запись не найдена.'
-    );
-  end if;
-  logger.trace(
-    'deleteOptionOld: opt_option deleted: option_id='
-    || oldOptionId
-  );
-
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-exception when others then
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при удалении записи из opt_option ('
-        || ' oldOptionId=' || oldOptionId
-        || ').'
-      )
-    , true
-  );
-end deleteOptionOld;
-
-/* iproc: deleteOptionOld
-  Удаляет записи из устаревшей таблицы opt_option.
-
-  Параметры:
-  valueId                     - Id значения если нужно удалить все связанные
-                                с этим значением записи кроме основной
-  optionId                    - Id параметра в opt_option_new если нужно
-                                удалить только основную запись по параметру
-  oldOptionDelDate            - дата удаления для сохранение в поле
-                                old_option_del_date
-*/
-procedure deleteOptionOld(
-  valueId integer := null
-  , optionId integer := null
-  , oldOptionDelDate date
-)
-is
-
-  cursor dataCur is
-    select
-      a.old_option_id
-      , a.value_id
-      , a.value_history_id
-    from
-      (
-      select
-        t.old_option_id
-        , t.value_id
-        , max( t.value_history_id)
-          keep ( dense_rank last order by t.change_number)
-          as value_history_id
-        , max( t.old_option_del_date)
-          keep ( dense_rank last order by t.change_number)
-          as old_option_del_date
-      from
-        v_opt_value_history t
-      where
-        t.value_id in
-          (
-          select
-            vl.value_id
-          from
-            opt_value vl
-          where
-            vl.value_id = valueId
-            or vl.option_id = optionId
-              and vl.instance_name is null
-              and vl.used_operator_id is null
-              and nullif( vl.prod_value_flag, 1) is null
-          )
-        and t.deleted = 0
-        and t.old_option_id is not null
-        and (
-          valueId is not null
-            and t.old_option_id != t.option_id
-          or optionId is not null
-            and t.old_option_id = t.option_id
-        )
-      group by
-        t.old_option_id
-        , t.value_id
-      ) a
-    where
-      a.old_option_del_date is null
-    -- на случай отсутствия значений
-    union all
-    select
-      opt.option_id as old_option_id
-      , null as value_id
-      , null as value_history_id
-    from
-      opt_option opt
-    where
-      opt.option_id = optionId
-    order by
-      1, 2
-  ;
-
-  -- Старое значение признака копирования в новые таблицы
-  isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
-  -- Флаг успешного удаления основной записи
-  isMainDeleted boolean := false;
-
--- deleteOptionOld
-begin
-
-  -- Исключаем обратное копирование изменений триггерами
-  isCopyOld2NewChange := false;
-
-  for rec in dataCur loop
-    begin
-      if optionId is null or not isMainDeleted then
-        deleteOptionOld(
-          oldOptionId => rec.old_option_id
-        );
-        if rec.old_option_id = optionId then
-          isMainDeleted := true;
-        end if;
-      end if;
-      if rec.value_id is not null then
-        setOldDelDate(
-          valueId                 => rec.value_id
-          , valueHistoryId        => rec.value_history_id
-          , oldOptionDelDate      => oldOptionDelDate
-        );
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при обработке записи ('
-            || ' option_id=' || rec.old_option_id
-            || ', value_history_id=' || rec.value_history_id
-            || ', value_id=' || rec.value_id
-            || ').'
-          )
-        , true
-      );
-    end;
-  end loop;
-
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-exception when others then
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при удалении записей из устаревшей таблицы opt_option ('
-        || ' valueId=' || valueId
-        || ', optionId=' || optionId
-        || ').'
-      )
-    , true
-  );
-end deleteOptionOld;
-
 /* func: getOptionId
   Возвращает Id настроечного параметра.
 
@@ -1370,8 +480,8 @@ end deleteOptionOld;
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
-  Id параметра ( из таблицы <opt_option_new>) либо null, если параметр не
-  найден и значение raiseNotFoundFlag равно 0.
+  Id параметра либо null, если параметр не найден и значение raiseNotFoundFlag
+  равно 0.
 */
 function getOptionId(
   moduleId integer
@@ -1397,7 +507,7 @@ begin
     min( t.option_id)
   into optionId
   from
-    opt_option_new t
+    opt_option t
   where
     t.module_id = moduleId
     and (
@@ -1445,7 +555,7 @@ end getOptionId;
   - в случае, если запись была логически удалена, выбрасывается исключение;
 */
 procedure lockOption(
-  rowData out nocopy opt_option_new%rowtype
+  rowData out nocopy opt_option%rowtype
   , optionId integer
 )
 is
@@ -1454,7 +564,7 @@ begin
     t.*
   into rowData
   from
-    opt_option_new t
+    opt_option t
   where
     t.option_id = optionId
   for update nowait;
@@ -1507,23 +617,10 @@ end lockOption;
                                 ( по умолчанию отсутствует)
   optionId                    - Id создаваемого параметра
                                 ( по умолчанию формируется автоматически)
-  oldOptionShortName          - короткое название параметра в таблице
-                                opt_option
-                                ( по умолчанию формируется автоматически)
-  oldMaskId                   - Id маски для значения параметра
-                                ( по умолчанию формируется автоматически)
-  oldOptionNameTest           - название тестового параметра в таблице
-                                opt_option
-                                ( по умолчанию отсутствует)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
   Id параметра.
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option с тем же значением
-    option_id;
 */
 function createOption(
   moduleId integer
@@ -1538,16 +635,13 @@ function createOption(
   , accessLevelCode varchar2 := null
   , optionDescription varchar2 := null
   , optionId integer := null
-  , oldOptionShortName varchar2 := null
-  , oldMaskId integer := null
-  , oldOptionNameTest varchar2 := null
   , operatorId integer := null
 )
 return integer
 is
 
   -- Данные в виде записи
-  rec opt_option_new%rowtype;
+  rec opt_option%rowtype;
 
 
 
@@ -1576,18 +670,7 @@ is
     );
     rec.option_description        := optionDescription;
     rec.option_id                 := optionId;
-    rec.old_option_short_name     := oldOptionShortName;
-    rec.old_mask_id               := oldMaskId;
-    rec.old_option_name_test      := oldOptionNameTest;
     rec.operator_id               := operatorId;
-
-    -- Исключаем ввод тривиального значения в old_option_name_test
-    rec.old_option_name_test :=
-      nullif(
-        rec.old_option_name_test
-        , rec.option_name || OldTestOptionName_Suffix
-      )
-    ;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -1601,44 +684,7 @@ is
 
 
   /*
-    Добавляет запись в устаревшую таблицу.
-  */
-  procedure insertOld
-  is
-
-    oldRec opt_option%rowtype;
-
-  begin
-    insertOptionOld(
-      rowData                 => oldRec
-      , moduleId              => rec.module_id
-      , objectShortName       => rec.object_short_name
-      , objectTypeId          => rec.object_type_id
-      , optionShortName       => rec.option_short_name
-      , storageValueTypeCode  =>
-          case when rec.value_list_flag = 1 then
-            String_ValueTypeCode
-          else
-            rec.value_type_code
-          end
-      , optionName            => rec.option_name
-      , testOptionFlag        => 0
-        -- используется при восстановлении ранее удаленного параметра
-      , optionId              => rec.option_id
-      , prodOldOptionShortName => rec.old_option_short_name
-      , operatorId            => rec.operator_id
-    );
-
-    rec.option_id             := oldRec.option_id;
-    rec.old_option_short_name := oldRec.option_short_name;
-    rec.old_mask_id           := oldRec.mask_id;
-    rec.old_option_name_test  := null;
-  end insertOld;
-
-
-
-  /*
-    Вставляет запись в таблицу opt_option_new и возвращает результат ( true в
+    Вставляет запись в таблицу opt_option и возвращает результат ( true в
     случае успеха, false в случае ошибки из-за нарушения уникальности).
   */
   function insertRecord
@@ -1646,7 +692,7 @@ is
   is
   begin
     insert into
-      opt_option_new
+      opt_option
     values
       rec
     returning
@@ -1655,12 +701,11 @@ is
       rec.option_id
     ;
     logger.trace(
-      'createOption: opt_option_new inserted:'
+      'createOption: opt_option inserted:'
       || ' option_id=' || rec.option_id
       || ', value_type_code="' || rec.value_type_code || '"'
       || ', value_list_flag=' || rec.value_list_flag
       || ', test_prod_sensitive_flag=' || rec.test_prod_sensitive_flag
-      || ', old_option_short_name="' || rec.old_option_short_name || '"'
     );
     return true;
   exception
@@ -1674,7 +719,7 @@ is
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
-            'Ошибка при вставке записи в таблицу opt_option_new.'
+            'Ошибка при вставке записи в таблицу opt_option.'
           )
         , true
       );
@@ -1693,7 +738,7 @@ is
       , d.deleted
     into rec.option_id, rec.deleted
     from
-      opt_option_new d
+      opt_option d
     where
       d.module_id = rec.module_id
       and d.option_short_name = rec.option_short_name
@@ -1713,12 +758,8 @@ is
           || ').'
       );
     end if;
-
-    if isCopyNew2OldChange then
-      insertOld();
-    end if;
     update
-      opt_option_new d
+      opt_option d
     set
       d.value_type_code             = rec.value_type_code
       , d.value_list_flag           = rec.value_list_flag
@@ -1727,21 +768,17 @@ is
       , d.access_level_code         = rec.access_level_code
       , d.option_name               = rec.option_name
       , d.option_description        = rec.option_description
-      , d.old_option_short_name     = rec.old_option_short_name
-      , d.old_mask_id               = rec.old_mask_id
-      , d.old_option_name_test      = rec.old_option_name_test
       , d.deleted                   = 0
       , d.change_operator_id        = rec.operator_id
     where
       d.option_id = rec.option_id
     ;
     logger.trace(
-      'createOption: restore deleted: opt_option_new updated:'
+      'createOption: restore deleted: opt_option updated:'
       || ' option_id=' || rec.option_id
       || ', value_type_code="' || rec.value_type_code || '"'
       || ', value_list_flag=' || rec.value_list_flag
       || ', test_prod_sensitive_flag=' || rec.test_prod_sensitive_flag
-      || ', old_option_short_name="' || rec.old_option_short_name || '"'
     );
   exception when others then
     raise_application_error(
@@ -1770,19 +807,8 @@ begin
     );
   end if;
   fillData();
-  if isCopyNew2OldChange then
-    rec.option_id := null;
-    insertOld();
-  end if;
   if not insertRecord() then
-    if isCopyNew2OldChange then
-      deleteOptionOld( oldOptionId => rec.option_id);
-      rec.option_id := null;
-    end if;
     restoreDeleted();
-  end if;
-  if isCopyNew2OldChange then
-    checkNew2OldSync();
   end if;
   return rec.option_id;
 exception when others then
@@ -1795,8 +821,6 @@ exception when others then
         || ', objectTypeId=' || objectTypeId
         || ', optionShortName="' || optionShortName || '"'
         || ', optionId=' || optionId
-        || ', oldOptionShortName="' || oldOptionShortName || '"'
-        || ', old_option_short_name="' || rec.old_option_short_name || '"'
         || ').'
       )
     , true
@@ -1831,11 +855,6 @@ end createOption;
                                 новым данным настроечного параметра
                                 ( 1 да, 0 нет ( выбрасывать исключение))
                                 ( по умолчанию 0)
-  oldOptionNameTest           - название тестового параметра в таблице
-                                opt_option
-                                ( используется только при внутренней
-                                  синхронизации изменений)
-                                ( по умолчанию текущее значение)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Замечания:
@@ -1856,19 +875,12 @@ procedure updateOption(
   , optionDescription varchar2
   , moveProdSensitiveValueFlag integer := null
   , deleteBadValueFlag integer := null
-  , oldOptionNameTest varchar2 := null
   , operatorId integer := null
 )
 is
 
   -- Текущие данные
-  rec opt_option_new%rowtype;
-
-  -- Id маски для значения параметра
-  oldMaskId opt_option_new.old_mask_id%type;
-
-  -- Название тестового параметра в устаревшей таблице ( новое значение)
-  newOldOptionNameTest opt_option_new.old_option_name_test%type;
+  rec opt_option%rowtype;
 
 
 
@@ -1996,18 +1008,7 @@ is
                 , setValueListFlag    =>
                     case when vr.list_separator is not null then 1 else 0 end
                 , valueListSeparator    => vr.list_separator
-                , oldOptionValueId      =>
-                    case when not isCopyNew2OldChange then
-                      vr.old_option_value_id
-                    end
-                , oldOptionId           => vr.old_option_id
-                , oldOptionValueDelDate =>
-                    case when not isCopyNew2OldChange then
-                      vr.old_option_value_del_date
-                    end
-                , oldOptionDelDate      => vr.old_option_del_date
                 , ignoreTestProdSensitiveFlag => 1
-                , fillIdFromOldFlag     => 0
                 , operatorId            => operatorId
               );
             end if;
@@ -2080,11 +1081,6 @@ is
     ;
 
   begin
-
-    -- Отключаем проверку различий, т.к. они могут быть в случае
-    -- одновременного изменения других полей ( например, option_name)
-    isSkipCheckNew2OldSync := true;
-
     for vr in valueCur loop
       -- Обновляем значение, при этом шифрование/дешифрование будет выполнено
       -- в соответствии с настройкой для параметра
@@ -2108,9 +1104,7 @@ is
         , operatorId          => vr.operator_id
       );
     end loop;
-    isSkipCheckNew2OldSync := false;
   exception when others then
-    isSkipCheckNew2OldSync := false;
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
@@ -2126,12 +1120,6 @@ is
 
 -- updateOption
 begin
-  if isCopyNew2OldChange and oldOptionNameTest is not null then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Параметр oldOptionNameTest должен использоваться только внутри пакета.'
-    );
-  end if;
   if encryptionFlag = 1 and valueTypeCode != String_ValueTypeCode then
     raise_application_error(
       pkg_Error.IllegalArgument
@@ -2148,38 +1136,8 @@ begin
         rec.test_prod_sensitive_flag != testProdSensitiveFlag
     );
   end if;
-  newOldOptionNameTest :=
-    case
-      when isCopyNew2OldChange then
-        null
-      else
-        nullif(
-          coalesce( oldOptionNameTest, rec.old_option_name_test)
-          , optionName || OldTestOptionName_Suffix
-        )
-    end
-  ;
-  oldMaskId :=
-    case when
-      rec.value_type_code != valueTypeCode
-        or rec.value_list_flag != valueListFlag
-    then
-      case
-          case when valueListFlag = 1 then
-            String_ValueTypeCode
-          else
-            valueTypeCode
-          end
-        when Date_ValueTypeCode    then 4
-        when Number_ValueTypeCode  then 1
-        when String_ValueTypeCode  then 3
-      end
-    else
-      rec.old_mask_id
-    end
-  ;
   update
-    opt_option_new d
+    opt_option d
   set
     d.value_type_code             = valueTypeCode
     , d.value_list_flag           = valueListFlag
@@ -2188,43 +1146,15 @@ begin
     , d.access_level_code         = accessLevelCode
     , d.option_name               = optionName
     , d.option_description        = optionDescription
-    , d.old_mask_id               = oldMaskId
-    , d.old_option_name_test      = newOldOptionNameTest
     , d.change_operator_id        = operatorId
   where
     d.option_id = optionId
   ;
   logger.trace(
-    'updateOption: opt_option_new updated: option_id=' || optionId
+    'updateOption: opt_option updated: option_id=' || optionId
   );
   if rec.encryption_flag != encryptionFlag then
     changeValueEncryption();
-  end if;
-  if isCopyNew2OldChange then
-    if coalesce(
-              nullif( rec.old_mask_id, oldMaskId)
-              , nullif( oldMaskId, rec.old_mask_id)
-            )
-            is not null
-          or rec.option_name != optionName
-          -- установили стандартное название тестового параметра
-          or newOldOptionNameTest is null
-            and rec.old_option_name_test is not null
-        then
-      updateOptionOld(
-        optionId                => optionId
-        , testProdSensitiveFlag => testProdSensitiveFlag
-        , storageValueTypeCode  =>
-            case when valueListFlag = 1 then
-              String_ValueTypeCode
-            else
-              valueTypeCode
-            end
-        , optionName            => optionName
-        , oldMaskId             => oldMaskId
-      );
-    end if;
-    checkNew2OldSync();
   end if;
 exception when others then
   raise_application_error(
@@ -2267,7 +1197,7 @@ is
   ;
 
   -- Текущие данные
-  rec opt_option_new%rowtype;
+  rec opt_option%rowtype;
 
 -- deleteOption
 begin
@@ -2279,7 +1209,7 @@ begin
     );
   end loop;
   update
-    opt_option_new d
+    opt_option d
   set
     d.deleted = 1
     , d.change_operator_id = operatorId
@@ -2287,15 +1217,8 @@ begin
     d.option_id = optionId
   ;
   logger.trace(
-    'deleteOption: opt_option_new set deleted: option_id=' || optionId
+    'deleteOption: opt_option set deleted: option_id=' || optionId
   );
-  if isCopyNew2OldChange then
-    deleteOptionOld(
-      optionId            => optionId
-      , oldOptionDelDate  => sysdate
-    );
-    checkNew2OldSync();
-  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -2311,89 +1234,6 @@ end deleteOption;
 
 
 /* group: Значения параметров */
-
-/* ifunc: insertOptionValueOld
-  Добавляет запись для значения параметра в устаревшую таблицу
-  <opt_option_value>.
-
-  Параметры:
-  oldOptionId                 - Id параметра в таблице opt_option
-  dateValue                   - значение типа дата
-  numberValue                 - числовое значение
-  stringValue                 - строковое значение
-  operatorId                  - Id оператора
-  copyOld2NewChange           - необходимость копирования изменений в новые
-                                таблицы
-                                ( по умолчанию нет)
-
-  Возврат:
-  Id добавленной записи.
-*/
-function insertOptionValueOld(
-  oldOptionId integer
-  , dateValue date
-  , numberValue number
-  , stringValue varchar2
-  , operatorId integer
-  , copyOld2NewChange boolean := null
-)
-return integer
-is
-
-  -- Старое значение признака копирования в новые таблицы
-  isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
-  -- Id созданной записи
-  optionValueId integer;
-
-begin
-
-  -- Настраиваем обратное копирование изменений триггерами
-  isCopyOld2NewChange := coalesce( copyOld2NewChange, false);
-
-  insert into
-    opt_option_value
-  (
-    option_id
-    , datetime_value
-    , integer_value
-    , string_value
-    , operator_id
-  )
-  values
-  (
-    oldOptionId
-    , dateValue
-    , numberValue
-    , stringValue
-    , operatorId
-  )
-  returning
-    option_value_id
-  into
-    optionValueId
-  ;
-  logger.trace(
-    'insertOptionValueOld: opt_option_value inserted:'
-    || ' option_id=' || oldOptionId
-    || ', option_value_id=' || optionValueId
-  );
-
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-
-  return optionValueId;
-exception when others then
-  isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении записи в устаревшую таблицу opt_option_value ('
-        || ' oldOptionId=' || oldOptionId
-        || ').'
-      )
-    , true
-  );
-end insertOptionValueOld;
 
 /* ifunc: toNumber
   Конвертирует строку с числом в число.
@@ -2923,7 +1763,7 @@ is
       select
         vl.*
       from
-        opt_option_new opn
+        opt_option opn
         left outer join opt_value vl
           on vl.option_id = opn.option_id
             and vl.deleted = 0
@@ -2958,7 +1798,7 @@ is
           as prod_value_flag
       into rowData.prod_value_flag
       from
-        opt_option_new opn
+        opt_option opn
       where
         opn.option_id = optionId
         and opn.deleted = 0
@@ -2987,7 +1827,7 @@ is
       vl.*
     into rowData
     from
-      opt_option_new opn
+      opt_option opn
       left outer join opt_value vl
         on vl.option_id = opn.option_id
           and vl.deleted = 0
@@ -3244,7 +2084,7 @@ end lockValue;
 */
 procedure fillValueData(
   vlr in out nocopy opt_value%rowtype
-  , opt opt_option_new%rowtype
+  , opt opt_option%rowtype
   , valueTypeCode varchar2
   , dateValue date := null
   , numberValue number := null
@@ -3710,34 +2550,16 @@ end fillValueData;
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
-  oldOptionValueDelDate       - дата удаления значения из таблицы
-                                opt_option_value
-                                ( по умолчанию отсутствует)
-  oldOptionDelDate            - дата удаления значения из таблицы
-                                opt_option
-                                ( по умолчанию отсутствует)
   ignoreTestProdSensitiveFlag - при создании значения не проверять его
                                 соответствие текущему значению флага
                                 test_prod_sensitive_flag параметра
                                 ( 1 да, 0 нет ( выбрасывать исключение при
                                   расхождении))
                                 ( по умолчанию 0)
-  fillIdFromOldFlag           - использовать в качестве Id создаваемой записи
-                                ( value_id) значение oldOptionValueId если
-                                оно задано
-                                ( 1 да ( по умолчанию), 0 нет)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
   Id значения параметра.
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
 */
 function createValue(
   optionId integer
@@ -3753,12 +2575,7 @@ function createValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
-  , oldOptionValueDelDate date := null
-  , oldOptionDelDate date := null
   , ignoreTestProdSensitiveFlag integer := null
-  , fillIdFromOldFlag integer := null
   , operatorId integer := null
 )
 return integer
@@ -3768,7 +2585,7 @@ is
   rec opt_value%rowtype;
 
   -- Данные параметра
-  opt opt_option_new%rowtype;
+  opt opt_option%rowtype;
 
 
 
@@ -3782,16 +2599,7 @@ is
     rec.prod_value_flag           := prodValueFlag;
     rec.instance_name             := upper( instanceName);
     rec.used_operator_id          := usedOperatorId;
-    rec.old_option_value_id       := oldOptionValueId;
-    rec.old_option_id             := oldOptionId;
-    rec.old_option_value_del_date := oldOptionValueDelDate;
-    rec.old_option_del_date       := oldOptionDelDate;
     rec.operator_id               := operatorId;
-
-    -- Id совпадают, т.к. используется одна последовательность
-    if coalesce( fillIdFromOldFlag, 1) = 1 then
-      rec.value_id := rec.old_option_value_id;
-    end if;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -3801,49 +2609,6 @@ is
       , true
     );
   end fillData;
-
-
-
-  /*
-    Добавляет запись в устаревшую таблицу.
-  */
-  procedure insertOld
-  is
-
-    -- Данные тестового параметра
-    testOptOldRec opt_option%rowtype;
-
-  begin
-    if rec.old_option_id is null then
-      if rec.prod_value_flag = 0 then
-        insertOptionOld(
-          rowData                 => testOptOldRec
-          , moduleId              => opt.module_id
-          , objectShortName       => opt.object_short_name
-          , objectTypeId          => opt.object_type_id
-          , optionShortName       => opt.option_short_name
-          , storageValueTypeCode  => rec.storage_value_type_code
-          , optionName            => opt.option_name
-          , testOptionFlag        => 1
-          , operatorId            => rec.operator_id
-          , prodOldOptionShortName => opt.old_option_short_name
-        );
-        rec.old_option_id := testOptOldRec.option_id;
-      else
-        rec.old_option_id := rec.option_id;
-      end if;
-    end if;
-    if rec.old_option_value_id is null then
-      rec.old_option_value_id := insertOptionValueOld(
-        oldOptionId             => rec.old_option_id
-        , dateValue             => rec.date_value
-        , numberValue           => rec.number_value
-        , stringValue           => rec.string_value
-        , operatorId            => rec.operator_id
-      );
-      rec.value_id := rec.old_option_value_id;
-    end if;
-  end insertOld;
 
 
 
@@ -3873,8 +2638,6 @@ is
       || ', used_operator_id=' || rec.used_operator_id
       || ', value_type_code="' || rec.value_type_code || '"'
       || ', list_separator="' || rec.list_separator || '"'
-      || ', old_option_value_id=' || rec.old_option_value_id
-      || ', old_option_id=' || rec.old_option_id
     );
     return true;
   exception
@@ -3946,10 +2709,6 @@ is
       , d.date_value                = rec.date_value
       , d.number_value              = rec.number_value
       , d.string_value              = rec.string_value
-      , d.old_option_value_id       = rec.old_option_value_id
-      , d.old_option_id             = rec.old_option_id
-      , d.old_option_value_del_date = rec.old_option_value_del_date
-      , d.old_option_del_date       = rec.old_option_del_date
       , d.deleted                   = 0
       , d.change_operator_id        = rec.operator_id
     where
@@ -3964,8 +2723,6 @@ is
       || ', used_operator_id=' || rec.used_operator_id
       || ', value_type_code="' || rec.value_type_code || '"'
       || ', list_separator="' || rec.list_separator || '"'
-      || ', old_option_value_id=' || rec.old_option_value_id
-      || ', old_option_id=' || rec.old_option_id
     );
   exception when others then
     raise_application_error(
@@ -3997,17 +2754,8 @@ begin
     , valueListDecimalChar        => valueListDecimalChar
     , ignoreTestProdSensitiveFlag => ignoreTestProdSensitiveFlag
   );
-  if isCopyNew2OldChange
-        and rec.instance_name is null
-        and rec.used_operator_id is null
-      then
-    insertOld();
-  end if;
   if not insertRecord() then
     restoreDeleted();
-  end if;
-  if isCopyNew2OldChange then
-    checkNew2OldSync();
   end if;
   return rec.value_id;
 exception when others then
@@ -4063,15 +2811,7 @@ end createValue;
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
   operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
 */
 procedure updateValue(
   valueId integer
@@ -4084,8 +2824,6 @@ procedure updateValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
   , operatorId integer := null
 )
 is
@@ -4094,49 +2832,7 @@ is
   rec opt_value%rowtype;
 
   -- Данные параметра
-  opt opt_option_new%rowtype;
-
-
-
-  /*
-    Заполняет поля записи.
-  */
-  procedure fillData
-  is
-  begin
-    rec.old_option_value_id       :=
-      coalesce( oldOptionValueId, rec.old_option_value_id)
-    ;
-    rec.old_option_id             :=
-      coalesce( oldOptionId, rec.old_option_id)
-    ;
-    rec.change_operator_id        := operatorId;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при заполнении полей записи.'
-        )
-      , true
-    );
-  end fillData;
-
-
-
-  /*
-    Добавляет запись в устаревшую таблицу.
-  */
-  procedure insertOld
-  is
-  begin
-    rec.old_option_value_id := insertOptionValueOld(
-      oldOptionId             => rec.old_option_id
-      , dateValue             => rec.date_value
-      , numberValue           => rec.number_value
-      , stringValue           => rec.string_value
-      , operatorId            => rec.change_operator_id
-    );
-  end insertOld;
+  opt opt_option%rowtype;
 
 
 
@@ -4156,8 +2852,6 @@ is
       , d.date_value              = rec.date_value
       , d.number_value            = rec.number_value
       , d.string_value            = rec.string_value
-      , d.old_option_value_id     = rec.old_option_value_id
-      , d.old_option_id           = rec.old_option_id
       , d.change_operator_id      = rec.change_operator_id
     where
       d.value_id = rec.value_id
@@ -4168,8 +2862,6 @@ is
       || ', option_id=' || rec.option_id
       || ', valueTypeCode="' || rec.value_type_code || '"'
       || ', list_separator="' || rec.list_separator || '"'
-      || ', old_option_value_id=' || rec.old_option_value_id
-      || ', old_option_id=' || rec.old_option_id
     );
   exception when others then
     raise_application_error(
@@ -4187,7 +2879,7 @@ is
 begin
   lockValue( rec, valueId => valueId);
   lockOption( opt, optionId => rec.option_id);
-  fillData();
+  rec.change_operator_id        := operatorId;
   fillValueData(
     vlr                           => rec
     , opt                         => opt
@@ -4202,16 +2894,7 @@ begin
     , valueListDecimalChar        => valueListDecimalChar
     , ignoreTestProdSensitiveFlag => 0
   );
-  if isCopyNew2OldChange
-        and rec.instance_name is null
-        and rec.used_operator_id is null
-      then
-    insertOld();
-  end if;
   updateRecord();
-  if isCopyNew2OldChange then
-    checkNew2OldSync();
-  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -4273,15 +2956,9 @@ end updateValue;
   valueListDecimalChar        - десятичный разделитель для строки со списком
                                 числовых значений
                                 ( по умолчанию используется точка)
-  oldOptionValueId            - Id значения в таблице opt_option_value
-                                ( по умолчанию формируется автоматически)
-  oldOptionId                 - Id параметра в таблице opt_option
-                                ( по умолчанию формируется автоматически)
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    добавляется запись в устаревшую таблицу opt_option_value;
   - для установки значения в зависимости от его наличия используется либо
     функция <createValue> либо процедура <updateValue>;
 */
@@ -4299,14 +2976,12 @@ procedure setValue(
   , valueListSeparator varchar2 := null
   , valueListItemFormat varchar2 := null
   , valueListDecimalChar varchar2 := null
-  , oldOptionValueId integer := null
-  , oldOptionId integer := null
   , operatorId integer := null
 )
 is
 
   -- Данные параметра
-  opt opt_option_new%rowtype;
+  opt opt_option%rowtype;
 
   -- Id значения параметра
   valueId integer;
@@ -4354,8 +3029,6 @@ begin
       , valueListSeparator    => valueListSeparator
       , valueListItemFormat   => valueListItemFormat
       , valueListDecimalChar  => valueListDecimalChar
-      , oldOptionValueId      => oldOptionValueId
-      , oldOptionId           => oldOptionId
       , operatorId            => operatorId
     );
   else
@@ -4370,8 +3043,6 @@ begin
       , valueListSeparator    => valueListSeparator
       , valueListItemFormat   => valueListItemFormat
       , valueListDecimalChar  => valueListDecimalChar
-      , oldOptionValueId      => oldOptionValueId
-      , oldOptionId           => oldOptionId
       , operatorId            => operatorId
     );
   end if;
@@ -4397,10 +3068,6 @@ end setValue;
   Параметры:
   valueId                     - Id значения параметра
   operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - если в пакете установлен признак <body::isCopyNew2OldChange>, то также
-    удаляются записи из устаревших таблиц opt_option_value и opt_option;
 */
 procedure deleteValue(
   valueId integer
@@ -4412,169 +3079,18 @@ is
   vlr opt_value%rowtype;
 
   -- Данные параметра
-  opt opt_option_new%rowtype;
+  opt opt_option%rowtype;
 
   -- Дата внесения изменений
   changeDate date := sysdate;
 
-
-
-  /*
-    Удаляет записи из устаревшей таблицы opt_option_value.
-  */
-  procedure deleteOptionValueOld
-  is
-
-    cursor dataCur is
-      select
-        a.*
-      from
-        (
-        select
-          t.value_id
-          , t.old_option_value_id
-          , max( t.value_history_id)
-            keep ( dense_rank last order by t.change_number)
-            as value_history_id
-          , max( t.old_option_value_del_date)
-            keep ( dense_rank last order by t.change_number)
-            as old_option_value_del_date
-        from
-          v_opt_value_history t
-        where
-          t.deleted = 0
-          and t.old_option_value_id is not null
-          and (
-            t.value_id = vlr.value_id
-            -- значение, удаленное в результате изменения параметра с указанием
-            -- moveProdSensitiveValueFlag = 1
-            or t.value_id =
-              (
-              select distinct
-                vl.value_id
-              from
-                opt_value vl
-                inner join opt_value_history vh
-                  on vh.value_id = vl.value_id
-                    and vh.deleted = 0
-                    and vh.old_option_value_id is not null
-              where
-                vl.option_id = vlr.option_id
-                and vl.deleted = 1
-                and (
-                  vlr.prod_value_flag = 1
-                    and vl.prod_value_flag is null
-                  or vlr.prod_value_flag is null
-                    and vl.prod_value_flag = 1
-                )
-                and exists
-                  (
-                  select
-                    null
-                  from
-                    v_opt_value_history vh0
-                  where
-                    vh0.value_id = vlr.value_id
-                    and vh0.old_option_value_id = vh.old_option_value_id
-                  )
-              )
-          )
-        group by
-          t.value_id
-          , t.old_option_value_id
-        ) a
-      where
-        a.old_option_value_del_date is null
-      order by
-        nullif( a.value_id, vlr.value_id) nulls first
-        , a.old_option_value_id
-    ;
-
-    -- Старое значение признака копирования в новые таблицы
-    isCopyOld2NewChangeOld boolean := isCopyOld2NewChange;
-
-  -- deleteOptionValueOld
-  begin
-
-    -- Исключаем обратное копирование изменений триггерами
-    isCopyOld2NewChange := false;
-
-    for rec in dataCur loop
-      delete
-        opt_option_value d
-      where
-        d.option_value_id = rec.old_option_value_id
-      ;
-      if sql%rowcount = 0 then
-        if rec.value_id = vlr.value_id then
-          raise_application_error(
-            pkg_Error.ProcessError
-            , 'Не удалось удалить запись в opt_option_value'
-              || ' из-за ее отсутствия ('
-              || ' option_value_id=' || rec.old_option_value_id
-              || ', value_history_id=' || rec.value_history_id
-              || ', value_id=' || rec.value_id
-              || ').'
-          );
-        else
-          logger.trace(
-            'deleteValue: Не удалось удалить запись в opt_option_value'
-            || ' из-за ее отсутствия ('
-            || ' option_value_id=' || rec.old_option_value_id
-            || ', value_history_id=' || rec.value_history_id
-            || ', value_id=' || rec.value_id
-            || ').'
-          );
-        end if;
-      else
-        logger.trace(
-          'deleteValue: opt_option_value deleted: option_value_id='
-          || rec.old_option_value_id
-        );
-      end if;
-      setOldDelDate(
-        valueId                 => rec.value_id
-        , valueHistoryId        => rec.value_history_id
-        , oldOptionValueDelDate => changeDate
-      );
-    end loop;
-
-    isCopyOld2NewChange := isCopyOld2NewChangeOld;
-  exception when others then
-    isCopyOld2NewChange := isCopyOld2NewChangeOld;
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при удалении записей из устаревшей таблицы opt_option_value.'
-        )
-      , true
-    );
-  end deleteOptionValueOld;
-
-
-
--- deleteValue
 begin
   lockValue( vlr, valueId => valueId);
   lockOption( opt, optionId => vlr.option_id);
-  if isCopyNew2OldChange
-        and vlr.instance_name is null
-        and vlr.used_operator_id is null
-      then
-    deleteOptionValueOld();
-    deleteOptionOld(
-      valueId             => vlr.value_id
-      , oldOptionDelDate  => changeDate
-    );
-  end if;
   update
     opt_value d
   set
     d.deleted = 1
-    , d.old_option_value_id = null
-    , d.old_option_id = null
-    , d.old_option_value_del_date = null
-    , d.old_option_del_date = null
     , d.change_operator_id = operatorId
   where
     d.value_id = vlr.value_id
@@ -4584,9 +3100,6 @@ begin
     || ' value_id=' || vlr.value_id
     || ', option_id=' || vlr.option_id
   );
-  if isCopyNew2OldChange then
-    checkNew2OldSync();
-  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -4602,98 +3115,6 @@ end deleteValue;
 
 
 /* group: Дополнительные функции */
-
-/* proc: addOptionWithValueOld
-  Добавляет настроечный параметр со значением в устаревшие таблицы, если он не
-  был создан ранее.
-
-  Параметры:
-  moduleName                  - имя модуля
-  moduleOptionName            - имя опции уникальное в пределах модуля
-  valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  dateValue                   - значение типа дата
-                                ( по умолчанию отсутствует)
-  numberValue                 - числовое значение
-                                ( по умолчанию отсутствует)
-  stringValue                 - строковое значение
-                                ( по умолчанию отсутствует)
-  operatorId                  - Id оператора ( по умолчанию текущий)
-*/
-procedure addOptionWithValueOld(
-  moduleName varchar2
-  , moduleOptionName varchar2
-  , valueTypeCode varchar2
-  , optionName varchar2
-  , dateValue date := null
-  , numberValue number := null
-  , stringValue varchar2 := null
-  , operatorId integer := null
-)
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Флаг использования значения только в промышленных ( либо тестовых) БД
-  prodValueFlag integer;
-
-  -- Данные добавленной в opt_option записи
-  opt opt_option%rowtype;
-
-  -- Id добавленной в opt_option_value записи
-  optionValueId integer;
-
-begin
-  getOptionInfoOld(
-    optionId            => optionId
-    , prodValueFlag     => prodValueFlag
-    , moduleName        => moduleName
-    , moduleOptionName  => moduleOptionName
-    , raiseNotFoundFlag => 0
-  );
-  if optionId is null then
-    insertOptionOld(
-      rowData                 => opt
-      , oldOptionShortName    => moduleName || '.' || moduleOptionName
-      , storageValueTypeCode  => valueTypeCode
-      , oldOptionName         => optionName
-      , operatorId            => operatorId
-    );
-    optionValueId := insertOptionValueOld(
-      oldOptionId             => opt.option_id
-      , dateValue             => dateValue
-      , numberValue           => numberValue
-      , stringValue           => stringValue
-      , operatorId            => operatorId
-      , copyOld2NewChange     => true
-    );
-    logger.trace(
-      'addOptionWithValueOld: created: "' || opt.option_short_name || '"'
-      || ' ( old option_id=' || opt.option_id
-      || ', option_value_id=' || optionValueId
-      || ')'
-    );
-  else
-    logger.trace(
-      'addOptionWithValueOld: exists: "' || opt.option_short_name || '"'
-      || ' ( old option_id=' || optionId
-      || ')'
-    );
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении параметра со значением устаревшими функциями ('
-        || ' moduleName="' || moduleName || '"'
-        || ', moduleOptionName="' || moduleOptionName || '"'
-        || ', valueTypeCode="' || valueTypeCode || '"'
-        || ').'
-      )
-    , true
-  );
-end addOptionWithValueOld;
 
 /* proc: addOptionWithValue
   Добавляет настроечный параметр со значением, если он не был создан ранее.
@@ -5013,1395 +3434,6 @@ exception when others then
     , true
   );
 end getOptionValue;
-
-
-
-/* group: Поддержка устаревших объектов */
-
-/* func: getSaveValueHistoryFlag
-  Возвращает текущее значение флага сохранения истории при изменении
-  записей в <opt_value>.
-*/
-function getSaveValueHistoryFlag
-return integer
-is
-begin
-  return coalesce( saveValueHistoryFlag, 1);
-end getSaveValueHistoryFlag;
-
-/* func: getCopyOld2NewChangeFlag
-  Возвращает текущее значение флага копирования изменений, вносимых в
-  устаревшие таблицы, в новые таблицы.
-*/
-function getCopyOld2NewChangeFlag
-return integer
-is
-begin
-  return
-    case when isCopyOld2NewChange then 1 else 0 end
-  ;
-end getCopyOld2NewChangeFlag;
-
-/* iproc: checkNew2OldSync
-  Проверяет отсутствие расхождений между значениями параметров в новых и
-  устаревших таблицах.
-*/
-procedure checkNew2OldSync
-is
-
-  cursor diffCur is
-    select
-      count( distinct d.option_id) as option_id_cnt
-      , count( distinct d.option_value_id) as option_value_id_cnt
-      , min( d.option_id) as min_option_id
-      , min( d.option_value_id) as min_option_value_id
-    from
-      v_opt_option_new2old_diff d
-  ;
-
-begin
-  if not coalesce( isSkipCheckNew2OldSync, false) then
-    for rec in diffCur loop
-      if rec.option_id_cnt > 0 then
-        raise_application_error(
-          pkg_Error.ProcessError
-          , 'Найдены расхождения ('
-            || ' option_id_cnt=' || rec.option_id_cnt
-            || ', option_value_id_cnt=' || rec.option_value_id_cnt
-            || ', min_option_id=' || rec.min_option_id
-            || ', min_option_value_id=' || rec.min_option_value_id
-            || ').'
-        );
-      end if;
-    end loop;
-    logger.trace( 'checkNew2OldSync: OK');
-  else
-    logger.trace( 'checkNew2OldSync: skipped');
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при проверке отсутствия расхождений между данными в новых'
-        || ' и устаревших таблицах.'
-      )
-    , true
-  );
-end checkNew2OldSync;
-
-/* proc: onOldBeforeStatement
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> перед
-  выполнением DML.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-*/
-procedure onOldBeforeStatement(
-  tableName varchar2
-  , statementType varchar2
-)
-is
-begin
-  logger.trace(
-    'onOldBeforeStatement: ' || tableName || ': ' || statementType
-    || case when not isCopyOld2NewChange then ' - skipped' end
-  );
-  if coalesce( isCopyOld2NewChange, true) then
-    if coalesce( tableName, '-') not in ( 'OPT_OPTION', 'OPT_OPTION_VALUE') then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Указано некорректное имя таблицы.'
-      );
-    elsif coalesce( statementType, '-') not in ( 'INSERT', 'UPDATE', 'DELETE')
-        then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Указан некорректный тип DML.'
-      );
-    elsif tableName = 'OPT_OPTION_VALUE' and statementType = 'UPDATE' then
-      raise_application_error(
-        pkg_Error.ProcessError
-        , 'Изменение ( update) записей в таблице opt_option_value запрещено.'
-      );
-    end if;
-    onChangeTableName := tableName;
-    onChangeStatementType := statementType;
-    onChangeIdList := IdListT();
-    onDeleteOptionSNameList := OptionSNameListT();
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка в процедуре, вызываемой перед выполнением DML ('
-        || ' tableName="' || tableName || '"'
-        || ', statementType="' || statementType || '"'
-        || ').'
-      )
-    , true
-  );
-end onOldBeforeStatement;
-
-/* proc: onOldAfterRow
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> при
-  выполнении DML после изменения каждой записи.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-  newRowId                    - Id изменяемой записи ( новое значение)
-  oldRowId                    - Id изменяемой записи ( старое значение)
-  oldOptionShortName          - короткое название опции ( передается
-                                только в случае удаления из opt_option)
-
-  Замечания:
-  - в качестве значения параметров newRowId и oldRowId для таблицы opt_option
-    указывается option_id, для таблицы opt_option_value указывается
-    option_value_id;
-*/
-procedure onOldAfterRow(
-  tableName varchar2
-  , statementType varchar2
-  , newRowId integer
-  , oldRowId integer
-  , oldOptionShortName varchar2 := null
-)
-is
-begin
-  logger.trace(
-    'onOldAfterRow: ' || tableName || ': ' || statementType
-    || ': ' || newRowId || ' ( ' || oldRowId
-    || case when oldOptionShortName is not null then
-        ', "' || oldOptionShortName || '"'
-      end
-    || ')'
-    || case when not isCopyOld2NewChange then ' - skipped' end
-  );
-  if coalesce( isCopyOld2NewChange, true) then
-    if tableName = onChangeTableName and statementType = onChangeStatementType
-        then
-      if newRowId != oldRowId then
-        raise_application_error(
-          pkg_Error.ProcessError
-          , 'Изменение значения первичного ключа записи запрещено.'
-        );
-      end if;
-      onChangeIdList.extend(1);
-      onChangeIdList( onChangeIdList.last) := coalesce( newRowId, oldRowId);
-      if tableName = 'OPT_OPTION' and  statementType = 'DELETE' then
-        onDeleteOptionSNameList.extend(1);
-        onDeleteOptionSNameList( onDeleteOptionSNameList.last)
-          := oldOptionShortName
-        ;
-      end if;
-    else
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Неожиданное имя таблицы или тип DML ( ожидалось'
-          || ' "' || onChangeTableName || '"'
-          || ' и "' || onChangeStatementType || '"'
-          || ').'
-          || ' Выполнение сложных DML ( например, merge) не поддерживается.'
-      );
-    end if;
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка в процедуре, вызываемой после изменения каждой записи в DML ('
-        || ' tableName="' || tableName || '"'
-        || ', statementType="' || statementType || '"'
-        || ', newRowId=' || newRowId
-        || ', oldRowId=' || oldRowId
-        || ').'
-      )
-    , true
-  );
-end onOldAfterRow;
-
-/* proc: onOldAfterStatement
-  Вызывается из триггеров на таблицах <opt_option> и <opt_option_value> после
-  выполнения DML.
-
-  Параметры:
-  tableName                   - имя таблицы ( в верхнем регистре)
-  statementType               - тип DML ( INSERT / UPDATE / DELETE)
-*/
-procedure onOldAfterStatement(
-  tableName varchar2
-  , statementType varchar2
-)
-is
-
-
-
-  /*
-    Обработка вставки в opt_option.
-  */
-  procedure processOptionInsert(
-    optionId integer
-  )
-  is
-
-    cursor oldOptionCur is
-      select
-        b.*
-        , opn.option_id as new_option_id
-        , cast( null as varchar2(100)) as batch_short_name
-        , cast( null as integer) as module_id
-      from
-        (
-        select
-          a.*
-          , case when
-                a.option_short_name != a.prod_option_short_name
-              then 1 else 0
-            end
-            as is_test_option
-        from
-          (
-          select
-            opt.*
-            , case when
-                opt.option_short_name like '%_'
-                || OldTestOption_Suffix
-              then
-                substr(
-                  opt.option_short_name, 1, length( opt.option_short_name) - 4
-                )
-              else
-                opt.option_short_name
-              end
-              as prod_option_short_name
-          from
-            opt_option opt
-          where
-            opt.option_id = optionId
-          ) a
-        ) b
-        left outer join opt_option_new opn
-          on opn.old_option_short_name = b.prod_option_short_name
-            and opn.deleted = 0
-    ;
-
-    oldRec oldOptionCur%rowtype;
-
-    rec opt_option_new%rowtype;
-
-
-
-    /*
-      Возвращает короткое имя батча и Id модуля, к которому относится
-      параметр, либо null, если он не связан с батчем.
-      Выборка вынесена из основного запроса в функцию и сделана динамической,
-      чтобы избежать ошибки при отсутствии модуля Scheduler ( т.к. зависимости
-      от него быть не должно).
-    */
-    procedure getBatchShortName(
-      batchShortName out varchar2
-      , moduleId out integer
-      , optionId integer
-    )
-    is
-    begin
-      if schedulerExistsInfo is null then
-        select
-          coalesce(
-            max( case when t.column_name = 'MODULE_ID' then 2 else 1 end)
-            , 0
-          )
-          as scheduler_exists_flag
-        into schedulerExistsInfo
-        from
-          user_tab_columns t
-        where
-          t.table_name = 'SCH_BATCH'
-        ;
-      end if;
-      if schedulerExistsInfo > 0 then
-        execute immediate '
-          select
-            max( opb.batch_short_name)
-            , max( opb.module_id)
-          from
-            (
-            select
-              op.option_id
-              , max( b.batch_short_name) as batch_short_name
-              , to_number( substr(
-                  max( rpad( b.batch_short_name, 50) || to_char( b.module_id))
-                  , 51
-                ))
-                as module_id
-            from
-              opt_option op
-              , (
-                select
-                  b.batch_short_name
-                  , ' || case when schedulerExistsInfo = 2 then
-                      'b.module_id'
-                    else
-                      'cast( null as integer) as module_id'
-                    end
-                  || '
-                  , replace(
-                      replace( b.batch_short_name, ''%'',''\%'')
-                      , ''_'',''\_''
-                    )
-                    || ''_%''
-                    as option_short_name_mask
-                from
-                  sch_batch b
-                ) b
-            where
-              op.option_short_name like b.option_short_name_mask escape ''\''
-            group by
-              op.option_id
-            ) opb
-          where
-            opb.option_id = :optionId
-        '
-        into
-          batchShortName
-          , moduleId
-        using
-          optionId
-        ;
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении имени батча, к которому относится'
-            || ' параметр ('
-            || ' optionId=' || optionId
-            || ').'
-          )
-        , true
-      );
-    end getBatchShortName;
-
-
-
-    /*
-      Возвращает тип значения параметра, соответствующий указанному значению
-      маски.
-    */
-    function getValueTypeFromMask(
-      maskId integer
-    )
-    return varchar2
-    is
-    begin
-      return
-        case oldRec.mask_id
-          when 1 then Number_ValueTypeCode
-          when 2 then Number_ValueTypeCode
-          when 3 then String_ValueTypeCode
-          when 4 then Date_ValueTypeCode
-        end
-      ;
-    end getValueTypeFromMask;
-
-
-
-    /*
-      Заполнение полей для нового параметра.
-    */
-    procedure fillRec
-    is
-    begin
-      rec.option_id                 := oldRec.option_id;
-      rec.module_id                 :=
-        case when oldRec.module_id is not null then
-          oldRec.module_id
-        else
-          pkg_ModuleInfo.getModuleId(
-            moduleName =>
-              case
-                when oldRec.batch_short_name is not null then
-                  BatchLoader_ModuleName
-                when oldRec.prod_option_short_name like '_%._%' then
-                  substr(
-                    oldRec.prod_option_short_name
-                    , 1
-                    , instr( oldRec.prod_option_short_name, '.') - 1
-                  )
-                when oldRec.prod_option_short_name like '_%:_%' then
-                  substr(
-                    oldRec.prod_option_short_name
-                    , 1
-                    , instr( oldRec.prod_option_short_name, ':') - 1
-                  )
-              end
-            , raiseExceptionFlag => 0
-          )
-        end
-      ;
-      if rec.module_id is null then
-        raise_application_error(
-          pkg_Error.IllegalArgument
-          , 'Не удалось определить имя модуля для параметра ('
-            || ' option_short_name="' || oldRec.option_short_name || '"'
-            || ', is_test_option=' || oldRec.is_test_option
-            || ').'
-        );
-      end if;
-      rec.object_short_name         := oldRec.batch_short_name;
-      rec.object_type_id            :=
-        case when oldRec.batch_short_name is not null then
-          getObjectTypeId(
-            moduleId              =>
-                pkg_ModuleInfo.getModuleId(
-                  svnRoot => Scheduler_SvnRoot
-                )
-            , objectTypeShortName => Batch_ObjectTypeShortName
-          )
-        end
-      ;
-      rec.option_short_name         :=
-        case
-          when oldRec.batch_short_name is not null then
-            substr(
-              oldRec.prod_option_short_name
-              , length( oldRec.batch_short_name) + 1
-            )
-          when oldRec.prod_option_short_name like '_%._%' then
-            substr(
-              oldRec.prod_option_short_name
-              , instr( oldRec.prod_option_short_name, '.') + 1
-            )
-          when oldRec.prod_option_short_name like '_%:_%' then
-            substr(
-              oldRec.prod_option_short_name
-              , instr( oldRec.prod_option_short_name, ':') + 1
-            )
-          else
-            oldRec.prod_option_short_name
-        end
-      ;
-      rec.value_type_code           := getValueTypeFromMask( oldRec.mask_id);
-      rec.value_list_flag           := 0;
-      rec.encryption_flag           := 0;
-      rec.test_prod_sensitive_flag  :=
-        case when
-            oldRec.is_test_option = 1
-            or oldRec.batch_short_name is not null
-          then 1
-          else 0
-        end
-      ;
-      rec.access_level_code         := null;
-      rec.option_name               :=
-        case
-          when oldRec.is_test_option = 1
-                and oldRec.option_name like '% (тест)'
-              then
-            substr( oldRec.option_name, 1, length( oldRec.option_name) - 7)
-          when oldRec.is_test_option = 1
-                and oldRec.option_name like '% ( тест)'
-              then
-            substr( oldRec.option_name, 1, length( oldRec.option_name) - 8)
-          else
-            oldRec.option_name
-        end
-      ;
-      rec.option_description        := null;
-      rec.old_option_short_name     := oldRec.prod_option_short_name;
-      rec.old_mask_id               := oldRec.mask_id;
-      rec.old_option_name_test      :=
-        case when oldRec.is_test_option = 1 then
-          oldRec.option_name
-        end
-      ;
-      rec.operator_id               := oldRec.operator_id;
-    end fillRec;
-
-
-
-  -- processOptionInsert
-  begin
-    open oldOptionCur;
-    fetch oldOptionCur into oldRec;
-    close oldOptionCur;
-
-    if oldRec.new_option_id is null then
-      getBatchShortName(
-        batchShortName  => oldRec.batch_short_name
-        , moduleId      => oldRec.module_id
-        , optionId      => oldRec.option_id
-      );
-      fillRec();
-      rec.option_id := createOption(
-        moduleId                => rec.module_id
-        , optionShortName       => rec.option_short_name
-        , valueTypeCode         => rec.value_type_code
-        , optionName            => rec.option_name
-        , objectShortName       => rec.object_short_name
-        , objectTypeId          => rec.object_type_id
-        , valueListFlag         => rec.value_list_flag
-        , encryptionFlag        => rec.encryption_flag
-        , testProdSensitiveFlag => rec.test_prod_sensitive_flag
-        , accessLevelCode       => rec.access_level_code
-        , optionDescription     => rec.option_description
-        , optionId              => rec.option_id
-        , oldOptionShortName    => rec.old_option_short_name
-        , oldMaskId             => rec.old_mask_id
-        , oldOptionNameTest     => rec.old_option_name_test
-        , operatorId            => rec.operator_id
-      );
-    else
-      lockOption(
-        rowData     => rec
-        , optionId  => oldRec.new_option_id
-      );
-      if rec.value_type_code != getValueTypeFromMask( oldRec.mask_id)
-          or rec.value_list_flag = 1
-          then
-        raise_application_error(
-          pkg_Error.ProcessError
-          , 'Тип ранее созданного параметра отличается от типа добавляемого'
-            || ' параметра ('
-            || ' option_id=' || rec.option_id
-            || ', value_type_code="' || rec.value_type_code || '"'
-            || ', value_list_flag=' || rec.value_list_flag
-            || ').'
-        );
-      elsif
-          oldRec.is_test_option = 0
-            and rec.option_name != oldRec.option_name
-          or oldRec.is_test_option = 1
-            and (
-              rec.test_prod_sensitive_flag != 1
-              or nullif( oldRec.option_name, rec.old_option_name_test)
-                  is not null
-            )
-          then
-        updateOption(
-          optionId                      => rec.option_id
-          , valueTypeCode               => rec.value_type_code
-          , valueListFlag               => rec.value_list_flag
-          , encryptionFlag              => rec.encryption_flag
-          , testProdSensitiveFlag       =>
-              case when oldRec.is_test_option = 1 then
-                1
-              else
-                rec.test_prod_sensitive_flag
-              end
-          , accessLevelCode             => rec.access_level_code
-          , optionName                  =>
-              case when oldRec.is_test_option = 0 then
-                oldRec.option_name
-              else
-                rec.option_name
-              end
-          , optionDescription           => rec.option_description
-          , moveProdSensitiveValueFlag  => 1
-          , deleteBadValueFlag          => 0
-          , oldOptionNameTest           =>
-              case when oldRec.is_test_option = 1 then
-                oldRec.option_name
-              else
-                rec.old_option_name_test
-              end
-          , operatorId                  => oldRec.operator_id
-        );
-      end if;
-    end if;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке вставки в opt_option ('
-          || ' optionId=' || optionId
-          || ').'
-        )
-      , true
-    );
-  end processOptionInsert;
-
-
-
-  /*
-    Обработка изменения в opt_option ( разрешено только изменение поля
-    option_name).
-  */
-  procedure processOptionUpdate(
-    oldOptionId integer
-  )
-  is
-
-    cursor oldOptionCur is
-      select
-        b.*
-        , opn.option_id as new_option_id
-      from
-        (
-        select
-          a.*
-          , case when
-                a.option_short_name != a.prod_option_short_name
-              then 1 else 0
-            end
-            as is_test_option
-        from
-          (
-          select
-            opt.*
-            , case when
-                opt.option_short_name like '%_'
-                || OldTestOption_Suffix
-              then
-                substr(
-                  opt.option_short_name, 1, length( opt.option_short_name) - 4
-                )
-              else
-                opt.option_short_name
-              end
-              as prod_option_short_name
-          from
-            opt_option opt
-          where
-            opt.option_id = oldOptionId
-          ) a
-        ) b
-        left outer join opt_option_new opn
-          on opn.old_option_short_name = b.prod_option_short_name
-            and opn.deleted = 0
-    ;
-
-    oldRec oldOptionCur%rowtype;
-
-    rec opt_option_new%rowtype;
-
-  -- processOptionUpdate
-  begin
-    open oldOptionCur;
-    fetch oldOptionCur into oldRec;
-    close oldOptionCur;
-    lockOption(
-      rowData     => rec
-      , optionId  => oldRec.new_option_id
-    );
-    updateOption(
-      optionId                      => rec.option_id
-      , valueTypeCode               => rec.value_type_code
-      , valueListFlag               => rec.value_list_flag
-      , encryptionFlag              => rec.encryption_flag
-      , testProdSensitiveFlag       => rec.test_prod_sensitive_flag
-      , accessLevelCode             => rec.access_level_code
-      , optionName                  =>
-          case when oldRec.is_test_option = 1 then
-            rec.option_name
-          else
-            oldRec.option_name
-          end
-      , optionDescription           => rec.option_description
-      , oldOptionNameTest           =>
-          case
-            when oldRec.is_test_option = 1 then
-              oldRec.option_name
-            else
-              coalesce(
-                rec.old_option_name_test
-                -- исключаем появление различия из-за неявного изменения
-                -- тестового названия опции ( которое формируется на базе
-                -- option_name)
-                , case when rec.test_prod_sensitive_flag = 1 then
-                    rec.option_name || OldTestOptionName_Suffix
-                  end
-              )
-          end
-      , operatorId                  => null
-    );
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке изменения в opt_option ('
-          || ' oldOptionId=' || oldOptionId
-          || ').'
-        )
-      , true
-    );
-  end processOptionUpdate;
-
-
-
-  /*
-    Обработка удаления из opt_option.
-  */
-  procedure processOptionDelete(
-    oldOptionId integer
-    , oldOptionShortName varchar2
-  )
-  is
-
-    -- Последняя запись, относящаяся к удаленной из opt_option записи
-    vhr v_opt_value_history%rowtype;
-
-
-
-    /*
-      Определяет последнюю запись из v_opt_value_history, относящуюся к
-      удаленной записи и сохраняет ее в переменной vhr.
-    */
-    procedure getValue
-    is
-
-      cursor valueCur is
-        select
-          a.*
-        into vhr
-        from
-          (
-          select
-            vlh.*
-          from
-            v_opt_value_history vlh
-          where
-            vlh.old_option_id = oldOptionId
-          order by
-            vlh.value_history_id desc nulls first
-            , vlh.change_date desc
-            , vlh.value_id desc
-          ) a
-        where
-          rownum <= 1
-      ;
-
-    begin
-      open valueCur;
-      fetch valueCur into vhr;
-      close valueCur;
-
-      -- Данных может не быть, если для параметра не задавалось значение
-      if vhr.value_id is not null then
-        if vhr.deleted = 1 then
-          raise_application_error(
-            pkg_Error.ProcessError
-            , 'Запись была удалена ('
-              || ' value_id=' || vhr.value_id
-              || ', change_number=' || vhr.change_number
-              || ').'
-          );
-        elsif vhr.old_option_del_date is not null then
-          raise_application_error(
-            pkg_Error.ProcessError
-            , 'Запись в opt_option_value уже была удалена ('
-              || ' value_id=' || vhr.value_id
-              || ', change_number=' || vhr.change_number
-              || ', old_option_del_date='
-                || to_char( vhr.old_option_del_date, 'dd.mm.yyyy hh24:mi:ss')
-              || ').'
-          );
-        end if;
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении записи из v_opt_value_history ('
-            || ' oldOptionId=' || oldOptionId
-            || ').'
-          )
-        , true
-      );
-    end getValue;
-
-
-
-    /*
-      Возвращает Id параметра по устаревшему короткому имени
-      ( возвращает null, если параметр был удален).
-      Если указан checkOptionId, то может быть возвращено только указанное
-      значение.
-    */
-    function getOptionId(
-      checkOptionId integer
-    )
-    return integer
-    is
-
-      -- Id параметра
-      optionId integer;
-
-    begin
-      select
-        case when opn.deleted = 0 then
-          opn.option_id
-        end
-        as option_id
-      into optionId
-      from
-        opt_option_new opn
-      where
-        opn.old_option_short_name =
-          case when
-            oldOptionShortName like '%_' || OldTestOption_Suffix
-          then
-            substr(
-              oldOptionShortName, 1, length( oldOptionShortName) - 4
-            )
-          else
-            oldOptionShortName
-          end
-        and nullif( checkOptionId, opn.option_id) is null
-      ;
-      return optionId;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении Id параметра ('
-            || ' oldOptionShortName="' || oldOptionShortName || '"'
-            || ', checkOptionId=' || checkOptionId
-            || ').'
-          )
-        , true
-      );
-    end getOptionId;
-
-
-
-    /*
-      Удаляет параметр, если относящихся к нему записей нет в opt_option.
-    */
-    procedure deleteNotUsedOption
-    is
-
-      -- Id параметра
-      optionId integer;
-
-      -- Id записи в opt_option, относящейся к параметру
-      minOldOptionId integer;
-
-    begin
-      select
-        min( opt.option_id)
-      into minOldOptionId
-      from
-        opt_option opt
-      where
-        opt.option_short_name in (
-          -- в принципе запись с oldOptionShortName может быть, т.к. в
-          -- opt_option нет уникальности по этому полю
-          oldOptionShortName
-          , case when
-              oldOptionShortName like '%_' || OldTestOption_Suffix
-            then
-              substr(
-                oldOptionShortName, 1, length( oldOptionShortName) - 4
-              )
-            else
-              oldOptionShortName || OldTestOption_Suffix
-            end
-        )
-        -- кроме игнорируемых временных данных
-        and opt.option_id >= 0
-      ;
-      if minOldOptionId is null then
-        optionId := getOptionId(
-          checkOptionId => vhr.option_id
-        );
-
-        -- Параметр может быть уже удален в случае удаления 2-х записей
-        -- из opt_option ( по тестовому и промышленному значению)
-        -- одной командой delete
-        if optionId is not null then
-          deleteOption(
-            optionId        => optionId
-            , operatorId    => null
-          );
-        end if;
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка проверке параметра на необходимость удаления ('
-            || ' option_id=' || vhr.option_id
-            || ').'
-          )
-        , true
-      );
-    end deleteNotUsedOption;
-
-
-
-  -- processOptionDelete
-  begin
-    getValue();
-    if vhr.value_id is not null then
-      vhr.old_option_del_date := sysdate;
-      setOldDelDate(
-        valueId               => vhr.value_id
-        , valueHistoryId      => vhr.value_history_id
-        , oldOptionDelDate    => vhr.old_option_del_date
-      );
-    end if;
-    deleteNotUsedOption();
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке удаления из opt_option ('
-          || ' oldOptionId=' || oldOptionId
-          || ', oldOptionShortName="' || oldOptionShortName || '"'
-          || ').'
-        )
-      , true
-    );
-  end processOptionDelete;
-
-
-
-  /*
-    Обработка вставки в opt_option_value.
-  */
-  procedure processValueInsert(
-    optionValueId integer
-  )
-  is
-
-    cursor oldValueCur is
-      select
-        b.*
-        , opn.option_id as new_option_id
-        , case when opn.value_list_flag = 1 then
-            String_ValueTypeCode
-          else
-            opn.value_type_code
-          end
-          as storage_value_type_code
-        , opn.test_prod_sensitive_flag
-        , opn.encryption_flag
-      from
-        (
-        select
-          a.*
-          , case when
-                a.option_short_name != a.prod_option_short_name
-              then 1 else 0
-            end
-            as is_test_option
-        from
-          (
-          select
-            ov.*
-            , opt.option_short_name
-            , case when
-                opt.option_short_name like '%_'
-                || OldTestOption_Suffix
-              then
-                substr(
-                  opt.option_short_name, 1, length( opt.option_short_name) - 4
-                )
-              else
-                opt.option_short_name
-              end
-              as prod_option_short_name
-          from
-            opt_option_value ov
-            inner join opt_option opt
-              on opt.option_id = ov.option_id
-          where
-            ov.option_value_id = optionValueId
-          ) a
-        ) b
-        left outer join opt_option_new opn
-          on opn.old_option_short_name = b.prod_option_short_name
-            and opn.deleted = 0
-    ;
-
-    oldRec oldValueCur%rowtype;
-
-  -- processValueInsert
-  begin
-    open oldValueCur;
-    fetch oldValueCur into oldRec;
-    close oldValueCur;
-    if oldRec.encryption_flag = 1 then
-      raise_application_error(
-        pkg_Error.ProcessError
-        , 'Для параметра с шифрованием значений установка значения возможна'
-          || ' только через API ('
-          || ' new_option_id=' || oldRec.new_option_id
-          || ').'
-      );
-    end if;
-    setValue(
-      optionId                => oldRec.new_option_id
-      , prodValueFlag         =>
-          case when oldRec.test_prod_sensitive_flag = 1 then
-            1 - oldRec.is_test_option
-          end
-      , instanceName          => null
-      , usedOperatorId        => null
-      , dateValue             => oldRec.datetime_value
-      , numberValue           => oldRec.integer_value
-      , stringValue           => oldRec.string_value
-      , oldOptionValueId      => oldRec.option_value_id
-      , oldOptionId           => oldRec.option_id
-      , operatorId            => oldRec.operator_id
-    );
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке вставки в opt_option_value ('
-          || ' optionValueId=' || optionValueId
-          || ').'
-        )
-      , true
-    );
-  end processValueInsert;
-
-
-
-  /*
-    Обработка удаления из opt_option_value.
-  */
-  procedure processValueDelete(
-    optionValueId integer
-  )
-  is
-
-    -- Последняя запись, относящаяся к удаленной из opt_option_value записи
-    vhr v_opt_value_history%rowtype;
-
-    -- Текущее значение
-    cv opt_value%rowtype;
-
-    -- Текущее значение согласно opt_option_value
-    cov opt_option_value%rowtype;
-
-
-
-    /*
-      Определяет последнюю запись из v_opt_value_history, относящуюся к
-      удаленной записи и сохраняет ее в переменной vhr.
-    */
-    procedure getValue
-    is
-    begin
-      select
-        a.*
-      into vhr
-      from
-        (
-        select
-          vlh.*
-        from
-          v_opt_value_history vlh
-        where
-          vlh.old_option_value_id = optionValueId
-        order by
-          vlh.value_history_id desc nulls first
-        ) a
-      where
-        rownum <= 1
-      ;
-      if vhr.deleted = 1 then
-        raise_application_error(
-          pkg_Error.ProcessError
-          , 'Запись была удалена ('
-            || ' value_id=' || vhr.value_id
-            || ', change_number=' || vhr.change_number
-            || ').'
-        );
-      elsif vhr.old_option_value_del_date is not null then
-        raise_application_error(
-          pkg_Error.ProcessError
-          , 'Запись в opt_option_value уже была удалена ('
-            || ' value_id=' || vhr.value_id
-            || ', change_number=' || vhr.change_number
-            || ', old_option_value_del_date='
-              || to_char(
-                  vhr.old_option_value_del_date, 'dd.mm.yyyy hh24:mi:ss'
-                )
-            || ').'
-        );
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении записи из v_opt_value_history ('
-            || ' optionValueId=' || optionValueId
-            || ').'
-          )
-        , true
-      );
-    end getValue;
-
-
-
-    /*
-      Определяет текущее значение согласно таблице opt_value и
-      сохраняет его в переменной cv.
-    */
-    procedure getCurrentValue(
-      valueId integer
-    )
-    is
-    begin
-      select
-        vl.*
-      into cv
-      from
-        opt_value vl
-      where
-        vl.value_id = valueId
-      ;
-      if cv.deleted = 1 then
-        cv := null;
-      end if;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении текущего значения по opt_value ('
-            || ' valueId=' || valueId
-            || ').'
-          )
-        , true
-      );
-    end getCurrentValue;
-
-
-
-    /*
-      Определяет текущее значение согласно таблице opt_option_value и
-      сохраняет его в переменной cov.
-    */
-    procedure getCurrentOldValue(
-      valueId integer
-      , storageValueTypeCode varchar2
-    )
-    is
-
-      cursor dataCur is
-        select
-          a.*
-        from
-          (
-          select
-            ov.*
-          from
-            opt_option_value ov
-            inner join opt_option opt
-              on opt.option_id = ov.option_id
-          where
-            ov.option_value_id in
-              (
-              select
-                vlh.old_option_value_id
-              from
-                v_opt_value_history vlh
-              where
-                vlh.value_id = valueId
-                and vlh.old_option_value_id is not null
-                and vlh.old_option_value_del_date is null
-              )
-            and case opt.mask_id
-                when 1 then Number_ValueTypeCode
-                when 2 then Number_ValueTypeCode
-                when 3 then String_ValueTypeCode
-                when 4 then Date_ValueTypeCode
-              end
-              = storageValueTypeCode
-          order by
-            ov.date_ins desc
-          ) a
-        where
-          rownum <= 1
-      ;
-
-    begin
-      open dataCur;
-      fetch dataCur into cov;
-      close dataCur;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при определении текущего значения по opt_option_value ('
-            || ' valueId=' || valueId
-            || ').'
-          )
-        , true
-      );
-    end getCurrentOldValue;
-
-
-
-  -- processValueDelete
-  begin
-    getValue();
-    getCurrentValue( valueId => vhr.value_id);
-    getCurrentOldValue(
-      valueId                 => vhr.value_id
-      , storageValueTypeCode  => vhr.storage_value_type_code
-    );
-
-    vhr.old_option_value_del_date := sysdate;
-    setOldDelDate(
-      valueId                 => vhr.value_id
-      , valueHistoryId        => vhr.value_history_id
-      , oldOptionValueDelDate => vhr.old_option_value_del_date
-    );
-    if nullif( cov.option_value_id, cv.old_option_value_id) is not null then
-      updateValue(
-        valueId                 => cv.value_id
-        , valueTypeCode         => cv.value_type_code
-        , dateValue             =>
-            case when
-              cv.storage_value_type_code = Date_ValueTypeCode
-            then
-              cov.datetime_value
-            end
-        , numberValue           =>
-            case when
-              cv.storage_value_type_code = Number_ValueTypeCode
-            then
-              cov.integer_value
-            end
-        , stringValue           =>
-            case when
-              cv.storage_value_type_code = String_ValueTypeCode
-            then
-              cov.string_value
-            end
-        , valueListSeparator    => cv.list_separator
-        , oldOptionValueId      => cov.option_value_id
-        , oldOptionId           => cov.option_id
-        , operatorId            => null
-      );
-    elsif cov.option_value_id is null
-          and cv.old_option_value_id is not null
-        then
-      deleteValue(
-        valueId   => cv.value_id
-      );
-    end if;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке удаления из opt_option_value ('
-          || ' optionValueId=' || optionValueId
-          || ').'
-        )
-      , true
-    );
-  end processValueDelete;
-
-
-
-  /*
-    Обработка изменений, внесенных в устаревшие таблицы.
-  */
-  procedure processChange
-  is
-
-    -- Индекс текущего элемента коллекции
-    i pls_integer;
-
-  begin
-    i := onChangeIdList.first();
-    while i is not null loop
-      if onChangeIdList( i) < 0 then
-        logger.trace(
-          'processChange: ignore temporary changes: id=' || onChangeIdList( i)
-        );
-      else
-        case
-          when tableName = 'OPT_OPTION' and statementType = 'INSERT' then
-            processOptionInsert( optionId => onChangeIdList( i));
-          when tableName = 'OPT_OPTION' and statementType = 'UPDATE' then
-            processOptionUpdate( oldOptionId => onChangeIdList( i));
-          when tableName = 'OPT_OPTION' and statementType = 'DELETE' then
-            processOptionDelete(
-              oldOptionId           => onChangeIdList( i)
-              , oldOptionShortName  => onDeleteOptionSNameList( i)
-            );
-          when tableName = 'OPT_OPTION_VALUE' and statementType = 'INSERT' then
-            processValueInsert( optionValueId => onChangeIdList( i));
-          when tableName = 'OPT_OPTION_VALUE' and statementType = 'DELETE' then
-            processValueDelete( optionValueId => onChangeIdList( i));
-          else
-            raise_application_error(
-              pkg_Error.ProcessError
-              , 'Обработка изменения не поддерживается.'
-            );
-        end case;
-      end if;
-      i := onChangeIdList.next( i);
-    end loop;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при обработке изменения.'
-        )
-      , true
-    );
-  end processChange;
-
-
-
--- onOldAfterStatement
-begin
-  logger.trace(
-    'onOldAfterStatement: ' || tableName || ': ' || statementType
-    || case when not isCopyOld2NewChange then ' - skipped' end
-  );
-  if coalesce( isCopyOld2NewChange, true) then
-    isCopyOld2NewChange := true;
-    if tableName = onChangeTableName and statementType = onChangeStatementType
-        then
-
-      -- отключаем, а затем включаем копирование изменений из новых таблиц
-      -- в устаревшие
-      begin
-        isCopyNew2OldChange := false;
-        processChange();
-        isCopyNew2OldChange := true;
-      exception when others then
-        isCopyNew2OldChange := true;
-        raise;
-      end;
-
-      checkNew2OldSync();
-      onChangeTableName := null;
-      onChangeStatementType := null;
-      onChangeIdList := null;
-    else
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Неожиданное имя таблицы или тип DML ( ожидалось'
-          || ' "' || onChangeTableName || '"'
-          || ' и "' || onChangeStatementType || '"'
-          || ').'
-          || ' Выполнение сложных DML ( например, merge) не поддерживается.'
-      );
-    end if;
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка в процедуре, вызываемой после выполнения DML ('
-        || ' tableName="' || tableName || '"'
-        || ', statementType="' || statementType || '"'
-        || ').'
-      )
-    , true
-  );
-end onOldAfterStatement;
 
 end pkg_OptionMain;
 /

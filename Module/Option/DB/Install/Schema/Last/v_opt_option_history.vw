@@ -21,9 +21,6 @@ from
     , h.access_level_code
     , h.option_name
     , h.option_description
-    , h.old_option_short_name
-    , h.old_mask_id
-    , h.old_option_name_test
     , h.deleted
     , h.change_number
     , h.change_date
@@ -49,9 +46,6 @@ from
     , t.access_level_code
     , t.option_name
     , t.option_description
-    , t.old_option_short_name
-    , t.old_mask_id
-    , t.old_option_name_test
     , t.deleted
     , t.change_number
     , t.change_date
@@ -62,7 +56,7 @@ from
     , cast( null as date) date_ins
     , cast( null as integer) operator_id
   from
-    opt_option_new t
+    opt_option t
   ) d
 /
 
@@ -104,15 +98,6 @@ comment on column v_opt_option_history.option_name is
 /
 comment on column v_opt_option_history.option_description is
   'Описание параметра'
-/
-comment on column v_opt_option_history.old_option_short_name is
-  'Устаревшее поле: Короткое название параметра в таблице opt_option'
-/
-comment on column v_opt_option_history.old_mask_id is
-  'Устаревшее поле: Id маски для значения параметра'
-/
-comment on column v_opt_option_history.old_option_name_test is
-  'Устаревшее поле: Название тестового параметра в таблице opt_option'
 /
 comment on column v_opt_option_history.deleted is
   'Флаг логического удаления записи ( 0 - существующая, 1 - удалена)'

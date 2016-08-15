@@ -50,7 +50,7 @@ under opt_option_list_t
   Замечания:
   - имя PL/SQL объекта ( objectName) используется как короткое название
     объекта, к которому относятся параметры ( поле object_short_name таблицы
-    <opt_option_new>);
+    <opt_option>);
   - для определения модуля должен быть задан один из параметров
     findModuleString, moduleName, moduleSvnRoot и модуль по нему
     должен определяться однозначно, иначе будет выброшено исключение;
@@ -77,7 +77,7 @@ return self as result,
   Замечания:
   - имя PL/SQL объекта ( objectName) используется как короткое название
     объекта, к которому относятся параметры ( поле object_short_name таблицы
-    <opt_option_new>);
+    <opt_option>);
 
   ( <body::opt_plsql_object_option_t( moduleId)>)
 */

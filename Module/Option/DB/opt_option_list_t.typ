@@ -1,6 +1,5 @@
 -- Для Oracle 11.2 и выше для пересоздания типа используется опция "force"
 -- в create type, для более ранних версий используется "drop type force"
--- ( Oracle 10.2 в БД Nic)
 set define on
 
 @oms-default forceOption "' || case when to_number( '&_O_RELEASE') >= 1102000000 then 'force' else '--' end || '"
@@ -46,12 +45,6 @@ objectTypeId integer,
 */
 usedOperatorId integer,
 
-/* ivar: oldModuleName
-  Имя модуля для использования с устаревшими функциями ( null если
-  для создания объекта использовался новый интерфейс).
-*/
-oldModuleName varchar2(100),
-
 
 
 /* group: Защищенные объявления */
@@ -86,9 +79,6 @@ logger lg_logger_t,
   usedOperatorId              - Id оператора, для которого может
                                 использоваться значение
                                 ( null без ограничений ( по умолчанию))
-  oldModuleName               - имя модуля для использования с устаревшими
-                                функциями ( null если для создания объекта
-                                использовался новый интерфейс ( по умолчанию))
 
   ( <body::initialize>)
 */
@@ -98,7 +88,6 @@ member procedure initialize(
   , objectTypeShortName varchar2 := null
   , objectTypeModuleId integer := null
   , usedOperatorId integer := null
-  , oldModuleName varchar2 := null
 ),
 
 
@@ -451,8 +440,8 @@ return integer,
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
-  Id параметра ( из таблицы <opt_option_new>) либо null, если параметр не
-  найден и значение raiseNotFoundFlag равно 0.
+  Id параметра либо null, если параметр не найден и значение raiseNotFoundFlag
+  равно 0.
 
   ( <body::getOptionId>)
 */
@@ -1535,26 +1524,16 @@ member procedure setDate(
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 
   ( <body::setDate( USED)>)
 */
 member procedure setDate(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , dateValue date
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 ),
 
 /* pproc: setNumber
@@ -1658,26 +1637,16 @@ member procedure setNumber(
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 
   ( <body::setNumber( USED)>)
 */
 member procedure setNumber(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , numberValue number
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 ),
 
 /* pproc: setString
@@ -1781,26 +1750,16 @@ member procedure setString(
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 
   ( <body::setString( USED)>)
 */
 member procedure setString(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , stringValue varchar2
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 ),
 
 /* pproc: setValueList
@@ -2333,78 +2292,6 @@ member procedure deleteObjectType(
   self in opt_option_list_t
   , objectTypeShortName varchar2
   , operatorId integer := null
-),
-
-
-
-/* group: Устаревшие функции */
-
-/* pfunc: getOptionDate
-  Устаревшая функция, следует использовать <getDate> или <getDate( USED)>.
-
-  ( <body::getOptionDate>)
-*/
-member function getOptionDate(
-  moduleOptionName varchar2
-)
-return date,
-
-/* pfunc: getOptionNumber
-  Устаревшая функция, следует использовать <getNumber> или <getNumber( USED)>.
-
-  ( <body::getOptionNumber>)
-*/
-member function getOptionNumber(
-  moduleOptionName varchar2
-)
-return number,
-
-/* pfunc: getOptionString
-  Устаревшая функция, следует использовать <getString> или <getString( USED)>.
-
-  ( <body::getOptionString>)
-*/
-member function getOptionString(
-  moduleOptionName varchar2
-)
-return varchar2,
-
-/* pproc: addOptionDate
-  Устаревшая функция, следует использовать <addDate> или <addDate( TEST_PROD)>.
-
-  ( <body::addOptionDate>)
-*/
-member procedure addOptionDate(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultDateValue varchar2 := null
-),
-
-/* pproc: addOptionNumber
-  Устаревшая функция, следует использовать <addNumber> или
-  <addNumber( TEST_PROD)>.
-
-  ( <body::addOptionNumber>)
-*/
-member procedure addOptionNumber(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultNumberValue varchar2 := null
-),
-
-/* pproc: addOptionString
-  Устаревшая функция, следует использовать <addString> или
-  <addString( TEST_PROD)>.
-
-  ( <body::addOptionString>)
-*/
-member procedure addOptionString(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultStringValue varchar2 := null
 )
 
 )

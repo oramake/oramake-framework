@@ -123,6 +123,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_OptionMain.pkb)
       }  # Group: pkg_OptionMain
 
+   Group: Test  {
+
+      Group: pkg_OptionTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_OptionTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_OptionTest.pkb)
+         }  # Group: pkg_OptionTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -161,7 +171,6 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
-            File: reference  (no auto-title, Install/Grant/Last/reference.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
@@ -173,10 +182,6 @@ Group: Скрипты  {
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-            File: doc_mask  (no auto-title, Install/Schema/Last/doc_mask.tab)
-            File: doc_mask_seq  (no auto-title, Install/Schema/Last/doc_mask_seq.sqs)
-            File: doc_storage_rule  (no auto-title, Install/Schema/Last/doc_storage_rule.tab)
-            File: doc_storage_rule_seq  (no auto-title, Install/Schema/Last/doc_storage_rule_seq.sqs)
             File: opt_access_level  (no auto-title, Install/Schema/Last/opt_access_level.tab)
             File: opt_access_level_bi_define  (no auto-title, Install/Schema/Last/opt_access_level_bi_define.trg)
             File: opt_getLocalCryptoKey  (no auto-title, Install/Schema/Last/opt_getLocalCryptoKey.prc)
@@ -184,37 +189,31 @@ Group: Скрипты  {
             File: opt_object_type_bi_define  (no auto-title, Install/Schema/Last/opt_object_type_bi_define.trg)
             File: opt_object_type_seq  (no auto-title, Install/Schema/Last/opt_object_type_seq.sqs)
             File: opt_option  (no auto-title, Install/Schema/Last/opt_option.tab)
-            File: opt_option_aiud_2new  (no auto-title, Install/Schema/Last/opt_option_aiud_2new.trg)
-            File: opt_option_aiuds_2new  (no auto-title, Install/Schema/Last/opt_option_aiuds_2new.trg)
-            File: opt_option_biuds_2new  (no auto-title, Install/Schema/Last/opt_option_biuds_2new.trg)
+            File: opt_option_bi_define  (no auto-title, Install/Schema/Last/opt_option_bi_define.trg)
+            File: opt_option_bu_history  (no auto-title, Install/Schema/Last/opt_option_bu_history.trg)
             File: opt_option_history  (no auto-title, Install/Schema/Last/opt_option_history.tab)
             File: opt_option_history_seq  (no auto-title, Install/Schema/Last/opt_option_history_seq.sqs)
-            File: opt_option_new  (no auto-title, Install/Schema/Last/opt_option_new.tab)
-            File: opt_option_new_bi_define  (no auto-title, Install/Schema/Last/opt_option_new_bi_define.trg)
-            File: opt_option_new_bu_history  (no auto-title, Install/Schema/Last/opt_option_new_bu_history.trg)
             File: opt_option_seq  (no auto-title, Install/Schema/Last/opt_option_seq.sqs)
-            File: opt_option_value  (no auto-title, Install/Schema/Last/opt_option_value.tab)
-            File: opt_option_value_aiud_2new  (no auto-title, Install/Schema/Last/opt_option_value_aiud_2new.trg)
-            File: opt_option_value_aiuds_2new  (no auto-title, Install/Schema/Last/opt_option_value_aiuds_2new.trg)
-            File: opt_option_value_biuds_2new  (no auto-title, Install/Schema/Last/opt_option_value_biuds_2new.trg)
-            File: opt_option_value_seq  (no auto-title, Install/Schema/Last/opt_option_value_seq.sqs)
             File: opt_value  (no auto-title, Install/Schema/Last/opt_value.tab)
             File: opt_value_bi_define  (no auto-title, Install/Schema/Last/opt_value_bi_define.trg)
             File: opt_value_bu_history  (no auto-title, Install/Schema/Last/opt_value_bu_history.trg)
             File: opt_value_history  (no auto-title, Install/Schema/Last/opt_value_history.tab)
             File: opt_value_history_seq  (no auto-title, Install/Schema/Last/opt_value_history_seq.sqs)
+            File: opt_value_seq  (no auto-title, Install/Schema/Last/opt_value_seq.sqs)
             File: opt_value_type  (no auto-title, Install/Schema/Last/opt_value_type.tab)
             File: opt_value_type_bi_define  (no auto-title, Install/Schema/Last/opt_value_type_bi_define.trg)
             File: v_opt_object_type  (no auto-title, Install/Schema/Last/v_opt_object_type.vw)
             File: v_opt_option  (no auto-title, Install/Schema/Last/v_opt_option.vw)
             File: v_opt_option_history  (no auto-title, Install/Schema/Last/v_opt_option_history.vw)
-            File: v_opt_option_new  (no auto-title, Install/Schema/Last/v_opt_option_new.vw)
-            File: v_opt_option_new2old  (no auto-title, Install/Schema/Last/v_opt_option_new2old.vw)
-            File: v_opt_option_new2old_diff  (no auto-title, Install/Schema/Last/v_opt_option_new2old_diff.vw)
             File: v_opt_option_value  (no auto-title, Install/Schema/Last/v_opt_option_value.vw)
             File: v_opt_value  (no auto-title, Install/Schema/Last/v_opt_value.vw)
             File: v_opt_value_history  (no auto-title, Install/Schema/Last/v_opt_value_history.vw)
             }  # Group: Last
+
+         Group: 3.3.0  {
+
+            File: run  (no auto-title, Install/Schema/3.3.0/run.sql)
+            }  # Group: 3.3.0
 
          }  # Group: Schema
 
@@ -224,6 +223,12 @@ Group: Скрипты  {
 
       File: option  (no auto-title, Show/option.sql)
       }  # Group: Show
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: set-trace-level  (no auto-title, Test/set-trace-level.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
@@ -248,7 +253,6 @@ Group: Индекс  {
 
    Group: Закрытые объявления  {
 
-      Type internal Index: Типы
       Constant internal Index: Константы
       Variable internal Index: Переменные
       }  # Group: Закрытые объявления

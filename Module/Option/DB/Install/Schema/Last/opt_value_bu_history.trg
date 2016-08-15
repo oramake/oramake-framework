@@ -37,57 +37,50 @@ begin
     );
   end if;
 
-  if pkg_OptionMain.getSaveValueHistoryFlag() =  1 then
-
-    -- Используем текущего оператора если Id оператора не был задан явно
-    if not updating( 'change_operator_id') or :new.change_operator_id is null
-        then
-      :new.change_operator_id := pkg_Operator.getCurrentUserId();
-    end if;
-
-    -- Сохраняем время обновления данных
-    :new.change_date := sysdate;
-
-    -- Увеличиваем счетчик обновлений
-    :new.change_number := :old.change_number + 1;
-
-    -- Заполняем поля с данными
-    hs.value_id                       := :old.value_id;
-    hs.option_id                      := :old.option_id;
-    hs.prod_value_flag                := :old.prod_value_flag;
-    hs.instance_name                  := :old.instance_name;
-    hs.used_operator_id               := :old.used_operator_id;
-    hs.value_type_code                := :old.value_type_code;
-    hs.list_separator                 := :old.list_separator;
-    hs.encryption_flag                := :old.encryption_flag;
-    hs.storage_value_type_code        := :old.storage_value_type_code;
-    hs.date_value                     := :old.date_value;
-    hs.number_value                   := :old.number_value;
-    hs.string_value                   := :old.string_value;
-    hs.old_option_value_id            := :old.old_option_value_id;
-    hs.old_option_id                  := :old.old_option_id;
-    hs.old_option_value_del_date      := :old.old_option_value_del_date;
-    hs.old_option_del_date            := :old.old_option_del_date;
-
-    -- Устанавливаем служебные поля
-    hs.deleted                        := :old.deleted;
-    hs.change_number                  := :old.change_number;
-    hs.change_date                    := :old.change_date;
-    hs.change_operator_id             := :old.change_operator_id;
-    hs.base_date_ins                  := :old.date_ins;
-    hs.base_operator_id               := :old.operator_id;
-    hs.date_ins                       := :new.change_date;
-    hs.operator_id                    := :new.change_operator_id;
-
-    -- Сохраняем старые данные
-    select
-      opt_value_history_seq.nextval
-    into
-      hs.value_history_id
-    from
-      dual
-    ;
-    insert into opt_value_history values hs;
+  -- Используем текущего оператора если Id оператора не был задан явно
+  if not updating( 'change_operator_id') or :new.change_operator_id is null
+      then
+    :new.change_operator_id := pkg_Operator.getCurrentUserId();
   end if;
+
+  -- Сохраняем время обновления данных
+  :new.change_date := sysdate;
+
+  -- Увеличиваем счетчик обновлений
+  :new.change_number := :old.change_number + 1;
+
+  -- Заполняем поля с данными
+  hs.value_id                       := :old.value_id;
+  hs.option_id                      := :old.option_id;
+  hs.prod_value_flag                := :old.prod_value_flag;
+  hs.instance_name                  := :old.instance_name;
+  hs.used_operator_id               := :old.used_operator_id;
+  hs.value_type_code                := :old.value_type_code;
+  hs.list_separator                 := :old.list_separator;
+  hs.encryption_flag                := :old.encryption_flag;
+  hs.storage_value_type_code        := :old.storage_value_type_code;
+  hs.date_value                     := :old.date_value;
+  hs.number_value                   := :old.number_value;
+  hs.string_value                   := :old.string_value;
+
+  -- Устанавливаем служебные поля
+  hs.deleted                        := :old.deleted;
+  hs.change_number                  := :old.change_number;
+  hs.change_date                    := :old.change_date;
+  hs.change_operator_id             := :old.change_operator_id;
+  hs.base_date_ins                  := :old.date_ins;
+  hs.base_operator_id               := :old.operator_id;
+  hs.date_ins                       := :new.change_date;
+  hs.operator_id                    := :new.change_operator_id;
+
+  -- Сохраняем старые данные
+  select
+    opt_value_history_seq.nextval
+  into
+    hs.value_history_id
+  from
+    dual
+  ;
+  insert into opt_value_history values hs;
 end;
 /

@@ -1,7 +1,0 @@
-alter table opt_option_value
-   add constraint opt_option_value_opt_option_fk foreign key (option_id)
-      references opt_option (option_id);
-
-alter table opt_option_value
-   add constraint op_option_value_op_operator_fk foreign key (operator_id)
-      references op_operator (operator_id);

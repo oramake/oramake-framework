@@ -2,6 +2,31 @@ title: Версии
 
 
 
+group: 3.3.0 ( 2016-08-15)
+
+[*] Прекращена поддержка устаревшего интерфейса работы с параметрами,
+    при этом удалены:
+    - таблицы doc_mask, doc_storage_rule, opt_option, opt_option_value;
+    - представление v_opt_option;
+    - в пакете pkg_Option функции
+      addOption<Date|Number|String>,
+      getMask, getStorageRule,
+      getOption<Date|Integer|Number|String>,
+      set<Date|DateTime|Integer|Number|String>,
+      устаревшие варианты createOption, updateOption, findOption;
+    - в пакете pkg_Option константы Role_Global_Option_Admin,
+      StorageRule<Date|Integer|String>, Test_Option_Postfix;
+    - в объектном типе opt_option_list_t функции
+      addOption<Date|Number|String>,
+      getOption<Date|Number|String>,
+      устаревший параметр moduleOptionName функций set<Date|Number|String>;
+
+    После удаления устаревших объектов таблица opt_option_new и представление
+    v_opt_option_new переименованы соответственно в opt_option и v_opt_option.
+
+
+
+
 group: 3.1.0.1 ( 2016-04-21)
 (<Установка::3.1.0.1>)
 

@@ -44,7 +44,7 @@ select
   , v.date_ins as value_date_ins
   , v.operator_id as value_operator_id
 from
-  v_opt_option_new d
+  v_opt_option d
   inner join v_mod_module md
     on md.module_id = d.module_id
   left outer join v_opt_object_type ot

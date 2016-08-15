@@ -26,9 +26,6 @@ create or replace type body opt_option_list_t is
   usedOperatorId              - Id оператора, для которого может
                                 использоваться значение
                                 ( null без ограничений ( по умолчанию))
-  oldModuleName               - имя модуля для использования с устаревшими
-                                функциями ( null если для создания объекта
-                                использовался новый интерфейс ( по умолчанию))
 */
 member procedure initialize(
   moduleId integer
@@ -36,7 +33,6 @@ member procedure initialize(
   , objectTypeShortName varchar2 := null
   , objectTypeModuleId integer := null
   , usedOperatorId integer := null
-  , oldModuleName varchar2 := null
 )
 is
 begin
@@ -72,7 +68,6 @@ begin
     end
   ;
   self.usedOperatorId := usedOperatorId;
-  self.oldModuleName := oldModuleName;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -83,7 +78,6 @@ exception when others then
         || ', objectTypeShortName="' || objectTypeShortName || '"'
         || ', objectTypeModuleId=' || objectTypeModuleId
         || ', usedOperatorId=' || usedOperatorId
-        || ', oldModuleName="' || oldModuleName || '"'
         || ').'
       )
     , true
@@ -424,25 +418,6 @@ begin
           )
         end
     , usedOperatorId        => usedOperatorId
-    , oldModuleName         =>
-        case when
-          -- возможно устаревшая сигнатура вызова: либо один неименованый
-          -- аргумент, либо moduleName
-          coalesce(
-                objectShortName, moduleSvnRoot
-                , objectTypeFindModuleString
-                , objectTypeModuleName
-                , objectTypeModuleSvnRoot
-              )
-              is null
-          and usedOperatorId is null
-          and not (
-            findModuleString is not null
-            and moduleName is not null
-          )
-        then
-          coalesce( moduleName, findModuleString)
-        end
   );
   return;
 exception when others then
@@ -634,7 +609,7 @@ end getObjectTypeId;
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
-  Id параметра ( из таблицы <opt_option_new>) либо null, если параметр не
+  Id параметра либо null, если параметр не
   найден и значение raiseNotFoundFlag равно 0.
 */
 member function getOptionId(
@@ -2680,29 +2655,16 @@ end setDate;
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 */
 member procedure setDate(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , dateValue date
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 )
 is
-
-  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
-  isOldProcess boolean;
 
   -- Id параметра и вид значения при обеспечении совместимости
   optionId integer;
@@ -2712,66 +2674,28 @@ is
   vlr opt_value%rowtype;
 
 begin
-  isOldProcess :=
-    oldModuleName is not null
-    and valueIndex is null
-    and createForInstanceFlag is null
-    and (
-      moduleOptionName is not null
-      -- для обеспечения совместимости в случае вызова процедуры без указания
-      -- имен параметров для тестовых значений параметров
-      or optionShortName like '%_Test'
-        and pkg_OptionMain.getOldOptionId(
-          moduleName            => oldModuleName
-          , moduleOptionName    => optionShortName
-          , raiseNotFoundFlag   => 0
+  pkg_OptionMain.getValue(
+    rowData             => vlr
+    , optionId          =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
         )
-        is not null
-    )
-  ;
-
-  if isOldProcess then
-    pkg_OptionMain.getOptionInfoOld(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , moduleName        => oldModuleName
-      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
-      , raiseNotFoundFlag => 1
-    );
-    pkg_OptionMain.setValue(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , instanceName      => null
-      , usedOperatorId    => null
-      , valueTypeCode     => pkg_OptionMain.Date_ValueTypeCode
-      , dateValue         => dateValue
-      , valueIndex        => null
-      , operatorId        => operatorId
-    );
-  else
-    pkg_OptionMain.getValue(
-      rowData             => vlr
-      , optionId          =>
-          getOptionId(
-            optionShortName     => optionShortName
-            , raiseNotFoundFlag => 1
-          )
-      , usedOperatorId    => usedOperatorId
-      , usedValueFlag     => 1
-      , raiseNotFoundFlag => 0
-    );
-    setDate(
-      optionShortName     => optionShortName
-      , prodValueFlag     => vlr.prod_value_flag
-      , instanceName      =>
-          case when vlr.value_id is not null or createForInstanceFlag = 1 then
-            vlr.instance_name
-          end
-      , dateValue         => dateValue
-      , valueIndex        => valueIndex
-      , operatorId        => operatorId
-    );
-  end if;
+    , usedOperatorId    => usedOperatorId
+    , usedValueFlag     => 1
+    , raiseNotFoundFlag => 0
+  );
+  setDate(
+    optionShortName     => optionShortName
+    , prodValueFlag     => vlr.prod_value_flag
+    , instanceName      =>
+        case when vlr.value_id is not null or createForInstanceFlag = 1 then
+          vlr.instance_name
+        end
+    , dateValue         => dateValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -2780,7 +2704,6 @@ exception when others then
         || ' optionShortName="' || optionShortName || '"'
         || ', valueIndex=' || valueIndex
         || ', createForInstanceFlag=' || createForInstanceFlag
-        || ', moduleOptionName="' || moduleOptionName || '"'
         || ').'
       )
     , true
@@ -2940,29 +2863,16 @@ end setNumber;
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 */
 member procedure setNumber(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , numberValue number
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 )
 is
-
-  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
-  isOldProcess boolean;
 
   -- Id параметра и вид значения при обеспечении совместимости
   optionId integer;
@@ -2972,66 +2882,28 @@ is
   vlr opt_value%rowtype;
 
 begin
-  isOldProcess :=
-    oldModuleName is not null
-    and valueIndex is null
-    and createForInstanceFlag is null
-    and (
-      moduleOptionName is not null
-      -- для обеспечения совместимости в случае вызова процедуры без указания
-      -- имен параметров для тестовых значений параметров
-      or optionShortName like '%_Test'
-        and pkg_OptionMain.getOldOptionId(
-          moduleName            => oldModuleName
-          , moduleOptionName    => optionShortName
-          , raiseNotFoundFlag   => 0
+  pkg_OptionMain.getValue(
+    rowData             => vlr
+    , optionId          =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
         )
-        is not null
-    )
-  ;
-
-  if isOldProcess then
-    pkg_OptionMain.getOptionInfoOld(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , moduleName        => oldModuleName
-      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
-      , raiseNotFoundFlag => 1
-    );
-    pkg_OptionMain.setValue(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , instanceName      => null
-      , usedOperatorId    => null
-      , valueTypeCode     => pkg_OptionMain.Number_ValueTypeCode
-      , numberValue       => numberValue
-      , valueIndex        => null
-      , operatorId        => operatorId
-    );
-  else
-    pkg_OptionMain.getValue(
-      rowData             => vlr
-      , optionId          =>
-          getOptionId(
-            optionShortName     => optionShortName
-            , raiseNotFoundFlag => 1
-          )
-      , usedOperatorId    => usedOperatorId
-      , usedValueFlag     => 1
-      , raiseNotFoundFlag => 0
-    );
-    setNumber(
-      optionShortName     => optionShortName
-      , prodValueFlag     => vlr.prod_value_flag
-      , instanceName      =>
-          case when vlr.value_id is not null or createForInstanceFlag = 1 then
-            vlr.instance_name
-          end
-      , numberValue       => numberValue
-      , valueIndex        => valueIndex
-      , operatorId        => operatorId
-    );
-  end if;
+    , usedOperatorId    => usedOperatorId
+    , usedValueFlag     => 1
+    , raiseNotFoundFlag => 0
+  );
+  setNumber(
+    optionShortName     => optionShortName
+    , prodValueFlag     => vlr.prod_value_flag
+    , instanceName      =>
+        case when vlr.value_id is not null or createForInstanceFlag = 1 then
+          vlr.instance_name
+        end
+    , numberValue       => numberValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -3040,7 +2912,6 @@ exception when others then
         || ' optionShortName="' || optionShortName || '"'
         || ', valueIndex=' || valueIndex
         || ', createForInstanceFlag=' || createForInstanceFlag
-        || ', moduleOptionName="' || moduleOptionName || '"'
         || ').'
       )
     , true
@@ -3200,29 +3071,16 @@ end setString;
                                 экземпляре БД
                                 ( 1 да, 0 нет ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
-  moduleOptionName            - устаревший параметр процедуры, следует
-                                использовать optionShortName с указанием
-                                короткого названия параметра в рамках модуля
-
-  Замечание:
-  - для обеспечения совместимости параметр процедуры optionShortName сделан
-    необязательным и при отсутствии у него значения используется значение из
-    параметра процедуры moduleOptionName, в дальнейшем параметр optionShortName
-    будет обязательным, а параметр moduleOptionName будет удален;
 */
 member procedure setString(
   self in opt_option_list_t
-  , optionShortName varchar2 := null
+  , optionShortName varchar2
   , stringValue varchar2
   , valueIndex integer := null
   , createForInstanceFlag integer := null
   , operatorId integer := null
-  , moduleOptionName varchar2 := null
 )
 is
-
-  -- Признак выполнения устаревшей процедуры для обеспечения совместимости
-  isOldProcess boolean;
 
   -- Id параметра и вид значения при обеспечении совместимости
   optionId integer;
@@ -3232,67 +3090,29 @@ is
   vlr opt_value%rowtype;
 
 begin
-  isOldProcess :=
-    oldModuleName is not null
-    and valueIndex is null
-    and createForInstanceFlag is null
-    and (
-      moduleOptionName is not null
-      -- для обеспечения совместимости в случае вызова процедуры без указания
-      -- имен параметров для тестовых значений параметров
-      or optionShortName like '%_Test'
-        and pkg_OptionMain.getOldOptionId(
-          moduleName            => oldModuleName
-          , moduleOptionName    => optionShortName
-          , raiseNotFoundFlag   => 0
+  pkg_OptionMain.getValue(
+    rowData             => vlr
+    , optionId          =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
         )
-        is not null
-    )
-  ;
-
-  if isOldProcess then
-    pkg_OptionMain.getOptionInfoOld(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , moduleName        => oldModuleName
-      , moduleOptionName  => coalesce( moduleOptionName, optionShortName)
-      , raiseNotFoundFlag => 1
-    );
-    pkg_OptionMain.setValue(
-      optionId            => optionId
-      , prodValueFlag     => prodValueFlag
-      , instanceName      => null
-      , usedOperatorId    => null
-      , valueTypeCode     => pkg_OptionMain.String_ValueTypeCode
-      , stringValue       => stringValue
-      , valueIndex        => null
-      , operatorId        => operatorId
-    );
-  else
-    pkg_OptionMain.getValue(
-      rowData             => vlr
-      , optionId          =>
-          getOptionId(
-            optionShortName     => optionShortName
-            , raiseNotFoundFlag => 1
-          )
-      , usedOperatorId    => usedOperatorId
-      , usedValueFlag     => 1
-      , decryptValueFlag  => 0
-      , raiseNotFoundFlag => 0
-    );
-    setString(
-      optionShortName     => optionShortName
-      , prodValueFlag     => vlr.prod_value_flag
-      , instanceName      =>
-          case when vlr.value_id is not null or createForInstanceFlag = 1 then
-            vlr.instance_name
-          end
-      , stringValue       => stringValue
-      , valueIndex        => valueIndex
-      , operatorId        => operatorId
-    );
-  end if;
+    , usedOperatorId    => usedOperatorId
+    , usedValueFlag     => 1
+    , decryptValueFlag  => 0
+    , raiseNotFoundFlag => 0
+  );
+  setString(
+    optionShortName     => optionShortName
+    , prodValueFlag     => vlr.prod_value_flag
+    , instanceName      =>
+        case when vlr.value_id is not null or createForInstanceFlag = 1 then
+          vlr.instance_name
+        end
+    , stringValue       => stringValue
+    , valueIndex        => valueIndex
+    , operatorId        => operatorId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -3301,7 +3121,6 @@ exception when others then
         || ' optionShortName="' || optionShortName || '"'
         || ', valueIndex=' || valueIndex
         || ', createForInstanceFlag=' || createForInstanceFlag
-        || ', moduleOptionName="' || moduleOptionName || '"'
         || ').'
       )
     , true
@@ -3683,10 +3502,10 @@ is
   changeFlag integer := 0;
 
   -- Текущие данные параметра
-  orc opt_option_new%rowtype;
+  orc opt_option%rowtype;
 
   -- Новые данные параметра
-  nrc opt_option_new%rowtype;
+  nrc opt_option%rowtype;
 
 begin
   pkg_OptionMain.lockOption(
@@ -3878,7 +3697,7 @@ is
   optionId integer;
 
   -- Данные параметра
-  opt opt_option_new%rowtype;
+  opt opt_option%rowtype;
 
   -- Данные значения
   vlr opt_value%rowtype;
@@ -4426,240 +4245,6 @@ exception when others then
     , true
   );
 end deleteObjectType;
-
-
-
-/* group: Устаревшие функции */
-
-/* func: getOptionDate
-  Устаревшая функция, следует использовать <getDate> или <getDate( USED)>.
-*/
-member function getOptionDate(
-  moduleOptionName varchar2
-)
-return date
-is
-
-  -- Id параметра и вид значения
-  optionId integer;
-  prodValueFlag integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  pkg_OptionMain.getOptionInfoOld(
-    optionId            => optionId
-    , prodValueFlag     => prodValueFlag
-    , moduleName        => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , raiseNotFoundFlag => 1
-  );
-  pkg_OptionMain.getValue(
-    rowData                 => vlr
-    , optionId              => optionId
-    , prodValueFlag         => prodValueFlag
-    , instanceName          => null
-    , usedOperatorId        => null
-    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
-    , valueIndex            => null
-    , raiseNotFoundFlag     => 1
-  );
-  return vlr.date_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении значения параметра типа дата ('
-        || ' moduleOptionName="' || moduleOptionName || '"'
-        || ').'
-      )
-    , true
-  );
-end getOptionDate;
-
-/* func: getOptionNumber
-  Устаревшая функция, следует использовать <getNumber> или <getNumber( USED)>.
-*/
-member function getOptionNumber(
-  moduleOptionName varchar2
-)
-return number
-is
-
-  -- Id параметра и вид значения
-  optionId integer;
-  prodValueFlag integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  pkg_OptionMain.getOptionInfoOld(
-    optionId            => optionId
-    , prodValueFlag     => prodValueFlag
-    , moduleName        => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , raiseNotFoundFlag => 1
-  );
-  pkg_OptionMain.getValue(
-    rowData                 => vlr
-    , optionId              => optionId
-    , prodValueFlag         => prodValueFlag
-    , instanceName          => null
-    , usedOperatorId        => null
-    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
-    , valueIndex            => null
-    , raiseNotFoundFlag     => 1
-  );
-  return vlr.number_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении значения параметра числового типа ('
-        || ' moduleOptionName="' || moduleOptionName || '"'
-        || ').'
-      )
-    , true
-  );
-end getOptionNumber;
-
-/* func: getOptionString
-  Устаревшая функция, следует использовать <getString> или <getString( USED)>.
-*/
-member function getOptionString(
-  moduleOptionName varchar2
-)
-return varchar2
-is
-
-  -- Id параметра и вид значения
-  optionId integer;
-  prodValueFlag integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  pkg_OptionMain.getOptionInfoOld(
-    optionId            => optionId
-    , prodValueFlag     => prodValueFlag
-    , moduleName        => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , raiseNotFoundFlag => 1
-  );
-  pkg_OptionMain.getValue(
-    rowData                 => vlr
-    , optionId              => optionId
-    , prodValueFlag         => prodValueFlag
-    , instanceName          => null
-    , usedOperatorId        => null
-    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
-    , valueIndex            => null
-    , raiseNotFoundFlag     => 1
-  );
-  return vlr.string_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении значения параметра строкового типа ('
-        || ' moduleOptionName="' || moduleOptionName || '"'
-        || ').'
-      )
-    , true
-  );
-end getOptionString;
-
-/* proc: addOptionDate
-  Устаревшая функция, следует использовать <addDate> или <addDate( TEST_PROD)>.
-*/
-member procedure addOptionDate(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultDateValue varchar2 := null
-)
-is
-begin
-  pkg_OptionMain.addOptionWithValueOld(
-    moduleName          => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , valueTypeCode     => pkg_OptionMain.Date_ValueTypeCode
-    , optionName        => optionName
-    , dateValue         => defaultDateValue
-  );
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении параметра со значением типа дата'
-        || ' устаревшей функцией.'
-      )
-    , true
-  );
-end addOptionDate;
-
-/* proc: addOptionNumber
-  Устаревшая функция, следует использовать <addNumber> или
-  <addNumber( TEST_PROD)>.
-*/
-member procedure addOptionNumber(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultNumberValue varchar2 := null
-)
-is
-begin
-  pkg_OptionMain.addOptionWithValueOld(
-    moduleName          => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , valueTypeCode     => pkg_OptionMain.Number_ValueTypeCode
-    , optionName        => optionName
-    , numberValue       => defaultNumberValue
-  );
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении параметра с числовым значением'
-        || ' устаревшей функцией.'
-      )
-    , true
-  );
-end addOptionNumber;
-
-/* proc: addOptionString
-  Устаревшая функция, следует использовать <addString> или
-  <addString( TEST_PROD)>.
-*/
-member procedure addOptionString(
-  self in opt_option_list_t
-  , moduleOptionName varchar2
-  , optionName varchar2
-  , defaultStringValue varchar2 := null
-)
-is
-begin
-  pkg_OptionMain.addOptionWithValueOld(
-    moduleName          => oldModuleName
-    , moduleOptionName  => moduleOptionName
-    , valueTypeCode     => pkg_OptionMain.String_ValueTypeCode
-    , optionName        => optionName
-    , stringValue       => defaultStringValue
-  );
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении параметра со строковым значением'
-        || ' устаревшей функцией.'
-      )
-    , true
-  );
-end addOptionString;
 
 end;
 /

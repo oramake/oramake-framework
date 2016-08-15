@@ -1,7 +1,7 @@
---script: Install/Config/before-action.sql
---ƒействи€ выполн€емые перед установкой обновлени€ модул€.
+-- script: Install/Config/before-action.sql
+-- ƒействи€ выполн€емые перед установкой обновлени€ модул€.
 --
---¬ыполн€емые действи€:
+-- ¬ыполн€емые действи€:
 --  - останавливает запуск заданий
 
-@@stop-batches.sql "v_opt_save_job_queue"
+@oms-run stop-batches.sql "v_opt_save_job_queue"
