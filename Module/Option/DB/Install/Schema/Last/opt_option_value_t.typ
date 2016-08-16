@@ -1,5 +1,16 @@
+-- Для Oracle 11.2 и выше для пересоздания типа используется опция "force"
+-- в create type, для более ранних версий используется "drop type force"
+set define on
+
+@oms-default forceOption "' || case when to_number( '&_O_RELEASE') >= 1102000000 then 'force' else '--' end || '"
+
+@oms-default dropTypeScript "' || case when '&forceOption' = '--' then './oms-drop-type.sql' else '' end || '"
+
+@oms-run "&dropTypeScript" opt_option_list_t
+
 create or replace type
   opt_option_value_t
+&forceOption
 as object
 (
 /* db object type: opt_option_value_t
@@ -26,22 +37,22 @@ option_id                         integer,
 value_id                          integer,
 
 /* var: module_name
-  Название модуля, к которому относится параметр
+  Наименование модуля, к которому относится параметр
 */
 module_name                       varchar2(100),
 
 /* var: object_short_name
-  Короткое название объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)
+  Краткое наименование объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)
 */
 object_short_name                 varchar2(100),
 
 /* var: object_type_short_name
-  Короткое название типа объекта
+  Краткое наименование типа объекта
 */
 object_type_short_name            varchar2(50),
 
 /* var: option_short_name
-  Короткое название параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)
+  Краткое наименование параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)
 */
 option_short_name                 varchar2(50),
 
@@ -96,7 +107,7 @@ test_prod_sensitive_flag          number(1),
 access_level_code                 varchar2(10),
 
 /* var: option_name
-  Название параметра
+  Наименование параметра
 */
 option_name                       varchar2(250),
 
@@ -136,7 +147,7 @@ module_svn_root                   varchar2(100),
 object_type_id                    integer,
 
 /* var: object_type_name
-  Название типа объекта
+  Наименование типа объекта
 */
 object_type_name                  varchar2(100),
 
@@ -146,7 +157,7 @@ object_type_name                  varchar2(100),
 object_type_module_id             integer,
 
 /* var: object_type_module_name
-  Модуль типа объекта: Название модуля
+  Модуль типа объекта: Наименование модуля
 */
 object_type_module_name           varchar2(100),
 

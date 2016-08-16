@@ -34,13 +34,13 @@ comment on column v_opt_object_type.module_id is
   'Id модуля, к которому относится тип объекта'
 /
 comment on column v_opt_object_type.module_name is
-  'Название модуля, к которому относится тип объекта'
+  'Наименование модуля, к которому относится тип объекта'
 /
 comment on column v_opt_object_type.object_type_short_name is
-  'Короткое название типа объекта ( уникальное в рамках модуля)'
+  'Краткое наименование типа объекта ( уникальное в рамках модуля)'
 /
 comment on column v_opt_object_type.object_type_name is
-  'Название типа объекта'
+  'Наименование типа объекта'
 /
 comment on column v_opt_object_type.module_svn_root is
   'Путь к корневому каталогу модуля в Subversion ( начиная с имени репозитария, например: "Oracle/Module/ModuleInfo")'

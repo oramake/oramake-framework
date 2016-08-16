@@ -25,13 +25,13 @@ create or replace type body opt_plsql_object_option_t is
                                 Subversion)
   objectName                  - имя PL/SQL объекта ( пакета, SQL-типа
                                 и т.д.), к которому относятся параметры
-  moduleName                  - название модуля ( например "ModuleInfo")
+  moduleName                  - наименование модуля ( например "ModuleInfo")
   moduleSvnRoot               - путь к корневому каталогу модуля в Subversion
                                 ( начиная с имени репозитария, например
                                 "Oracle/Module/ModuleInfo")
 
   Замечания:
-  - имя PL/SQL объекта ( objectName) используется как короткое название
+  - имя PL/SQL объекта ( objectName) используется как краткое наименование
     объекта, к которому относятся параметры ( поле object_short_name таблицы
     <opt_option>);
   - для определения модуля должен быть задан один из параметров
@@ -87,7 +87,7 @@ end opt_plsql_object_option_t;
                                 и т.д.), к которому относятся параметры
 
   Замечания:
-  - имя PL/SQL объекта ( objectName) используется как короткое название
+  - имя PL/SQL объекта ( objectName) используется как краткое наименование
     объекта, к которому относятся параметры ( поле object_short_name таблицы
     <opt_option>);
 */

@@ -11,7 +11,7 @@ create or replace package pkg_Option is
 /* group: Константы */
 
 /* const: Module_Name
-  Название модуля, к которому относится пакет.
+  Наименование модуля, к которому относится пакет.
 */
 Module_Name constant varchar2(30) := pkg_OptionMain.Module_Name;
 
@@ -29,11 +29,11 @@ Module_Name constant varchar2(30) := pkg_OptionMain.Module_Name;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
                                 ( по умолчанию отсутствует)
   objectTypeId                - Id типа объекта
                                 ( по умолчанию отсутствует)
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
                                 указанного типа ( 1 да, 0 нет ( по умолчанию))
@@ -44,7 +44,7 @@ Module_Name constant varchar2(30) := pkg_OptionMain.Module_Name;
                                 данных ( тестовая или промышленная), для
                                 которого оно предназначено
                                 ( 1 да, 0 нет ( по умолчанию))
-  optionName                  - название параметра
+  optionName                  - наименование параметра
   optionDescription           - описание параметра
                                 ( по умолчанию отсутствует)
   dateValue                   - значение типа дата
@@ -107,7 +107,7 @@ return integer;
                                 данных ( тестовая или промышленная), для
                                 которого оно предназначено
                                 ( 1 да, 0 нет)
-  optionName                  - название параметра
+  optionName                  - наименование параметра
   optionDescription           - описание параметра
   checkRoleFlag               - проверять наличие у оператора прав для
                                 выполнения операции
@@ -212,12 +212,12 @@ procedure deleteOption(
   Параметры:
   optionId                    - Id параметра
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
                                 ( поиск по like без учета регистра)
   objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
                                 ( поиск по like без учета регистра)
-  optionName                  - название параметра
+  optionName                  - наименование параметра
                                 ( поиск по like без учета регистра)
   optionDescription           - описание параметра
                                 ( поиск по like без учета регистра)
@@ -234,16 +234,16 @@ procedure deleteOption(
   option_id                   - Id параметра
   value_id                    - Id используемого значения
   module_id                   - Id модуля, к которому относится параметр
-  module_name                 - Название модуля, к которому относится параметр
+  module_name                 - Наименование модуля, к которому относится параметр
   module_svn_root             - Путь в Subversion к корневому каталогу модуля,
                                 к кооторому относится параметр
-  object_short_name           - Короткое название объекта модуля
+  object_short_name           - Краткое наименование объекта модуля
   object_type_id              - Id типа объекта
-  object_type_short_name      - Короткое название типа объекта
-  object_type_name            - Название типа объекта
-  option_short_name           - Короткое название параметра
+  object_type_short_name      - Краткое наименование типа объекта
+  object_type_name            - Наименование типа объекта
+  option_short_name           - Краткое наименование параметра
   value_type_code             - Код типа значения параметра
-  value_type_name             - Название типа значения параметра
+  value_type_name             - Наименование типа значения параметра
   date_value                  - Значение параметра типа дата
   number_value                - Числовое значение параметра
   string_value                - Строковое значение параметра либо список
@@ -259,7 +259,7 @@ procedure deleteOption(
                                 которого оно предназначено
   access_level_code           - Код уровня доступа через интерфейс
   access_level_name           - Описание уровня доступа через интерфейс
-  option_name                 - Название параметра
+  option_name                 - Наименование параметра
   option_description          - Описание параметра
 
   Замечания:
@@ -441,7 +441,7 @@ procedure deleteValue(
   used_operator_name          - ФИО оператора, для которого может
                                 использоваться значение
   value_type_code             - Код типа значения параметра
-  value_type_name             - Название типа значения параметра
+  value_type_name             - Наименование типа значения параметра
   list_separator              - символ, используемый в качестве разделителя в
                                 списке значений
   encryption_flag             - Флаг хранения значений параметра в
@@ -478,9 +478,9 @@ return sys_refcursor;
 
   Возврат ( курсор):
   object_type_id              - Id типа объекта
-  object_type_short_name      - короткое название типа объекта
-  object_type_name            - название типа объекта
-  module_name                 - название модуля, к которому относится тип
+  object_type_short_name      - краткое наименование типа объекта
+  object_type_name            - наименование типа объекта
+  module_name                 - наименование модуля, к которому относится тип
                                 объекта
   module_svn_root             - путь в Subversion к корневому каталогу модуля,
                                 к кооторому относится тип объекта
@@ -496,7 +496,7 @@ return sys_refcursor;
 
   Возврат ( курсор):
   value_type_code             - код типа значения параметра
-  value_type_name             - название типа значения параметра
+  value_type_name             - наименование типа значения параметра
 
   ( сортировка по value_type_name)
 
@@ -514,13 +514,13 @@ return sys_refcursor;
 
   Параметры:
   moduleId                    - Id модуля
-  moduleName                  - название модуля
+  moduleName                  - наименование модуля
                                 ( поиск по like без учета регистра)
   maxRowCount                 - максимальное число возвращаемых поиском записей
 
   Возврат ( курсор):
   module_id                   - Id модуля
-  module_name                 - Название модуля
+  module_name                 - Наименование модуля
   svn_root                    - Путь в Subversion к корневому каталогу модуля,
 
   ( <body::findModule>)

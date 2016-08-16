@@ -82,7 +82,7 @@ end getCurrentUsedOperatorId;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 записи ( 1 да ( по умолчанию), 0 нет)
 
@@ -138,8 +138,8 @@ end getObjectTypeId;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
-  objectTypeName              - название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
+  objectTypeName              - наименование типа объекта
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -197,8 +197,8 @@ end createObjectType;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
-  objectTypeName              - название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
+  objectTypeName              - наименование типа объекта
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -283,7 +283,7 @@ end mergeObjectType;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
   operatorId                  - Id оператора, выполняющего операцию ( по
                                 умолчанию текущий)
 
@@ -473,9 +473,9 @@ end getDecryptValue;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
   objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -592,10 +592,10 @@ end lockOption;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  objectShortName             - короткое название объекта модуля
+  optionName                  - наименование параметра
+  objectShortName             - краткое наименование объекта модуля
                                 ( по умолчанию отсутствует)
   objectTypeId                - Id типа объекта
                                 ( по умолчанию отсутствует)
@@ -833,9 +833,9 @@ end createOption;
   Параметры:
   optionId                    - Id параметра
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
   objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
                                 указанного типа ( 1 да, 0 нет)
@@ -847,7 +847,7 @@ end createOption;
                                 ( 1 да, 0 нет)
   accessLevelCode             - код уровня доступа к параметру через
                                 пользовательский интерфейс
-  optionName                  - название параметра
+  optionName                  - наименование параметра
   optionDescription           - описание параметра
   moveProdSensitiveValueFlag  - при изменении значения флага
                                 testProdSensitiveFlag переносить существующие
@@ -3133,10 +3133,10 @@ end deleteValue;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  objectShortName             - короткое название объекта модуля
+  optionName                  - наименование параметра
+  objectShortName             - краткое наименование объекта модуля
                                 ( по умолчанию отсутствует)
   objectTypeId                - Id типа объекта
                                 ( по умолчанию отсутствует)
@@ -3315,7 +3315,7 @@ end addOptionWithValue;
                                 ( тип <opt_option_value_table_t>)
                                 ( возврат)
   moduleId                    - Id модуля, к которому относятся параметры
-  objectShortName             - короткое название объекта модуля, к которому
+  objectShortName             - краткое наименование объекта модуля, к которому
                                 относятся параметры ( по умолчанию относящиеся
                                 ко всему модулю)
   objectTypeId                - Id типа объекта

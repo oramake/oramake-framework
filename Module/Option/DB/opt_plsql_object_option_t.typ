@@ -1,6 +1,5 @@
 -- Для Oracle 11.2 и выше для пересоздания типа используется опция "force"
 -- в create type, для более ранних версий используется "drop type force"
--- ( Oracle 10.2 в БД Nic)
 set define on
 
 @oms-default forceOption "' || case when to_number( '&_O_RELEASE') >= 1102000000 then 'force' else '--' end || '"
@@ -42,13 +41,13 @@ under opt_option_list_t
                                 Subversion)
   objectName                  - имя PL/SQL объекта ( пакета, SQL-типа
                                 и т.д.), к которому относятся параметры
-  moduleName                  - название модуля ( например "ModuleInfo")
+  moduleName                  - наименование модуля ( например "ModuleInfo")
   moduleSvnRoot               - путь к корневому каталогу модуля в Subversion
                                 ( начиная с имени репозитария, например
                                 "Oracle/Module/ModuleInfo")
 
   Замечания:
-  - имя PL/SQL объекта ( objectName) используется как короткое название
+  - имя PL/SQL объекта ( objectName) используется как краткое наименование
     объекта, к которому относятся параметры ( поле object_short_name таблицы
     <opt_option>);
   - для определения модуля должен быть задан один из параметров
@@ -75,7 +74,7 @@ return self as result,
                                 и т.д.), к которому относятся параметры
 
   Замечания:
-  - имя PL/SQL объекта ( objectName) используется как короткое название
+  - имя PL/SQL объекта ( objectName) используется как краткое наименование
     объекта, к которому относятся параметры ( поле object_short_name таблицы
     <opt_option>);
 

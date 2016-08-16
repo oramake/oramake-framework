@@ -10,7 +10,7 @@ create or replace package pkg_OptionMain is
 /* group: Константы */
 
 /* const: Module_Name
-  Название модуля, к которому относится пакет.
+  Наименование модуля, к которому относится пакет.
 */
 Module_Name constant varchar2(30) := 'Option';
 
@@ -24,7 +24,7 @@ Module_SvnRoot constant varchar2(30) := 'Oracle/Module/Option';
 /* group: Настроечные параметры */
 
 /* const: LocalRoleSuffix_OptionSName
-  Короткое наименование параметра
+  Краткое наименование параметра
   "Суффикс для ролей, с помощью которых выдаются права на все параметры,
   созданные в локально установленном модуле Option".
 
@@ -112,7 +112,7 @@ String_ValueTypeCode constant varchar2(10) := 'STR';
 /* group: Типы объектов */
 
 /* const: PlsqlObject_ObjTypeSName
-  Короткое название типа объекта "PL/SQL объект".
+  Краткое наименование типа объекта "PL/SQL объект".
 */
 PlsqlObject_ObjTypeSName constant varchar2(50) := 'plsql_object';
 
@@ -139,7 +139,7 @@ return integer;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 записи ( 1 да ( по умолчанию), 0 нет)
 
@@ -161,8 +161,8 @@ return integer;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
-  objectTypeName              - название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
+  objectTypeName              - наименование типа объекта
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -183,8 +183,8 @@ return integer;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
-  objectTypeName              - название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
+  objectTypeName              - наименование типа объекта
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -205,7 +205,7 @@ return integer;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится тип объекта
-  objectTypeShortName         - короткое название типа объекта
+  objectTypeShortName         - краткое наименование типа объекта
   operatorId                  - Id оператора, выполняющего операцию ( по
                                 умолчанию текущий)
 
@@ -253,9 +253,9 @@ return varchar2;
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
   objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -296,10 +296,10 @@ procedure lockOption(
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  objectShortName             - короткое название объекта модуля
+  optionName                  - наименование параметра
+  objectShortName             - краткое наименование объекта модуля
                                 ( по умолчанию отсутствует)
   objectTypeId                - Id типа объекта
                                 ( по умолчанию отсутствует)
@@ -351,9 +351,9 @@ return integer;
   Параметры:
   optionId                    - Id параметра
   moduleId                    - Id модуля, к которому относится параметр
-  objectShortName             - короткое название объекта модуля
+  objectShortName             - краткое наименование объекта модуля
   objectTypeId                - Id типа объекта
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
                                 указанного типа ( 1 да, 0 нет)
@@ -365,7 +365,7 @@ return integer;
                                 ( 1 да, 0 нет)
   accessLevelCode             - код уровня доступа к параметру через
                                 пользовательский интерфейс
-  optionName                  - название параметра
+  optionName                  - наименование параметра
   optionDescription           - описание параметра
   moveProdSensitiveValueFlag  - при изменении значения флага
                                 testProdSensitiveFlag переносить существующие
@@ -810,10 +810,10 @@ procedure deleteValue(
 
   Параметры:
   moduleId                    - Id модуля, к которому относится параметр
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   valueTypeCode               - код типа значения параметра
-  optionName                  - название параметра
-  objectShortName             - короткое название объекта модуля
+  optionName                  - наименование параметра
+  objectShortName             - краткое наименование объекта модуля
                                 ( по умолчанию отсутствует)
   objectTypeId                - Id типа объекта
                                 ( по умолчанию отсутствует)
@@ -913,7 +913,7 @@ procedure addOptionWithValue(
                                 ( тип <opt_option_value_table_t>)
                                 ( возврат)
   moduleId                    - Id модуля, к которому относятся параметры
-  objectShortName             - короткое название объекта модуля, к которому
+  objectShortName             - краткое наименование объекта модуля, к которому
                                 относятся параметры ( по умолчанию относящиеся
                                 ко всему модулю)
   objectTypeId                - Id типа объекта

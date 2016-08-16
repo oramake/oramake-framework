@@ -15,3 +15,6 @@
 @oms-run rename-object.sql
 
 @oms-run recreate-option-uk.sql
+
+@oms-run change-tab-comment.sql
+@oms-run Install/Schema/Last/opt_option_value_t.typ

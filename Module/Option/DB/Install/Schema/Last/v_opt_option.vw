@@ -38,13 +38,13 @@ comment on column v_opt_option.module_id is
   'Id модуля, к которому относится параметр'
 /
 comment on column v_opt_option.object_short_name is
-  'Короткое название объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)'
+  'Краткое наименование объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)'
 /
 comment on column v_opt_option.object_type_id is
   'Id типа объекта'
 /
 comment on column v_opt_option.option_short_name is
-  'Короткое название параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)'
+  'Краткое наименование параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)'
 /
 comment on column v_opt_option.value_type_code is
   'Код типа значения параметра'
@@ -62,7 +62,7 @@ comment on column v_opt_option.access_level_code is
   'Код уровня доступа к параметру через пользовательский интерфейс'
 /
 comment on column v_opt_option.option_name is
-  'Название параметра'
+  'Наименование параметра'
 /
 comment on column v_opt_option.option_description is
   'Описание параметра'

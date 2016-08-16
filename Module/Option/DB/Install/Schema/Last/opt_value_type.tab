@@ -22,7 +22,7 @@ comment on column opt_value_type.value_type_code is
   'Код типа значения параметра'
 /
 comment on column opt_value_type.value_type_name is
-  'Название типа значения параметра'
+  'Наименование типа значения параметра'
 /
 comment on column opt_value_type.date_ins is
   'Дата добавления записи'

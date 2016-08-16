@@ -65,7 +65,7 @@ isProduction integer := pkg_Common.isProduction();
   Проверяет данные типа объекта.
 
   Параметры:
-  objectTypeShortName             - короткое название типа объекта
+  objectTypeShortName             - краткое наименование типа объекта
 
     данные типа объекта ( по умолчанию не проверять):
   objectTypeId                    - ...
@@ -139,9 +139,9 @@ end checkObjectType;
   Проверяет данные и значения настроечного параметра.
 
   Параметры:
-  optionShortName             - короткое название параметра
+  optionShortName             - краткое наименование параметра
   moduleName                  - имя модуля ( по умолчанию Exp_ModuleName)
-  objectShortName             - короткое имя объекта
+  objectShortName             - краткое имя объекта
   objectTypeId                - Id типа объекта
   instanceName                - имя экземпляра БД для проверки заданных
                                 значений

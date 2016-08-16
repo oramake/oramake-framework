@@ -194,16 +194,16 @@ comment on column v_opt_option_value.value_id is
   'Id значения ( null при отсутствии подходящего значения)'
 /
 comment on column v_opt_option_value.module_name is
-  'Название модуля, к которому относится параметр'
+  'Наименование модуля, к которому относится параметр'
 /
 comment on column v_opt_option_value.object_short_name is
-  'Короткое название объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)'
+  'Краткое наименование объекта модуля ( уникальное в рамках модуля), к которому относится параметр ( null если не требуется разделения параметров по объектам либо параметр относится ко всему модулю)'
 /
 comment on column v_opt_option_value.object_type_short_name is
-  'Короткое название типа объекта'
+  'Краткое наименование типа объекта'
 /
 comment on column v_opt_option_value.option_short_name is
-  'Короткое название параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)'
+  'Краткое наименование параметра ( уникальное в рамках модуля либо в рамках объекта модуля, если заполнено поле object_short_name)'
 /
 comment on column v_opt_option_value.value_type_code is
   'Код типа значения параметра'
@@ -233,7 +233,7 @@ comment on column v_opt_option_value.access_level_code is
   'Код уровня доступа к параметру через пользовательский интерфейс'
 /
 comment on column v_opt_option_value.option_name is
-  'Название параметра'
+  'Наименование параметра'
 /
 comment on column v_opt_option_value.option_description is
   'Описание параметра'
@@ -257,13 +257,13 @@ comment on column v_opt_option_value.object_type_id is
   'Id типа объекта'
 /
 comment on column v_opt_option_value.object_type_name is
-  'Название типа объекта'
+  'Наименование типа объекта'
 /
 comment on column v_opt_option_value.object_type_module_id is
   'Модуль типа объекта: Id модуля'
 /
 comment on column v_opt_option_value.object_type_module_name is
-  'Модуль типа объекта: Название модуля'
+  'Модуль типа объекта: Наименование модуля'
 /
 comment on column v_opt_option_value.object_type_module_svn_root is
   'Модуль типа объекта: Путь к корневому каталогу модуля в Subversion ( начиная с имени репозитария, например: "Oracle/Module/ModuleInfo")'
