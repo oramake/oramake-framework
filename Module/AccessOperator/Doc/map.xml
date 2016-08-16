@@ -10,8 +10,8 @@
   <request>
     <msp></msp>
   </request>
-  <path>Module/AccessOperator</path>
-  <initialPath>Module/AccessOperator@20</initialPath>
+  <path>Oracle/Module/AccessOperator</path>
+  <initialPath>Oracle/Module/AccessOperator@20</initialPath>
   <db>
     <database>
       <instance></instance>

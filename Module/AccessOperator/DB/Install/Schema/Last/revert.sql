@@ -4,6 +4,8 @@
 
 -- Пакеты
 
+drop package pkg_AccessOperator
+/
 drop package pkg_Operator
 /
 
@@ -13,6 +15,8 @@ drop package pkg_Operator
 drop view v_op_operator
 /
 drop view v_op_operator_role
+/
+drop view v_op_role
 /
 
 

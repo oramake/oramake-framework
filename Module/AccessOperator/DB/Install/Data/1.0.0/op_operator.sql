@@ -20,7 +20,7 @@ begin
       , k.password
       , k.date_begin
       , k.date_finish
-      , 1 as operator_id_ins
+      , k.operator_id as operator_id_ins
     from
       (
       select

@@ -4,8 +4,13 @@ title: Установка
 group: Общие замечания
 
 Параметры установки:
-
-LOAD_USERID                   - пользователь для загрузки ( формат: [userName[/password]][@dbName] )
+INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
+                                первоначальной установке или номер при
+                                обновлении)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
+LOAD_USERID                   - основной пользователь для установки в БД
+                                ( формат: username/password@dbName)
 
 
 
@@ -45,6 +50,22 @@ group: Первоначальная установка
 
 (code)
 
-make install LOAD_USERID=???/???@??? INSTALL_VERSION=Last LOAD_OPERATORID=
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID= SKIP_FILE_MASK=*/oms-save-install-info.sql
+
+$ make install-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? SKIP_FILE_MASK=*/oms-save-uninstall-info.sql
+
+$ make uninstall-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=
+
+(end)
