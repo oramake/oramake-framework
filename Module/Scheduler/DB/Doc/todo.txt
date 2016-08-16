@@ -4,6 +4,13 @@ Title: Доработки
 
 group: Общие
 
+[+] Добавлить в <pkg_SchedulerLoad> функцию переименования пакетного
+    задания ( изменения batch_short_name) для использования в скриптах
+    установки модулей.
+
+[*] Вместо процедуры <pkg_SchedulerLoad::body::changeOptionModule> использовать
+    процедуру opt_option_list_t.moveAll модуля Option.
+
 [*] Переименовать интерфейсную функцию <pkg_Scheduler.findModule> в getModule.
 
 [*] При ошибке job "Перезапуск пакетов..."
