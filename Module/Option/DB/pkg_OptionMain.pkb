@@ -832,6 +832,9 @@ end createOption;
 
   Параметры:
   optionId                    - Id параметра
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - короткое название объекта модуля
+  objectTypeId                - Id типа объекта
   optionShortName             - короткое название параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
@@ -867,6 +870,9 @@ end createOption;
 */
 procedure updateOption(
   optionId integer
+  , moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
   , optionShortName varchar2
   , valueTypeCode varchar2
   , valueListFlag integer
@@ -1141,7 +1147,10 @@ begin
   update
     opt_option d
   set
-    d.option_short_name           = optionShortName
+    d.module_id                   = moduleId
+    , d.object_short_name         = objectShortName
+    , d.object_type_id            = objectTypeId
+    , d.option_short_name         = optionShortName
     , d.value_type_code           = valueTypeCode
     , d.value_list_flag           = valueListFlag
     , d.encryption_flag           = encryptionFlag

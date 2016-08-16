@@ -1933,6 +1933,42 @@ member procedure createOption(
   , operatorId integer := null
 ),
 
+/* pproc: moveAll
+  Переносит все настроечные параметры из текущего в указанный набор параметров,
+  корректируя модуль, краткое наименование и тип объекта, к которому относятся
+  параметры.
+
+  Параметры:
+  optionList                  - набор, в который переносятся параметры
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  ( <body::moveAll>)
+*/
+member procedure moveAll(
+  self in opt_option_list_t
+  , optionList opt_option_list_t
+  , operatorId integer := null
+),
+
+/* pproc: moveOption
+  Переносит настроечный параметр из текущего в указанный набор параметров,
+  корректируя модуль, краткое наименование и тип объекта, к которому относится
+  параметр.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionList                  - набор, в который переносится параметр
+  operatorId                  - Id оператора ( по умолчанию текущий)
+
+  ( <body::moveOption>)
+*/
+member procedure moveOption(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionList opt_option_list_t
+  , operatorId integer := null
+),
+
 /* pfunc: updateOption
   Изменяет настроечный параметр.
 
@@ -2123,6 +2159,9 @@ member procedure setValue(
 
 /* pproc: deleteAll
   Удаляет все настроечные параметры, относящиеся к набору параметров.
+
+  Параметры:
+  operatorId                  - Id оператора ( по умолчанию текущий)
 
   ( <body::deleteAll>)
 */

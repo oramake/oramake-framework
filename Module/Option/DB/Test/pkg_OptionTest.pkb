@@ -17,6 +17,11 @@ Exp_ModuleName constant varchar2(50) :=
   substr( Exp_SvnRoot, instr( Exp_SvnRoot, '/', -1) + 1)
 ;
 
+/* iconst: Exp_ModuleName
+  Имя второго модуля для использования в тестах.
+*/
+Exp2_ModuleName constant varchar2(50) := 'DynamicSql';
+
 /* iconst: None_Date
   Дата, указываемая в качестве значения параметра по умолчанию, позволяющая
   определить отсутствие явно заданного значения.
@@ -135,6 +140,7 @@ end checkObjectType;
 
   Параметры:
   optionShortName             - короткое название параметра
+  moduleName                  - имя модуля ( по умолчанию Exp_ModuleName)
   objectShortName             - короткое имя объекта
   objectTypeId                - Id типа объекта
   instanceName                - имя экземпляра БД для проверки заданных
@@ -202,6 +208,7 @@ end checkObjectType;
 */
 procedure checkOptionValue(
   optionShortName varchar2
+  , moduleName varchar2 := null
   , objectShortName varchar2 := null
   , objectTypeId varchar2 := null
   , instanceName varchar2 := null
@@ -249,6 +256,9 @@ is
   -- Дополнительная информация для сообщения о некорректностях в параметре
   failInfo varchar2(200) :=
     ' ( optionShortName="' || optionShortName || '"'
+    || case when moduleName is not null then
+        ', moduleName="' || moduleName || '"'
+      end
     || case when objectShortName is not null then
         ', objectShortName="' || objectShortName || '"'
       end
@@ -299,7 +309,7 @@ is
 
   begin
     moduleId := pkg_ModuleInfo.getModuleId(
-      svnRoot  => Exp_SvnRoot
+      findModuleString  => coalesce( moduleName, Exp_SvnRoot)
     );
     open optionCur;
     fetch optionCur into opt;
@@ -4811,6 +4821,8 @@ where
 
     nOption integer;
 
+    optionId integer;
+
   -- testObjectOption
   begin
     pkg_TestUtility.beginTest( 'testOptionList: option for object');
@@ -5153,6 +5165,74 @@ where
       , objectShortName       => 'company.com'
       , objectTypeId          => ob2.getObjectTypeId()
       , stringValue           => 'ftpUser'
+    );
+
+    -- Перенос параметра в другой набор
+    ob1.addNumber(
+      optionShortName       => 'Port'
+      , optionName          => 'Порт'
+      , numberValue         => 5000
+    );
+    ob1.addString(
+      optionShortName       => 'Proxy'
+      , optionName          => 'Прокси'
+      , stringValue         => 'proxy.com'
+    );
+    optionId := ob1.getOptionId( 'Proxy');
+    checkOptionValue(
+      optionShortName         => 'Proxy'
+      , moduleName            => Exp_ModuleName
+      , objectShortName       => 'company.com'
+      , objectTypeId          => ob1.getObjectTypeId()
+      , optionId              => optionId
+      , optionName            => 'Прокси'
+      , stringValue           => 'proxy.com'
+    );
+    ob2 := opt_option_list_t(
+      moduleName              => Exp2_ModuleName
+      , objectShortName       => 'company2.com'
+      , objectTypeShortName   => 'ftpServer'
+      , objectTypeModuleName  => Exp_ModuleName
+    );
+    ob1.moveOption(
+      optionShortName       => 'Proxy'
+      , optionList          => ob2
+    );
+    checkOptionValue(
+      optionShortName         => 'Proxy'
+      , moduleName            => Exp2_ModuleName
+      , objectShortName       => 'company2.com'
+      , objectTypeId          => ob2.getObjectTypeId()
+      , optionId              => optionId
+      , optionName            => 'Прокси'
+      , stringValue           => 'proxy.com'
+    );
+
+    -- ... всех параметров в другой набор
+    optionId := ob1.getOptionId( 'Port');
+    ob1.moveAll(
+      optionList              => ob2
+    );
+    checkOptionValue(
+      optionShortName         => 'Port'
+      , moduleName            => Exp2_ModuleName
+      , objectShortName       => 'company2.com'
+      , objectTypeId          => ob2.getObjectTypeId()
+      , optionId              => optionId
+      , optionName            => 'Порт'
+      , numberValue           => 5000
+    );
+    select
+      count(*)
+    into nOption
+    from
+      table( ob1.getOptionValue())
+    ;
+    pkg_TestUtility.compareChar(
+      actualString        => nOption
+      , expectedString    => 0
+      , failMessageText   =>
+          'ob1.moveAll(): Не все параметры перенесены в другой набор'
     );
 
     pkg_TestUtility.endTest();

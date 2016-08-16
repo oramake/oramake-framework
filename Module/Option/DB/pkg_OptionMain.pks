@@ -350,6 +350,9 @@ return integer;
 
   Параметры:
   optionId                    - Id параметра
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - короткое название объекта модуля
+  objectTypeId                - Id типа объекта
   optionShortName             - короткое название параметра
   valueTypeCode               - код типа значения параметра
   valueListFlag               - флаг задания для параметра списка значений
@@ -387,6 +390,9 @@ return integer;
 */
 procedure updateOption(
   optionId integer
+  , moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
   , optionShortName varchar2
   , valueTypeCode varchar2
   , valueListFlag integer

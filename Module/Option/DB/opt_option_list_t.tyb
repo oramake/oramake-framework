@@ -3424,6 +3424,137 @@ exception when others then
   );
 end createOption;
 
+/* proc: moveAll
+  Переносит все настроечные параметры из текущего в указанный набор параметров,
+  корректируя модуль, краткое наименование и тип объекта, к которому относятся
+  параметры.
+
+  Параметры:
+  optionList                  - набор, в который переносятся параметры
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure moveAll(
+  self in opt_option_list_t
+  , optionList opt_option_list_t
+  , operatorId integer := null
+)
+is
+
+  cursor optionCur is
+    select
+      t.*
+    from
+      v_opt_option t
+    where
+      t.module_id = moduleId
+      and (
+        objectShortName is null
+          and t.object_short_name is null
+          and t.object_type_id is null
+        or objectShortName is not null
+          and t.object_short_name = objectShortName
+          and t.object_type_id = objectTypeId
+      )
+    order by
+      1
+  ;
+
+begin
+  for rec in optionCur loop
+    pkg_OptionMain.updateOption(
+      optionId                      => rec.option_id
+      , moduleId                    => optionList.moduleId
+      , objectShortName             => optionList.objectShortName
+      , objectTypeId                => optionList.objectTypeId
+      , optionShortName             => rec.option_short_name
+      , valueTypeCode               => rec.value_type_code
+      , valueListFlag               => rec.value_list_flag
+      , encryptionFlag              => rec.encryption_flag
+      , testProdSensitiveFlag       => rec.test_prod_sensitive_flag
+      , accessLevelCode             => rec.access_level_code
+      , optionName                  => rec.option_name
+      , optionDescription           => rec.option_description
+      , moveProdSensitiveValueFlag  => 0
+      , deleteBadValueFlag          => 0
+      , operatorId                  => operatorId
+    );
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при переносе всех параметров в другой набор ('
+        || ' moduleId=' || optionList.moduleId
+        || ', objectShortName="' || optionList.objectShortName || '"'
+        || ', objectTypeId=' || optionList.objectTypeId
+        || ').'
+      )
+    , true
+  );
+end moveAll;
+
+/* proc: moveOption
+  Переносит настроечный параметр из текущего в указанный набор параметров,
+  корректируя модуль, краткое наименование и тип объекта, к которому относится
+  параметр.
+
+  Параметры:
+  optionShortName             - короткое название параметра
+  optionList                  - набор, в который переносится параметр
+  operatorId                  - Id оператора ( по умолчанию текущий)
+*/
+member procedure moveOption(
+  self in opt_option_list_t
+  , optionShortName varchar2
+  , optionList opt_option_list_t
+  , operatorId integer := null
+)
+is
+
+  -- Данные параметра
+  opt opt_option%rowtype;
+
+begin
+  pkg_OptionMain.lockOption(
+    rowData         => opt
+    , optionId      =>
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+  );
+  pkg_OptionMain.updateOption(
+    optionId                      => opt.option_id
+    , moduleId                    => optionList.moduleId
+    , objectShortName             => optionList.objectShortName
+    , objectTypeId                => optionList.objectTypeId
+    , optionShortName             => opt.option_short_name
+    , valueTypeCode               => opt.value_type_code
+    , valueListFlag               => opt.value_list_flag
+    , encryptionFlag              => opt.encryption_flag
+    , testProdSensitiveFlag       => opt.test_prod_sensitive_flag
+    , accessLevelCode             => opt.access_level_code
+    , optionName                  => opt.option_name
+    , optionDescription           => opt.option_description
+    , moveProdSensitiveValueFlag  => 0
+    , deleteBadValueFlag          => 0
+    , operatorId                  => operatorId
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при переносе параметра в другой набор ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', moduleId=' || optionList.moduleId
+        || ', objectShortName="' || optionList.objectShortName || '"'
+        || ', objectTypeId=' || optionList.objectTypeId
+        || ').'
+      )
+    , true
+  );
+end moveOption;
+
 /* func: updateOption
   Изменяет настроечный параметр.
 
@@ -3565,6 +3696,9 @@ begin
       then
     pkg_OptionMain.updateOption(
       optionId                      => orc.option_id
+      , moduleId                    => orc.module_id
+      , objectShortName             => orc.object_short_name
+      , objectTypeId                => orc.object_type_id
       , optionShortName             => nrc.option_short_name
       , valueTypeCode               => nrc.value_type_code
       , valueListFlag               => nrc.value_list_flag
@@ -3857,6 +3991,9 @@ end setValue;
 
 /* proc: deleteAll
   Удаляет все настроечные параметры, относящиеся к набору параметров.
+
+  Параметры:
+  operatorId                  - Id оператора ( по умолчанию текущий)
 */
 member procedure deleteAll(
   self in opt_option_list_t

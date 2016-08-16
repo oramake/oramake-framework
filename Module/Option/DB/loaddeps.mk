@@ -48,8 +48,7 @@ pkg_OptionCrypto.pkb.$(lu): \
 pkg_OptionMain.pkb.$(lu): \
   pkg_OptionMain.pks.$(lu) \
   pkg_OptionCrypto.pks.$(lu) \
-  Install/Schema/Last/v_opt_value.vw.$(lu) \
-  Install/Schema/Last/v_opt_value_history.vw.$(lu) \
+  Install/Schema/Last/v_opt_option_value.vw.$(lu) \
 
 
 pkg_OptionTest.pkb.$(lu): \
@@ -59,7 +58,7 @@ pkg_OptionTest.pkb.$(lu): \
 opt_option_list_t.tyb.$(lu): \
   opt_option_list_t.typ.$(lu) \
   pkg_OptionMain.pks.$(lu) \
-  Install/Schema/Last/v_opt_option_value.vw.$(lu) \
+  Install/Schema/Last/v_opt_option.vw.$(lu) \
   Install/Schema/Last/v_opt_value.vw.$(lu) \
 
 
