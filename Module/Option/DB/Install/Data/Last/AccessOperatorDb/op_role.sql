@@ -17,8 +17,7 @@ prompt refresh roles...
 declare
 
   cursor localRoleCur(
-        productionDbName varchar2
-        , localRoleSuffix varchar2
+        localRoleSuffix varchar2
       )
       is
     select
@@ -30,21 +29,21 @@ declare
               when 'Admin'    then 'Администрирование'
               when 'Show'     then 'Просмотр'
            end
-        || ' всех параметров ' || productionDbName
+        || ' всех параметров ' || localRoleSuffix
         as role_name
       , 'Option: '
         || case pr.column_value
               when 'Admin'    then 'Administration of'
               when 'Show'     then 'View'
            end
-        || ' all options ' || productionDbName
+        || ' all options ' || localRoleSuffix
         as role_name_en
       , 'Доступ к '
         || case pr.column_value
               when 'Admin'    then 'администрированию'
               when 'Show'     then 'просмотру'
            end
-        || ' всех параметров модулей в ' || productionDbName
+        || ' всех параметров модулей в ' || localRoleSuffix
         as description
     from
       table( cmn_string_table_t(
@@ -113,15 +112,9 @@ declare
       fetch :optDbRoleSuffixList into prodDbName, roleSuffix;
       exit when :optDbRoleSuffixList%notfound;
       nRow := nRow + 1;
-      if trim( prodDbName) is null then
-        raise_application_error(
-          pkg_Error.IllegalArgument
-          , 'Не задан production_db_name ('
-            || ' nRow=' || nRow
-            || ').'
-        );
-      end if;
-      if trim( roleSuffix) is null then
+      prodDbName := trim( prodDbName);
+      roleSuffix := trim( roleSuffix);
+      if roleSuffix is null then
         raise_application_error(
           pkg_Error.IllegalArgument
           , 'Не задан local_role_suffix ('
@@ -131,8 +124,7 @@ declare
         );
       end if;
       for rec in localRoleCur(
-            productionDbName    => trim( prodDbName)
-            , localRoleSuffix   => trim( roleSuffix)
+            localRoleSuffix   => roleSuffix
           )
           loop
         mergeRole(
