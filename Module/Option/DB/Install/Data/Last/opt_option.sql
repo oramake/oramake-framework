@@ -10,7 +10,9 @@
 --  - значение дл€ параметра <pkg_OptionMain.LocalRoleSuffix_OptionSName>
 --    определ€етс€ согласно настройкам, заданным скриптом
 --    <Install/Data/Last/Custom/set-optDbRoleSuffixList.sql>,
---    и значению productionDbName;
+--    по значению productionDbName с учетом текущей схемы, при этом
+--    если параметру уже было присвоено значение, отличное от null, то оно не
+--    измен€етс€;
 --
 
 define productionDbName = "&1"
@@ -36,13 +38,12 @@ declare
 
 
   /*
-    —оздает/обновл€ет значение параметра LocalRoleSuffix.
+    ”станавливает значение параметра LocalRoleSuffix согласно настройкам.
   */
-  procedure mergeLocalRoleSuffix
+  procedure setLocalRoleSuffix
   is
 
     newValue varchar2(100);
-    oldValue varchar2(100);
 
 
 
@@ -52,16 +53,27 @@ declare
     procedure getNewValue
     is
 
+      findDbName varchar2(100);
+      findSchema varchar2(100);
+
       prodDbName varchar2(100);
       roleSuffix varchar2(100);
 
     begin
+      findDbName := upper( trim( productionDbName));
+      findSchema :=
+        upper( sys_context( 'USERENV', 'CURRENT_SCHEMA'))
+        || '@' || findDbName
+      ;
       loop
         fetch :optDbRoleSuffixList into prodDbName, roleSuffix;
         exit when :optDbRoleSuffixList%notfound;
-        if upper( trim( prodDbName)) = trim( upper( productionDbName)) then
+        if upper( trim( prodDbName)) = findSchema then
           newValue := roleSuffix;
+          -- выходим, т.к. найдено наиболее точное совпадение
           exit;
+        elsif upper( trim( prodDbName)) = findDbName then
+          newValue := roleSuffix;
         end if;
       end loop;
       close :optDbRoleSuffixList;
@@ -75,8 +87,17 @@ declare
 
 
 
-  -- mergeLocalRoleSuffix
+  -- setLocalRoleSuffix
   begin
+    if productionDbName is null then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Ќе удалось определить им€ промышленной Ѕƒ, к которой относитс€'
+          || ' установка ('
+          || ' можно указать с помощью параметра установки PRODUCTION_DB_NAME'
+          || ').'
+      );
+    end if;
     dbms_output.put_line(
       'productionDbName: "' || productionDbName || '"'
     );
@@ -112,40 +133,33 @@ Option.
         '"' || pkg_OptionMain.LocalRoleSuffix_OptionSName || '"'
         || ' option created with value: "' || newValue || '"'
       );
-    else
-      oldValue := opt.getString( pkg_OptionMain.LocalRoleSuffix_OptionSName);
-      if coalesce(
-              oldValue != newValue
-              , coalesce( oldValue, newValue) is not null
-            )
-          then
-        opt.setString(
-          optionShortName => pkg_OptionMain.LocalRoleSuffix_OptionSName
-          , stringValue   => newValue
-        );
-        dbms_output.put_line(
-          '"' || pkg_OptionMain.LocalRoleSuffix_OptionSName || '"'
-          || ' option value changed: "' || newValue || '"'
-        );
-      end if;
+    elsif newValue is not null then
+      opt.setString(
+        optionShortName => pkg_OptionMain.LocalRoleSuffix_OptionSName
+        , stringValue   => newValue
+      );
+      dbms_output.put_line(
+        '"' || pkg_OptionMain.LocalRoleSuffix_OptionSName || '"'
+        || ' option set value: "' || newValue || '"'
+      );
     end if;
-  end mergeLocalRoleSuffix;
+  end setLocalRoleSuffix;
 
 
 
 -- main
 begin
-  if productionDbName is null then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Ќе удалось определить им€ промышленной Ѕƒ, к которой относитс€'
-        || ' установка ('
-        || ' можно указать с помощью параметра установки PRODUCTION_DB_NAME'
-        || ').'
-    );
-  end if;
 
-  mergeLocalRoleSuffix();
+  --  ”станавливает значение параметра LocalRoleSuffix, если оно не было
+  --  задано ранее отличным от null.
+  if opt.getString(
+          pkg_OptionMain.LocalRoleSuffix_OptionSName
+          , raiseNotFoundFlag => 0
+        )
+        is null
+      then
+    setLocalRoleSuffix();
+  end if;
 
   commit;
 end;
