@@ -5,7 +5,7 @@ create or replace force view
   v_op_role
 as
 select
-  -- SVN root: Module/AccessOperator
+  -- SVN root: Oracle/Module/AccessOperator
   role_id
   , role_short_name
   , role_name
@@ -19,7 +19,7 @@ from
 
 
 comment on table v_op_role is
-  'Роли [ SVN root: Module/AccessOperator]'
+  'Роли [ SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column v_op_role.role_id is
   'Идентификатор роли'

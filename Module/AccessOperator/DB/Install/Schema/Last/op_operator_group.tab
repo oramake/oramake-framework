@@ -15,7 +15,7 @@ create table op_operator_group
 /
 
 comment on table op_operator_group is
-  'Группы операторов [SVN root: Module/AccessOperator]'
+  'Группы операторов [SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column op_operator_group.operator_id is
   'Идентификатор оператора'

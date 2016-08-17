@@ -2,7 +2,7 @@ create or replace package pkg_AccessOperator is
 /* package: pkg_AccessOperator
   Пакет для изменения данных модуля.
 
-  SVN root: Module/AccessOperator
+  SVN root: Oracle/Module/AccessOperator
 */
 
 

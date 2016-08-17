@@ -2,7 +2,7 @@ create or replace package pkg_AccessOperatorTest is
 /* package: pkg_AccessOperatorTest
   Тестовый пакет модуля.
 
-  SVN root: Module/AccessOperator
+  SVN root: Oracle/Module/AccessOperator
 */
 
 /* const: TestOperator_LoginPrefix

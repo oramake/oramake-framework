@@ -21,7 +21,7 @@ create table op_operator
 /
 
 comment on table op_operator is
-  'Операторы [SVN root: Module/AccessOperator]'
+  'Операторы [SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column op_operator.operator_id is
   'Первичный ключ. Идентификатор пользователя'

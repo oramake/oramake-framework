@@ -2,7 +2,7 @@ create or replace package pkg_Operator is
 /* package: pkg_Operator
   Интерфейсный пакет модуля Operator.
 
-  SVN root: Module/AccessOperator
+  SVN root: Oracle/Module/AccessOperator
 */
 
 /* const: Module_Name

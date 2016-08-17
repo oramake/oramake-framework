@@ -3,7 +3,7 @@
 create or replace view v_op_operator
 as
 select
-  -- SVN root: Module/AccessOperator
+  -- SVN root: Oracle/Module/AccessOperator
   operator_id
   , login
   , password

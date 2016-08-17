@@ -2,7 +2,7 @@
 -- Доступ оператора к ролям.
 create or replace view v_op_operator_role as
 select
-  -- SVN root: Module/AccessOperator
+  -- SVN root: Oracle/Module/AccessOperator
   d.operator_id
   , d.role_id
   , d.source_group_id
@@ -34,7 +34,7 @@ from
   ) d
 /
 comment on table v_op_operator_role is
-  'Доступ оператора к ролям [ SVN root: Module/AccessOperator]'
+  'Доступ оператора к ролям [ SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column v_op_operator_role.operator_id is
   'Id оператора'

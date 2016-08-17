@@ -22,7 +22,7 @@ create table op_role
 /
 
 comment on table op_role is
-  'Роли [SVN root: Module/AccessOperator]'
+  'Роли [SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column op_role.role_id is
   'Идентификатор роли'

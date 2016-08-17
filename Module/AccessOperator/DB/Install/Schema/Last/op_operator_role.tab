@@ -15,7 +15,7 @@ create table op_operator_role
 /
 
 comment on table op_operator_role is
-  'Роли операторов [SVN root: Module/AccessOperator]'
+  'Роли операторов [SVN root: Oracle/Module/AccessOperator]'
 /
 comment on column op_operator_role.operator_id is
   'Идентификатор оператора'
