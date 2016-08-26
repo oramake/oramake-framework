@@ -33,3 +33,7 @@ errors   : class java/security/spec/RSAKeyGenParameterSpec
 [*] »збавитьс€ от избыточных сообщений при логировании установки общих модулей.
 
 [*] »спользовать модуль TextCreate при формировании текста дл€ выгрузки.
+
+[+] Ћогирование вывода команды <pkg_FileOrigin.execCommand( CMD)> по-умолчанию
+    с уровнем INFO ( см. модуль BirdDataTransfer, CarDataTransfer внутренние
+    процедуры execCommand). ¬озможно, следует удалить неиспользуемые методы.
