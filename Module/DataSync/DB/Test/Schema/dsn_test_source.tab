@@ -1,0 +1,48 @@
+-- table: dsn_test_source
+create table
+  dsn_test_source
+(
+  owner                           varchar2(30)                        not null
+  , table_name                    varchar2(30)                        not null
+  , row_uid                       varchar2(100)
+  , tablespace_name               varchar2(30)
+  , status                        varchar2(8)
+  , num_rows                      number
+  , last_analyzed                 date
+  , constraint dsn_test_source_pk primary key
+    ( owner, table_name)
+  , constraint dsn_test_source_uk_uid unique
+    ( row_uid)
+)
+/
+
+
+comment on table dsn_test_source is
+  'Тестовый источник данных [ SVN root: Oracle/Module/DataSync]'
+/
+
+insert into
+  dsn_test_source
+(
+  owner
+  , table_name
+  , row_uid
+  , tablespace_name
+  , status
+  , num_rows
+  , last_analyzed
+)
+select
+  t.owner
+  , t.table_name
+  , t.owner || '.' || t.table_name as row_uid
+  , t.tablespace_name
+  , t.status
+  , t.num_rows
+  , t.last_analyzed
+from
+  all_tables t
+/
+
+commit
+/

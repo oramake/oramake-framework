@@ -16,6 +16,8 @@ LOAD_OPERATORID               - логин и пароль оператора, выполн€ющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основной пользователь дл€ установки в Ѕƒ
                                 ( формат: username/password@dbName)
+TO_USERNAME                   - им€ пользовател€, которому выдаютс€ права
+                                ( формат: username)
 
 
 
@@ -27,17 +29,26 @@ group: ѕервоначальна€ установка
 
 (code)
 
-make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 (end)
 
-- выдача прав на использование модул€ всем пользовател€м
+
+
+group: ¬ыдача прав на использование модул€
+
+ оманда дл€ выдачи прав:
 
 (code)
 
-make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=public
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 (end)
+
+«амечани€:
+- дл€ выдачи прав всем пользовател€м в TO_USERNAME нужно указать public
+  ( " TO_USERNAME=public"), при этом у пользовател€, в схему которого
+  установлен модуль, должна быть системна€ привилеги€ "CREATE PUBLIC SYNONYM";
 
 
 

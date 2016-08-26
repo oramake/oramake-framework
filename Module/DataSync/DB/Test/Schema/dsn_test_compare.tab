@@ -1,0 +1,22 @@
+-- table: dsn_test_compare
+create table
+  dsn_test_compare
+(
+  owner                           varchar2(30)                        not null
+  , table_name                    varchar2(30)                        not null
+  , row_uid                       varchar2(100)
+  , tablespace_name               varchar2(30)
+  , status                        varchar2(8)
+  , num_rows                      number
+  , last_analyzed                 date
+  , constraint dsn_test_compare_pk primary key
+    ( owner, table_name)
+  , constraint dsn_test_compare_uk_uid unique
+    ( row_uid)
+)
+/
+
+
+comment on table dsn_test_compare is
+  'Тестовая интерфейсная таблица ( метод сравнения данных) [ SVN root: Oracle/Module/DataSync]'
+/

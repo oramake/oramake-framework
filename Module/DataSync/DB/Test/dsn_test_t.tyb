@@ -1,0 +1,52 @@
+create or replace type body dsn_test_t is
+/* db object type body: dsn_test_t::body */
+
+
+
+/* group: Функции */
+
+/* func: dsn_test_t
+  Конструктор объекта.
+*/
+constructor function dsn_test_t
+return self as result
+is
+begin
+  ( self as dsn_data_sync_t).initialize(
+    tableList       =>
+        cmn_string_table_t(
+          -- метод сравнения
+          'dsn_test_compare'
+          , 'dsn_test_compare_ext::v_dsn_test_compare:
+                excludeColumnList =
+                  change_number
+                  , change_date
+                  , date_ins
+            '
+          -- метод сравнения с использованием временной таблицы
+          , 'dsn_test_cmptemp:t'
+          , 'dsn_test_cmptemp_ext:t:v_dsn_test_cmptemp:dsn_test_cmptemp_tmp
+                : excludeColumnList = date_ins'
+          -- с помощью м-представления
+          , 'dsn_test_mview:m'
+          , 'dsn_test_mview_ext:m:v_dsn_test_mview
+                :excludeColumnList = change_date
+          '
+        )
+    , mlogList      =>
+        cmn_string_table_t(
+          'dsn_test_mview: with primary key, rowid'
+          , 'dsn_test_mview_ext: with primary key, rowid'
+        )
+  );
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при создании экземпляра объекта.'
+    , true
+  );
+end dsn_test_t;
+
+end;
+/

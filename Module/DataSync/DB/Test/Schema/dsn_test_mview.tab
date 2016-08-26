@@ -1,0 +1,25 @@
+-- table: dsn_test_mview
+create table
+  dsn_test_mview
+(
+  owner                           varchar2(30)                        not null
+  , table_name                    varchar2(30)                        not null
+  , row_uid                       varchar2(100)
+  , tablespace_name               varchar2(30)
+  , status                        varchar2(8)
+  , num_rows                      number
+  , last_analyzed                 date
+  , constraint dsn_test_mview_pk primary key
+    ( owner, table_name)
+    -- для исключения ошибки "ORA-00001: unique constraint (...) violated"
+    initially deferred deferrable
+  , constraint dsn_test_mview_pk_uid unique
+    ( row_uid)
+    initially deferred deferrable
+)
+/
+
+
+comment on table dsn_test_mview is
+  'Тестовая интерфейсная таблица ( метод обновления с помощью материализованного представления) [ SVN root: Oracle/Module/DataSync]'
+/

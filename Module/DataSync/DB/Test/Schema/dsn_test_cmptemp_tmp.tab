@@ -1,0 +1,20 @@
+-- table: dsn_test_cmptemp_tmp
+create global temporary table
+  dsn_test_cmptemp_tmp
+(
+  owner                           varchar2(30)                        not null
+  , table_name                    varchar2(30)                        not null
+  , row_uid                       varchar2(100)
+  , tablespace_name               varchar2(30)
+  , status                        varchar2(8)
+  , num_rows                      number
+  , last_analyzed                 date
+)
+-- сохраняем записи для проверки загрузки данных при тестировании
+on commit preserve rows
+/
+
+
+comment on table dsn_test_cmptemp_tmp is
+  'Тестовая интерфейсная таблица ( метод сравнения данных с использованием временной таблицы) ( временная таблица) [ SVN root: Oracle/Module/DataSync]'
+/

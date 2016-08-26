@@ -1,0 +1,23 @@
+-- table: dsn_test_cmptemp_ext
+create table
+  dsn_test_cmptemp_ext
+(
+  owner                           varchar2(30)                        not null
+  , table_name                    varchar2(30)                        not null
+  , row_uid                       varchar2(100)
+  , tablespace_name               varchar2(30)
+  , status                        varchar2(8)
+  , num_rows                      number
+  , last_analyzed                 date
+  , date_ins                      date                default sysdate not null
+  , constraint dsn_test_cmptemp_ext_pk primary key
+    ( owner, table_name)
+  , constraint dsn_test_cmptemp_ext_uk_uid unique
+    ( row_uid)
+)
+/
+
+
+comment on table dsn_test_cmptemp_ext is
+  'Тестовая интерфейсная таблица ( метод сравнения данных с использованием временной таблицы, с дополнительными колонками) [ SVN root: Oracle/Module/DataSync]'
+/
