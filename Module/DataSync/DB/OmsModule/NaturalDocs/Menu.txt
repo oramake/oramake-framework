@@ -141,6 +141,7 @@ Group: Скрипты  {
          File: v_dsn_test_cmptemp  (no auto-title, Test/Schema/v_dsn_test_cmptemp.vw)
          File: v_dsn_test_compare  (no auto-title, Test/Schema/v_dsn_test_compare.vw)
          File: v_dsn_test_mview  (no auto-title, Test/Schema/v_dsn_test_mview.vw)
+         File: v_dsn_test_mview_ext  (no auto-title, Test/Schema/v_dsn_test_mview_ext.vw)
          }  # Group: Schema
 
       File: run  (no auto-title, Test/run.sql)

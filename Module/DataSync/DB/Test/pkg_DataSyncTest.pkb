@@ -205,6 +205,9 @@ is
       caseDescription || ' [' || tableName || ']'
     ;
 
+    isClobColumn integer;
+    isBlobColumn integer;
+
     nRow integer;
 
   -- checkCase
@@ -248,30 +251,94 @@ end;
       );
     end if;
 
-    pkg_TestUtility.compareRowCount(
-      tableName           =>
+    if not pkg_TestUtility.isTestFailed() then
+      select
+        max(
+            case when lower( tc.column_name) = 'clob_column' then 1 else 0 end
+          )
+          as is_clob_column
+        , max(
+            case when lower( tc.column_name) = 'blob_column' then 1 else 0 end
+          )
+          as is_blob_column
+      into isClobColumn, isBlobColumn
+      from
+        user_tab_columns tc
+      where
+        tc.table_name = upper( tableName)
+      ;
+      pkg_TestUtility.compareRowCount(
+        tableName           =>
 '(
 select
-  t.owner
-  , t.table_name
-  , t.row_uid
-  , t.tablespace_name
-  , t.status
-  , t.num_rows
-  , t.last_analyzed
+  null
 from
-  ' || tableName || ' t
-intersect
-select
-  s.*
-from
-  dsn_test_source s
+  ' || tableName || ' d
+where
+  exists
+    (
+    select
+      null
+    from
+      dsn_test_source s
+    where
+      (
+        coalesce( s.owner, d.owner) is null
+        or s.owner = d.owner
+      )
+      and (
+        coalesce( s.table_name, d.table_name) is null
+        or s.table_name = d.table_name
+      )
+      and (
+        coalesce( s.row_uid, d.row_uid) is null
+        or s.row_uid = d.row_uid
+      )
+      and (
+        coalesce( s.tablespace_name, d.tablespace_name) is null
+        or s.tablespace_name = d.tablespace_name
+      )
+      and (
+        coalesce( s.status, d.status) is null
+        or s.status = d.status
+      )
+      and (
+        coalesce( s.num_rows, d.num_rows) is null
+        or s.num_rows = d.num_rows
+      )
+      and (
+        coalesce( s.last_analyzed, d.last_analyzed) is null
+        or s.last_analyzed = d.last_analyzed
+      )'
+|| case when isClobColumn = 1 then
+'
+      and (
+        s.clob_column is null
+          and d.clob_column is null
+        or s.clob_column is not null
+          and d.clob_column is not null
+          and dbms_lob.compare( s.clob_column, d.clob_column) = 0
+      )'
+  end
+|| case when isBlobColumn = 1 then
+'
+      and (
+        s.blob_column is null
+          and d.blob_column is null
+        or s.blob_column is not null
+          and d.blob_column is not null
+          and dbms_lob.compare( s.blob_column, d.blob_column) = 0
+      )'
+  end
+|| '
+    )
 )'
-      , expectedRowCount  => nRow
-      , failMessageText   =>
-          caseInfo
-          || ': Некорректные данные в интерфейсной таблице'
-    );
+        , expectedRowCount  => nRow
+        , failMessageText   =>
+            caseInfo
+            || ': Некорректные данные в интерфейсной таблице'
+      );
+    end if;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -320,7 +387,7 @@ from
       end;
     end if;
 
-    -- подготваливаем тестовые данные
+    -- подготавливаем тестовые данные
     delete
       dsn_test_source t
     where
@@ -333,12 +400,22 @@ from
       , table_name
       , row_uid
       , num_rows
+      , clob_column
+      , blob_column
     )
     select
       'dsn_test' as owner
       , 't' || level as table_name
       , 'dsn_test.t' || level as row_uid
       , level as num_rows
+      , case when mod( level, 2) = 1 then
+          'clob_' || level
+        end
+        as clob_column
+      , case when mod( level, 2) = 1 then
+          hextoraw( to_char( level + 64*64*64, 'fmxxxxxx'))
+        end
+        as blob_column
     from
       dual
     connect by
@@ -422,6 +499,17 @@ from
     where
       t.owner = 'dsn_test'
       and t.table_name = 't4' || changeNumber
+    ;
+
+    -- меняем только CLOB и BLOB
+    update
+      dsn_test_source t
+    set
+      t.clob_column = 'upd: ' || changeNumber
+      , t.blob_column = hextoraw( to_char( changeNumber, 'fmx'))
+    where
+      t.owner = 'dsn_test'
+      and t.table_name = 't5' || changeNumber
     ;
 
     commit;

@@ -9,6 +9,7 @@ create global temporary table
   , status                        varchar2(8)
   , num_rows                      number
   , last_analyzed                 date
+  , blob_column                   blob
 )
 -- сохраняем записи для проверки загрузки данных при тестировании
 on commit preserve rows

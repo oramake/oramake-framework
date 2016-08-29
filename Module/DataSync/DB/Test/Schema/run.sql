@@ -36,3 +36,4 @@
 @@dsn_test_mview_ext_bu_chg.trg
 
 @@v_dsn_test_mview.vw
+@@v_dsn_test_mview_ext.vw

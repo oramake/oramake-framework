@@ -9,6 +9,7 @@ create table
   , status                        varchar2(8)
   , num_rows                      number
   , last_analyzed                 date
+  , clob_column                   clob
   , change_number                 integer             default 1       not null
   , change_date                   date                default sysdate not null
   , date_ins                      date                default sysdate not null

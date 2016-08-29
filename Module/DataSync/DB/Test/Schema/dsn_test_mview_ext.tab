@@ -9,6 +9,8 @@ create table
   , status                        varchar2(8)
   , num_rows                      number
   , last_analyzed                 date
+  , clob_column                   clob
+  , blob_column                   blob
   , change_date                   date                default sysdate not null
   , constraint dsn_test_mview_ext_pk primary key
     ( owner, table_name)

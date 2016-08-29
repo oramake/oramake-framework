@@ -29,7 +29,7 @@ begin
                 : excludeColumnList = date_ins'
           -- с помощью м-представления
           , 'dsn_test_mview:m'
-          , 'dsn_test_mview_ext:m:v_dsn_test_mview
+          , 'dsn_test_mview_ext:m:v_dsn_test_mview_ext
                 :excludeColumnList = change_date
           '
         )

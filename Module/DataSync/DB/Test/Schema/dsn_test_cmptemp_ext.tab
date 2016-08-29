@@ -9,6 +9,7 @@ create table
   , status                        varchar2(8)
   , num_rows                      number
   , last_analyzed                 date
+  , blob_column                   blob
   , date_ins                      date                default sysdate not null
   , constraint dsn_test_cmptemp_ext_pk primary key
     ( owner, table_name)

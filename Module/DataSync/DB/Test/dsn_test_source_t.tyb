@@ -17,6 +17,7 @@ begin
     , viewList      =>
         cmn_string_table_t(
           'v_dsn_test_mview'
+          , 'v_dsn_test_mview_ext'
         )
     , mlogList      =>
         cmn_string_table_t(

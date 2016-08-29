@@ -9,6 +9,8 @@ create table
   , status                        varchar2(8)
   , num_rows                      number
   , last_analyzed                 date
+  , clob_column                   clob
+  , blob_column                   blob
   , constraint dsn_test_source_pk primary key
     ( owner, table_name)
   , constraint dsn_test_source_uk_uid unique
@@ -31,6 +33,8 @@ insert into
   , status
   , num_rows
   , last_analyzed
+  , clob_column
+  , blob_column
 )
 select
   t.owner
@@ -40,6 +44,9 @@ select
   , t.status
   , t.num_rows
   , t.last_analyzed
+  , to_char( t.num_rows) as clob_column
+  , hextoraw( to_char( t.num_rows, 'fm' || rpad( 'x', 30, 'x') ))
+    as blob_column
 from
   all_tables t
 /

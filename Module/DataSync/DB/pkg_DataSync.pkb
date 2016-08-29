@@ -153,6 +153,11 @@ is
   -- ",<columnName>[,<columnName2>][,<columnName3>]...."
   regularColumn varchar2(10000);
 
+  -- ”слови€ дл€ where, возвращающие истину в случае идентичности данных в
+  -- исходной записи ( алиас "a") и конечной записи ( алиас "t"), заполн€етс€
+  -- в случае необходимости обновлени€ колонок типа LOB ( CLOB или BLOB)
+  equalWhereSql varchar2(32500);
+
   -- ƒата обновлени€
   refreshDate date;
 
@@ -179,8 +184,22 @@ is
     cursor columnCur is
       select
         lower( tc.column_name) as column_name
-        , case when b.column_name is not null then 1 end
+        , case when b.column_name is not null then 1 else 0 end
           as key_column_flag
+        , case when
+              excludeColumn is not null
+              and instr( excludeColumn, ',' || lower( tc.column_name) || ',')
+                > 0
+            then 1 else 0
+          end
+          as exclude_flag
+        , case when tc.data_type in ( 'CLOB', 'BLOB')  then 1 else 0 end
+          as lob_type_flag
+        , case when tc.nullable = 'Y' then 1 else 0 end
+          as nullable_flag
+        , max( case when tc.data_type in ( 'CLOB', 'BLOB') then 1 else 0 end)
+          over()
+          as exists_lob_column_flag
       from
         all_tab_columns tc
         left outer join
@@ -215,10 +234,37 @@ is
     for rec in columnCur loop
       if rec.key_column_flag = 1 then
         keyColumn := keyColumn || ',' || rec.column_name;
-      elsif excludeColumn is null
-            or instr( excludeColumn, ',' || rec.column_name || ',') = 0
-          then
+        if rec.exclude_flag = 1 then
+          raise_application_error(
+            pkg_Error.IllegalArgument
+            , 'Ќевозможно исключить из обновлени€ колонку первичного ключа ('
+              || ' column_name="' || rec.column_name || '"'
+              || ').'
+          );
+        end if;
+      elsif rec.exclude_flag = 0 then
         regularColumn := regularColumn || ',' || rec.column_name;
+      end if;
+      if rec.exists_lob_column_flag = 1 and rec.exclude_flag = 0 then
+        equalWhereSql :=
+          case when equalWhereSql is not null then
+            equalWhereSql || chr(10) || ' and '
+          end
+          || replace(
+              case when rec.nullable_flag = 0 and rec.lob_type_flag = 0 then
+                't.$cn = a.$cn'
+              else
+                '( coalesce( t.$cn, a.$cn) is null'
+                  || case when rec.lob_type_flag = 1 then
+                      ' or dbms_lob.compare( t.$cn, a.$cn) = 0'
+                    else
+                      ' or t.$cn = a.$cn'
+                    end
+                  || ')'
+              end
+              , '$cn', rec.column_name
+            )
+        ;
       end if;
     end loop;
     if keyColumn is null then
@@ -307,7 +353,21 @@ select
         , 6
       ) || '
 from
-  ' || recordSource || ' a
+  ' || recordSource || ' a'
+|| case when equalWhereSql is not null then
+'
+where
+  not exists
+    (
+    select
+      null
+    from
+      ' || targetTable || ' t
+    where
+      ' || equalWhereSql || '
+    )'
+else
+'
 minus
 select
   ' || substr(
@@ -315,7 +375,9 @@ select
         , 6
       ) || '
 from
-  ' || targetTable || ' t
+  ' || targetTable || ' t'
+end
+|| '
 ) s
 on
 (
