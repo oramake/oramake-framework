@@ -6,12 +6,50 @@ create or replace package body pkg_SchedulerLoad is
 /* group: Константы */
 
 
-/* const: Blank_Characters
+/* iconst: Blank_Characters
   Управляющие символы, обрезаемые в некоторых строках.
 */
 Blank_Characters constant varchar2(10) :=
    ' ' || chr(10) || chr(13) || chr(9)
 ;
+
+
+
+/* group: Значения типа параметра */
+
+/* iconst: Date_OptionType
+  Значение option/@type, соответствующее параметру типа дата.
+*/
+Date_OptionType constant varchar2(30) := 'date';
+
+/* iconst: Number_OptionType
+  Значение option/@type, соответствующее параметру типа число.
+*/
+Number_OptionType constant varchar2(30) := 'number';
+
+/* iconst: String_OptionType
+  Значение option/@type, соответствующее параметру типа строка.
+*/
+String_OptionType constant varchar2(30) := 'string';
+
+
+
+/* group: Значения уровня доступа к параметру */
+
+/* iconst: Full_OptionAccessLevel
+  Значение option/@access_level, соответствующее полному доступу.
+*/
+Full_OptionAccessLevel constant varchar2(30) := 'full';
+
+/* iconst: Read_OptionAccessLevel
+  Значение option/@access_level, соответствующее доступу только по чтению.
+*/
+Read_OptionAccessLevel constant varchar2(30) := 'read';
+
+/* iconst: Value_OptionAccessLevel
+  Значение option/@access_level, соответствующее доступу к изменению значения.
+*/
+Value_OptionAccessLevel constant varchar2(30) := 'value';
 
 
 
@@ -1957,7 +1995,7 @@ is
       begin
         for rec in dataCur loop
           if not usedValueIdList.exists( to_char( rec.value_id)) then
-            opt_option_list_t.deleteValue(
+            sch_batch_option_t.deleteValue(
               valueId => rec.value_id
             );
             nValueChange := nValueChange + 1;
@@ -2096,7 +2134,7 @@ is
                 case when
                   rec.value_text is not null
                   and valueTypeCode
-                    = opt_option_list_t.getDateValueTypeCode()
+                    = sch_batch_option_t.getDateValueTypeCode()
                 then
                   toDate( rec.value_text, 'dd.mm.yyyy hh24:mi:ss')
                 end
@@ -2104,7 +2142,7 @@ is
                 case when
                   rec.value_text is not null
                   and valueTypeCode
-                    = opt_option_list_t.getNumberValueTypeCode()
+                    = sch_batch_option_t.getNumberValueTypeCode()
                 then
                   toNumber( rec.value_text, '.')
                 end
@@ -2113,7 +2151,7 @@ is
                   when rec.value_list_flag = 1 then
                     getValueList( rec.value_xml, rec.list_separator)
                   when valueTypeCode
-                        = opt_option_list_t.getStringValueTypeCode()
+                        = sch_batch_option_t.getStringValueTypeCode()
                       then
                     rec.value_text
                 end
@@ -2123,7 +2161,7 @@ is
                 case when
                   rec.value_list_flag = 1
                   and valueTypeCode
-                    = opt_option_list_t.getDateValueTypeCode()
+                    = sch_batch_option_t.getDateValueTypeCode()
                 then
                   'dd.mm.yyyy hh24:mi:ss'
                 end
@@ -2131,7 +2169,7 @@ is
                 case when
                   rec.value_list_flag = 1
                   and valueTypeCode
-                    = opt_option_list_t.getNumberValueTypeCode()
+                    = sch_batch_option_t.getNumberValueTypeCode()
                 then
                   '.'
                 end
@@ -2236,9 +2274,12 @@ is
         select
           a.*
           , case a.option_type
-              when 'date'   then opt_option_list_t.getDateValueTypeCode()
-              when 'number' then opt_option_list_t.getNumberValueTypeCode()
-              when 'string' then opt_option_list_t.getStringValueTypeCode()
+              when Date_OptionType then
+                sch_batch_option_t.getDateValueTypeCode()
+              when Number_OptionType then
+                sch_batch_option_t.getNumberValueTypeCode()
+              when String_OptionType then
+                sch_batch_option_t.getStringValueTypeCode()
             end
             as value_type_code
           , case coalesce( a.encryption, '0')
@@ -2246,10 +2287,13 @@ is
               when '1' then 1
             end
             as encryption_flag
-          , case coalesce( a.access_level, 'full')
-              when 'full'   then opt_option_list_t.getFullAccessLevelCode()
-              when 'read'   then opt_option_list_t.getReadAccessLevelCode()
-              when 'value'  then opt_option_list_t.getValueAccessLevelCode()
+          , case coalesce( a.access_level, Full_OptionAccessLevel)
+              when Full_OptionAccessLevel then
+                sch_batch_option_t.getFullAccessLevelCode()
+              when Read_OptionAccessLevel then
+                sch_batch_option_t.getReadAccessLevelCode()
+              when Value_OptionAccessLevel then
+                sch_batch_option_t.getValueAccessLevelCode()
             end
             as access_level_code
           , case when a.first_child_name like '%value\_list' escape '\' then
@@ -3545,10 +3589,11 @@ end deleteBatch;
   batchShortName              - короткое наименование батча
   seperateFileFlag            - является ли создаваемый xml отдельным
                                 ( вне batch.xml)
+                                ( 1 да, 0 нет ( по умолчанию))
 */
 function createBatchConfigXml(
   batchShortName varchar2
-  , separateFileFlag boolean
+  , separateFileFlag integer := null
 )
 return clob
 is
@@ -3644,161 +3689,214 @@ is
   */
   procedure addOptionXml
   is
-  begin
-    for batchOption in (
+
+    -- Параметры батча
+    opt sch_batch_option_t := sch_batch_option_t(
+      batchShortName  => batch.batch_short_name
+      , moduleId      => batch.module_id
+    );
+
+
+    cursor optionCur is
       select
-        max(
-          case when
-            is_test_value = 0
-          then
-            option_id
-          end
-        ) as production_option_id
-        ,
-        substr(
-          option_short_name
-          , length( batch.batch_short_name) + 1
-        ) as batch_option_name
-        , max(
-            case when
-              is_test_value = 0
-            then
-              option_name
-            end
-          ) as option_name
-        , option_type_code
-        , max(
-            case when
-              is_test_value = 1
-            then
-              string_value
-            end
-          ) as test_value
-        , max(
-            case when
-              is_test_value = 0
-            then
-              string_value
-            end
-          ) as production_value
-      from
-        (
-        select
-          option_id
-          , is_test_value
-          , option_short_name
-          , option_name
-          , option_type_code
-          , case when
-              option_type_code = 'number'
-            then
-              rtrim(
-                to_char(
-                  integer_value
-                  , 'FM999999999999999990.9999'
-                )
-                , '.'
-              )
-            when
-              option_type_code = 'date'
-            then
-              case when
-                trunc( datetime_value) = datetime_value
-              then
-                to_char(
-                  datetime_value
-                  , 'dd.mm.yyyy'
-                )
-              else
-                to_char(
-                  datetime_value
-                  , 'dd.mm.yyyy hh24:mi:ss'
-                )
-              end
-            else
-              string_value
-            end as string_value
-        from
-          (
-          select
-            option_id
-            , is_test_value
-            ,
-            case when
-              is_test_value = 1
-            then
-              substr( option_short_name, 1, length( option_short_name) - 4)
-            else
-              option_short_name
-            end as option_short_name
-            , case when
-                mask_id in ( 1,2)
-              then
-                'number'
-              when
-                mask_id = 3
-              then
-                'string'
-              when
-                mask_id = 4
-              then
-                'date'
-              end as option_type_code
-            , option_name
-            , datetime_value
-            , integer_value
-            , string_value
-          from
-            (
-            select
-              v.*
-              , case when
-                  option_short_name like '%Test'
-                then
-                  1
-                else
-                  0
-                end is_test_value
-            from
-              v_opt_option v
-            where
-              option_short_name like
-                replace( batch.batch_short_name, '_', '\_') || '_%' escape '\'
-              and not exists (
-                select
-                  *
-                from
-                  sch_batch b
-                where
-                  b.batch_short_name like batch.batch_short_name || '_%'
-                  and option_short_name like
-                    replace( b.batch_short_name, '_', '\_') || '_%' escape '\'
-              )
-            )
+        d.option_short_name
+        , d.value_type_code
+        , d.option_name
+        , nullif( d.encryption_flag, 0)
+          as encryption_flag
+        , nullif(
+            d.access_level_code
+            , sch_batch_option_t.getFullAccessLevelCode()
           )
-        )
-      group by
-        option_short_name
-        , option_type_code
+          as access_level_code
+        , d.option_description
+      from
+        table(
+          -- явное приведение типа добавлено для совместимости с Oracle 10.2
+          cast( opt.getOptionValue() as opt_option_value_table_t)
+        ) d
       order by
         1
-    ) loop
+    ;
+
+    cursor valueCur( optionShortName varchar2) is
+      select
+        d.value_list_flag
+        , d.prod_value_flag
+        , d.instance_name
+        , nullif( d.list_separator, ';') as list_separator
+        , d.date_value
+        , d.number_value
+        , d.string_value
+      from
+        table(
+          -- явное приведение типа добавлено для совместимости с Oracle 10.2
+          cast( opt.getValue( optionShortName) as opt_value_table_t)
+        ) d
+      order by
+        1, 2 desc, 3
+    ;
+
+    -- Имя элемента *value*
+    valueTag varchar2(100);
+
+
+
+    /*
+      Возвращает значение параметра в виде строки для вставки в XML
+      ( значение, отличное от null, должен иметь не более чем 1 параметр)
+    */
+    function getXmlValue(
+      dateValue date
+      , numberValue number
+      , stringValue varchar2
+    )
+    return varchar2
+    is
+    begin
+      return
+        case
+          when dateValue is not null then
+            to_char(
+              dateValue
+              , 'dd.mm.yyyy'
+                || case when dateValue != trunc( dateValue) then
+                    ' hh24:mi:ss'
+                  end
+            )
+          when numberValue is not null then
+            to_char(
+              numberValue
+              , 'tm9'
+              , 'NLS_NUMERIC_CHARACTERS = ''. '''
+            )
+          when stringValue is not null then
+            getXmlString( stringValue)
+        end
+      ;
+    end getXmlValue;
+
+
+
+  -- addOptionXml
+  begin
+    for opr in optionCur loop
       batchConfigXml := batchConfigXml || '
-  <option short_name="' || batchOption.batch_option_name || '"'
-        || ' type="' || batchOption.option_type_code || '"'
-        || ' name="' || getXmlString( batchOption.option_name) || '">'
-        ||
-        case when
-          coalesce(
-            nullif( batchOption.test_value, batchOption.production_value)
-            , nullif( batchOption.production_value, batchOption.test_value)
-          ) is null
-        then '
-    <value>' || getXmlString( batchOption.production_value) || '</value>'
-        else '
-    <test_value>' || getXmlString( batchOption.test_value) || '</test_value>
-    <production_value>' || getXmlString( batchOption.production_value) || '</production_value>'
-        end || '
+  <option'
+        || ' short_name="' || getXmlString( opr.option_short_name) || '"'
+        || ' type="'
+          || case opr.value_type_code
+              when sch_batch_option_t.getDateValueTypeCode() then
+                Date_OptionType
+              when sch_batch_option_t.getNumberValueTypeCode() then
+                Number_OptionType
+              when sch_batch_option_t.getStringValueTypeCode() then
+                String_OptionType
+            end
+          || '"'
+        || ' name="' || getXmlString( opr.option_name) || '"'
+        || case when opr.encryption_flag is not null then
+            ' encryption="' || opr.encryption_flag || '"'
+          end
+        || case when opr.access_level_code is not null then
+            ' access_level="'
+              || case opr.access_level_code
+                when sch_batch_option_t.getFullAccessLevelCode() then
+                  Full_OptionAccessLevel
+                when sch_batch_option_t.getReadAccessLevelCode() then
+                  Read_OptionAccessLevel
+                when sch_batch_option_t.getValueAccessLevelCode() then
+                  Value_OptionAccessLevel
+              end
+              || '"'
+          end
+        || case when opr.option_description is not null then
+            ' description="' || getXmlString( opr.option_description) || '"'
+          end
+        || '>'
+      ;
+      for vlr in valueCur( opr.option_short_name) loop
+        valueTag :=
+          case vlr.prod_value_flag
+            when 1 then 'production_'
+            when 0 then 'test_'
+            else ''
+          end
+          || 'value'
+          || case when vlr.value_list_flag = 1  then
+              '_list'
+            end
+        ;
+        batchConfigXml := batchConfigXml || '
+    <' || valueTag
+          || case when vlr.instance_name is not null then
+              ' instance="' || getXmlString( vlr.instance_name) || '"'
+            end
+          || '>'
+        ;
+        if vlr.value_list_flag = 1 then
+          for i in 1 ..
+                opt.getValueCount(
+                  optionShortName => opr.option_short_name
+                )
+              loop
+            batchConfigXml := batchConfigXml
+              || '<item>'
+              || getXmlValue(
+                  dateValue     =>
+                      case when
+                        opr.value_type_code
+                          = sch_batch_option_t.getDateValueTypeCode()
+                      then
+                        opt.getDate(
+                          optionShortName   => opr.option_short_name
+                          , prodValueFlag   => vlr.prod_value_flag
+                          , instanceName    => vlr.instance_name
+                          , valueIndex      => i
+                        )
+                      end
+                  , numberValue =>
+                      case when
+                        opr.value_type_code
+                          = sch_batch_option_t.getNumberValueTypeCode()
+                      then
+                        opt.getNumber(
+                          optionShortName   => opr.option_short_name
+                          , prodValueFlag   => vlr.prod_value_flag
+                          , instanceName    => vlr.instance_name
+                          , valueIndex      => i
+                        )
+                      end
+                  , stringValue =>
+                      case when
+                        opr.value_type_code
+                          = sch_batch_option_t.getStringValueTypeCode()
+                      then
+                        opt.getString(
+                          optionShortName   => opr.option_short_name
+                          , prodValueFlag   => vlr.prod_value_flag
+                          , instanceName    => vlr.instance_name
+                          , valueIndex      => i
+                        )
+                      end
+                )
+              || '</item>'
+            ;
+          end loop;
+        else
+          batchConfigXml := batchConfigXml
+            || getXmlValue(
+                dateValue     => vlr.date_value
+                , numberValue => vlr.number_value
+                , stringValue => vlr.string_value
+              )
+          ;
+        end if;
+        batchConfigXml := batchConfigXml
+          || '</' || valueTag || '>'
+        ;
+      end loop;
+      batchConfigXml := batchConfigXml || '
   </option>'
       ;
     end loop;
@@ -3834,7 +3932,7 @@ begin
   ;
   batchConfigXml :=
   case when
-    separateFileFlag
+    separateFileFlag = 1
   then
 '<?xml version="1.0" encoding="Windows-1251"?>
 '
@@ -3843,7 +3941,7 @@ begin
 '<batch_config'
   ||
   case when
-    separateFileFlag
+    separateFileFlag = 1
   then
     ' short_name="' || batchShortName || '"'
   end
@@ -3905,7 +4003,7 @@ is
 begin
   xmlText := createBatchConfigXml(
     batchShortName => batchShortName
-    , separateFileFlag => true
+    , separateFileFlag => 1
   );
   unloadClobToFile(
     xmlText
@@ -4112,7 +4210,7 @@ begin
   ' || -- отступ
     replace( createBatchConfigXml(
       batchShortName => batchShortName
-      , separateFileFlag => false
+      , separateFileFlag => 0
     ), chr(10), chr(10) || '  ')
   end
   || batchContentXml || '

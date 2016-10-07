@@ -387,12 +387,13 @@ procedure deleteBatch(
   batchShortName              - короткое наименование батча
   seperateFileFlag            - является ли создаваемый xml отдельным
                                 ( вне batch.xml)
+                                ( 1 да, 0 нет ( по умолчанию))
 
   ( <body::createBatchConfigXml>)
 */
 function createBatchConfigXml(
   batchShortName varchar2
-  , separateFileFlag boolean
+  , separateFileFlag integer := null
 )
 return clob;
 
