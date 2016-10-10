@@ -27,7 +27,7 @@ define objectList = "&1"
 var rc refcursor
 
 declare
-  
+
   objectList constant varchar2(4000) := '&objectList';
 
   emptyRefCursor sys_refcursor;
@@ -56,7 +56,7 @@ from
       where
         jr.sid = ss.sid
       ) as oracle_job_id
-  from 
+  from
     (
     select
       b.session_id
@@ -85,7 +85,7 @@ from
             when ''Trigger'' then ''.trg''
           end
           as file_extension
-        , upper( 
+        , upper(
             replace( replace( replace( replace( replace( replace(
               '' '' || :objectList || '' ''
               , ''.pks '' , ''.tab '')
@@ -119,6 +119,7 @@ from
       on ss.sid = a.session_id
   where
     ss.status <> ''INACTIVE''
+    and ss.sid <> sys_context( ''USERENV'',''SID'')
   ) d
 order by
   d.logon_time
