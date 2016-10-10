@@ -5,7 +5,7 @@ declare
       db.column_value as db_name
       , pr.column_value as privilege_name
       , pr.column_value || 'AllBatch' || db.column_value
-        as short_name
+        as role_short_name
       , 'Батч: '
         || case pr.column_value
               when 'Admin'    then 'Администрирование'
@@ -46,87 +46,49 @@ declare
       1, 2
   ;
 
-  -- Число добавленный ролей
-  nCreated integer := 0;
-
-  -- Число ранее созданных ролей
-  nExists integer := 0;
+  -- Число изменений
+  nChanged integer := 0;
 
 
 
   /*
-    Добавляет роль в случае ее отсутствия.
+    Добавление или обновление роли.
   */
-  procedure addRole(
-    shortName varchar2
+  procedure mergeRole(
+    roleShortName varchar2
     , roleName varchar2
     , roleNameEn varchar2
     , description varchar2
-    , oldShortName varchar2 := null
   )
   is
 
-    cursor roleCur is
-      select
-        t.*
-      from
-        op_role t
-      where
-        t.short_name in ( oldShortName, shortName)
-      order by
-        nullif( t.short_name, oldShortName) nulls first
-    ;
-
-    rec roleCur%rowtype;
+    changedFlag integer;
 
   begin
-    open roleCur;
-    fetch roleCur into rec;
-    close roleCur;
-    if rec.role_id is null then
-      rec.role_id := pkg_AccessOperator.createRole(
-        shortName     => shortName
-        , roleName    => roleName
-        , roleNameEn  => roleNameEn
-        , description => description
-        , operatorId  => pkg_Operator.getCurrentUserId()
-      );
+    changedFlag := pkg_AccessOperator.mergeRole(
+      roleShortName   => roleShortName
+      , roleName      => roleName
+      , roleNameEn    => roleNameEn
+      , description   => description
+    );
+    if changedFlag = 1 then
       dbms_output.put_line(
-        'role created: ' || shortName || ' ( role_id=' || rec.role_id || ')'
+        'changed role: ' || roleShortName
       );
-      nCreated := nCreated + 1;
+      nChanged := nChanged + 1;
     else
-      if coalesce( rec.short_name != shortName
-              , coalesce( rec.short_name, shortName) is not null)
-          or coalesce( rec.role_name != roleName
-              , coalesce( rec.role_name, roleName) is not null)
-          or coalesce( rec.role_name_en != roleNameEn
-              , coalesce( rec.role_name_en, roleNameEn) is not null)
-          or coalesce( rec.description != description
-              , coalesce( rec.description, description) is not null)
-          then
-        pkg_AccessOperator.updateRole(
-          roleId        => rec.role_id
-          , shortName   => shortName
-          , roleName    => roleName
-          , roleNameEn  => roleNameEn
-          , description => description
-          , operatorId  => pkg_Operator.getCurrentUserId()
-        );
-        dbms_output.put_line(
-          'role updated: ' || shortName || ' ( role_id=' || rec.role_id || ')'
-        );
-      end if;
-      nExists := nExists + 1;
+      dbms_output.put_line(
+        'checked role: ' || roleShortName
+      );
     end if;
-  end addRole;
+  end mergeRole;
 
 
 
 -- main
 begin
-  addRole(
-    shortName     => 'AllBatchAdmin'
+  mergeRole(
+    roleShortName => 'AllBatchAdmin'
     , roleName    =>
         'Администратор всех пакетных заданий во всех БД'
     , roleNameEn  =>
@@ -134,8 +96,8 @@ begin
     , description =>
         'Пользователь с данной ролью имеет полные права на пакетные задания во всех БД'
   );
-  addRole(
-    shortName     => 'SchShowBatch'
+  mergeRole(
+    roleShortName => 'SchShowBatch'
     , roleName    =>
         'Scheduler: доступ к форме «Пакетное задание»'
     , roleNameEn  =>
@@ -143,8 +105,8 @@ begin
     , description =>
         'Пользователь с данной ролью имеет доступ к форме «Пакетное задание»'
   );
-  addRole(
-    shortName     => 'SchShowBatchOption'
+  mergeRole(
+    roleShortName => 'SchShowBatchOption'
     , roleName    =>
         'Scheduler: доступ к закладке «Параметры» формы «Пакетное задание»'
     , roleNameEn  =>
@@ -152,8 +114,8 @@ begin
     , description =>
         'Пользователь с данной ролью имеет доступ к закладке «Параметры» формы «Пакетное задание»'
   );
-  addRole(
-    shortName     => 'SchShowSchedule'
+  mergeRole(
+    roleShortName => 'SchShowSchedule'
     , roleName    =>
         'Scheduler: доступ к закладке «Расписание» формы «Пакетное задание»'
     , roleNameEn  =>
@@ -161,8 +123,8 @@ begin
     , description =>
         'Пользователь с данной ролью имеет доступ к закладке «Расписание» формы «Пакетное задание»'
   );
-  addRole(
-    shortName     => 'SchShowLog'
+  mergeRole(
+    roleShortName => 'SchShowLog'
     , roleName    =>
         'Scheduler: доступ к закладке «Лог» формы «Пакетное задание»'
     , roleNameEn  =>
@@ -170,8 +132,8 @@ begin
     , description =>
         'Пользователь с данной ролью имеет доступ к закладке «Лог» формы «Пакетное задание»'
   );
-  addRole(
-    shortName     => 'SchShowBatchRole'
+  mergeRole(
+    roleShortName => 'SchShowBatchRole'
     , roleName    =>
         'Scheduler: доступ к закладке «Батч - Роль» формы «Пакетное задание»'
     , roleNameEn  =>
@@ -179,20 +141,19 @@ begin
     , description =>
         'Пользователь с данной ролью имеет доступ к закладке «Батч - Роль» формы «Пакетное задание»'
   );
-  addRole(
-    shortName     => 'SchShowModuleRolePrivilege'
+  mergeRole(
+    roleShortName => 'SchShowModuleRolePrivilege'
     , roleName    =>
         'Scheduler: доступ к форме «Права на пакетные задания модулей»'
     , roleNameEn  =>
         'Scheduler: Access to batch type -  role form'
     , description =>
         'Пользователь с данной ролью имеет доступ к форме «Права на пакетные задания модулей»'
-    , oldShortName => 'SchShowBatchTypeRole'
   );
 
   for rec in localRoleCur loop
-    addRole(
-      shortName     => rec.short_name
+    mergeRole(
+      roleShortName => rec.role_short_name
       , roleName    => rec.role_name
       , roleNameEn  => rec.role_name_en
       , description => rec.description
@@ -200,8 +161,7 @@ begin
   end loop;
 
   dbms_output.put_line(
-    'roles created: ' || nCreated
-    || ' ( already exists: ' || nExists || ')'
+    'roles changed: ' || nChanged
   );
   commit;
 end;

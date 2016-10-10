@@ -578,6 +578,7 @@ installDataTarget = \
     $(call getInstallDataFile,Local/$(LOCAL_USER_DIR)) \
   ) \
   $(addsuffix .$(lu2), \
+    $(call getInstallDataFile,AccessOperatorDb) \
   ) \
   $(addsuffix .$(lu3), \
   ) \
