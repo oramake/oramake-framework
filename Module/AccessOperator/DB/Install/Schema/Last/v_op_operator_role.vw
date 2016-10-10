@@ -27,10 +27,20 @@ from
     , ogr.operator_id_ins
   from
     op_operator_group ogr
-    inner join op_group gr
-      on gr.group_id = ogr.group_id
     inner join op_group_role grr
       on grr.group_id = ogr.group_id
+  union all
+  select
+    ogr.operator_id
+    , rl.role_id
+    , ogr.group_id as source_group_id
+    , ogr.date_ins
+    , ogr.operator_id_ins
+  from
+    op_operator_group ogr
+    cross join op_role rl
+  where
+    ogr.group_id = 1 -- pkg_Operator.FullAccess_GroupId
   ) d
 /
 comment on table v_op_operator_role is

@@ -1,5 +1,5 @@
 -- script: Install/Data/1.0.0/op_group.sql
--- Добавление первоначальных ролей для работы с модулем.
+-- Добавление первоначальных групп для работы с модулем.
 
 declare
 
@@ -26,7 +26,7 @@ begin
       from
         (
         select
-          1 as group_id
+          pkg_Operator.FullAccess_GroupId as group_id
           , 'Полный доступ' as group_name
           , 'Full Access'   as group_name_en
         from

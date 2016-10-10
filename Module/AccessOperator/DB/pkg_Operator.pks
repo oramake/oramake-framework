@@ -5,10 +5,19 @@ create or replace package pkg_Operator is
   SVN root: Oracle/Module/AccessOperator
 */
 
+
+
+/* group: Константы */
+
 /* const: Module_Name
   Название модуля, к которому относится пакет.
 */
 Module_Name constant varchar2(30) := 'AccessOperator';
+
+/* const: FullAccess_GroupId
+  Id группы "Полный доступ".
+*/
+FullAccess_GroupId constant integer := 1;
 
 
 
