@@ -8,13 +8,12 @@ create table ml_attachment  (
    is_image_content_id  number(1,0),
    date_ins             date                            default sysdate not null,
    operator_id          integer                         not null,
-   constraint ml_attachment_pk primary key (attachment_id) 
+   constraint ml_attachment_pk primary key (attachment_id)
 	using index tablespace &indexTablespace
 );
 
 comment on table ml_attachment is
-'Вложения почтовых сообщений
-[ SVN root: Exchange/Module/Mail]';
+'Вложения почтовых сообщений [ SVN root: Oracle/Module/Mail]';
 
 comment on column ml_attachment.attachment_id is
 'ID вложения';
@@ -40,7 +39,7 @@ comment on column ml_attachment.operator_id is
 comment on column ml_attachment.is_image_content_id is
 'Является ли вложение изображением
 ( 0 - нет, 1 - да, по-умолчанию ( null ) - не является )
-Название поля выбрано по причинам особенности 
+Название поля выбрано по причинам особенности
 использования параметра вложения
 ';
 

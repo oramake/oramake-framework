@@ -144,7 +144,7 @@ GENDOC_DB_DIR      = ../Doc/DB/AutoGen
 
 # build var: GENDOC_DB_FLAGS
 # Дополнительные параметры генерации документации.
-GENDOC_DB_FLAGS    =  -xi "$(JAVAMAIL_DIR)" -xi "$(JAF_DIR)" -xi Test
+GENDOC_DB_FLAGS    =  -xi "$(JAVAMAIL_DIR)" -xi "$(JAF_DIR)"
 
 
 # target: gendoc
@@ -723,6 +723,7 @@ installTestTarget = \
     $(wildcard \
       $(addprefix Test/, \
         *.typ *.pks *.tyb *.pkb \
+        Data/*.sql \
       ) \
     ) \
   ) \
@@ -826,6 +827,9 @@ uninstall-before: uninstall-before.oms
 # Скрипты для отмены установки схемы
 uninstallSchemaTarget = \
   $(addsuffix .$(ru), \
+    $(addsuffix .revert, \
+      $(loadJavaUsedLibJar) \
+		) \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
@@ -998,3 +1002,6 @@ grant: grant.oms
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk
+
+# Включаем дополнительные настройки для Java
+include java_support.mk

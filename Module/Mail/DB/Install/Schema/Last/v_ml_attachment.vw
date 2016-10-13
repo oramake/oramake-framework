@@ -14,7 +14,7 @@ create or replace force view v_ml_attachment
 )
 as
 select
-  /* SVN root: Exchange/Module/Mail */
+  -- SVN root: Oracle/Module/Mail
   atc.attachment_id as attachment_id
   , atc.message_id as message_id
   , atc.file_name as file_name
@@ -22,14 +22,12 @@ select
   , dbms_lob.getlength( atc.attachment_data) as attachment_data_length
   , atc.date_ins as date_ins
   , atc.operator_id as operator_id
-  , atc.is_image_content_id 
+  , atc.is_image_content_id
 from
   ml_attachment atc
 /
 comment on table v_ml_attachment is
-'ѕредставление дл€ получени€ информации
-о вложени€х
-[ SVN root: Exchange/Module/Mail ]'
+'ѕредставление дл€ получени€ информации о вложени€х [ SVN root: Oracle/Module/Mail ]'
 /
 comment on column v_ml_attachment.attachment_id is
 'ID вложени€';
@@ -55,6 +53,6 @@ comment on column v_ml_attachment.operator_id is
 comment on column v_ml_attachment.is_image_content_id is
 'явл€етс€ ли вложение изображением
 ( 0 - нет, 1 - да, по-умолчанию ( null ) - не €вл€етс€ )
-Ќазвание пол€ выбрано по причинам особенности 
+Ќазвание пол€ выбрано по причинам особенности
 использовани€ параметра вложени€
 ';

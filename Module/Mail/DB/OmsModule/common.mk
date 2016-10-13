@@ -2,14 +2,11 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2133 $
-# $LastChangedDate:: 2014-07-09 10:34:20 +0400 #$
+# $Revision:: 24409882 $
+# $Date:: 2016-05-30 10:22:40 +0300 #$
 #
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
 
 
 
@@ -277,20 +274,14 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 2133                     $$
+omsRevisionKeyword    := \$$Revision:: 24409882 $$
 
-omsRevision          := $(strip $(shell           \
-  omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:25}"               \
-  ))
+omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateValue  := \$$Date:: 2014-07-09 10:34:20 +0400 #$$
+omsChangeDateKeyword  := \$$Date:: 2016-05-30 10:22:40 +0300 #$$
 
-omsChangeDate      := $(strip $(shell             \
-  omsChangeDateValue='$(omsChangeDateValue)';     \
-  echo "$${omsChangeDateValue:8:11}"              \
-  ))
+omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
 
 
@@ -1090,7 +1081,7 @@ load-start-log.oms:
 				&& usedOmsRevision=$${omsLoadVersion#*File revision*: } \
 				&& usedOmsRevision=$${usedOmsRevision%% *} \
 				&& usedOmsChangeDate=$${omsLoadVersion#*File change date*: } \
-				&& usedOmsChangeDate=$${usedOmsChangeDate:0:10} \
+				&& usedOmsChangeDate=$${usedOmsChangeDate:0:25} \
 				&& echo "installed OMS version : $$usedOmsVersion ( rev. $$usedOmsRevision, $$usedOmsChangeDate)" \
 				; } \
 			&& echo "" \

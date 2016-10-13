@@ -1,6 +1,6 @@
 -- table: ml_request_state
 -- Состояния запросов модуля Mail
--- 
+--
 create table ml_request_state(
   request_state_code			varchar2( 10 ) not null,
   date_ins					date default sysdate not null,
@@ -9,9 +9,8 @@ create table ml_request_state(
     using index tablespace &indexTablespace
 )
 /
-comment on table ml_request_state is 
-'Состояния запросов модуля Mail
-[ SVN root: Exchange/Module/Mail]
+comment on table ml_request_state is
+'Состояния запросов модуля Mail [ SVN root: Oracle/Module/Mail]
 '
 /
 comment on column ml_request_state.request_state_code is

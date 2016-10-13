@@ -1,19 +1,19 @@
---script: Install/Grant/Last/sys-privs.sql
---Выдает права, необходимые для получения/отправки почты через Java
---с помощью библиотеки <JavaMail>.
+-- script: Install/Grant/Last/sys-privs.sql
+-- Выдает права, необходимые для получения/отправки почты через Java
+-- с помощью библиотеки <JavaMail>.
 --
---Параметры:
---userName                    - имя пользователя, которому выдаются права
+-- Параметры:
+-- userName                   - имя пользователя, которому выдаются права
 --                              ( по умолчанию текущий)
 --
+
 define userName = "&1"
 
 
 
 declare
 
-  userName varchar2( 30)
-    := upper( coalesce( nullif( '&userName', 'null'), user));
+  userName varchar2(30) := upper( '&userName');
 
 begin
   dbms_java.grant_permission(
@@ -26,28 +26,31 @@ begin
     userName
     , 'SYS:java.net.SocketPermission'
     , '*'
-    , 'resolve' 
+    , 'resolve'
   );
-                                        --Подключение по POP3
+
+  -- Подключение по POP3
   dbms_java.grant_permission(
     userName
     , 'SYS:java.net.SocketPermission'
     , '*:110'
-    , 'connect' 
+    , 'connect'
   );
-                                        --Подключение по IMAP
+
+  -- Подключение по IMAP
   dbms_java.grant_permission(
     userName
     , 'SYS:java.net.SocketPermission'
     , '*:143'
-    , 'connect' 
+    , 'connect'
   );
-                                        --Подключение по SMTP
+
+  -- Подключение по SMTP
   dbms_java.grant_permission(
     userName
     , 'SYS:java.net.SocketPermission'
     , '*:25'
-    , 'connect' 
+    , 'connect'
   );
 end;
 /

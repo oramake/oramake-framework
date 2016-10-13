@@ -1,18 +1,19 @@
---trigger: ml_message_state_bi_define
---Стандартный триггер инициализации записи
+-- trigger: ml_message_state_bi_define
+-- Инициализация полей таблицы <ml_message_state> при вставке записи.
 create or replace trigger ml_message_state_bi_define
- before insert
- on ml_message_state
- for each row
+  before insert
+  on ml_message_state
+  for each row
 begin
-                                        --Оператор, создавший строку.
-if :new.Operator_ID is null then
-  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
-end if;
-                                        --Определяем дату создания строки.
-if :new.Date_Ins is null then
-  :new.Date_Ins := SysDate;
-end if;
-      
-end;--trigger;
+
+  -- Id оператора, добавившего запись
+  if :new.operator_id is null then
+    :new.operator_id := pkg_Operator.getCurrentUserId();
+  end if;
+
+  -- Определяем дату добавления записи
+  if :new.date_ins is null then
+    :new.date_ins := sysdate;
+  end if;
+end;
 /

@@ -1,0 +1,6 @@
+-- sequence: ml_attachment_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <ml_attachment>.
+create sequence
+  ml_attachment_seq
+/

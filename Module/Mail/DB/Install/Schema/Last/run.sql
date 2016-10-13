@@ -1,33 +1,31 @@
---script: Install/Schema/Last/run.sql
---Выполняет установку последней версии объектов схемы.
---
+-- script: Install/Schema/Last/run.sql
+-- Выполняет установку последней версии объектов схемы.
+
+
+-- Определяем табличное пространство для индексов
 @oms-set-indexTablespace.sql
 
 
---
---
---
+-- Таблицы
 
---Модуль Operator
---@@op_operator.tab
-
---Собственные таблицы
-@@ml_attachment.tab
-@@ml_message.tab
-@@ml_message_state.tab
-@@ml_request_state.tab
-@@ml_fetch_request.tab
-
---Outline-ограничения целостности
-@@ml_attachment.con
-@@ml_message.con
-@@ml_message_state.con
-@@ml_request_state.con
-@@ml_fetch_request.con
-
---Последовательности
-@@sequences.sql
+@oms-run ml_attachment.tab
+@oms-run ml_fetch_request.tab
+@oms-run ml_message.tab
+@oms-run ml_message_state.tab
+@oms-run ml_request_state.tab
 
 
+-- Outline-ограничения целостности
+
+@oms-run ml_attachment.con
+@oms-run ml_fetch_request.con
+@oms-run ml_message.con
+@oms-run ml_message_state.con
+@oms-run ml_request_state.con
 
 
+-- Последовательности
+
+@oms-run ml_attachment_seq.sqs
+@oms-run ml_fetch_request_seq.sqs
+@oms-run ml_message_seq.sqs

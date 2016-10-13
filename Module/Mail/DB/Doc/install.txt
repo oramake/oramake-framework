@@ -1,15 +1,17 @@
 title: Установка
 
-Group: Общие замечания
-
-Модуль устанавливается под "основным" пользователем базы
+group: Общие замечания
 
 Параметры установки:
 INSTALL_VERSION               - устанавливаемая версия схемы ( Last при
                                 первоначальной установке или номер при
-                                обновлении, например 2.5.0)
+                                обновлении, например 1.1.0)
 LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
 LOAD_USERID                   - основная схема для установки
+                                ( формат: username/password@dbName)
+TO_USERNAME                   - имя пользователя, которому выдаются права
+                                ( формат: username)
 
 
 
@@ -27,10 +29,8 @@ FAX_SENDER_SMTP               - имя или ip smtp-сервера для отправки факсов
                                 модуля Option с именем <pkg_MailInternal.FaxSenderSmtp_OptionName>
 
 
-
 Перед установкой модуль останавливает выполнение заданий в БД ( см.
-<Install/Config/stop-batches.sql>) на BATCH_WAIT секунд
-, а после успешной установки восстанавливает
+<Install/Config/stop-batches.sql>), а после успешной установки восстанавливает
 их выполнение ( см. <Install/Config/resume-batches.sql>).
 При повторном запуске установки возможно появление сообщения
 "Warning. There's a non-zero value saved in view...",
@@ -46,24 +46,105 @@ FAX_SENDER_SMTP               - имя или ip smtp-сервера для отправки факсов
 Пример запуска установки со временем ожидания 1000 секунд
 ( ??? нужно заменить на актуальные значения):
 
+(code)
+
+make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
+
+(end)
 
 - остальные ошибки
 
-Рекомендуется перезапустить установку с параметром -i ( игнорирование ошибок ).
-Можно тажке восстановить запуск заданий в БД:
+Команда для восстановления выполнения заданий
+в БД:
 
 (code)
+
 $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Для отключения остановки/восстановления выполнения заданий в БД при установке
+модуля нужно добавить в команду установки " SKIP_FILE_MASK=*-batches.sql".
+
+
+
+group: Первоначальная установка
+
+Предварительные требования:
+- установка модуля Common;
+- установка модуля Logging;
+- установка модуля AccessOperator;
+- установка модуля Option;
+- установка модуля Scheduler;
+- установка модуля TaskHandler;
+
+Порядок для первоначальной установки последней версии модуля:
+
+- выдача дополнительных прав на системные объекты ( в TO_USERNAME указывается
+  пользователь, в схему которого будет установлен модуль)
+
+(code)
+
+$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=sys-privs TO_USERNAME=???
+
+(end)
+
+( в случае, если у пользователя, под которым выдаются права, нет прав на
+использование модуля ModuleInfo, то нужно отключить сохранение информации об
+установке в ModuleInfo, дополнив команду строкой
+"  OMS_SAVE_FILE_INSTALL_INFO=0 SKIP_FILE_MASK=*/oms-save-grant-info.sql"
+и можно не указывать LOAD_OPERATORID
+)
+
+- установка объектов модуля
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
 (end)
 
 
-Group: Last ( первоначальная установка последней версии)
 
-Пример установки:
+group: Выполнение тестов
+
+Предварительные требования:
+- установка модуля TestUtility;
+
+Команда установки объектов для выполнения тестов ( можно также сразу установить
+параметры тестирования с помощью <SQL_DEFINE>, см. следующий пример):
 
 (code)
 
-$ make grant LOAD_USERID=sys/???@??? GRANT_SCRIPT=sys-privs
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make install-test INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Команда для изменения параметров тестирования ( перечислены
+в <pkg_MailTest::Параметры тестирования>, в примере устанавливается значение
+SMTP-сервера ( <pkg_MailTest.TestSmtpServer_OptSName>) в "smtp.company.com"):
+
+(code)
+
+$ make -B install-test INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/opt_option.sql SQL_DEFINE=TestSmtpServer=smtp.company.com
+
+(end)
+
+Команда для выполнения всех тестов:
+
+(code)
+
+$ make test INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

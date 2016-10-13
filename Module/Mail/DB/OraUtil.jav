@@ -3,7 +3,7 @@ create or replace and compile java source named "OraUtil" as
 // Набор вспомогательных классов Java для Oracle.
 //
 
-package com.technology.orautil;
+package com.technology.oramake.mail.orautil;
 
 import java.io.*;
 import java.util.*;

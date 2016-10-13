@@ -1,10 +1,10 @@
 -- view: v_ml_fetch_request_wait
--- «апросы на извлечени€ сообщений, ожидающие обработки 
--- 
+-- «апросы на извлечени€ сообщений, ожидающие обработки
+--
 create or replace view v_ml_fetch_request_wait
-as 
-/* SVN root: Exchange/Module/Mail */
-select 
+as
+select
+  -- SVN root: Oracle/Module/Mail
   fetch_request_id as fetch_request_id
   , handler_sid as handler_sid
   , handler_serial# as handler_serial#
@@ -14,20 +14,20 @@ from
   (
   select /*+index(r ml_fetch_request_ix_wait)*/
     case request_state_code when 'WAIT' then
-      fetch_request_id   
-    end as fetch_request_id    
-    , 
+      fetch_request_id
+    end as fetch_request_id
+    ,
     case request_state_code when 'WAIT' then
       handler_sid
-    end as handler_sid    
-    , 
+    end as handler_sid
+    ,
     case request_state_code when 'WAIT' then
       handler_serial#
     end as handler_serial#
-    , 
+    ,
     case request_state_code when 'WAIT' then
       priority_order
-    end as priority_order    
+    end as priority_order
     ,
     case request_state_code when 'WAIT' then
       batch_short_name
@@ -38,9 +38,8 @@ from
 where
   fetch_request_id is not null
 /
-comment on table v_ml_fetch_request_wait is 
-'«апросы на извлечени€ email-сообщений, ожидающие обработки 
-[ SVN root: Exchange/Module/Mail]
+comment on table v_ml_fetch_request_wait is
+'«апросы на извлечени€ email-сообщений, ожидающие обработки [ SVN root: Oracle/Module/Mail]
 '
 /
 comment on column v_ml_fetch_request_wait.fetch_request_id is
@@ -53,7 +52,7 @@ comment on column v_ml_fetch_request_wait.handler_serial# is
 'јтрибут сеанса обработчика: "serial#"'
 /
 comment on column v_ml_fetch_request_wait.priority_order is
-'ѕриоритет запроса 
+'ѕриоритет запроса
 ( первыми обрабатываютс€ запросы с большим priority_order)'
 /
 comment on column v_ml_fetch_request_wait.batch_short_name is

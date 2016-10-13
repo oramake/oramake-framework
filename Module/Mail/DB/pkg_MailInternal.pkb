@@ -438,12 +438,12 @@ function GetOptionStringValue(
 )
 return varchar2
 is
-  optionList opt_option_list_t := opt_option_list_t(
+  opl opt_option_list_t := opt_option_list_t(
     moduleName => pkg_Mail.Module_Name
   );
 begin
   return
-    optionList.getOptionString(
+    opl.getString(
       moduleOptionName
     );
 exception when others then

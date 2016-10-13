@@ -5,7 +5,7 @@ create or replace force view
   v_ml_message
 as
 select
-  -- SVN root: Exchange/Module/Mail
+  -- SVN root: Oracle/Module/Mail
   message_id
   , case when
       message_state_code = 'S'
@@ -22,7 +22,7 @@ from
 /
 
 comment on table v_ml_message is
-  'Интерфейсное представления для таблицы <ml_message> [ SVN root: Exchange/Module/Mail]'
+  'Интерфейсное представления для таблицы <ml_message> [ SVN root: Oracle/Module/Mail]'
 /
 
 comment on column v_ml_message.message_id is

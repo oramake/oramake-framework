@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="ClearExpiredMailMessage">
   <name>Удаление почтовых сообщений с истекшим сроком жизни</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>ежедневно в 2:45</name>
+      <interval type="hh24">
+        <value>2</value>
+      </interval>
+      <interval type="mi">
+        <value>45</value>
+      </interval>
+    </schedule>
+  </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
   <content id="2" job="clear_expired_message">
     <condition id="1">true</condition>

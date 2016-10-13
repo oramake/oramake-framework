@@ -2,8 +2,8 @@
 <map>
   <map_version>1.3</map_version>
   <name>Mail</name>
-  <description>Модуль предназначен для обработки Email-запросов.</description>
-  <version>1.7.9</version>
+  <description>Отправка и получение сообщений электронной почты</description>
+  <version>2.0.0</version>
   <prefix>ml</prefix>
   <team>
     <programmerDB></programmerDB>
@@ -38,10 +38,12 @@
     <infrastructure></infrastructure>
   </diagram>
   <depend>
-    <module>Common</module>
-    <module>TaskHandler</module>
+    <module>Oracle/Module/AccessOperator</module>
+    <module>Oracle/Module/Common</module>
     <module>Oracle/Module/Logging</module>
     <module>Oracle/Module/Option</module>
+    <module>Oracle/Module/Scheduler</module>
+    <module>Oracle/Module/TaskHandler</module>
     <link></link>
   </depend>
   <image></image>

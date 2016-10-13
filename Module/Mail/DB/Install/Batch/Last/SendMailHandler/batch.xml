@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="SendMailHandler">
   <name>Обработчик отправки почтовых сообщений</name>
+  <batch_config>
+    <retry_count>60</retry_count>
+    <retry_interval>1</retry_interval>
+    <schedule>
+      <name>немедленно</name>
+    </schedule>
+    <option short_name="MaxMessageCount" type="number" name="Количество отправляемых сообщений">
+      <value>500</value>
+    </option>
+    <option short_name="SmtpServer" type="string" name="SMTP-сервер">
+      <value></value>
+    </option>
+  </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
-  <content id="2" job="send_mail_handler">
+  <content id="2" job="send_mail_handler" module="Mail">
     <condition id="1">true</condition>
   </content>
   <content id="3" job="retry_batch" module="Scheduler">

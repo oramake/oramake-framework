@@ -1,5 +1,5 @@
---table: ml_fetch_request
---Запросы на извлечение email-сообщений из ящиков
+-- table: ml_fetch_request
+-- Запросы на извлечение email-сообщений из ящиков
 --
 create table ml_fetch_request  (
    fetch_request_id		integer not null,
@@ -38,16 +38,18 @@ create table ml_fetch_request  (
    constraint ml_fetch_request_ck_error check (
      error_message is not null
      and request_state_code in ( 'ERROR')
-     or 
+     or
      error_code is null
-     and error_message is null 
+     and error_message is null
      and request_state_code in ( 'WAIT', 'PROCESSED')
    )
 )
 /
+
+
+
 comment on table ml_fetch_request is
-'Запросы на получения email-сообщений из ящиков
-[SVN root: Exchange/Module/Mail]'
+'Запросы на получения email-сообщений из ящиков [ SVN root: Oracle/Module/Mail]'
 /
 comment on column ml_fetch_request.fetch_request_id is
 'Id запроса извлечения сообщений из ящика. Первичный ключ.'
@@ -67,7 +69,7 @@ comment on column ml_fetch_request.recipient_address is
 из URL как user@domen)'
 /
 comment on column ml_fetch_request.is_got_message_deleted is
-'Удалять ли из ящика полученные сообщения 
+'Удалять ли из ящика полученные сообщения
 (1 - да, 0 - нет, null - по-умолчанию - удалять)'
 /
 comment on column ml_fetch_request.request_time is
@@ -92,7 +94,7 @@ comment on column ml_fetch_request.handler_serial# is
 'Атрибут сеанса обработчика: "serial#"'
 /
 comment on column ml_fetch_request.priority_order is
-'Приоритет запроса 
+'Приоритет запроса
 ( первыми обрабатываются запросы с большим priority_order)'
 /
 comment on column ml_fetch_request.error_code is
@@ -104,39 +106,39 @@ comment on column ml_fetch_request.error_message is
 comment on column ml_fetch_request.date_ins is
 'Дата добавления записи'
 /
+
+
+
 create index ml_fetch_request_ix_wait on ml_fetch_request
 (
   case request_state_code when 'WAIT' then
-    fetch_request_id   
-  end     
-  , 
+    fetch_request_id
+  end
+  ,
   case request_state_code when 'WAIT' then
     handler_sid
-  end     
-  , 
+  end
+  ,
   case request_state_code when 'WAIT' then
     handler_serial#
-  end     
-  , 
+  end
+  ,
   case request_state_code when 'WAIT' then
     priority_order
-  end     
+  end
   ,
   case request_state_code when 'WAIT' then
     batch_short_name
-  end     
-) 
+  end
+)
 tablespace &indexTablespace
 /
--- index:  ml_fetch_request_ix_date_ins 
+
+-- index:  ml_fetch_request_ix_date_ins
 -- Индекс для доступа по дате создания записи
--- запроса 
+-- запроса
 create index ml_fetch_request_ix_date_ins on ml_fetch_request(
   date_ins
 )
 tablespace &indexTablespace
-/
--- sequence: ml_fetch_request_seq
--- Последовательность для генерации первичного ключа
-create sequence  ml_fetch_request_seq
 /

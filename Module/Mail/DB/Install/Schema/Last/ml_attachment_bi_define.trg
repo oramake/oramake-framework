@@ -1,22 +1,24 @@
---trigger: ml_attachment_bi_define
---Стандартный триггер инициализации записи
+-- trigger: ml_attachment_bi_define
+-- Инициализация полей таблицы <ml_attachment> при вставке записи.
 create or replace trigger ml_attachment_bi_define
- before insert
- on ml_attachment
- for each row
+  before insert
+  on ml_attachment
+  for each row
 begin
-                                        --Определяем значение первичного ключа.     
-if :new.Attachment_ID is null then
-  select ml_Attachment_Seq.nextval into :new.Attachment_ID from dual;
-end if;
-                                        --Оператор, создавший строку.
-if :new.Operator_ID is null then
-  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
-end if;
-                                        --Определяем время создания строки.
-if :new.Date_Ins is null then
-  :new.Date_Ins := sysdate;
-end if;
 
-end;--trigger;
+  -- Определяем значение первичного ключа
+  if :new.attachment_id is null then
+    :new.attachment_id := ml_attachment_seq.nextval;
+  end if;
+
+  -- Id оператора, добавившего запись
+  if :new.operator_id is null then
+    :new.operator_id := pkg_Operator.getCurrentUserId();
+  end if;
+
+  -- Определяем дату добавления записи
+  if :new.date_ins is null then
+    :new.date_ins := sysdate;
+  end if;
+end;
 /

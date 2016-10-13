@@ -1,7 +1,7 @@
---table: ml_message
---Почтовые сообщения ( входящие и исходящие).
+-- table: ml_message
+-- Почтовые сообщения ( входящие и исходящие).
 --
---Замечания:
+-- Замечания:
 --  - поля sender_address и recipient_address содержат приведенный к нижнему
 --    регистру почтовый адрес, полученный, соответственно, из sender и
 --    recipient ( в случае, если поле содержит несколько адресов, берется первый
@@ -41,40 +41,40 @@ create table ml_message  (
    , fetch_request_id	            integer
    , date_ins                     date default sysdate not null
    , operator_id                  integer not null
-   , constraint 
-       ml_message_pk 
+   , constraint
+       ml_message_pk
      primary key (
        message_id
      )
 	   using index tablespace &indexTablespace
-   , constraint 
-       ml_message_chk_sender_address 
-     check( 
+   , constraint
+       ml_message_chk_sender_address
+     check(
        sender_address like '%@%'
        and sender_address not like '% %'
        and nullif( sender_address, lower( sender_address)) is null
      )
-   , constraint 
+   , constraint
        ml_message_chk_recipient_addr
      check(
        recipient_address like '%@%'
        and recipient_address not like '% %'
        and nullif( recipient_address, lower( recipient_address)) is null
      )
-   , constraint 
-       ml_message_chk_parent_message 
-     check( 
+   , constraint
+       ml_message_chk_parent_message
+     check(
        parent_message_id is null and message_state_code <> 'N'
-       or parent_message_id is not null 
+       or parent_message_id is not null
        and nullif( 'N', message_state_code) is null
      )
-   , constraint 
-       ml_message_ck_is_html 
-     check( 
+   , constraint
+       ml_message_ck_is_html
+     check(
        coalesce( is_html, 0) in ( 0, 1)
      )
-   , constraint 
-       ml_message_ck_mandatory 
+   , constraint
+       ml_message_ck_mandatory
      check(
        message_state_code in ( 'P','N','R')
        or sender_text is not null
@@ -83,9 +83,102 @@ create table ml_message  (
        and recipient is not null
        and sender_address is not null
        and recipient_address is not null
-     )  
+     )
 )
 /
+
+
+
+comment on table ml_message is
+  'Почтовые ( e-mail) сообщения [ SVN root: Oracle/Module/Mail]'
+/
+comment on column ml_message.message_id is
+  'Id сообщения'
+/
+comment on column ml_message.parent_message_id is
+  'Id родительского сообщения ( для вложенного сообщения)'
+/
+comment on column ml_message.sender_address is
+  'Адрес отравителя ( в нормализованном виде)'
+/
+comment on column ml_message.recipient_address is
+  'Адрес получателя ( в нормализованном виде)'
+/
+comment on column ml_message.message_state_code is
+  'Код состояния сообщения ( ссылка на ml_message_state)'
+/
+comment on column ml_message.message_state_code is
+  'Код состояния сообщения ( ссылка на ml_message_state)'
+/
+comment on column ml_message.smtp_server is
+  'SMTP-сервер для отправки сообщения. Значение null приравнивается к pkg_Common.getSmtpServer'
+/
+comment on column ml_message.sender is
+  'Адреса отправителей ( кодированныее оригинальные для входящих сообщений, преобразованные для исходящих)'
+/
+comment on column ml_message.recipient is
+  'Адреса получателей ( кодированные: оригинальные для входящих сообщений, преобразованные для исходящих)'
+/
+comment on column ml_message.copy_recipient is
+'Адреса получателей копии'
+/
+comment on column ml_message.sender_text is
+  'Адреса отправителей ( декодированные: преобразованные для входящих сообщений, оригинальные для исходящих)'
+/
+comment on column ml_message.recipient_text is
+  'Адреса получателей ( декодированные: преобразованные для входящих сообщений, оригинальные для исходящих)'
+/
+comment on column ml_message.copy_recipient_text is
+  'Декодированные адреса получателей копии'
+/
+comment on column ml_message.send_date is
+  'Дата отправки'
+/
+comment on column ml_message.subject is
+  'Тема сообщения'
+/
+comment on column ml_message.content_type is
+  'Тип содержимого'
+/
+comment on column ml_message.message_size is
+  'Примерный размер сообщения ( в байтах)'
+/
+comment on column ml_message.message_uid is
+  'Глобально-уникальный Id сообщения'
+/
+comment on column ml_message.source_message_id is
+  'Id исходного сообщения ( для ответного сообщения)'
+/
+comment on column ml_message.message_text is
+  'Текст сообщения'
+/
+comment on column ml_message.process_date is
+  'Дата обработки'
+/
+comment on column ml_message.expire_date is
+  'Дата устаревания'
+/
+comment on column ml_message.error_code is
+  'Код ошибки'
+/
+comment on column ml_message.error_message is
+  'Текст ошибки'
+/
+comment on column ml_message.is_html is
+'Интерпретировать ли текст письма как HTML ( 0 - нет, 1 - да, по-умолчанию(null) - нет )'
+/
+comment on column ml_message.fetch_request_id is
+  'Id запроса извлечения сообщения'
+/
+comment on column ml_message.date_ins is
+  'Дата добавления записи'
+/
+comment on column ml_message.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
 --index: ml_message_ix_state_smtp
 create index ml_message_ix_state_smtp on ml_message (
    message_state_code asc
@@ -131,5 +224,3 @@ create index ml_message_ix_source_message on ml_message (
 create index ml_message_ix_parent_message on ml_message (
    parent_message_id asc
 ) tablespace &indexTablespace;
-
-@oms-run ml_message.cmn

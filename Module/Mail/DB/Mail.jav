@@ -15,7 +15,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import oracle.jdbc.driver.*;
 import oracle.sql.*;
-import com.technology.orautil.ReaderInputStream;
+import com.technology.oramake.mail.orautil.ReaderInputStream;
 
 /** class: Mail
  *  Реализация процедур для работы с e-mail модуля Mail.

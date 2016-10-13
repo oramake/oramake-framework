@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="NotifyMailError">
   <name>Нотификация по ошибкам работы с почтой</name>
+  <batch_config>
+    <schedule>
+      <name>every 5 minutes from 00:01</name>
+      <interval type="mi">
+        <min_value>1</min_value>
+        <max_value>59</max_value>
+        <step>5</step>
+      </interval>
+    </schedule>
+    <option short_name="SendLimitMinute" type="number" name="Лимит времени для отправки почты ( в минутах)">
+      <value>5</value>
+    </option>
+  </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
   <content id="2" job="notify_error">
     <condition id="1">true</condition>

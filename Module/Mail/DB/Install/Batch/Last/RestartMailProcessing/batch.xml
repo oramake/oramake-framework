@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="RestartMailProcessing">
   <name>Перезапуск пакетов обработки почты</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>daily at 1:15</name>
+      <interval type="hh24">
+        <value>1</value>
+      </interval>
+      <interval type="mi">
+        <value>15</value>
+      </interval>
+    </schedule>
+    <option short_name="BatchList" type="string" name="Имена пакетов (через &quot;,&quot;) для перезапуска">
+      <value>SendMailHandler,FetchMailHandler</value>
+    </option>
+    <option short_name="CheckTimeout" type="number" name="Таймаут перед проверкой рестарта сессий в секундах">
+      <value>300</value>
+    </option>
+    <option short_name="RestartTimeout" type="number" name="Таймаут между рестартом пакетов в секундах">
+      <value>60</value>
+    </option>
+  </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
   <content id="2" job="restart_task_handler" module="TaskHandler">
     <condition id="1">true</condition>

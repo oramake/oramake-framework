@@ -5,17 +5,21 @@ declare
   );
 
 begin
-  optionList.addOptionString(
-    moduleOptionName => pkg_MailInternal.MassDistributeSmtp_OptionName
+  optionList.addString(
+    optionShortName => pkg_MailInternal.MassDistributeSmtp_OptionName
     , optionName => 'Имя или ip smtp-сервера для массовых рассылок'
-    , defaultStringValue => '&massDistributionSmtp'
+    , testStringValue => '&massDistributionSmtp'
+    , prodStringValue => '&massDistributionSmtp'
   );
-  optionList.addOptionString(
-    moduleOptionName => pkg_MailInternal.FaxSenderSmtp_OptionName
+  optionList.addString(
+    optionShortName => pkg_MailInternal.FaxSenderSmtp_OptionName
     , optionName => 'Имя или ip smtp-сервера для отправки факсов'
-    , defaultStringValue => '&faxSenderSmtp'
+    , testStringValue => '&faxSenderSmtp'
+    , prodStringValue => '&faxSenderSmtp'
   );
 end;
 /
-commit;
+
+commit
+/
 

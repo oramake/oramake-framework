@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="FetchMailHandler">
+  <name>Обработка запросов извлечения электронных писем</name>
+  <batch_config>
+    <retry_count>60</retry_count>
+    <retry_interval>10</retry_interval>
+    <schedule>
+      <name>immediate</name>
+    </schedule>
+    <option short_name="BatchShortName" type="string" name="Наименования батча, создавшего запрос">
+      <value></value>
+    </option>
+    <option short_name="CheckRequestInterval" type="number" name="Интервал для проверки наличия запросов для обработки">
+      <value>3</value>
+    </option>
+    <option short_name="LoggingLevelCode" type="string" name="Уровень логирования">
+      <prod_value></prod_value>
+      <test_value></test_value>
+    </option>
+    <option short_name="MaxRequestCount" type="number" name="Максимальное количество обрабатываемых запросов">
+      <value>10000</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="fetch_mail_handler" module="Mail">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="retry_batch" module="Scheduler">
+    <condition id="2">skip</condition>
+    <condition id="2">error</condition>
+  </content>
+</batch>

@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Mail
-SubTitle: Версия 1.7.9
+SubTitle: Версия 2.0.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -86,6 +86,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_MailUtility.pkb)
       }  # Group: pkg_MailUtility
 
+   Group: Test  {
+
+      Group: pkg_MailTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_MailTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_MailTest.pkb)
+         }  # Group: pkg_MailTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Java-исходники  {
@@ -155,12 +165,16 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: ml_attachment  (no auto-title, Install/Schema/Last/ml_attachment.tab)
             File: ml_attachment_bi_define  (no auto-title, Install/Schema/Last/ml_attachment_bi_define.trg)
+            File: ml_attachment_seq  (no auto-title, Install/Schema/Last/ml_attachment_seq.sqs)
             File: ml_fetch_request  (no auto-title, Install/Schema/Last/ml_fetch_request.tab)
             File: ml_fetch_request_bi_define  (no auto-title, Install/Schema/Last/ml_fetch_request_bi_define.trg)
+            File: ml_fetch_request_seq  (no auto-title, Install/Schema/Last/ml_fetch_request_seq.sqs)
             File: ml_message  (no auto-title, Install/Schema/Last/ml_message.tab)
             File: ml_message_bi_define  (no auto-title, Install/Schema/Last/ml_message_bi_define.trg)
+            File: ml_message_seq  (no auto-title, Install/Schema/Last/ml_message_seq.sqs)
             File: ml_message_state  (no auto-title, Install/Schema/Last/ml_message_state.tab)
             File: ml_message_state_bi_define  (no auto-title, Install/Schema/Last/ml_message_state_bi_define.trg)
             File: ml_request_state  (no auto-title, Install/Schema/Last/ml_request_state.tab)
@@ -173,6 +187,22 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: Java  {
+
+      File: drop-java-lib  (no auto-title, Java/drop-java-lib.sh)
+      File: load-java-lib  (no auto-title, Java/load-java-lib.sh)
+      }  # Group: Java
+
+   Group: Test  {
+
+      Group: Data  {
+
+         File: opt_option  (no auto-title, Test/Data/opt_option.sql)
+         }  # Group: Data
+
+      File: run  (no auto-title, Test/run.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
