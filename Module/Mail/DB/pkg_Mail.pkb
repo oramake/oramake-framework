@@ -21,22 +21,6 @@ Attachment_DefaultType constant varchar2(50) := BinaryData_MimeType;
 */
 AttachmentImage_DefaultType constant varchar2(50) := ImageJPEGData_MimeType;
 
-/* ivar: massDistributionSmtpServer
-  Имя или ip smtp-сервера для массовых рассылок
-  Инициализируется при первом обращении к
-  <GetMassDistributionSmtpServer> и далее используется
-  в качестве результата функции
-*/
-  massDistributionSmtpServer varchar2(300) := null;
-
-/* ivar: faxSenderSmtpServer
-  Имя или ip smtp-сервера для отправки факсов
-  Инициализируется при первом обращении к
-  <GetFaxSenderSmtpServer> и далее используется
-  в качестве результата функции
-*/
-  faxSenderSmtpServer varchar2(300) := null;
-
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
@@ -1510,107 +1494,6 @@ exception when others then
     , true
   );
 end CancelSendMessage;
-
-/* func: GetMassDistributionSmtpServer
-  Получает имя ( или ip-адрес) SMTP-сервера
-  для внешних рассылок ( отличный от
-  pkg_Common.GetSmtpServer ).
-
-  Замечания:
-    - использует значение опции
-      <pkg_MailInternal.MassDistributeSmtp_OptionName>
-      модуля Option на момент открытия сессии
-*/
-function GetMassDistributionSmtpServer
-return varchar2
-is
-begin
-  if massDistributionSmtpServer is null then
-    logger.Debug( 'GetOptionStringValue');
-    massDistributionSmtpServer :=
-      pkg_MailInternal.GetOptionStringValue(
-        pkg_MailInternal.MassDistributeSmtp_OptionName
-      );
-  end if;
-  if massDistributionSmtpServer is null then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , logger.ErrorStack(
-          'Значение имени smtp-сервера массовых рассылок не задано( '
-          || 'optionShortName='
-          ||  '"' || pkg_MailInternal.MassDistributeSmtp_OptionName || '"'
-          || ')'
-        )
-    );
-  end if;
-  return
-    massDistributionSmtpServer;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка получения smtp массовых рассылок'
-      )
-    , true
-  );
-end GetMassDistributionSmtpServer;
-
-/* func: GetAlternativeSmtpServer
-  Устаревший вариант функции <GetMassDistributionSmtpServer>.
-  Оставлено для обратной совместимости
-  с прикладными модулями. Не использовать.
-
-  Вызывает <GetMassDistributionSmtpServer>.
-*/
-function GetAlternativeSmtpServer
-return varchar2
-is
-begin
-  return
-    GetMassDistributionSmtpServer;
-end GetAlternativeSmtpServer;
-
-/* func: GetFaxSenderSmtpServer
-  Получает имя ( или ip-адрес) SMTP-сервера
-  для smtp-сервера для отправки факсов
-
-  Замечания:
-    - использует значение опции
-      <pkg_MailInternal.FaxSenderSmtp_OptionName>
-      модуля Option на момент открытия сессии
-*/
-function GetFaxSenderSmtpServer
-return varchar2
-is
-begin
-  if faxSenderSmtpServer is null then
-    faxSenderSmtpServer :=
-      pkg_MailInternal.GetOptionStringValue(
-        pkg_MailInternal.FaxSenderSmtp_OptionName
-      );
-  end if;
-  if faxSenderSmtpServer is null then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , logger.ErrorStack(
-          'Значение имени smtp-сервера для отправки факсов не задано( '
-          || 'optionShortName='
-          ||  '"' || pkg_MailInternal.FaxSenderSmtp_OptionName || '"'
-          || ')'
-        )
-    );
-  end if;
-  return
-    faxSenderSmtpServer;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка получения smtp для отправки факсов'
-      )
-    , true
-  );
-end GetFaxSenderSmtpServer;
 
 
 end pkg_Mail;

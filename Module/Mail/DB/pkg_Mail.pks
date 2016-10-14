@@ -262,32 +262,6 @@ procedure CancelSendMessage(
   , expireDate date := null
 );
 
-/* pfunc: GetMassDistributionSmtpServer
-  Получает имя ( или ip-адрес) SMTP-сервера
-  для внешних рассылок ( отличный от
-  pkg_Common.GetSmtpServer )
-  ( <body::GetMassDistributionSmtpServer>).
-*/
-function GetMassDistributionSmtpServer
-return varchar2;
-
-/* pfunc: GetAlternativeSmtpServer
-  Устаревший вариант функции <GetMassDistributionSmtpServer>
-  Оставлено для обратной совместимости
-  с прикладными модулями. Не использовать
-  ( <body::GetAlternativeSmtpServer>).
-*/
-function GetAlternativeSmtpServer
-return varchar2;
-
-/* pfunc: GetFaxSenderSmtpServer
-  Получает имя ( или ip-адрес) SMTP-сервера
-  для smtp-сервера для отправки факсов
-  ( <body::GetFaxSenderSmtpServer>).
-*/
-function GetFaxSenderSmtpServer
-return varchar2;
-
 
 end pkg_Mail;
 /

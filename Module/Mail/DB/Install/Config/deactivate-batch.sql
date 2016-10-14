@@ -1,4 +1,4 @@
 -- script: Install/Config/deactivate-batch.sql
--- Деактивирует пакетные задания модуля.
+-- Деактивирует пакетные задания модуля ( с ожиданием остановки обработчиков).
 
-@oms-deactivate-batch "Mail/%"
+@oms-stop-batch "Mail/%"

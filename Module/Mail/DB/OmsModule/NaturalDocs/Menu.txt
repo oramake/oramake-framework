@@ -136,8 +136,8 @@ Group: Скрипты  {
 
          File: after-action  (no auto-title, Install/Config/after-action.sql)
          File: before-action  (no auto-title, Install/Config/before-action.sql)
-         File: deactivate-batch.sql  (Install/Config/deactivate-batch.sql)
-         File: reactivate-batch.sql  (Install/Config/reactivate-batch.sql)
+         File: deactivate-batch  (no auto-title, Install/Config/deactivate-batch.sql)
+         File: reactivate-batch  (no auto-title, Install/Config/reactivate-batch.sql)
          File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
          File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
          }  # Group: Config
@@ -185,6 +185,11 @@ Group: Скрипты  {
             File: v_ml_fetch_request_wait  (no auto-title, Install/Schema/Last/v_ml_fetch_request_wait.vw)
             File: v_ml_message  (no auto-title, Install/Schema/Last/v_ml_message.vw)
             }  # Group: Last
+
+         Group: 2.0.0  {
+
+            File: run  (no auto-title, Install/Schema/2.0.0/run.sql)
+            }  # Group: 2.0.0
 
          }  # Group: Schema
 

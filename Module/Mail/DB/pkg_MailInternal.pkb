@@ -427,36 +427,5 @@ begin
   end if;
 end WaitForFetchRequest;
 
-/* func: GetOptionStringValue
-  Получает строковое значение опции
-
-  Параметры:
-  moduleOptionName            - имя опции, уникальное в пределах модуля
-*/
-function GetOptionStringValue(
-  moduleOptionName varchar2
-)
-return varchar2
-is
-  opl opt_option_list_t := opt_option_list_t(
-    moduleName => pkg_Mail.Module_Name
-  );
-begin
-  return
-    opl.getString(
-      moduleOptionName
-    );
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка получения строкового значения опции( '
-        || ' moduleOptionName="' || moduleOptionName || '"'
-        || ')'
-      )
-    , true
-  );
-end GetOptionStringValue;
-
 end pkg_MailInternal;
 /

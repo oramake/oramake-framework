@@ -20,22 +20,6 @@ Error_RequestStateCode constant varchar2(10) := 'ERROR';
 */
 Processed_RequestStateCode constant varchar2(10) := 'PROCESSED';
 
-/* group: Имена параметров модуля ( Option)*/
-
-/* const: MassDistributeSmtp_OptionName
-  Имя option для имени или ip smtp-сервера
-  для массовых рассылок
-*/
-MassDistributeSmtp_OptionName constant varchar2( 100) :=
-  'MassDistributionSmtpServer';
-
-/* const: FaxSenderSmtp_OptionName
-  Имя option для имени или ip smtp-сервера
-  для отправки факсов
-*/
-FaxSenderSmtp_OptionName constant varchar2( 100) :=
-  'FaxSenderSmtpServer';
-
 /* group: Процедуры и функции */
 
 /* pfunc: GetIsGotMessageDeleted
@@ -119,15 +103,6 @@ return boolean;
 procedure WaitForFetchRequest(
   fetchRequestId integer
 );
-
-/* pfunc: GetOptionStringValue
-  Получает строковое значение опции
-  ( <body::GetOptionStringValue>)
-*/
-function GetOptionStringValue(
-  moduleOptionName varchar2
-)
-return varchar2;
 
 end pkg_MailInternal;
 /
