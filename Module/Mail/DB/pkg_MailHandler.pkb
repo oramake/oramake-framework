@@ -5,6 +5,11 @@ create or replace package body pkg_MailHandler is
 
 /* group: Типы */
 
+/* itype: TUrlString
+  Тип для строки с URL.
+*/
+subtype TUrlString is ml_fetch_request.url%type;
+
 /* itype: TColSmtpServer
   Тип коллекции для адресов SMTP-серверов
 */
@@ -126,396 +131,9 @@ exception when others then
   );
 end parseSmtpServerList;
 
-/* func: notifyError
-  Информирует об ошибках ( по e-mail) и возвращает число найденных ошибок.
-
-  Параметры:
-  sendLimit                   - лимит времени, в течении которого должна быть
-                                произведена попытка отправки сообщения ( при
-                                передаче null будет использовано значение по
-                                умолчанию)
-  smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
-                                через ",". Пустая строка приравнивается
-                                к pkg_Common.getSmtpServer.
-
-  Возврат:
-    - количество ошибок
-*/
-function notifyError(
-  sendLimit interval day to second := null
-  , smtpServerList varchar2 := null
-)
-return integer
-is
-
-  -- Дата проверки
-  checkTime timestamp with time zone := systimestamp;
-
-  -- Число ошибок
-  nError integer := 0;
-
-  -- Текст сообщения
-  msg varchar2( 30000);
-
-  -- Коллекция SMTP-серверов
-  colSmtpServer TColSmtpServer;
 
 
-
-  /*
-    Добавление сообщений по ошибкам по данному серверу.
-  */
-  procedure processSmtpServer(
-    smtpServer varchar2
-  )
-  is
-
-    -- Используемый SMTP-сервер
-    usedSmtpServer varchar2( 512 ) :=
-      coalesce( smtpServer, pkg_Common.getSmtpServer())
-    ;
-
-    -- Создан ли заголовок для SMTP-сервера
-    headerCreated boolean := false;
-
-    cursor curError( minSendTime timestamp with time zone) is
-      select
-        1 as show_order
-        , ms.error_code
-        , coalesce(
-            ms.error_message
-            , 'Длительно не отправляемые сообщения'
-          )
-          as error_message
-        , count(*) as cnt
-        , min( ms.date_ins) as min_date_ins
-        , max( ms.date_ins) as max_date_ins
-        , min( ms.process_date) as min_error_date
-        , max( ms.process_date) as max_error_date
-        , min( ms.send_date) as min_send_date
-        , max( ms.send_date) as max_send_date
-        , min( ms.message_id) as min_message_id
-        , max( ms.message_id) as max_message_id
-      from
-        ml_message ms
-      where
-        ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode
-        -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
-        -- SMTP-сервера по-умолчанию, иметь значение null
-        and
-        ( ms.smtp_server = usedSmtpServer
-          or usedSmtpServer = pkg_Common.getSmtpServer
-          and ms.smtp_server is null
-        )
-        and (
-          ms.error_code is not null
-          or ms.send_date < minSendTime
-          )
-      group by
-        ms.error_code
-        , ms.error_message
-      order by
-        show_order
-        , error_code nulls first
-        , error_message
-    ;
-
-  -- processSmtpServer
-  begin
-    pkg_TaskHandler.setAction( 'processSmtpServer('
-      || smtpServer
-      || ')'
-    );
-    for rec in curError(
-      checkTime - coalesce( sendLimit, SendMessage_TimeLimit)
-    )
-    loop
-
-      -- Формируем текст сообщения
-      if not headerCreated then
-        msg := substr( msg
-          || chr(10)
-          || chr(10)
-          || '* SMTP Server: ' || to_char( usedSmtpServer )
-          || chr(10)
-          , 1
-          , 30000
-        );
-        headerCreated := true;
-      end if;
-      nError := nError + rec.cnt;
-      msg := substr( msg
-        || chr( 10) || '* '
-        || case when rec.error_code is null then
-            rec.error_message
-          else
-            'Ошибка обработки с кодом ORA' || to_char( rec.error_code, '00000')
-          end
-          || ' - ' || to_char( rec.cnt) || ' шт.'
-          || chr( 10)
-        || case when rec.error_code is not null
-              and rec.error_message is not null
-              then
-            chr( 10)
-            || rec.error_message
-            || chr( 10)
-          end
-        || chr( 10)
-          || 'date_ins:   '
-            || to_char( rec.min_date_ins, 'dd.mm.yy hh24:mi:ss')
-            || case when rec.min_date_ins <> rec.max_date_ins then
-                ' - '
-                || to_char( rec.max_date_ins, 'dd.mm.yy hh24:mi:ss')
-              end
-            || chr( 10)
-          || case when rec.min_error_date is not null then
-             'error_date: '
-            || to_char( rec.min_error_date, 'dd.mm.yy hh24:mi:ss')
-            || case when rec.min_error_date <> rec.max_error_date then
-                ' - '
-                || to_char( rec.max_error_date, 'dd.mm.yy hh24:mi:ss')
-              end
-            || chr( 10)
-            end
-          || case when rec.min_send_date is not null then
-             'send_date:  '
-            || to_char( rec.min_send_date, 'dd.mm.yy hh24:mi:ss')
-            || case when rec.min_send_date <> rec.max_send_date then
-                ' - '
-                || to_char( rec.max_send_date, 'dd.mm.yy hh24:mi:ss')
-              end
-            || chr( 10)
-            end
-          ||
-             'message_id: '
-            || to_char( rec.min_message_id)
-            || case when rec.min_message_id <> rec.max_message_id then
-                ' - '
-                || to_char( rec.max_message_id)
-              end
-            || chr( 10)
-        , 1, 30000)
-      ;
-    end loop;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка добавления сообщений об ошибках ('
-          || 'smtpServer="' || smtpServer || '"'
-          || ')'
-        )
-      , true
-    );
-  end processSmtpServer;
-
-
-
--- notifyError
-begin
-  colSmtpServer := parseSmtpServerList(
-    smtpServerList => smtpServerList
-  );
-
-  -- Формируем сообщение
-  for i in 1..colSmtpServer.count loop
-    processSmtpServer(
-      smtpServer => colSmtpServer(i)
-    );
-  end loop;
-
-  -- Отправляем письмо по ошибкам
-  if msg is not null then
-    pkg_Common.sendMail(
-      mailSender => pkg_Common.getMailAddressSource( Module_Name)
-      , mailRecipient => pkg_Common.getMailAddressDestination
-      , subject => Module_Name || ': error notification'
-      , message =>
-          rpad( 'Дата проверки: ', 35) || to_char( checkTime, 'dd.mm.yy hh24:mi:ss')
-          || chr( 10)
-          || rpad( 'Планируемая отправка не ранее:', 35) ||
-                to_char( checkTime - coalesce( sendLimit, SendMessage_TimeLimit)
-                         , 'dd.mm.yy hh24:mi:ss' )
-          || chr( 10)
-          || msg
-    );
-  end if;
-  return nError;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при проверке ошибок обработки сообщений.'
-      )
-    , true
-  );
-end notifyError;
-
-/* func: clearExpiredMessage
-  Удаляет сообщения с истекшим сроком жизни и возвращает число удаленных
-  сообщений.
-
-  Параметры:
-  checkDate                   - дата проверки ( по умолчанию текущая дата)
-
-  Замечание:
-  если сообщение входит в цепочку ( по source_message_id), то оно будет удалено
-  только вместе со всей цепочкой ( т.е. когда у всех сообщений в цепочке
-  истечет срок жизни).
-  Вложенные сообщения удаляются при истечении срока жизни сообщения основного
-  сообщения.
-*/
-function clearExpiredMessage(
-  checkDate date := null
-)
-return integer
-is
-
-  -- Удаляемые сообщения
-  cursor curExpiredMessage( checkDate date) is
-    select
-      d.message_id
-    from
-      (
-      select
-        ms.message_id
-        , (
-          select
-            level
-          from
-            ml_message t
-          where
-            ----Выделяем корневое сообщение
-            t.source_message_id is null
-            ----Проверям всю цепочку от корня
-            and not exists
-              (
-              select
-                null
-              from
-                ml_message t2
-              where
-                t2.expire_date is null
-                or t2.expire_date > checkDate
-              start with
-                t2.message_id = t.message_id
-              connect by
-                prior t2.message_id = t2.source_message_id
-              )
-          start with
-            t.message_id = ms.message_id
-          connect by
-            prior t.source_message_id = t.message_id
-          )
-          as del_thread_level
-      from
-        ml_message ms
-      where
-        ms.expire_date <= checkDate
-        and ms.parent_message_id is null
-      ) d
-    where
-      d.del_thread_level is not null
-    order by
-      d.del_thread_level desc
-      , d.message_id
-  ;
-
-  -- Число удаленных сообщений
-  nDeleted integer := 0;
-
--- clearExpiredMessage
-begin
-  savepoint pkg_MailHandler_DeleteExpMsg;
-  for rec in curExpiredMessage( coalesce( checkDate, sysdate)) loop
-    begin
-      delete from
-        ml_attachment atc
-      where
-        atc.message_id in
-          (
-          select
-            ms.message_id
-          from
-            ml_message ms
-          start with
-            ms.parent_message_id is null
-            and ms.message_id = rec.message_id
-          connect by
-            prior ms.message_id = ms.parent_message_id
-          )
-      ;
-      delete from
-        ml_message t
-      where
-        t.message_id in
-          (
-          select
-            ms.message_id
-          from
-            ml_message ms
-          start with
-            ms.parent_message_id is null
-            and ms.message_id = rec.message_id
-          connect by
-            prior ms.message_id = ms.parent_message_id
-          )
-      ;
-      nDeleted := nDeleted + 1;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , 'Ошибка при удалении сообщения ('
-          || ' message_id=' || to_char( rec.message_id)
-          || ').'
-        , true
-      );
-    end;
-  end loop;
-  return nDeleted;
-exception when others then
-  rollback to pkg_MailHandler_DeleteExpMsg;
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при удалении сообщений с истекшим сроком жизни ('
-        || ' checkDate=' || to_date( checkDate, 'dd.mm.yyyy hh24:mi:ss')
-        || ').'
-      )
-    , true
-  );
-end clearExpiredMessage;
-
-/* func: clearFetchRequest
-  Удаляет запросы извлечения из ящика
-  с датой создания до определённой
-  даты
-
-  Параметры:
-  beforeDate                  - дата, до которой удалять запросы
-*/
-procedure clearFetchRequest(
-  beforeDate date
-)
-is
-begin
-  delete from
-    ml_fetch_request
-  where
-    date_ins <= beforeDate
-  ;
-  logger.debug('Удалено записей: ' || to_char( SQL%RowCount));
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при удалении запросов на извлечение ('
-        || ' beforeDate=' || to_date( beforeDate, 'dd.mm.yyyy hh24:mi:ss')
-        || ').'
-      )
-    , true
-  );
-end clearFetchRequest;
+/* group: Отправка писем */
 
 /* ifunc: sendMessageJava
   Отсылает ожидающие отправки сообщения.
@@ -907,6 +525,178 @@ exception when others then
   raise;
 end sendHandler;
 
+
+
+/* group: Получение писем */
+
+/* ifunc: fetchMessageJava
+  Получает почтовые сообщения.
+*/
+function fetchMessageJava(
+  url varchar2
+  , recipientAddress varchar2
+  , isGotMessageDeleted number
+  , fetchRequestId number
+  , errorMessage in out varchar2
+)
+return number
+is
+language java name '
+Mail.fetchMessage(
+  java.lang.String
+  , java.lang.String
+  , oracle.sql.NUMBER
+  , java.math.BigDecimal
+  , java.lang.String[]
+)
+return oracle.sql.NUMBER
+';
+
+/* func: fetchMessageImmediate(out ERROR)
+  Получает почту и возвращает число полученных сообщений ( в том же сеансе).
+
+  Параметры:
+  errorMessage                - сообщение об ошибке получения сообщений
+                                ( возврат)
+  errorCode                   - код сообщения об ошибке
+                                ( возврат)
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  password                    - пароль для подключения к почтовому ящику
+                                ( если null, то используется пароль из url)
+  recipientAddress            - адрес получателя, под которым будут сохраняться
+                                полученные сообщения ( при отсутствии выделяется
+                                из URL как user@domen)
+  fetchRequestId              - id запроса извлечения из ящика
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+
+  Возврат:
+  число полученных сообщений
+
+  Замечания:
+  - функция выполняется в автономной транзакции;
+*/
+function fetchMessageImmediate(
+  errorMessage in out varchar2
+  , errorCode in out integer
+  , url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
+  , fetchRequestId integer := null
+)
+return integer
+is
+
+  -- Автономная транзакция в связи с обращением к внешнему сервису
+  pragma autonomous_transaction;
+
+  -- Число полученных сообщений
+  nFetched integer := null;
+
+  -- URL с удаленным паролем
+  clearUrl TUrlString;
+
+
+
+  procedure tryFetchMessage
+  is
+  begin
+    nFetched := fetchMessageJava(
+      url =>
+      case when password is not null then
+        pkg_MailUtility.changeUrlPassword( url, password)
+      else
+        url
+      end
+      , recipientAddress => recipientAddress
+      , isGotMessageDeleted => isGotMessageDeleted
+      , fetchRequestId => fetchRequestId
+      , errorMessage => errorMessage
+    );
+    errorCode := null;
+  exception when others then
+    errorCode := sqlcode;
+    errorMessage := logger.getErrorStack();
+  end tryFetchMessage;
+
+
+
+-- fetchMessage
+begin
+  clearUrl := pkg_MailUtility.changeUrlPassword( url, null);
+  tryFetchMessage();
+  if length( errorMessage) > 0 then
+    errorMessage :=
+      'Ошибка при получении почты'
+      || case when clearUrl is not null then
+          ' по URL "' || clearUrl || '"'
+         end
+      || ': ' || errorMessage;
+  end if;
+  return nFetched;
+end fetchMessageImmediate;
+
+/* func: fetchMessageImmediate
+  Получает почту и возвращает число полученных сообщений ( в том же сеансе).
+
+  Параметры:
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  password                    - пароль для подключения к почтовому ящику
+                                ( если null, то используется пароль из url)
+  recipientAddress            - адрес получателя, под которым будут сохраняться
+                                полученные сообщения ( при отсутствии выделяется
+                                из URL как user@domen)
+
+  Возврат:
+  число полученных сообщений
+
+  Замечания:
+  - вызывает функцию <fetchMessageImmediate( out ERROR) и в случае ошибки
+    при получении почты выбрасывает исключение;
+*/
+function fetchMessageImmediate(
+  url varchar2
+  , password varchar2 := null
+  , recipientAddress varchar2 := null
+)
+return integer
+is
+
+  -- Количество извлечённых сообщений
+  nFetched integer;
+
+  -- Данные об ошибке
+  errorMessage varchar2( 4000);
+  errorCode integer;
+
+begin
+  nFetched :=
+    fetchMessageImmediate(
+      url => url
+      , password => password
+      , recipientAddress => recipientAddress
+      , errorMessage => errorMessage
+      , errorCode => errorCode
+    );
+  if trim( errorMessage) is not null then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , errorMessage
+    );
+  end if;
+  return nFetched;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при извлечении сообщений.'
+      )
+    , true
+  );
+end fetchMessageImmediate;
+
 /* func: processFetchRequest
   Обработка текущих запросов на извлечение из ящиков
 
@@ -1113,7 +903,7 @@ is
     logger.debug('fetch start: (fetch_request_id='
       || to_char( recRequest.fetch_request_id) || ')'
     );
-    fetchedCount := pkg_Mail.fetchMessageImmediate(
+    fetchedCount := fetchMessageImmediate(
       url => recRequest.url
       , password => recRequest.password
       , recipientAddress => recRequest.recipient_address
@@ -1307,6 +1097,401 @@ exception when others then
     , true
   );
 end fetchHandler;
+
+
+
+/* group: Вспомогательные функции */
+
+/* func: notifyError
+  Информирует об ошибках ( по e-mail) и возвращает число найденных ошибок.
+
+  Параметры:
+  sendLimit                   - лимит времени, в течении которого должна быть
+                                произведена попытка отправки сообщения ( при
+                                передаче null будет использовано значение по
+                                умолчанию)
+  smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
+                                через ",". Пустая строка приравнивается
+                                к pkg_Common.getSmtpServer.
+
+  Возврат:
+    - количество ошибок
+*/
+function notifyError(
+  sendLimit interval day to second := null
+  , smtpServerList varchar2 := null
+)
+return integer
+is
+
+  -- Дата проверки
+  checkTime timestamp with time zone := systimestamp;
+
+  -- Число ошибок
+  nError integer := 0;
+
+  -- Текст сообщения
+  msg varchar2( 30000);
+
+  -- Коллекция SMTP-серверов
+  colSmtpServer TColSmtpServer;
+
+
+
+  /*
+    Добавление сообщений по ошибкам по данному серверу.
+  */
+  procedure processSmtpServer(
+    smtpServer varchar2
+  )
+  is
+
+    -- Используемый SMTP-сервер
+    usedSmtpServer varchar2( 512 ) :=
+      coalesce( smtpServer, pkg_Common.getSmtpServer())
+    ;
+
+    -- Создан ли заголовок для SMTP-сервера
+    headerCreated boolean := false;
+
+    cursor curError( minSendTime timestamp with time zone) is
+      select
+        1 as show_order
+        , ms.error_code
+        , coalesce(
+            ms.error_message
+            , 'Длительно не отправляемые сообщения'
+          )
+          as error_message
+        , count(*) as cnt
+        , min( ms.date_ins) as min_date_ins
+        , max( ms.date_ins) as max_date_ins
+        , min( ms.process_date) as min_error_date
+        , max( ms.process_date) as max_error_date
+        , min( ms.send_date) as min_send_date
+        , max( ms.send_date) as max_send_date
+        , min( ms.message_id) as min_message_id
+        , max( ms.message_id) as max_message_id
+      from
+        ml_message ms
+      where
+        ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode
+        -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
+        -- SMTP-сервера по-умолчанию, иметь значение null
+        and
+        ( ms.smtp_server = usedSmtpServer
+          or usedSmtpServer = pkg_Common.getSmtpServer
+          and ms.smtp_server is null
+        )
+        and (
+          ms.error_code is not null
+          or ms.send_date < minSendTime
+          )
+      group by
+        ms.error_code
+        , ms.error_message
+      order by
+        show_order
+        , error_code nulls first
+        , error_message
+    ;
+
+  -- processSmtpServer
+  begin
+    pkg_TaskHandler.setAction( 'processSmtpServer('
+      || smtpServer
+      || ')'
+    );
+    for rec in curError(
+      checkTime - coalesce( sendLimit, SendMessage_TimeLimit)
+    )
+    loop
+
+      -- Формируем текст сообщения
+      if not headerCreated then
+        msg := substr( msg
+          || chr(10)
+          || chr(10)
+          || '* SMTP Server: ' || to_char( usedSmtpServer )
+          || chr(10)
+          , 1
+          , 30000
+        );
+        headerCreated := true;
+      end if;
+      nError := nError + rec.cnt;
+      msg := substr( msg
+        || chr( 10) || '* '
+        || case when rec.error_code is null then
+            rec.error_message
+          else
+            'Ошибка обработки с кодом ORA' || to_char( rec.error_code, '00000')
+          end
+          || ' - ' || to_char( rec.cnt) || ' шт.'
+          || chr( 10)
+        || case when rec.error_code is not null
+              and rec.error_message is not null
+              then
+            chr( 10)
+            || rec.error_message
+            || chr( 10)
+          end
+        || chr( 10)
+          || 'date_ins:   '
+            || to_char( rec.min_date_ins, 'dd.mm.yy hh24:mi:ss')
+            || case when rec.min_date_ins <> rec.max_date_ins then
+                ' - '
+                || to_char( rec.max_date_ins, 'dd.mm.yy hh24:mi:ss')
+              end
+            || chr( 10)
+          || case when rec.min_error_date is not null then
+             'error_date: '
+            || to_char( rec.min_error_date, 'dd.mm.yy hh24:mi:ss')
+            || case when rec.min_error_date <> rec.max_error_date then
+                ' - '
+                || to_char( rec.max_error_date, 'dd.mm.yy hh24:mi:ss')
+              end
+            || chr( 10)
+            end
+          || case when rec.min_send_date is not null then
+             'send_date:  '
+            || to_char( rec.min_send_date, 'dd.mm.yy hh24:mi:ss')
+            || case when rec.min_send_date <> rec.max_send_date then
+                ' - '
+                || to_char( rec.max_send_date, 'dd.mm.yy hh24:mi:ss')
+              end
+            || chr( 10)
+            end
+          ||
+             'message_id: '
+            || to_char( rec.min_message_id)
+            || case when rec.min_message_id <> rec.max_message_id then
+                ' - '
+                || to_char( rec.max_message_id)
+              end
+            || chr( 10)
+        , 1, 30000)
+      ;
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка добавления сообщений об ошибках ('
+          || 'smtpServer="' || smtpServer || '"'
+          || ')'
+        )
+      , true
+    );
+  end processSmtpServer;
+
+
+
+-- notifyError
+begin
+  colSmtpServer := parseSmtpServerList(
+    smtpServerList => smtpServerList
+  );
+
+  -- Формируем сообщение
+  for i in 1..colSmtpServer.count loop
+    processSmtpServer(
+      smtpServer => colSmtpServer(i)
+    );
+  end loop;
+
+  -- Отправляем письмо по ошибкам
+  if msg is not null then
+    pkg_Common.sendMail(
+      mailSender => pkg_Common.getMailAddressSource( Module_Name)
+      , mailRecipient => pkg_Common.getMailAddressDestination
+      , subject => Module_Name || ': error notification'
+      , message =>
+          rpad( 'Дата проверки: ', 35) || to_char( checkTime, 'dd.mm.yy hh24:mi:ss')
+          || chr( 10)
+          || rpad( 'Планируемая отправка не ранее:', 35) ||
+                to_char( checkTime - coalesce( sendLimit, SendMessage_TimeLimit)
+                         , 'dd.mm.yy hh24:mi:ss' )
+          || chr( 10)
+          || msg
+    );
+  end if;
+  return nError;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при проверке ошибок обработки сообщений.'
+      )
+    , true
+  );
+end notifyError;
+
+/* func: clearExpiredMessage
+  Удаляет сообщения с истекшим сроком жизни и возвращает число удаленных
+  сообщений.
+
+  Параметры:
+  checkDate                   - дата проверки ( по умолчанию текущая дата)
+
+  Замечание:
+  если сообщение входит в цепочку ( по source_message_id), то оно будет удалено
+  только вместе со всей цепочкой ( т.е. когда у всех сообщений в цепочке
+  истечет срок жизни).
+  Вложенные сообщения удаляются при истечении срока жизни сообщения основного
+  сообщения.
+*/
+function clearExpiredMessage(
+  checkDate date := null
+)
+return integer
+is
+
+  -- Удаляемые сообщения
+  cursor curExpiredMessage( checkDate date) is
+    select
+      d.message_id
+    from
+      (
+      select
+        ms.message_id
+        , (
+          select
+            level
+          from
+            ml_message t
+          where
+            ----Выделяем корневое сообщение
+            t.source_message_id is null
+            ----Проверям всю цепочку от корня
+            and not exists
+              (
+              select
+                null
+              from
+                ml_message t2
+              where
+                t2.expire_date is null
+                or t2.expire_date > checkDate
+              start with
+                t2.message_id = t.message_id
+              connect by
+                prior t2.message_id = t2.source_message_id
+              )
+          start with
+            t.message_id = ms.message_id
+          connect by
+            prior t.source_message_id = t.message_id
+          )
+          as del_thread_level
+      from
+        ml_message ms
+      where
+        ms.expire_date <= checkDate
+        and ms.parent_message_id is null
+      ) d
+    where
+      d.del_thread_level is not null
+    order by
+      d.del_thread_level desc
+      , d.message_id
+  ;
+
+  -- Число удаленных сообщений
+  nDeleted integer := 0;
+
+-- clearExpiredMessage
+begin
+  savepoint pkg_MailHandler_DeleteExpMsg;
+  for rec in curExpiredMessage( coalesce( checkDate, sysdate)) loop
+    begin
+      delete from
+        ml_attachment atc
+      where
+        atc.message_id in
+          (
+          select
+            ms.message_id
+          from
+            ml_message ms
+          start with
+            ms.parent_message_id is null
+            and ms.message_id = rec.message_id
+          connect by
+            prior ms.message_id = ms.parent_message_id
+          )
+      ;
+      delete from
+        ml_message t
+      where
+        t.message_id in
+          (
+          select
+            ms.message_id
+          from
+            ml_message ms
+          start with
+            ms.parent_message_id is null
+            and ms.message_id = rec.message_id
+          connect by
+            prior ms.message_id = ms.parent_message_id
+          )
+      ;
+      nDeleted := nDeleted + 1;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , 'Ошибка при удалении сообщения ('
+          || ' message_id=' || to_char( rec.message_id)
+          || ').'
+        , true
+      );
+    end;
+  end loop;
+  return nDeleted;
+exception when others then
+  rollback to pkg_MailHandler_DeleteExpMsg;
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении сообщений с истекшим сроком жизни ('
+        || ' checkDate=' || to_date( checkDate, 'dd.mm.yyyy hh24:mi:ss')
+        || ').'
+      )
+    , true
+  );
+end clearExpiredMessage;
+
+/* func: clearFetchRequest
+  Удаляет запросы извлечения из ящика
+  с датой создания до определённой
+  даты
+
+  Параметры:
+  beforeDate                  - дата, до которой удалять запросы
+*/
+procedure clearFetchRequest(
+  beforeDate date
+)
+is
+begin
+  delete from
+    ml_fetch_request
+  where
+    date_ins <= beforeDate
+  ;
+  logger.debug('Удалено записей: ' || to_char( SQL%RowCount));
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при удалении запросов на извлечение ('
+        || ' beforeDate=' || to_date( beforeDate, 'dd.mm.yyyy hh24:mi:ss')
+        || ').'
+      )
+    , true
+  );
+end clearFetchRequest;
 
 end pkg_MailHandler;
 /
