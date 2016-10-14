@@ -3,6 +3,10 @@ create or replace package pkg_MailInternal is
   Внутренние процедуры-утилиты модуля Mail
 */
 
+
+
+/* group: Константы */
+
 /* group: Состояния запросов */
 
 /* const: Wait_RequestStateCode
@@ -20,87 +24,133 @@ Error_RequestStateCode constant varchar2(10) := 'ERROR';
 */
 Processed_RequestStateCode constant varchar2(10) := 'PROCESSED';
 
-/* group: Процедуры и функции */
 
-/* pfunc: GetIsGotMessageDeleted
-  Возврат флага <body::isGotMessageDeleted>.
-  (<body::GetIsGotMessageDeleted>)
+
+/* group: Функции */
+
+/* pfunc: getIsGotMessageDeleted
+  Возврат флага <isGotMessageDeleted>.
+
+  ( <body::getIsGotMessageDeleted>)
 */
-function GetIsGotMessageDeleted
+function getIsGotMessageDeleted
 return integer;
 
-/* pproc: SetIsGotMessageDeleted
-  Установка флага <body::isGotMessageDeleted>.
-  (<body::SetIsGotMessageDeleted>)
+/* pproc: setIsGotMessageDeleted
+  Установка флага <isGotMessageDeleted>.
+
+  ( <body::setIsGotMessageDeleted>)
 */
-procedure SetIsGotMessageDeleted(
+procedure setIsGotMessageDeleted(
   isGotMessageDeleted integer
 );
 
-/* pproc: LogJava
-  Интерфейсная процедура к модулю Logging
+/* pproc: logJava
+  Интерфейсная процедура логгирования
   для использования в Java
-  (<body::LogJava>).
+
+  Параметры:
+  levelCode                   - код уровня сообщения
+  messageText                 - текст сообщения
+
+  ( <body::logJava>)
 */
-procedure LogJava(
+procedure logJava(
   levelCode varchar2
   , messageText varchar2
 );
 
-/* pfunc: GetBatchShortName
+/* pfunc: getBatchShortName
   Возвращает наименование батча сеанса
-  (<body::GetBatchShortName>)
+
+  Параметры:
+  forcedBatchShortName        - переопределение наименования батча
+
+  Возврат:
+  имя выполняемого батча.
+
+  ( <body::getBatchShortName>)
 */
-function GetBatchShortName(
+function getBatchShortName(
   forcedBatchShortName varchar2 := null
 )
 return varchar2;
 
-/* pproc: InitCheckTime
+/* pproc: initCheckTime
   Инициализация проверки поступления запросов и команд
-  (<body::InitCheckTime>)
-*/
-procedure InitCheckTime;
 
-/* pproc: InitRequestCheckTime
-  Инициализация проверки поступления запросов
-  (<body::InitRequestCheckTime>)
+  ( <body::initCheckTime>)
 */
-procedure InitRequestCheckTime;
+procedure initCheckTime;
 
-/* pproc: InitHandler
-  Инициализация обработчика
-  (<body::InitHandler>)
+/* pproc: initRequestCheckTime
+  Инициализация проверки поступления команд и запросов
+
+  ( <body::initRequestCheckTime>)
 */
-procedure InitHandler(
+procedure initRequestCheckTime;
+
+/* pproc: initHandler
+  Инициализация обработчика.
+
+  Параметры:
+  processName                 - имя процесса
+
+  ( <body::initHandler>)
+*/
+procedure initHandler(
   processName varchar2
 );
 
-/* pfunc: WaitForCommand
+/* pfunc: waitForCommand
   Ожидает команду, получаемую через pipe
-  (<body::WaitForCommand>)
+  в случае если наступило время проверять команду
+  с учётом <lastCommandCheck>.
+
+  Параметры:
+  command                     - команда для ожидания
+  checkRequestTimeOut         - интервал для проверки ожидания запроса
+                                Если задан интервал ожидания команды
+                                вычисляется на основе переменной
+                                (<body::lastRequestCheck>).
+
+  Возврат:
+  получена ли команда.
+
+  ( <body::waitForCommand>)
 */
-function WaitForCommand(
+function waitForCommand(
   command varchar2
   , checkRequestTimeOut integer := null
 )
 return boolean;
 
-/* pfunc: NextRequestTime
-  Определяет истечение таймаута для проверки
-  наличия запросов
-  (<body::NextRequestTime>)
+/* pfunc: nextRequestTime
+  Определяет истечение таймаута для проверки наличия запросов.
+  Учитывается переменная <body::lastRequestCheck>.
+
+  Параметр:
+  checkRequestTimeOut         - таймаут ожидания запроса( в секундах)
+
+  Возврат:
+  наступило ли время проверять запрос.
+
+  ( <body::nextRequestTime>)
 */
-function NextRequestTime(
+function nextRequestTime(
   checkRequestTimeOut number
 )
 return boolean;
 
-/* pproc: WaitForFetchRequest
+/* pproc: waitForFetchRequest
   Ожидание запроса извлечения сообщений
-  (<body::WaitForFetchRequest>)
+
+  Параметры:
+  fetchRequestId              - Id запроса
+
+  ( <body::waitForFetchRequest>)
 */
-procedure WaitForFetchRequest(
+procedure waitForFetchRequest(
   fetchRequestId integer
 );
 

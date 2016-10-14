@@ -1,6 +1,19 @@
 create or replace package body pkg_MailHandler is
 /* package body: pkg_MailHandler::body */
 
+
+
+/* group: Типы */
+
+/* itype: TColSmtpServer
+  Тип коллекции для адресов SMTP-серверов
+*/
+type TColSmtpServer is table of ml_message.smtp_server%type;
+
+
+
+/* group: Константы */
+
 /* iconst: Module_Name
   Название модуля, к которому относится пакет.
 */
@@ -27,41 +40,43 @@ SendMessage_TimeLimit constant interval day to second := INTERVAL '3' MINUTE;
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
-  logger lg_logger_t := lg_logger_t.GetLogger(
-    moduleName => pkg_Mail.Module_Name
-    , objectName => 'pkg_MailHanlder'
-  );
+logger lg_logger_t := lg_logger_t.getLogger(
+  moduleName => pkg_Mail.Module_Name
+  , objectName => 'pkg_MailHanlder'
+);
 
-/* itype: TColSmtpServer
-  Тип коллекции для адресов smtp-серверов
-*/
-  type TColSmtpServer is table of ml_message.smtp_server%type;
 
-/* func: ParseSmtpServerList
+
+/* group: Функции */
+
+/* ifunc: parseSmtpServerList
   Разбирает строку со списком адресов
-  smtp-серверов.
+  SMTP-серверов.
 
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
                                 через ",". Пустая строка приравнивается
-                                к pkg_Common.GetSmtpServer.
+                                к pkg_Common.getSmtpServer.
 
   Возврат:
     - коллекция адресов
 */
-function ParseSmtpServerList(
+function parseSmtpServerList(
   smtpServerList varchar2
 )
 return TColSmtpServer
 is
-                                       -- Результирующая коллекция
+
+  -- Результирующая коллекция
   colSmtpServer TColSmtpServer := TColSmtpServer();
-                                       -- Указатели на символы в строке
+
+  -- Указатели на символы в строке
   i integer := 1;
   j integer;
-                                       -- Признак окончания разбора
+
+  -- Признак окончания разбора
   finished boolean := false;
-                                       -- Длина строки списка
-                                       -- имён smtp-серверов
+
+  -- Длина строки списка имён SMTP-серверов
   lengthSmtpList integer := coalesce( length( smtpServerList),0);
 
 begin
@@ -72,11 +87,12 @@ begin
     if j = 0 then
       j := lengthSmtpList + 1;
       finished := true;
-      logger.Trace( 'finished');
+      logger.trace( 'finished');
     end if;
-    logger.Trace( 'i=' || to_char( i));
-    logger.Trace( 'j=' || to_char( j));
-                                     -- Получаем следующий элемент
+    logger.trace( 'i=' || to_char( i));
+    logger.trace( 'j=' || to_char( j));
+
+    -- Получаем следующий элемент
     colSmtpServer.extend;
     colSmtpServer( colSmtpServer.last)
       := coalesce(
@@ -87,9 +103,9 @@ begin
                    )
              , ' '
            )
-           , pkg_Common.GetSmtpServer
+           , pkg_Common.getSmtpServer
          );
-    logger.Debug( 'add smtp: '
+    logger.debug( 'add SMTP: '
       || '"' || colSmtpServer( colSmtpServer.last) || '"'
     );
     exit when
@@ -101,16 +117,16 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка разбора строки списка адресов smtp('
+    , logger.errorStack(
+        'Ошибка разбора строки списка адресов SMTP('
         || 'smtpServerList="' || smtpServerList || '"'
         || ')'
       )
     , true
   );
-end ParseSmtpServerList;
+end parseSmtpServerList;
 
-/* func: NotifyError
+/* func: notifyError
   Информирует об ошибках ( по e-mail) и возвращает число найденных ошибок.
 
   Параметры:
@@ -120,39 +136,46 @@ end ParseSmtpServerList;
                                 умолчанию)
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
                                 через ",". Пустая строка приравнивается
-                                к pkg_Common.GetSmtpServer.
+                                к pkg_Common.getSmtpServer.
 
   Возврат:
     - количество ошибок
 */
-function NotifyError(
+function notifyError(
   sendLimit interval day to second := null
   , smtpServerList varchar2 := null
 )
 return integer
 is
 
-                                        --Дата проверки
+  -- Дата проверки
   checkTime timestamp with time zone := systimestamp;
 
-                                        --Число ошибок
+  -- Число ошибок
   nError integer := 0;
-                                        --Текст сообщения
+
+  -- Текст сообщения
   msg varchar2( 30000);
-                                        -- Коллекция smtp-серверов
+
+  -- Коллекция SMTP-серверов
   colSmtpServer TColSmtpServer;
 
-  procedure ProcessSmtpServer(
+
+
+  /*
+    Добавление сообщений по ошибкам по данному серверу.
+  */
+  procedure processSmtpServer(
     smtpServer varchar2
   )
   is
-  -- Добавление сообщений по ошибкам
-  -- по данному smtp
-                                        --Используемый smtp-сервер
+
+    -- Используемый SMTP-сервер
     usedSmtpServer varchar2( 512 ) :=
-      coalesce( smtpServer, pkg_Common.GetSmtpServer );
-                                        -- Создан ли заголовок
-                                        -- для smtp-сервера
+      coalesce( smtpServer, pkg_Common.getSmtpServer())
+    ;
+
+    -- Создан ли заголовок для SMTP-сервера
     headerCreated boolean := false;
 
     cursor curError( minSendTime timestamp with time zone) is
@@ -177,12 +200,11 @@ is
         ml_message ms
       where
         ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode
-                                         -- Поле smtp_server должно совпадать с
-                                         -- smtpServer, либо, в случае SMTP-сервера
-                                         -- по-умолчанию, иметь значение null.
+        -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
+        -- SMTP-сервера по-умолчанию, иметь значение null
         and
         ( ms.smtp_server = usedSmtpServer
-          or usedSmtpServer = pkg_Common.GetSmtpServer
+          or usedSmtpServer = pkg_Common.getSmtpServer
           and ms.smtp_server is null
         )
         and (
@@ -197,9 +219,10 @@ is
         , error_code nulls first
         , error_message
     ;
-  -- ProcessSmtpServer
+
+  -- processSmtpServer
   begin
-    pkg_TaskHandler.SetAction( 'ProcessSmtpServer('
+    pkg_TaskHandler.setAction( 'processSmtpServer('
       || smtpServer
       || ')'
     );
@@ -207,7 +230,8 @@ is
       checkTime - coalesce( sendLimit, SendMessage_TimeLimit)
     )
     loop
-                                        --Формируем текст сообщения
+
+      -- Формируем текст сообщения
       if not headerCreated then
         msg := substr( msg
           || chr(10)
@@ -276,30 +300,35 @@ is
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack(
+      , logger.errorStack(
           'Ошибка добавления сообщений об ошибках ('
           || 'smtpServer="' || smtpServer || '"'
           || ')'
         )
       , true
     );
-  end ProcessSmtpServer;
---NotifyError
+  end processSmtpServer;
+
+
+
+-- notifyError
 begin
-  colSmtpServer := ParseSmtpServerList(
+  colSmtpServer := parseSmtpServerList(
     smtpServerList => smtpServerList
   );
-                                        -- Формируем сообщение
+
+  -- Формируем сообщение
   for i in 1..colSmtpServer.count loop
-    ProcessSmtpServer(
+    processSmtpServer(
       smtpServer => colSmtpServer(i)
     );
   end loop;
-                                        -- Отправляем письмо по ошибкам
+
+  -- Отправляем письмо по ошибкам
   if msg is not null then
-    pkg_Common.SendMail(
-      mailSender => pkg_Common.GetMailAddressSource( Module_Name)
-      , mailRecipient => pkg_Common.GetMailAddressDestination
+    pkg_Common.sendMail(
+      mailSender => pkg_Common.getMailAddressSource( Module_Name)
+      , mailRecipient => pkg_Common.getMailAddressDestination
       , subject => Module_Name || ': error notification'
       , message =>
           rpad( 'Дата проверки: ', 35) || to_char( checkTime, 'dd.mm.yy hh24:mi:ss')
@@ -315,11 +344,14 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при проверке ошибок обработки сообщений.' )
+    , logger.errorStack(
+        'Ошибка при проверке ошибок обработки сообщений.'
+      )
     , true
   );
-end NotifyError;
-/* func: ClearExpiredMessage
+end notifyError;
+
+/* func: clearExpiredMessage
   Удаляет сообщения с истекшим сроком жизни и возвращает число удаленных
   сообщений.
 
@@ -333,12 +365,13 @@ end NotifyError;
   Вложенные сообщения удаляются при истечении срока жизни сообщения основного
   сообщения.
 */
-function ClearExpiredMessage(
+function clearExpiredMessage(
   checkDate date := null
 )
 return integer
 is
-                                        --Удаляемые сообщения
+
+  -- Удаляемые сообщения
   cursor curExpiredMessage( checkDate date) is
     select
       d.message_id
@@ -387,11 +420,11 @@ is
       d.del_thread_level desc
       , d.message_id
   ;
-                                        --Число удаленных сообщений
+
+  -- Число удаленных сообщений
   nDeleted integer := 0;
 
-
---ClearExpiredMessage
+-- clearExpiredMessage
 begin
   savepoint pkg_MailHandler_DeleteExpMsg;
   for rec in curExpiredMessage( coalesce( checkDate, sysdate)) loop
@@ -444,15 +477,16 @@ exception when others then
   rollback to pkg_MailHandler_DeleteExpMsg;
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-      'Ошибка при удалении сообщений с истекшим сроком жизни ('
-      || ' checkDate=' || to_date( checkDate, 'dd.mm.yyyy hh24:mi:ss')
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при удалении сообщений с истекшим сроком жизни ('
+        || ' checkDate=' || to_date( checkDate, 'dd.mm.yyyy hh24:mi:ss')
+        || ').'
+      )
     , true
   );
-end ClearExpiredMessage;
+end clearExpiredMessage;
 
-/* func: ClearFetchRequest
+/* func: clearFetchRequest
   Удаляет запросы извлечения из ящика
   с датой создания до определённой
   даты
@@ -460,32 +494,33 @@ end ClearExpiredMessage;
   Параметры:
   beforeDate                  - дата, до которой удалять запросы
 */
-procedure ClearFetchRequest(
+procedure clearFetchRequest(
   beforeDate date
 )
 is
---ClearFetchRequest
 begin
   delete from
     ml_fetch_request
   where
-    date_ins <= beforeDate;
-  logger.Debug('Удалено записей: ' || to_char( SQL%RowCount));
+    date_ins <= beforeDate
+  ;
+  logger.debug('Удалено записей: ' || to_char( SQL%RowCount));
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-      'Ошибка при удалении запросов на извлечение ('
-      || ' beforeDate=' || to_date( beforeDate, 'dd.mm.yyyy hh24:mi:ss')
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при удалении запросов на извлечение ('
+        || ' beforeDate=' || to_date( beforeDate, 'dd.mm.yyyy hh24:mi:ss')
+        || ').'
+      )
     , true
   );
-end ClearFetchRequest;
+end clearFetchRequest;
 
-/* func: SendMessageJava
+/* ifunc: sendMessageJava
   Отсылает ожидающие отправки сообщения.
 */
-function SendMessageJava(
+function sendMessageJava(
   smtpServer varchar2
   , maxMessageCount number
 )
@@ -498,105 +533,122 @@ Mail.sendMessage(
 )
 return java.math.BigDecimal
 ';
-/* func: SendMessage
+
+/* func: sendMessage
   Отправляет ожидающие отправки сообщения и возвращает число отправленных
   сообщений.
 
   Параметры:
   smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                Значение null приравнивается к pkg_Common.GetSmtpServer.
+                                Значение null приравнивается к
+                                pkg_Common.getSmtpServer.
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
 
+  Возврат:
+  число отправленных сообщений.
+
   Замечание:
-  В вызываемой процедуре <SendMessageJava> происходит фиксация транзакции
-  после каждого отправляемого Email-сообщения.
+  - в вызываемой процедуре <body::sendMessageJava> происходит фиксация
+    автономной транзакции после каждого отправляемого email-сообщения;
 */
-function SendMessage(
+function sendMessage(
   smtpServer varchar2 := null
   , maxMessageCount integer := null
 )
 return integer
 is
 
-                                        --Автономная транзакция, т.к.
-                                        --обращаемся к внешним сервисам
+  -- Автономная транзакция, т.к.  обращаемся к внешним сервисам
   pragma autonomous_transaction;
-                                        --Число отправленных сообщений
+
+  -- Число отправленных сообщений
   nSend integer := 0;
 
---SendMessage
 begin
-  nSend := SendMessageJava(
-     coalesce( smtpServer, pkg_Common.GetSmtpServer )
+  nSend := sendMessageJava(
+    coalesce( smtpServer, pkg_Common.getSmtpServer())
     , maxMessageCount - nSend
   );
   return nSend;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при отправке ожидающих отправки сообщений ('
-      || ' smtpServer="' || smtpServer || '"'
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при отправке ожидающих отправки сообщений ('
+        || ' smtpServer="' || smtpServer || '"'
+        || ').'
+      )
     , true
   );
-end SendMessage;
-/* func: SendHandler
+end sendMessage;
+
+/* func: sendHandler
   Обработчик отправки писем.
 
   Параметры:
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
                                 через ",".
-                                Значение null приравнивается к pkg_Common.GetSmtpServer.
+                                Значение null приравнивается к pkg_Common.getSmtpServer.
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
 
   Замечание:
-  В вызываемой процедуре <body::SendMessage> происходит фиксация транзакции.
+  - в вызываемой процедуре <body::sendMessage> происходит фиксация транзакции.
 */
-procedure SendHandler(
+procedure sendHandler(
   smtpServerList varchar2 := null
   , maxMessageCount integer := null
 )
 is
 
-                                        --Флаг завершения работы
+  -- Флаг завершения работы
   isFinish boolean := false;
-                                        --SID и serial# сессии обработчика
+
+  -- SID и serial# сессии обработчика
   handlerSid number;
   handlerSerial number;
-                                        --Проверка поступления команды
-                                        --Интервал в секундах
+
+  -- Проверка поступления команды
+
+  -- Интервал в секундах
   checkCommandTimeout number;
-                                        --Время последней проверки команд
+
+  -- Время последней проверки команд
   lastCommandCheck number;
-                                        --Время последней проверки
+
+  -- Время последней проверки
   lastRequestCheck number;
-                                        --Интервал проверки в секундах
+
+  -- Интервал проверки в секундах
   checkRequestTimeout number;
 
-                                        --Имя текущей команды
+  -- Имя текущей команды
   command varchar2(50) := null;
-                                        --Признак необходимости обработки
-                                        --запросов
+
+  -- Признак необходимости обработки запросов
   isProcessRequest boolean := false;
-                                        --Количество отправленных
-                                        --сообщений
+
+  -- Количество отправленных сообщений
   sentMessageCount integer := 0;
-                                        --Коллекция имён smtp-серверов
+
+  -- Коллекция имён SMTP-серверов
   colSmtpServer TColSmtpServer;
 
-  procedure Initialize is
-  --Выполняем подготовительные действия
 
-  --Initialize
+
+  /*
+    Выполняем подготовительные действия
+  */
+  procedure initialize is
   begin
-                                        --Инициализируем обработчик
-    pkg_TaskHandler.InitHandler(
+
+    -- Инициализируем обработчик
+    pkg_TaskHandler.initHandler(
       moduleName                  => Module_Name
-      , processName               => 'SendHandler'
+      , processName               => 'sendHandler'
          || '('
          || coalesce(
               case
@@ -609,50 +661,57 @@ is
               , 'null' )
          || ')'
     );
-                                        --Определяем таймауты
+
+    -- Определяем таймауты
     checkCommandTimeout :=
-      pkg_TaskHandler.ToSecond( CheckCommand_Timeout);
+      pkg_TaskHandler.toSecond( CheckCommand_Timeout);
     checkRequestTimeout :=
-      pkg_TaskHandler.ToSecond( CheckNewRequest_Timeout);
-                                        --Сохраняем идентификаторы сессии
-    handlerSid          := pkg_Common.GetSessionSid;
-    handlerSerial       := pkg_Common.GetSessionSerial;
+      pkg_TaskHandler.toSecond( CheckNewRequest_Timeout);
+
+    -- Сохраняем идентификаторы сессии
+    handlerSid          := pkg_Common.getSessionSid();
+    handlerSerial       := pkg_Common.getSessionSerial();
                                         -- Разбираем список адресов
-    colSmtpServer := ParseSmtpServerList(
+    colSmtpServer := parseSmtpServerList(
       smtpServerList => smtpServerList
     );
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack(
+      , logger.errorStack(
           'Ошибка инициализации обработчика'
         )
       , true
     );
-  end Initialize;
+  end initialize;
 
-  procedure Clean is
-  --Выполняет очистку перед завершением работы
 
-  --Clean
+
+  /*
+    Выполняет очистку перед завершением работы.
+  */
+  procedure clean
+  is
   begin
-                                        --Устанавливаем информацию о состоянии
-    pkg_TaskHandler.SetAction( 'clean');
-    pkg_TaskHandler.CleanHandler;
-  end Clean;
+    pkg_TaskHandler.setAction( 'clean');
+    pkg_TaskHandler.cleanHandler();
+  end clean;
 
-  function CheckNewRequest
+
+
+  /*
+    Проверка поступления новых запросов.
+  */
+  function checkNewRequest
   return boolean
   is
-  --Проверка поступления новых запросов.
 
     isFound integer;
 
-  --CheckNewRequest
   begin
-    logger.Trace( 'check new request');
-                                        -- Проверяем сообщения по указанным
-                                        -- smtp-серверам
+    logger.trace( 'check new request');
+
+    -- Проверяем сообщения по указанным SMTP-серверам
     for i in 1..colSmtpServer.count loop
       select
         count(*)
@@ -662,12 +721,11 @@ is
         ml_message ms
       where
         ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode
-                                         -- Поле smtp_server должно совпадать с
-                                         -- smtpServer, либо, в случае SMTP-сервера
-                                         -- по-умолчанию, иметь значение null.
+        -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
+        -- SMTP-сервера по-умолчанию, иметь значение null
         and
         ( ms.smtp_server = colSmtpServer(i)
-          or colSmtpServer(i) = pkg_Common.GetSmtpServer
+          or colSmtpServer(i) = pkg_Common.getSmtpServer
           and ms.smtp_server is null
         )
         and ms.send_date <= systimestamp
@@ -681,80 +739,93 @@ is
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack(
-           'Ошибка при проверке поступления новых запросов для обработки.'
+      , logger.errorStack(
+          'Ошибка при проверке поступления новых запросов для обработки.'
         )
       , true
     );
-  end CheckNewRequest;
+  end checkNewRequest;
 
-  procedure WaitEvent
+
+
+  /*
+    Ожидает наступление какого-либо события.
+  */
+  procedure waitEvent
   is
-  --Ожидает наступление какого-либо события.
 
-                                        --Текущее время
+    -- Текущее время
     currentTime number;
-                                        --Время ожидания (в 100-x секунды)
+
+    -- Время ожидания (в 100-x секунды)
     waitTimeout number;
 
-  --WaitEvent
   begin
-                                        --Устанавливаем информацию о состоянии
-    logger.Trace( 'start wait event');
-    pkg_TaskHandler.SetAction( 'idle');
+
+    -- Устанавливаем информацию о состоянии
+    logger.trace( 'start wait event');
+    pkg_TaskHandler.setAction( 'idle');
     loop
-                                        --Определяем таймаут ожидания
-      currentTime := pkg_TaskHandler.GetTime();
+
+      -- Определяем таймаут ожидания
+      currentTime := pkg_TaskHandler.getTime();
       waitTimeout :=
         checkRequestTimeout
-          - pkg_TaskHandler.TimeDiff( currentTime, lastRequestCheck);
-                                        --Проверка поступления команды
+          - pkg_TaskHandler.timeDiff( currentTime, lastRequestCheck);
+
+      -- Проверка поступления команды
       if waitTimeout > 0
-          or pkg_TaskHandler.NextTime( lastCommandCheck, checkCommandTimeout)
+          or pkg_TaskHandler.nextTime( lastCommandCheck, checkCommandTimeout)
           then
-        logger.Trace( 'get command: waitTimeout=' || waitTimeout);
-        if pkg_TaskHandler.GetCommand( command, waitTimeout) then
+        logger.trace( 'get command: waitTimeout=' || waitTimeout);
+        if pkg_TaskHandler.getCommand( command, waitTimeout) then
           lastCommandCheck := null;
           exit;
         else
-          lastCommandCheck := pkg_TaskHandler.GetTime();
+          lastCommandCheck := pkg_TaskHandler.getTime();
         end if;
       end if;
-                                        --Проверка изменений в таблице запросов
-      if pkg_TaskHandler.NextTime( lastRequestCheck, checkRequestTimeout) then
-        if CheckNewRequest then
+
+      -- Проверка изменений в таблице запросов
+      if pkg_TaskHandler.nextTime( lastRequestCheck, checkRequestTimeout) then
+        if checkNewRequest() then
           isProcessRequest := true;
           lastRequestCheck := null;
           exit;
         end if;
       end if;
     end loop;
-  end WaitEvent;
+  end waitEvent;
 
-  procedure ProcessRequest
+
+
+  /*
+    Обработка запроса.
+  */
+  procedure processRequest
   is
-  --Обработка запроса.
-                                        --Число отправленных сообщений
+
+    -- Число отправленных сообщений
     nSend integer;
 
-  --ProcessRequest
   begin
-    logger.Trace( 'process request');
-                                       -- Устанавливаем информацию о состоянии
-    pkg_TaskHandler.SetAction( 'send mail');
-                                       -- Выполняем отправку сообщений
-                                       -- c ограничением по количеству записей
-                                       -- для каждого smtp-сервера
+    logger.trace( 'process request');
+
+    -- Устанавливаем информацию о состоянии
+    pkg_TaskHandler.setAction( 'send mail');
+
+    -- Выполняем отправку сообщений c ограничением по количеству записей для
+    -- каждого SMTP-сервера
     for i in 1..colSmtpServer.count loop
-      nSend := SendMessage(
+      nSend := sendMessage(
         smtpServer => colSmtpServer(i)
         , maxMessageCount => maxMessageCount - sentMessageCount
       );
-      logger.Trace( 'sent count: ' || nSend);
+      logger.trace( 'sent count: ' || nSend);
       sentMessageCount := sentMessageCount + nSend;
-                                       -- Если отправили максимально допустимое
-                                       -- количество сообщений, то выходим
-                                       -- из цикла SendHandler
+
+      -- Если отправили максимально допустимое количество сообщений, то
+      -- выходим из цикла sendHandler
       if sentMessageCount >= maxMessageCount then
         isFinish := true;
         exit;
@@ -763,20 +834,25 @@ is
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack(  'Ошибка при отправке сообщений.' )
+      , logger.errorStack(
+          'Ошибка при отправке сообщений.'
+        )
       , true
     );
-  end ProcessRequest;
+  end processRequest;
 
-  procedure ProcessCommand
+
+
+  /*
+    Выполняет команду, полученную через управляющий пайп.
+  */
+  procedure processCommand
   is
-  --Выполняет команду, полученную через управляющий пайп.
-
-  --ProcessCommand
   begin
-    logger.Trace( 'process command: ' || command);
-    pkg_TaskHandler.SetAction( 'process command', command);
-                                    --Обрабатываем команду
+    logger.trace( 'process command: ' || command);
+    pkg_TaskHandler.setAction( 'process command', command);
+
+    -- Обрабатываем команду
     case command
       when pkg_TaskHandler.Stop_Command then
         isFinish := true;
@@ -786,22 +862,26 @@ is
           , 'Получена неизвестная управляющая команда "' || command || '".'
         );
     end case;
-  end ProcessCommand;
+  end processCommand;
 
-  procedure ProcessEvent
+
+
+  /*
+    Обрабатывает событие.
+  */
+  procedure processEvent
   is
-  --Обрабатывает событие.
-
-  --ProcessEvent
   begin
     case
-                                        --Обрабатываем команду
+
+      -- Обрабатываем команду
       when command is not null then
-        ProcessCommand;
+        processCommand();
         command := null;
-                                        --Обработка запроса
+
+      -- Обработка запроса
       when isProcessRequest then
-        ProcessRequest;
+        processRequest();
         isProcessRequest := false;
       else
         raise_application_error(
@@ -809,35 +889,36 @@ is
           , 'Получено неизвестное событие внутри цикла обработки.'
         );
     end case;
-  end ProcessEvent;
+  end processEvent;
 
---SendHandler
+
+
+-- sendHandler
 begin
-  Initialize;                           --Выполняем подготовительные действия
+  initialize();
   loop
-    WaitEvent;                          --Ждем событие
-    ProcessEvent;                       --Обрабатываем событие
-    exit when isFinish;                 --Выходим, если установлен флаг
+    waitEvent();
+    processEvent();
+    exit when isFinish;
   end loop;
-  Clean;                                --Выполняем очистку перед выходом
+  clean();
 exception when others then
-  Clean;                                --Выполняем очистку перед выходом
+  clean();
   raise;
-end SendHandler;
+end sendHandler;
 
-/* func: ProcessFetchRequest
+/* func: processFetchRequest
   Обработка текущих запросов на извлечение из ящиков
 
   Параметры:
-    batchShortName                     - обработка запросов только от
-                                         определённого прикладного батча
-    fetchRequestId                     - параметр для обработки
-                                         определённого запроса
+  batchShortName              - обработка запросов только от определённого
+                                прикладного батча
+  fetchRequestId              - параметр для обработки определённого запроса
 
   Возврат:
-    - количество обработанных запросов
+  количество обработанных запросов.
 */
-function ProcessFetchRequest(
+function processFetchRequest(
   batchShortName varchar2 := null
   , fetchRequestId integer := null
 )
@@ -850,9 +931,8 @@ is
     , maxRequestCount integer
   )
   is
-                                       -- Для использования
-                                       -- доступа по первичному ключу
-    select /*+ordered*/
+    -- Для использования доступа по первичному ключу
+    select /*+ ordered */
       r.fetch_request_id as fetch_request_id
       , r.url as url
       , r.password as password
@@ -872,8 +952,7 @@ is
       from
         v_ml_fetch_request_wait w
       where
-                                       -- Если соотв. параметр не задан
-                                       -- то условие не применяется
+        -- Если соотв. параметр не задан то условие не применяется
         ( fetchRequestId is null
           or w.fetch_request_id = fetchRequestId
         )
@@ -881,8 +960,7 @@ is
         ( batchShortName is null
           or batchShortName = batch_short_name
         )
-                                       -- Записи ещё не захвачены другим
-                                       -- сеансом
+        -- Записи ещё не захвачены другим сеансом
         and
         (
           handler_sid is null
@@ -897,8 +975,7 @@ is
             and ss.serial# = w.handler_serial#
           )
         )
-                                     -- Упорядочиваем записи
-                                     -- при заливке в массив
+        -- Упорядочиваем записи при заливке в массив
       order by
         w.priority_order desc nulls last
         , w.fetch_request_id
@@ -913,30 +990,46 @@ is
       , r.handler_reserved_time
       , r.processed_time
       , r.result_message_count
-    nowait;
-                                       -- Атрибуты сеанса обработки
-  handlerSid number := pkg_Common.GetSessionSid;
-  handlerSerial# number := pkg_Common.GetSessionSerial;
-                                       -- Извлечённая запись
+    nowait
+  ;
+
+  -- Атрибуты сеанса обработки
+  handlerSid number := pkg_Common.getSessionSid;
+  handlerSerial# number := pkg_Common.getSessionSerial;
+
+  -- Извлечённая запись
   recRequest curLockFetchRequest%rowtype;
-                                       -- Удалось ли извлечь запись
+
+  -- Удалось ли извлечь запись
   gotRequest boolean;
-                                       -- Результаты обработки запроса
+
+  -- Результаты обработки запроса
   fetchedCount integer;
   errorMessage varchar2( 4000);
   errorCode integer;
   requestStateCode ml_fetch_request.request_state_code%type;
-                                       -- Количество обработанных записей
+
+  -- Количество обработанных записей
   nProcessed integer := 0;
-                                       -- Количество ошибок
+
+  -- Количество ошибок
   nError integer := 0;
 
-  procedure ReserveRequest
+
+
+  /*
+    Резервирует запись для обработки.
+  */
+  procedure reserveRequest
   is
 
-    procedure GetRequest
+
+
+    /*
+      Открытие курсора и получения массива
+    */
+    procedure getRequest
     is
-    -- Открытие курсора и получения массива
     begin
       gotRequest := false;
       open
@@ -945,11 +1038,13 @@ is
           , batchShortName => batchShortName
           , maxRequestCount => 1
         );
-                                       -- Извлекаем данные из курсора
+
+      -- Извлекаем данные из курсора
       fetch
         curLockFetchRequest
       into
-        recRequest;
+        recRequest
+      ;
       gotRequest := curLockFetchRequest%FOUND;
 
       close curLockFetchRequest;
@@ -957,56 +1052,68 @@ is
       if curLockFetchRequest%ISOPEN then
         close curLockFetchRequest;
       end if;
-                                       -- Если не удаётся зарезервировать
-      if SQLCODE = pkg_Error.ResourceBusyNowait then
-        logger.Debug( 'Could not lock request: resource busy');
-      else
-        logger.Error( 'Could not lock request: ' || SQLERRM);
-      end if;
-    end GetRequest;
 
+      -- Если не удаётся зарезервировать
+      if SQLCODE = pkg_Error.ResourceBusyNowait then
+        logger.debug( 'Could not lock request: resource busy');
+      else
+        logger.error( 'Could not lock request: ' || SQLERRM);
+      end if;
+    end getRequest;
+
+
+
+  -- reserveRequest
   begin
-    pkg_TaskHandler.SetAction( 'reserve' );
-                                       -- Получаем id записей
-    GetRequest;
-                                       -- Запрос получен
+    pkg_TaskHandler.setAction( 'reserve' );
+
+    -- Получаем id записей
+    getRequest();
+
+    -- Запрос получен
     if gotRequest then
-                                       -- Присваиваем записям атрибуеты сеанса
+
+      -- Присваиваем записям атрибуеты сеанса
       update
         ml_fetch_request r
       set
         r.handler_sid = handlerSid
         , r.handler_serial# = handlerSerial#
         , r.handler_reserved_time = systimestamp
-        , r.handler_batch_short_name = pkg_MailInternal.GetBatchShortName
+        , r.handler_batch_short_name = pkg_MailInternal.getBatchShortName
       where
-        r.fetch_request_id = recRequest.fetch_request_id;
-      logger.Debug('Зарезервирована запись'
+        r.fetch_request_id = recRequest.fetch_request_id
+      ;
+      logger.debug('Зарезервирована запись'
         || '( fetch_request_id='
         || to_char( recRequest.fetch_request_id) || ')'
       );
     end if;
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
   exception when others then
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack( 'Ошибка резервирования записей' )
+      , logger.errorStack(
+          'Ошибка резервирования записей'
+        )
       , true
     );
-  end ReserveRequest;
+  end reserveRequest;
 
-  procedure ProcessRequest
-  -- Процедура обработки захваченной
-  -- записи
+
+
+  /*
+    Процедура обработки захваченной записи.
+  */
+  procedure processRequest
   is
-  -- ProcessRequest
   begin
-    pkg_TaskHandler.SetAction( 'process fetch' );
-    logger.Debug('fetch start: (fetch_request_id='
+    pkg_TaskHandler.setAction( 'process fetch' );
+    logger.debug('fetch start: (fetch_request_id='
       || to_char( recRequest.fetch_request_id) || ')'
     );
-    fetchedCount := pkg_Mail.FetchMessageImmediate(
+    fetchedCount := pkg_Mail.fetchMessageImmediate(
       url => recRequest.url
       , password => recRequest.password
       , recipientAddress => recRequest.recipient_address
@@ -1015,10 +1122,11 @@ is
       , errorMessage => errorMessage
       , errorCode => errorCode
     );
-    logger.Debug('fetch finish: (fetch_request_id='
+    logger.debug('fetch finish: (fetch_request_id='
       || to_char( recRequest.fetch_request_id) || ')'
     );
-                                       -- Увеличиваем счётчики
+
+    -- Увеличиваем счётчики
     if errorMessage is not null then
       nError := nError + 1;
       requestStateCode := pkg_MailInternal.Error_RequestStateCode;
@@ -1026,25 +1134,29 @@ is
       nProcessed := nProcessed + 1;
       requestStateCode := pkg_MailInternal.Processed_RequestStateCode;
     end if;
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
   exception when others then
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack(
+      , logger.errorStack(
           'Ошибка обработки записи request_id:'
           || '( fetch_request_id='
           || to_char( recRequest.fetch_request_id) || ')'
         )
       , true
     );
-  end ProcessRequest;
+  end processRequest;
 
-  procedure UpdateRequest
+
+
+  /*
+    Обновление информации о загрузке
+  */
+  procedure updateRequest
   is
-  -- Обновление информации о загрузке
   begin
-    pkg_TaskHandler.SetAction( 'update request' );
+    pkg_TaskHandler.setAction( 'update request' );
     update
       ml_fetch_request r
     set
@@ -1056,33 +1168,38 @@ is
     where
       fetch_request_id = recRequest.fetch_request_id
     ;
-    logger.Debug('Установлен статус обработки: "'
+    logger.debug('Установлен статус обработки: "'
       || requestStateCode || '"');
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
   exception when others then
-    pkg_TaskHandler.SetAction( '' );
+    pkg_TaskHandler.setAction( '' );
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , logger.ErrorStack( 'Ошибка обновления состояния запросов' )
+      , logger.errorStack( 'Ошибка обновления состояния запросов' )
       , true
     );
-  end UpdateRequest;
+  end updateRequest;
 
+
+
+-- processFetchRequest
 begin
   loop
-                                       -- Резервируем запись для обработки,
-                                       -- записав информацию о потоке
-    ReserveRequest;
+
+    -- Резервируем запись для обработки, записав информацию о потоке
+    reserveRequest();
     commit;
     exit when not gotRequest;
-                                       -- Обрабатываем запись
-    ProcessRequest;
-                                       -- Обновляем запись
-    UpdateRequest;
+
+    -- Обрабатываем запись
+    processRequest();
+
+    -- Обновляем запись
+    updateRequest();
     commit;
   end loop;
   if nProcessed > 0 or nError > 0 then
-    logger.Debug(
+    logger.debug(
       'Обработано: '
       || to_char( nProcessed)
       || '; Ошибок: ' || to_char( nError)
@@ -1093,81 +1210,84 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
+    , logger.errorStack(
         'Ошибка обработки запросов извлечения из ящиков.'
       )
     , true
   );
-end ProcessFetchRequest;
+end processFetchRequest;
 
-/* proc: FetchHandler
+/* proc: fetchHandler
   Обработчик запросов на извлечение из ящиков
 
   Параметры:
-    checkRequestInterval               - интервал для проверки наличия запросов
-                                         для обработки
-    maxRequestCount                    - максимальное количество
-                                         обрабатываемых запросов за запуск
-    batchShortName                     - параметр для обработки запросов только от
-                                         определённого прикладного батча
+  checkRequestInterval        - интервал для проверки наличия запросов для
+                                обработки
+  maxRequestCount             - максимальное количество обрабатываемых
+                                запросов за запуск
+  batchShortName              - параметр для обработки запросов только от
+                                определённого прикладного батча
 */
-procedure FetchHandler(
+procedure fetchHandler(
   checkRequestInterval interval day to second
   , maxRequestCount integer := null
   , batchShortName varchar2 := null
 )
 is
-                                       -- Количество запросов
-                                       -- для которых выполнена попытка обработки
+
+  -- Количество запросов для которых выполнена попытка обработки
   nCount integer := 0;
-                                       -- Результат вызова ProcessFetchRequest
+
+  -- Результат вызова processFetchRequest
   nLastCount integer;
-                                       -- Интервал между проверками
-                                       -- наличия запросов
-  checkRequestTimeout number
-    := pkg_TaskHandler.ToSecond( checkRequestInterval );
+
+  -- Интервал между проверками наличия запросов
+  checkRequestTimeout number := pkg_TaskHandler.toSecond( checkRequestInterval);
+
 begin
-  pkg_MailInternal.InitHandler(
-    processName  => 'FetchHandler'
+  pkg_MailInternal.initHandler(
+    processName  => 'fetchHandler'
   );
-  logger.Debug( 'HandleRequest: checkRequestTimeout='
+  logger.debug( 'HandleRequest: checkRequestTimeout='
     || to_char( checkRequestTimeout)
   );
   loop
-                                       -- Наступило время проверять запрос
-    if pkg_MailInternal.NextRequestTime(
+
+    -- Наступило время проверять запрос
+    if pkg_MailInternal.nextRequestTime(
       checkRequestTimeout => checkRequestTimeout
     )
     then
-                                       -- Проверяем команду,
-                                       -- если наступило время
-      if pkg_MailInternal.WaitForCommand(
+
+      -- Проверяем команду, если наступило время
+      if pkg_MailInternal.waitForCommand(
            command => pkg_TaskHandler.Stop_Command
         )
       then
         exit;
       end if;
-                                       -- Обработка при существовании
-                                       -- запросов в состоянии ожидания
+
+      -- Обработка при существовании запросов в состоянии ожидания
       nLastCount :=
-         ProcessFetchRequest(
+         processFetchRequest(
             batchShortName => batchShortName
          );
-                                       -- Если запросы были обработаны
+
+      -- Если запросы были обработаны
       if nLastCount > 0 then
         nCount := nCount + nLastCount;
-                                       -- Если достигнут лимит, выходим
-                                       -- из процедуры обработчика
+
+        -- Если достигнут лимит, выходим из процедуры обработчика
         if nCount >= maxRequestCount then
           exit;
         end if;
-        pkg_MailInternal.InitRequestCheckTime;
+        pkg_MailInternal.initRequestCheckTime;
       end if;
     else
-                                       -- Время проверки запроса не поступило
-                                       -- Тогда проверяем команду
-                                       -- с учётом интервала ожидания запроса
-      if pkg_MailInternal.WaitForCommand(
+
+      -- Время проверки запроса не поступило
+      -- Тогда проверяем команду с учётом интервала ожидания запроса
+      if pkg_MailInternal.waitForCommand(
         command => pkg_TaskHandler.Stop_Command
         , checkRequestTimeOut => checkRequestTimeout
       )
@@ -1176,18 +1296,17 @@ begin
       end if;
     end if;
   end loop;
-  pkg_TaskHandler.CleanHandler;
+  pkg_TaskHandler.cleanHandler();
 exception when others then
-  pkg_TaskHandler.CleanHandler;
+  pkg_TaskHandler.cleanHandler();
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
+    , logger.errorStack(
         'Ошибка обработчика запросов извлечения из ящиков.'
       )
     , true
   );
-end FetchHandler;
-
+end fetchHandler;
 
 end pkg_MailHandler;
 /

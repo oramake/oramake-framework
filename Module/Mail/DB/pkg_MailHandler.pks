@@ -3,63 +3,149 @@ create or replace package pkg_MailHandler is
   Внутренние процедуры обработки модуля Mail.
 */
 
-/* pfunc: NotifyError
-  Информирует об ошибках ( <body::NotifyError>).
+
+
+/* group: Функции */
+
+/* pfunc: notifyError
+  Информирует об ошибках ( по e-mail) и возвращает число найденных ошибок.
+
+  Параметры:
+  sendLimit                   - лимит времени, в течении которого должна быть
+                                произведена попытка отправки сообщения ( при
+                                передаче null будет использовано значение по
+                                умолчанию)
+  smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
+                                через ",". Пустая строка приравнивается
+                                к pkg_Common.getSmtpServer.
+
+  Возврат:
+    - количество ошибок
+
+  ( <body::notifyError>)
 */
-function NotifyError(
+function notifyError(
   sendLimit interval day to second := null
   , smtpServerList varchar2 := null
 )
 return integer;
 
-/* pfunc: ClearExpiredMessage
-  Удаляет сообщения с истекшим сроком жизни ( <body::ClearExpiredMessage>).
+/* pfunc: clearExpiredMessage
+  Удаляет сообщения с истекшим сроком жизни и возвращает число удаленных
+  сообщений.
+
+  Параметры:
+  checkDate                   - дата проверки ( по умолчанию текущая дата)
+
+  Замечание:
+  если сообщение входит в цепочку ( по source_message_id), то оно будет удалено
+  только вместе со всей цепочкой ( т.е. когда у всех сообщений в цепочке
+  истечет срок жизни).
+  Вложенные сообщения удаляются при истечении срока жизни сообщения основного
+  сообщения.
+
+  ( <body::clearExpiredMessage>)
 */
-function ClearExpiredMessage(
+function clearExpiredMessage(
   checkDate date := null
 )
 return integer;
 
-/* pfunc: ClearFetchRequest
-  Удаляет запросы извлечения из ящика 
-  (<body::ClearFetchRequest>)
+/* pfunc: clearFetchRequest
+  Удаляет запросы извлечения из ящика
+  с датой создания до определённой
+  даты
+
+  Параметры:
+  beforeDate                  - дата, до которой удалять запросы
+
+  ( <body::clearFetchRequest>)
 */
-procedure ClearFetchRequest(
+procedure clearFetchRequest(
   beforeDate date
 );
 
-/* pfunc: SendMessage
-  Отправляет ожидающие отправки сообщения ( <body::SendMessage>).
+/* pfunc: sendMessage
+  Отправляет ожидающие отправки сообщения и возвращает число отправленных
+  сообщений.
+
+  Параметры:
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                Значение null приравнивается к
+                                pkg_Common.getSmtpServer.
+  maxMessageCount             - ограничение по количеству отправляемых сообщений
+                                за один запуск процедуры. В случае передачи
+                                null, ограничение не используется.
+
+  Возврат:
+  число отправленных сообщений.
+
+  Замечание:
+  - в вызываемой процедуре <body::sendMessageJava> происходит фиксация
+    автономной транзакции после каждого отправляемого email-сообщения;
+
+  ( <body::sendMessage>)
 */
-function SendMessage(
+function sendMessage(
   smtpServer varchar2 := null
   , maxMessageCount integer := null
 )
 return integer;
 
-/* pfunc: SendHandler
-  Обработчик отправки писем ( <body::SendHandler>).
+/* pfunc: sendHandler
+  Обработчик отправки писем.
+
+  Параметры:
+  smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
+                                через ",".
+                                Значение null приравнивается к pkg_Common.getSmtpServer.
+  maxMessageCount             - ограничение по количеству отправляемых сообщений
+                                за один запуск процедуры. В случае передачи
+                                null, ограничение не используется.
+
+  Замечание:
+  - в вызываемой процедуре <body::sendMessage> происходит фиксация транзакции.
+
+  ( <body::sendHandler>)
 */
-procedure SendHandler(
+procedure sendHandler(
   smtpServerList varchar2 := null
   , maxMessageCount integer := null
 );
 
-/* pfunc: ProcessFetchRequest
+/* pfunc: processFetchRequest
   Обработка текущих запросов на извлечение из ящиков
-  (<body::ProcessFetchRequest>)
+
+  Параметры:
+  batchShortName              - обработка запросов только от определённого
+                                прикладного батча
+  fetchRequestId              - параметр для обработки определённого запроса
+
+  Возврат:
+  количество обработанных запросов.
+
+  ( <body::processFetchRequest>)
 */
-function ProcessFetchRequest(
+function processFetchRequest(
   batchShortName varchar2 := null
   , fetchRequestId integer := null
 )
 return integer;
 
-/* pproc: FetchHandler
+/* pproc: fetchHandler
   Обработчик запросов на извлечение из ящиков
-  (<body::FetchHandler>)
+
+  Параметры:
+  checkRequestInterval        - интервал для проверки наличия запросов для
+                                обработки
+  maxRequestCount             - максимальное количество обрабатываемых
+                                запросов за запуск
+  batchShortName              - параметр для обработки запросов только от
+                                определённого прикладного батча
+
+  ( <body::fetchHandler>)
 */
-procedure FetchHandler(
+procedure fetchHandler(
   checkRequestInterval interval day to second
   , maxRequestCount integer := null
   , batchShortName varchar2 := null

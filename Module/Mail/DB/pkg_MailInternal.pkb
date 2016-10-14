@@ -1,10 +1,14 @@
 create or replace package body pkg_MailInternal is
 /* package body: pkg_MailInternal::body */
 
+
+
+/* group: Константы */
+
 /* iconst: Module_Name
   Название модуля, к которому относится пакет.
 */
-  Module_Name constant varchar2(30) := pkg_Mail.Module_Name;
+Module_Name constant varchar2(30) := pkg_Mail.Module_Name;
 
 /* iconst: CheckCommand_Timeout
   Таймаут между проверками наличия команд для обработки
@@ -23,73 +27,80 @@ WaitRequest_Timeout constant integer := 1;
 */
 Max_Wait_TimeOut constant integer := 3600*2.5;
 
-/* ivar: lastCommandCheck
-  Время последней проверки команд
-*/
-  lastCommandCheck number := null;
 
-/* ivar: lastRequestCheck
-  Время последней проверки запроса
-*/
-  lastRequestCheck number := null;
 
-/* ivar: batchInited
-  Установлена ли переменная <batchShortName>
-*/
-  batchInited boolean not null:= false;
-
-/* ivar: batchShortName
-  Наименование текущего выполняемого в данном сеансе батча
-*/
-  batchShortName sch_batch.batch_short_name%type
-    := null;
-
-/* ivar: isGotMessageDeleted
-  Флаг удаления почтовых сообщений из ящика
-  По-умолчанию (null) удалять.
-*/
-  isGotMessageDeleted integer := null;
+/* group: Переменные */
 
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
-  logger lg_logger_t := lg_logger_t.GetLogger(
-    moduleName => Module_Name
-    , objectName => 'pkg_MailInternal'
-  );
+logger lg_logger_t := lg_logger_t.getLogger(
+  moduleName => Module_Name
+  , objectName => 'pkg_MailInternal'
+);
 
 /* ivar: loggerJava
   Интерфейсный объект к модулю Logging
   для использования в Java
 */
-  loggerJava lg_logger_t := lg_logger_t.GetLogger(
-    moduleName => Module_Name
-    , objectName => 'Mail.pkg_Mail.java'
-  );
+loggerJava lg_logger_t := lg_logger_t.getLogger(
+  moduleName => Module_Name
+  , objectName => 'Mail.pkg_Mail.java'
+);
 
-/* func: GetIsGotMessageDeleted
+/* ivar: lastCommandCheck
+  Время последней проверки команд
+*/
+lastCommandCheck number := null;
+
+/* ivar: lastRequestCheck
+  Время последней проверки запроса
+*/
+lastRequestCheck number := null;
+
+/* ivar: batchInited
+  Установлена ли переменная <batchShortName>
+*/
+batchInited boolean not null:= false;
+
+/* ivar: batchShortName
+  Наименование текущего выполняемого в данном сеансе батча
+*/
+batchShortName sch_batch.batch_short_name%type := null;
+
+/* ivar: isGotMessageDeleted
+  Флаг удаления почтовых сообщений из ящика
+  По-умолчанию (null) удалять.
+*/
+isGotMessageDeleted integer := null;
+
+
+
+/* group: Функции */
+
+/* func: getIsGotMessageDeleted
   Возврат флага <isGotMessageDeleted>.
 */
-function GetIsGotMessageDeleted
+function getIsGotMessageDeleted
 return integer
 is
 begin
   return pkg_MailInternal.isGotMessageDeleted;
-end GetIsGotMessageDeleted;
+end getIsGotMessageDeleted;
 
-/* proc: SetIsGotMessageDeleted
+/* proc: setIsGotMessageDeleted
   Установка флага <isGotMessageDeleted>.
 */
-procedure SetIsGotMessageDeleted(
+procedure setIsGotMessageDeleted(
   isGotMessageDeleted integer
 )
 is
 begin
   pkg_MailInternal.isGotMessageDeleted :=
-    SetIsGotMessageDeleted.isGotMessageDeleted;
-end SetIsGotMessageDeleted;
+    setIsGotMessageDeleted.isGotMessageDeleted;
+end setIsGotMessageDeleted;
 
-/* proc: LogJava
+/* proc: logJava
   Интерфейсная процедура логгирования
   для использования в Java
 
@@ -97,29 +108,28 @@ end SetIsGotMessageDeleted;
   levelCode                   - код уровня сообщения
   messageText                 - текст сообщения
 */
-procedure LogJava(
+procedure logJava(
   levelCode varchar2
   , messageText varchar2
 )
 is
 begin
-  loggerJava.Log(
+  loggerJava.log(
     levelCode => levelCode
     , messageText => messageText
   );
-end LogJava;
+end logJava;
 
-/* func: GetBatchShortName
+/* func: getBatchShortName
   Возвращает наименование батча сеанса
 
   Параметры:
-   forcedBatchShortName      - переопределение наименования
-                               батча
+  forcedBatchShortName        - переопределение наименования батча
 
   Возврат:
-    - имя выполняемого батча
+  имя выполняемого батча.
 */
-function GetBatchShortName(
+function getBatchShortName(
   forcedBatchShortName varchar2 := null
 )
 return varchar2
@@ -135,56 +145,58 @@ begin
       from
         v_sch_batch v
       where
-        sid = pkg_Common.GetSessionSid
-        and v.serial# = pkg_Common.GetSessionSerial
+        sid = pkg_Common.getSessionSid()
+        and v.serial# = pkg_Common.getSessionSerial()
       )
     into
       batchShortName
     from
-      dual;
+      dual
+    ;
   end if;
   batchInited := true;
   return batchShortName;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка инициализации batchShortName' )
+    , logger.errorStack(
+        'Ошибка инициализации batchShortName.'
+      )
     , true
   );
-end GetBatchShortName;
+end getBatchShortName;
 
-/* proc: InitCheckTime
+/* proc: initCheckTime
   Инициализация проверки поступления запросов и команд
 */
-procedure InitCheckTime
+procedure initCheckTime
 is
 begin
   lastRequestCheck := null;
   lastCommandCheck := null;
-end InitCheckTime;
+end initCheckTime;
 
-/* proc: InitRequestCheckTime
+/* proc: initRequestCheckTime
   Инициализация проверки поступления команд и запросов
 */
-procedure InitRequestCheckTime
+procedure initRequestCheckTime
 is
 begin
   lastRequestCheck := null;
-end InitRequestCheckTime;
+end initRequestCheckTime;
 
-
-/* proc: InitHandler
-  Инициализация обработчика
+/* proc: initHandler
+  Инициализация обработчика.
 
   Параметры:
-    processName              - имя процесса
+  processName                 - имя процесса
 */
-procedure InitHandler(
+procedure initHandler(
   processName varchar2
 )
 is
 begin
-  pkg_TaskHandler.InitHandler(
+  pkg_TaskHandler.initHandler(
     moduleName => Module_Name
     , processName => processName
   );
@@ -193,63 +205,68 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка инициализации обработчика' )
+    , logger.errorStack(
+        'Ошибка инициализации обработчика'
+      )
     , true
   );
-end InitHandler;
+end initHandler;
 
-
-/* func: WaitForCommand
+/* func: waitForCommand
   Ожидает команду, получаемую через pipe
   в случае если наступило время проверять команду
   с учётом <lastCommandCheck>.
 
   Параметры:
-    command                  - команда для ожидания
-    checkRequestTimeOut      - интервал для проверки ожидания запроса
-                               Если задан интервал ожидания команды
-                               вычисляется на основе переменной
-                               (<lastRequestCheck>).
+  command                     - команда для ожидания
+  checkRequestTimeOut         - интервал для проверки ожидания запроса
+                                Если задан интервал ожидания команды
+                                вычисляется на основе переменной
+                                (<body::lastRequestCheck>).
+
   Возврат:
-    - получена ли команда
+  получена ли команда.
 */
-function WaitForCommand(
+function waitForCommand(
   command varchar2
   , checkRequestTimeOut integer := null
 )
 return boolean
 is
-                                       -- Полученная команду
+
+  -- Полученная команду
   recievedCommand varchar2( 50 );
-                                       -- Возвращаемое значение
-                                       -- функции
+
+  -- Возвращаемое значение функции
   isFinish boolean;
-                                       -- Интервал для ожидания команды
-                                       -- ( в секундах )
+
+  -- Интервал для ожидания команды ( в секундах )
   waitTimeout number;
+
 begin
-  logger.Trace( 'WaitForStopCommand: start');
-  pkg_TaskHandler.SetAction( 'idle' );
-  logger.Trace( 'WaitForStopCommand: checkRequestTimeOut='
+  logger.trace( 'WaitForStopCommand: start');
+  pkg_TaskHandler.setAction( 'idle' );
+  logger.trace( 'WaitForStopCommand: checkRequestTimeOut='
     || to_char( checkRequestTimeOut)
   );
-                                       -- Наступило время проверять команду
-                                       -- либо передан параметр интервала
-                                       -- проверки запросов
+
+  -- Наступило время проверять команду либо передан параметр интервала
+  -- проверки запросов
   if checkRequestTimeOut is not null
-    or pkg_TaskHandler.NextTime(
+    or pkg_TaskHandler.nextTime(
       checkTime => lastCommandCheck
       , timeout => CheckCommand_Timeout
     )
   then
     waitTimeout :=
        checkRequestTimeout
-       - pkg_TaskHandler.TimeDiff( pkg_TaskHandler.GetTime, lastRequestCheck);
-    logger.Trace( 'WaitForStopCommand: waitTimeout='
+       - pkg_TaskHandler.timeDiff( pkg_TaskHandler.getTime, lastRequestCheck);
+    logger.trace( 'WaitForStopCommand: waitTimeout='
       || to_char( waitTimeout)
     );
-                                       -- Проверяем поступление команды
-    if pkg_TaskHandler.GetCommand(
+
+    -- Проверяем поступление команды
+    if pkg_TaskHandler.getCommand(
       command => recievedCommand
       , timeout => waitTimeout
     )
@@ -263,90 +280,98 @@ begin
             , 'Получена неизвестная управляющая команда "' || command || '".'
           );
       end case;
-      logger.Info('Получена команда "' || recievedCommand || '"');
+      logger.info('Получена команда "' || recievedCommand || '"');
     else
       isFinish := false;
     end if;
     lastCommandCheck := null;
   end if;
-  pkg_TaskHandler.SetAction( '' );
-  logger.Trace( 'WaitForStopCommand: end');
+  pkg_TaskHandler.setAction( '' );
+  logger.trace( 'WaitForStopCommand: end');
   return isFinish;
 exception when others then
-  pkg_TaskHandler.SetAction( '' );
+  pkg_TaskHandler.setAction( '' );
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка обработки команды' )
+    , logger.errorStack(
+        'Ошибка обработки команды'
+      )
     , true
   );
-end WaitForCommand;
+end waitForCommand;
 
-/* func: NextRequestTime
-  Определяет истечение таймаута для проверки
-  наличия запросов.
-  Учитывается переменная <lastRequestCheck>.
+/* func: nextRequestTime
+  Определяет истечение таймаута для проверки наличия запросов.
+  Учитывается переменная <body::lastRequestCheck>.
 
   Параметр:
-  checkRequestTimeOut                  - таймаут ожидания
-                                         запроса( в секундах)
+  checkRequestTimeOut         - таймаут ожидания запроса( в секундах)
+
   Возврат:
-    - наступило ли время проверять запрос
+  наступило ли время проверять запрос.
 */
-function NextRequestTime(
+function nextRequestTime(
   checkRequestTimeOut number
 )
 return boolean
 is
+
   isOk boolean;
+
 begin
-  logger.Trace( 'NextRequestTime: lastRequestCheck='
+  logger.trace( 'nextRequestTime: lastRequestCheck='
     || to_char( lastRequestCheck)
   );
   isOk :=
-    pkg_TaskHandler.NextTime(
+    pkg_TaskHandler.nextTime(
       checkTime => lastRequestCheck
       , timeout => checkRequestTimeOut
     );
-  logger.Trace( 'NextRequestTime: isOk='
+  logger.trace( 'nextRequestTime: isOk='
     || case when isOk then 'true' else 'false' end
   );
   return isOk;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка проверки истечения таймаута' )
+    , logger.errorStack(
+        'Ошибка проверки истечения таймаута'
+      )
     , true
   );
-end NextRequestTime;
+end nextRequestTime;
 
-/* proc: WaitForFetchRequestInternal
-  Ожидание запроса извлечения сообщений без генерации
-  exception в случае ошибки обработки
+/* iproc: waitForFetchRequestInternal
+  Ожидание запроса извлечения сообщений без генерации exception в случае
+  ошибки обработки.
 
   Параметры:
-    fetchRequestId          - id запроса
+  fetchRequestId              - Id запроса
 */
-procedure WaitForFetchRequestInternal(
+procedure waitForFetchRequestInternal(
   fetchRequestId integer
 )
 is
-                                       -- Временная переменная
-                                       -- для количества запросов в ожидании
+
+  -- Временная переменная для количества запросов в ожидании
   nCount integer;
-                                       -- Время начала ожидания
-  startWait number := pkg_TaskHandler.GetTime;
+
+  -- Время начала ожидания
+  startWait number := pkg_TaskHandler.getTime;
   waitingTimedOut boolean;
+
 begin
-  pkg_MailInternal.InitCheckTime;
-  pkg_TaskHandler.SetAction('fetch mail wait');
-  logger.Debug( 'WaitForFetchRequestInternal: start' );
+  pkg_MailInternal.initCheckTime();
+  pkg_TaskHandler.setAction('fetch mail wait');
+  logger.debug( 'waitForFetchRequestInternal: start' );
   loop
-                                       -- Наступило время проверять запрос
-    if pkg_MailInternal.NextRequestTime(
+
+    -- Наступило время проверять запрос
+    if pkg_MailInternal.nextRequestTime(
       checkRequestTimeout => pkg_MailInternal.WaitRequest_Timeout
     )
     then
-      logger.Trace( 'WaitForFetchRequestInternal: check start' );
+      logger.trace( 'waitForFetchRequestInternal: check start' );
       select
         count(1)
       into
@@ -354,12 +379,13 @@ begin
       from
         v_ml_fetch_request_wait
       where
-        fetch_request_id = fetchRequestId;
-      waitingTimedOut := pkg_TaskHandler.NextTime(
-          checkTime => startWait
-          , timeout => Max_Wait_Timeout
-        );
-      logger.Trace( 'WaitForFetchRequestInternal: check end' );
+        fetch_request_id = fetchRequestId
+      ;
+      waitingTimedOut := pkg_TaskHandler.nextTime(
+        checkTime => startWait
+        , timeout => Max_Wait_Timeout
+      );
+      logger.trace( 'waitForFetchRequestInternal: check end' );
       exit when nCount = 0 or waitingTimedOut;
     else
       dbms_lock.sleep( pkg_MailInternal.WaitRequest_Timeout);
@@ -368,39 +394,44 @@ begin
   if waitingTimedOut then
     raise_application_error(
       pkg_Error.ProcessError
-      , logger.ErrorStack(
+      , logger.errorStack(
           'Время ожидания (' || to_char( Max_Wait_Timeout) || ' c.) истекло'
         )
     );
   end if;
-  logger.Debug( 'WaitForFetchRequestInternal: end' );
-  pkg_TaskHandler.SetAction('');
+  logger.debug( 'waitForFetchRequestInternal: end' );
+  pkg_TaskHandler.setAction('');
 exception when others then
-  pkg_TaskHandler.SetAction('');
+  pkg_TaskHandler.setAction('');
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Внутренняя ошибка ожидания запроса' )
+    , logger.errorStack(
+        'Внутренняя ошибка ожидания запроса.'
+      )
     , true
   );
-end WaitForFetchRequestInternal;
+end waitForFetchRequestInternal;
 
-/* proc: WaitForFetchRequest
+/* proc: waitForFetchRequest
   Ожидание запроса извлечения сообщений
 
   Параметры:
-    fetchRequestId          - id запроса
+  fetchRequestId              - Id запроса
 */
-procedure WaitForFetchRequest(
+procedure waitForFetchRequest(
   fetchRequestId integer
 )
 is
-                                       -- Переменные для считывания состояния
-                                       -- обработки
+
+  -- Переменные для считывания состояния обработки
   requestStateCode ml_fetch_request.request_state_code%type;
   errorMessage varchar2( 4000);
+
 begin
-  WaitForFetchRequestInternal( fetchRequestId => fetchRequestId);
-                                       -- Получаем состояние контракта
+
+  waitForFetchRequestInternal( fetchRequestId => fetchRequestId);
+
+  -- Получаем состояние контракта
   select
     r.request_state_code
     , error_message
@@ -410,22 +441,23 @@ begin
   from
     ml_fetch_request r
   where
-    fetch_request_id = fetchRequestId;
+    fetch_request_id = fetchRequestId
+  ;
   if requestStateCode = pkg_MailInternal.Error_RequestStateCode then
     raise_application_error(
-      pkg_Error.ProcessError
-      , logger.ErrorStack(
+      pkg_Error.processError
+      , logger.errorStack(
           'Возникла ошибка обработки запроса. Сообщение: '
           || chr(10)
           ||  '"' || errorMessage || '"'
         )
     );
   else
-    logger.Debug('Запрос обработан( код состояния: "'
+    logger.debug('Запрос обработан( код состояния: "'
       || requestStateCode || '")'
     );
   end if;
-end WaitForFetchRequest;
+end waitForFetchRequest;
 
 end pkg_MailInternal;
 /

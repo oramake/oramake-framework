@@ -3,65 +3,109 @@ create or replace package pkg_MailUtility is
   Вспомогательные функции модуля Mail.
 */
 
-/* pfunc: ChangeUrlPassword
-  Возвращает URL с измененным паролем
-  ( <body::ChangeUrlPassword>).
+
+
+/* group: Функции */
+
+/* pfunc: changeUrlPassword
+  Возвращает URL с измененным паролем.
+
+  Параметры:
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+  newPassword                 - новый пароль
+
+  ( <body::changeUrlPassword>)
 */
-function ChangeUrlPassword(
+function changeUrlPassword(
   url varchar2
   , newPassword varchar2
 )
 return varchar2;
-/* pfunc: GetAddress
-  Возвращает нормализованный почтовый адрес ( <body::GetAddress>).
+
+/* pfunc: getAddress
+  Возвращает нормализованный почтовый адрес.
+  При наличии нескольких адресов, возвращается первый из них.
+
+  Параметры:
+  addressText                 - текст адреса
+
+  ( <body::getAddress>)
 */
-function GetAddress(
+function getAddress(
   addressText varchar2
 )
 return varchar2;
-/* pfunc: GetMailboxAddress
-  Возвращает адрес почтового ящика по URL ( <body::GetMailboxAddress>).
+
+/* pfunc: getMailboxAddress
+  Возвращает адрес почтового ящика по URL ( в случае невозможности -
+  выбрасывает исключение).
+
+  Параметры:
+  url                         - URL почтового ящика в URL-encoded формате
+                                ( pop3://user:passwd@server.domen)
+
+  ( <body::getMailboxAddress>)
 */
-function GetMailboxAddress(
+function getMailboxAddress(
   url varchar2
 )
 return varchar2;
-/* pfunc: GetEncodedAddressList
-  Возвращает кодированный список адресов
-  ( <body::GetEncodedAddressList>).
+
+/* pfunc: getEncodedAddressList
+  Возвращает кодированный список адресов.
+
+  Параметры:
+  textAddressList             - текст адреса ( можно список с разделителем ","
+                                или ";")
+
+  ( <body::getEncodedAddressList>)
 */
-function GetEncodedAddressList(
+function getEncodedAddressList(
   textAddressList varchar2
 )
 return varchar2;
-/* pfunc: GetTextAddressList
-  Возвращает текстовый список адресов
-  ( <body::GetTextAddressList>).
+
+/* pfunc: getTextAddressList
+  Возвращает текстовый список адресов.
+
+  Параметры:
+  addressList                 - список адресов
+
+  ( <body::getTextAddressList>)
 */
-function GetTextAddressList(
+function getTextAddressList(
   addressList varchar2
 )
 return varchar2;
 
-/* pproc: SetDeleteErrorMessageUid
+/* pproc: setDeleteErrorMessageUid
   Установка значения идентификатора сообщения,
   которое нужно удалить из ящика в случае ошибки
-  получения в данной сессии (см. <pkg_Mail.FetchMessageImmediate>)
-  ( <body::SetDeleteErrorMessageUid>)
+  получения в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
+  При null, сообщения удаляются только при получении.
+
+  Параметры:
+  messageUid                  - значение идентификатора сообщения для удаления
+
+  ( <body::setDeleteErrorMessageUid>)
 */
-procedure SetDeleteErrorMessageUid(
+procedure setDeleteErrorMessageUid(
   messageUid varchar2
 );
 
-/* pfunc: GetDeleteErrorMessageUid
+/* pfunc: getDeleteErrorMessageUid
   Получение установленного идентификатора сообщения,
   которое нужно удалить из ящика в случае ошибки
-  получения в данной сессии (см. <pkg_Mail.FetchMessageImmediate>)
-  ( <body::GetDeleteErrorMessageUid>)
-*/
-function GetDeleteErrorMessageUid
-return varchar2;
+  получения в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
 
+  Возврат:
+  значение идентификатора сообщения для удаления.
+
+  ( <body::getDeleteErrorMessageUid>)
+*/
+function getDeleteErrorMessageUid
+return varchar2;
 
 /* pfunc: isEmailValid
    Выполняет проверку корректности адреса электронной почты
@@ -72,13 +116,12 @@ return varchar2;
    Возврат:
      - если адрес email корректен, то 1, иначе 0
 
-   (<body::isEmailValid>)
+  ( <body::isEmailValid>)
 */
 function isEmailValid (
   emailAddress in varchar2
   )
 return integer;
-
 
 end pkg_MailUtility;
 /

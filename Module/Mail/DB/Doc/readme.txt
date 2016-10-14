@@ -24,7 +24,7 @@ title: Описание
   (start code)
 
   loop
-    messageId := pkg_Mail.GetMessage( url);
+    messageId := pkg_Mail.getMessage( url);
     exit when messageId is null;
 
     --обрабатываем полученное сообщение
@@ -36,7 +36,7 @@ title: Описание
   (end)
 
   при этом в случае отсутствия почтовых сообщений для обрработки, функция
-  <pkg_Mail.GetMessage> будет вызывать <pkg_Mail.FetchMessage> для получения
+  <pkg_Mail.getMessage> будет вызывать <pkg_Mail.fetchMessage> для получения
   писем из почтового ящика.
 
 - для явного контроля над подключением к почтовому ящику можно использовать
@@ -45,11 +45,11 @@ title: Описание
   (start code)
 
   loop
-    nFetch := pkg_Mail.FetchMessage( url);
+    nFetch := pkg_Mail.fetchMessage( url);
     exit when nFetch = 0;
 
     loop
-      messageId := pkg_Mail.GetMessage( recipientAddress => recipientAddress);
+      messageId := pkg_Mail.getMessage( recipientAddress => recipientAddress);
       exit when messageId is null;
 
       --обрабатываем полученное сообщение
@@ -61,6 +61,3 @@ title: Описание
   end loop;
 
   (end)
-
-
-

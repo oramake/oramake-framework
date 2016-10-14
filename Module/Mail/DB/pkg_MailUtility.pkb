@@ -1,28 +1,40 @@
 create or replace package body pkg_MailUtility is
 /* package body: pkg_MailUtility::body */
 
+
+
+/* group: Типы */
+
 /* itype: TUrlString
   Тип для строки с URL.
 */
 subtype TUrlString is varchar2(1000);
 
+
+
+/* group: Переменные */
+
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
-  logger lg_logger_t := lg_logger_t.GetLogger(
-    moduleName => pkg_Mail.Module_Name
-    , objectName => 'pkg_MailUtility'
-  );
+logger lg_logger_t := lg_logger_t.getLogger(
+  moduleName => pkg_Mail.Module_Name
+  , objectName => 'pkg_MailUtility'
+);
 
 /* ivar: deleteErrorMessageUid
   Идентификатор сообщения для удаления из ящика
 */
-  deleteErrorMessageUid ml_message.message_uid%type := null;
+deleteErrorMessageUid ml_message.message_uid%type := null;
 
-/* func: ChangeUrlPasswordJava
+
+
+/* group: Функции */
+
+/* ifunc: changeUrlPasswordJava
   Возвращает URL с измененным паролем.
 */
-function ChangeUrlPasswordJava(
+function changeUrlPasswordJava(
   url varchar2
   , newPassword varchar2
 )
@@ -35,7 +47,8 @@ Mail.changeUrlPassword(
 )
 return java.lang.String
 ';
-/* func: ChangeUrlPassword
+
+/* func: changeUrlPassword
   Возвращает URL с измененным паролем.
 
   Параметры:
@@ -43,26 +56,25 @@ return java.lang.String
                                 ( pop3://user:passwd@server.domen)
   newPassword                 - новый пароль
 */
-function ChangeUrlPassword(
+function changeUrlPassword(
   url varchar2
   , newPassword varchar2
 )
 return varchar2
 is
-
---ChangeUrlPassword
 begin
   return
-    ChangeUrlPasswordJava(
+    changeUrlPasswordJava(
       url           => url
       , newPassword => newPassword
     )
   ;
-end ChangeUrlPassword;
-/* func: GetAddressJava
+end changeUrlPassword;
+
+/* ifunc: getAddressJava
   Возвращает нормализованный почтовый адрес.
 */
-function GetAddressJava(
+function getAddressJava(
   addressText varchar2
 )
 return varchar2
@@ -73,35 +85,37 @@ Mail.getAddress(
 )
 return java.lang.String
 ';
-/* func: GetAddress
+
+/* func: getAddress
   Возвращает нормализованный почтовый адрес.
   При наличии нескольких адресов, возвращается первый из них.
 
   Параметры:
   addressText                 - текст адреса
 */
-function GetAddress(
+function getAddress(
   addressText varchar2
 )
 return varchar2
 is
-
---GetAddress
 begin
-  return GetAddressJava( addressText);
+  return getAddressJava( addressText);
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при получении нормализованного почтового адреса ('
-      || ' address_text="' || addressText || '"'
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при получении нормализованного почтового адреса ('
+        || ' address_text="' || addressText || '"'
+        || ').'
+      )
     , true
   );
-end GetAddress;
-/* func: GetMailboxAddressJava
+end getAddress;
+
+/* ifunc: getMailboxAddressJava
   Возвращает адрес почтового ящика по URL.
 */
-function GetMailboxAddressJava(
+function getMailboxAddressJava(
   url varchar2
 )
 return varchar2
@@ -112,28 +126,29 @@ Mail.getMailboxAddress(
 )
 return java.lang.String
 ';
-/* func: GetMailboxAddress
-  Возвращает адрес почтового ящика по URL ( в случае невозможности - выбрасывает
-  исключение).
+
+/* func: getMailboxAddress
+  Возвращает адрес почтового ящика по URL ( в случае невозможности -
+  выбрасывает исключение).
 
   Параметры:
   url                         - URL почтового ящика в URL-encoded формате
                                 ( pop3://user:passwd@server.domen)
 */
-function GetMailboxAddress(
+function getMailboxAddress(
   url varchar2
 )
 return varchar2
 is
 
   mailboxAddress ml_message.recipient_address%type;
-                                        --URL с удаленным паролем
+
+  -- URL с удаленным паролем
   clearUrl TUrlString;
 
---GetMailboxAddress
 begin
-  clearUrl := ChangeUrlPassword( url, null);
-  mailboxAddress := GetMailboxAddressJava( url);
+  clearUrl := changeUrlPassword( url, null);
+  mailboxAddress := getMailboxAddressJava( url);
   if mailboxAddress is null then
     raise_application_error(
       pkg_Error.IllegalArgument
@@ -144,19 +159,22 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при определении адреса почтового ящика по URL'
-      || case when clearUrl is not null then
-          ' "' || clearUrl || '"'
-        end
-      || '.' )
+    , logger.errorStack(
+        'Ошибка при определении адреса почтового ящика по URL'
+        || case when clearUrl is not null then
+            ' "' || clearUrl || '"'
+          end
+        || '.'
+      )
     , true
   );
-end GetMailboxAddress;
-/* func: GetEncodedAddressListJava
+end getMailboxAddress;
+
+/* ifunc: getEncodedAddressListJava
   Возвращает кодированный список адресов
   ( обертка для <Mail.getEncodedAddressList>).
 */
-function GetEncodedAddressListJava(
+function getEncodedAddressListJava(
   textAddressList varchar2
 )
 return varchar2
@@ -167,36 +185,38 @@ Mail.getEncodedAddressList(
 )
 return java.lang.String
 ';
-/* func: GetEncodedAddressList
+
+/* func: getEncodedAddressList
   Возвращает кодированный список адресов.
 
   Параметры:
   textAddressList             - текст адреса ( можно список с разделителем ","
                                 или ";")
 */
-function GetEncodedAddressList(
+function getEncodedAddressList(
   textAddressList varchar2
 )
 return varchar2
 is
-
---GetEncodedAddressList
 begin
-  return GetEncodedAddressListJava( textAddressList);
+  return getEncodedAddressListJava( textAddressList);
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при получении кодированного списка адресов ('
-      || ' textAddressList="' || textAddressList || '"'
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при получении кодированного списка адресов ('
+        || ' textAddressList="' || textAddressList || '"'
+        || ').'
+      )
     , true
   );
-end GetEncodedAddressList;
-/* func: GetTextAddressListJava
+end getEncodedAddressList;
+
+/* ifunc: getTextAddressListJava
   Возвращает текстовый список адресов
   ( обертка для <Mail.getTextAddressList>).
 */
-function GetTextAddressListJava(
+function getTextAddressListJava(
   addressList varchar2
 )
 return varchar2
@@ -207,67 +227,67 @@ Mail.getTextAddressList(
 )
 return java.lang.String
 ';
-/* func: GetTextAddressList
+
+/* func: getTextAddressList
   Возвращает текстовый список адресов.
 
   Параметры:
-  addressList             - список адресов
+  addressList                 - список адресов
 */
-function GetTextAddressList(
+function getTextAddressList(
   addressList varchar2
 )
 return varchar2
 is
-
---GetTextAddressList
 begin
-  return GetTextAddressListJava( addressList);
+  return getTextAddressListJava( addressList);
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack( 'Ошибка при получении текстового списка адресов ('
-      || ' addressList="' || addressList || '"'
-      || ').' )
+    , logger.errorStack(
+        'Ошибка при получении текстового списка адресов ('
+        || ' addressList="' || addressList || '"'
+        || ').'
+      )
     , true
   );
-end GetTextAddressList;
+end getTextAddressList;
 
-/* proc: SetDeleteErrorMessageUid
+/* proc: setDeleteErrorMessageUid
   Установка значения идентификатора сообщения,
   которое нужно удалить из ящика в случае ошибки
-  получения в данной сессии (см. <pkg_Mail.FetchMessageImmediate>)
+  получения в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
   При null, сообщения удаляются только при получении.
 
   Параметры:
-    messageUid               - значение идентификатора
-                               сообщения для удаления
+  messageUid                  - значение идентификатора сообщения для удаления
 */
-procedure SetDeleteErrorMessageUid(
+procedure setDeleteErrorMessageUid(
   messageUid varchar2
 )
 is
 begin
   pkg_MailUtility.deleteErrorMessageUid :=
-    SetDeleteErrorMessageUid.messageUid;
+    setDeleteErrorMessageUid.messageUid;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка установки идентификатора сообщения для удаления'
+    , logger.errorStack(
+        'Ошибка установки идентификатора сообщения для удаления.'
       )
     , true
   );
-end SetDeleteErrorMessageUid;
+end setDeleteErrorMessageUid;
 
-/* func: GetDeleteErrorMessageUid
+/* func: getDeleteErrorMessageUid
   Получение установленного идентификатора сообщения,
   которое нужно удалить из ящика в случае ошибки
-  получения в данной сессии (см. <pkg_Mail.FetchMessageImmediate>)
+  получения в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
 
   Возврат:
-    - значение идентификатора сообщения для удаления
+  значение идентификатора сообщения для удаления.
 */
-function GetDeleteErrorMessageUid
+function getDeleteErrorMessageUid
 return varchar2
 is
 begin
@@ -276,13 +296,12 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
+    , logger.errorStack(
         'Ошибка получения идентификатора сообщения для удаления'
       )
     , true
   );
-end GetDeleteErrorMessageUid;
-
+end getDeleteErrorMessageUid;
 
 /* func: isEmailValid
    Выполняет проверку корректности адреса электронной почты
@@ -403,6 +422,7 @@ is
 
 -- isEmailValid
 begin
+
   -- разбивает адрес на локальную и доменную часть
   splitAddress(
       emailAddress => emailAddress
@@ -423,7 +443,6 @@ begin
   end if;
 
 end isEmailValid;
-
 
 end pkg_MailUtility;
 /
