@@ -16,6 +16,9 @@ TO_USERNAME                   - им€ пользовател€, которому выдаютс€ права
 
 
 ƒополнительные параметры:
+STOP_JOB                      - останавливать выполнение заданий в Ѕƒ на врем€
+                                установки обновлени€ модул€
+                                ( 1 да, 0 нет ( по умолчанию))
 BATCH_WAIT                    - ожидание окончани€ работы батчей в секундах
                                 ( по умолчанию 60)
 JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
@@ -29,14 +32,13 @@ FAX_SENDER_SMTP               - им€ или ip smtp-сервера дл€ отправки факсов
                                 модул€ Option с именем <pkg_MailInternal.FaxSenderSmtp_OptionName>
 
 
-ѕеред установкой модуль останавливает выполнение заданий в Ѕƒ ( см.
-<Install/Config/stop-batches.sql>), а после успешной установки восстанавливает
-их выполнение ( см. <Install/Config/resume-batches.sql>).
-ѕри повторном запуске установки возможно по€вление сообщени€
-"Warning. There's a non-zero value saved in view...",
+¬ случае указани€ STOP_JOB=1 перед установкой обновлени€ модул€ останавливаетс€
+выполнение заданий в Ѕƒ ( см.  <Install/Config/stop-batches.sql>), а после
+успешной установки их выполнение восстанавливаетс€ ( см.
+<Install/Config/resume-batches.sql>). ѕри повторном запуске установки возможно
+по€вление сообщени€ "Warning. There's a non-zero value saved in view...",
 которое говорит о том, что используетс€ значение параметра JOB_QUEUE_PROCESSES,
 запомненного при предыдущем запуске установки.
-
 
 ¬ случае ошибок при установке:
 
@@ -48,7 +50,7 @@ FAX_SENDER_SMTP               - им€ или ip smtp-сервера дл€ отправки факсов
 
 (code)
 
-make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
+make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1 BATCH_WAIT=1000
 
 (end)
 
@@ -59,12 +61,9 @@ make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (code)
 
-$ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 (end)
-
-ƒл€ отключени€ остановки/восстановлени€ выполнени€ заданий в Ѕƒ при установке
-модул€ нужно добавить в команду установки " SKIP_FILE_MASK=*-batches.sql".
 
 
 

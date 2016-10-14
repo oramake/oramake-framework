@@ -136,6 +136,8 @@ Group: Скрипты  {
 
          File: after-action  (no auto-title, Install/Config/after-action.sql)
          File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: deactivate-batch.sql  (Install/Config/deactivate-batch.sql)
+         File: reactivate-batch.sql  (Install/Config/reactivate-batch.sql)
          File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
          File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
          }  # Group: Config

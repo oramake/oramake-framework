@@ -1,3 +1,4 @@
+SQL_DEFINE += ,STOP_JOB=$(STOP_JOB)
 SQL_DEFINE += ,maxBatchWait=$(BATCH_WAIT)
 SQL_DEFINE += ,forcedJobQueueProcesses=$(JOB_QUEUE_PROCESSES)
 SQL_DEFINE += ,massDistributionSmtp=$(MASS_DISTRIBUTION_SMTP)
