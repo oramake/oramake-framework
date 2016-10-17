@@ -552,7 +552,7 @@ Mail.fetchMessage(
 return oracle.sql.NUMBER
 ';
 
-/* func: fetchMessageImmediate(out ERROR)
+/* func: fetchMessageImmediate
   ѕолучает почту и возвращает число полученных сообщений ( в том же сеансе).
 
   ѕараметры:
@@ -567,8 +567,8 @@ return oracle.sql.NUMBER
   recipientAddress            - адрес получател€, под которым будут сохран€тьс€
                                 полученные сообщени€ ( при отсутствии выдел€етс€
                                 из URL как user@domen)
-  fetchRequestId              - id запроса извлечени€ из €щика
   isGotMessageDeleted         - удал€ть ли из €щика полученные сообщени€
+  fetchRequestId              - id запроса извлечени€ из €щика
 
   ¬озврат:
   число полученных сообщений
@@ -635,66 +635,6 @@ begin
       || ': ' || errorMessage;
   end if;
   return nFetched;
-end fetchMessageImmediate;
-
-/* func: fetchMessageImmediate
-  ѕолучает почту и возвращает число полученных сообщений ( в том же сеансе).
-
-  ѕараметры:
-  url                         - URL почтового €щика в URL-encoded формате
-                                ( pop3://user:passwd@server.domen)
-  password                    - пароль дл€ подключени€ к почтовому €щику
-                                ( если null, то используетс€ пароль из url)
-  recipientAddress            - адрес получател€, под которым будут сохран€тьс€
-                                полученные сообщени€ ( при отсутствии выдел€етс€
-                                из URL как user@domen)
-
-  ¬озврат:
-  число полученных сообщений
-
-  «амечани€:
-  - вызывает функцию <fetchMessageImmediate( out ERROR) и в случае ошибки
-    при получении почты выбрасывает исключение;
-*/
-function fetchMessageImmediate(
-  url varchar2
-  , password varchar2 := null
-  , recipientAddress varchar2 := null
-)
-return integer
-is
-
-  --  оличество извлечЄнных сообщений
-  nFetched integer;
-
-  -- ƒанные об ошибке
-  errorMessage varchar2( 4000);
-  errorCode integer;
-
-begin
-  nFetched :=
-    fetchMessageImmediate(
-      url => url
-      , password => password
-      , recipientAddress => recipientAddress
-      , errorMessage => errorMessage
-      , errorCode => errorCode
-    );
-  if trim( errorMessage) is not null then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , errorMessage
-    );
-  end if;
-  return nFetched;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'ќшибка при извлечении сообщений.'
-      )
-    , true
-  );
 end fetchMessageImmediate;
 
 /* func: processFetchRequest
@@ -904,13 +844,13 @@ is
       || to_char( recRequest.fetch_request_id) || ')'
     );
     fetchedCount := fetchMessageImmediate(
-      url => recRequest.url
-      , password => recRequest.password
-      , recipientAddress => recRequest.recipient_address
+      errorMessage          => errorMessage
+      , errorCode           => errorCode
+      , url                 => recRequest.url
+      , password            => recRequest.password
+      , recipientAddress    => recRequest.recipient_address
       , isGotMessageDeleted => recRequest.is_got_message_deleted
-      , fetchRequestId => recRequest.fetch_request_id
-      , errorMessage => errorMessage
-      , errorCode => errorCode
+      , fetchRequestId      => recRequest.fetch_request_id
     );
     logger.debug('fetch finish: (fetch_request_id='
       || to_char( recRequest.fetch_request_id) || ')'

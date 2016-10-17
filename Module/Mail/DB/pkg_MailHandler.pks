@@ -63,7 +63,7 @@ procedure sendHandler(
 
 /* group: Получение писем */
 
-/* pfunc: fetchMessageImmediate(out ERROR)
+/* pfunc: fetchMessageImmediate
   Получает почту и возвращает число полученных сообщений ( в том же сеансе).
 
   Параметры:
@@ -78,8 +78,8 @@ procedure sendHandler(
   recipientAddress            - адрес получателя, под которым будут сохраняться
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
-  fetchRequestId              - id запроса извлечения из ящика
   isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+  fetchRequestId              - id запроса извлечения из ящика
 
   Возврат:
   число полученных сообщений
@@ -87,7 +87,7 @@ procedure sendHandler(
   Замечания:
   - функция выполняется в автономной транзакции;
 
-  ( <body::fetchMessageImmediate(out ERROR)>)
+  ( <body::fetchMessageImmediate>)
 */
 function fetchMessageImmediate(
   errorMessage in out varchar2
@@ -97,34 +97,6 @@ function fetchMessageImmediate(
   , recipientAddress varchar2 := null
   , isGotMessageDeleted integer := null
   , fetchRequestId integer := null
-)
-return integer;
-
-/* pfunc: fetchMessageImmediate
-  Получает почту и возвращает число полученных сообщений ( в том же сеансе).
-
-  Параметры:
-  url                         - URL почтового ящика в URL-encoded формате
-                                ( pop3://user:passwd@server.domen)
-  password                    - пароль для подключения к почтовому ящику
-                                ( если null, то используется пароль из url)
-  recipientAddress            - адрес получателя, под которым будут сохраняться
-                                полученные сообщения ( при отсутствии выделяется
-                                из URL как user@domen)
-
-  Возврат:
-  число полученных сообщений
-
-  Замечания:
-  - вызывает функцию <fetchMessageImmediate( out ERROR) и в случае ошибки
-    при получении почты выбрасывает исключение;
-
-  ( <body::fetchMessageImmediate>)
-*/
-function fetchMessageImmediate(
-  url varchar2
-  , password varchar2 := null
-  , recipientAddress varchar2 := null
 )
 return integer;
 

@@ -82,7 +82,7 @@ return varchar2;
 /* pproc: setDeleteErrorMessageUid
   ”становка значени€ идентификатора сообщени€,
   которое нужно удалить из €щика в случае ошибки
-  получени€ в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
+  получени€ в данной сессии (см. <pkg_MailHandler.fetchMessageImmediate>)
   ѕри null, сообщени€ удал€ютс€ только при получении.
 
   ѕараметры:
@@ -97,7 +97,7 @@ procedure setDeleteErrorMessageUid(
 /* pfunc: getDeleteErrorMessageUid
   ѕолучение установленного идентификатора сообщени€,
   которое нужно удалить из €щика в случае ошибки
-  получени€ в данной сессии (см. <pkg_Mail.fetchMessageImmediate>)
+  получени€ в данной сессии (см. <pkg_MailHandler.fetchMessageImmediate>)
 
   ¬озврат:
   значение идентификатора сообщени€ дл€ удалени€.
