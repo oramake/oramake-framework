@@ -587,8 +587,10 @@ is
       -- Получение отправленного письма
       for i in 1 .. 3 loop
         nFetch := pkg_Mail.fetchMessage(
-          url         => opt.getString( TestFetchUrl_OptSName)
-          , password  => opt.getString( TestFetchPassword_OptSName)
+          url                     => opt.getString( TestFetchUrl_OptSName)
+          , password              => opt.getString( TestFetchPassword_OptSName)
+          , recipientAddress      => null
+          , isGotMessageDeleted   => null
         );
         exit when findMessage() or coalesce( nFetch != 0, true);
       end loop;

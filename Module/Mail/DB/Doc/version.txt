@@ -5,6 +5,10 @@ title: Версии
 group: 2.0.0 ( 2016-10-12)
 (<Установка::2.0.0>)
 
+[*] В функции fetchMessage и getMessage пакта <pkg_Mail> добавлен параметр
+    isGotMessageDeleted, процедура pkg_MailInternal.setIsGotMessageDeleted
+    удалена.
+
 [*] Функция fetchMessageImmediate перенесена из пакета <pkg_Mail> в пакет
     <pkg_MailHandler>.
 

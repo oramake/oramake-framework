@@ -28,23 +28,6 @@ Processed_RequestStateCode constant varchar2(10) := 'PROCESSED';
 
 /* group: Функции */
 
-/* pfunc: getIsGotMessageDeleted
-  Возврат флага <isGotMessageDeleted>.
-
-  ( <body::getIsGotMessageDeleted>)
-*/
-function getIsGotMessageDeleted
-return integer;
-
-/* pproc: setIsGotMessageDeleted
-  Установка флага <isGotMessageDeleted>.
-
-  ( <body::setIsGotMessageDeleted>)
-*/
-procedure setIsGotMessageDeleted(
-  isGotMessageDeleted integer
-);
-
 /* pproc: logJava
   Интерфейсная процедура логгирования
   для использования в Java

@@ -68,37 +68,9 @@ batchInited boolean not null:= false;
 */
 batchShortName sch_batch.batch_short_name%type := null;
 
-/* ivar: isGotMessageDeleted
-  Флаг удаления почтовых сообщений из ящика
-  По-умолчанию (null) удалять.
-*/
-isGotMessageDeleted integer := null;
-
 
 
 /* group: Функции */
-
-/* func: getIsGotMessageDeleted
-  Возврат флага <isGotMessageDeleted>.
-*/
-function getIsGotMessageDeleted
-return integer
-is
-begin
-  return pkg_MailInternal.isGotMessageDeleted;
-end getIsGotMessageDeleted;
-
-/* proc: setIsGotMessageDeleted
-  Установка флага <isGotMessageDeleted>.
-*/
-procedure setIsGotMessageDeleted(
-  isGotMessageDeleted integer
-)
-is
-begin
-  pkg_MailInternal.isGotMessageDeleted :=
-    setIsGotMessageDeleted.isGotMessageDeleted;
-end setIsGotMessageDeleted;
 
 /* proc: logJava
   Интерфейсная процедура логгирования

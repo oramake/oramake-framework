@@ -773,6 +773,8 @@ end cancelSendMessage;
   recipientAddress            - адрес получателя, под которым будут сохраняться
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
 
   Возврат:
   число полученных сообщений
@@ -784,6 +786,7 @@ function fetchMessage(
   url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
 )
 return integer
 is
@@ -810,7 +813,7 @@ begin
     fetchMessage.url
     , fetchMessage.password
     , recipientAddress
-    , pkg_MailInternal.getIsGotMessageDeleted()
+    , coalesce( isGotMessageDeleted, 1)
     , pkg_MailInternal.getBatchShortName()
     , systimestamp
   )
@@ -867,6 +870,8 @@ end fetchMessage;
   recipientAddress            - адрес получателя, по которому выбираются
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   expireDate                  - дата истечения срока жизни, которая
                                 устанавливается при изменении статуса сообщения
                                 ( если null, то не изменяется)
@@ -884,6 +889,7 @@ function getMessage(
   , url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
   , expireDate date := null
   , isGetMessageData boolean := true
 )
@@ -1027,9 +1033,10 @@ begin
       messageId is not null
       or not isAllowFetch
       or fetchMessage(
-          url                 => url
-          , password          => password
-          , recipientAddress  => usedRecipientAddress
+          url                     => url
+          , password              => password
+          , recipientAddress      => usedRecipientAddress
+          , isGotMessageDeleted   => isGotMessageDeleted
         )
       = 0
     ;
@@ -1068,6 +1075,8 @@ end getMessage;
   recipientAddress            - адрес получателя, по которому выбираются
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   expireDate                  - дата истечения срока жизни, которая
                                 устанавливается при изменении статуса сообщения
                                 ( если null, то не изменяется)
@@ -1079,6 +1088,7 @@ function getMessage(
   url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
   , expireDate date := null
 )
 return integer
@@ -1093,15 +1103,16 @@ is
 begin
   return
     getMessage(
-      senderAddress       => senderAddress
-      , sendDate          => sendDate
-      , subject           => subject
-      , messageText       => messageText
-      , url               => url
-      , password          => password
-      , recipientAddress  => recipientAddress
-      , expireDate        => expireDate
-      , isGetMessageData  => false
+      senderAddress           => senderAddress
+      , sendDate              => sendDate
+      , subject               => subject
+      , messageText           => messageText
+      , url                   => url
+      , password              => password
+      , recipientAddress      => recipientAddress
+      , isGotMessageDeleted   => isGotMessageDeleted
+      , expireDate            => expireDate
+      , isGetMessageData      => false
     );
 end getMessage;
 
@@ -1123,6 +1134,8 @@ end getMessage;
   recipientAddress            - адрес получателя, по которому выбираются
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   expireDate                  - дата истечения срока жизни, которая
                                 устанавливается при изменении статуса сообщения
                                 ( если null, то не изменяется)
@@ -1135,6 +1148,7 @@ function getMessage(
   , url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
   , expireDate date := null
 )
 return integer
@@ -1148,15 +1162,16 @@ is
 begin
   return
     getMessage(
-      senderAddress       => senderAddress
-      , sendDate          => sendDate
-      , subject           => subject
-      , messageText       => messageText
-      , url               => url
-      , password          => password
-      , recipientAddress  => recipientAddress
-      , expireDate        => expireDate
-      , isGetMessageData  => true
+      senderAddress           => senderAddress
+      , sendDate              => sendDate
+      , subject               => subject
+      , messageText           => messageText
+      , url                   => url
+      , password              => password
+      , recipientAddress      => recipientAddress
+      , isGotMessageDeleted   => isGotMessageDeleted
+      , expireDate            => expireDate
+      , isGetMessageData      => true
     );
 end getMessage;
 
@@ -1184,6 +1199,8 @@ end getMessage;
   recipientAddress            - адрес получателя, по которому выбираются
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   expireDate                  - дата истечения срока жизни, которая
                                 устанавливается при изменении статуса сообщения
                                 ( если null, то не изменяется)
@@ -1196,6 +1213,7 @@ function getMessage(
   , url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
   , expireDate date := null
 )
 return integer
@@ -1203,15 +1221,16 @@ is
 begin
   return
     getMessage(
-      senderAddress       => senderAddress
-      , sendDate          => sendDate
-      , subject           => subject
-      , messageText       => messageText
-      , url               => url
-      , password          => password
-      , recipientAddress  => recipientAddress
-      , expireDate        => expireDate
-      , isGetMessageData  => true
+      senderAddress           => senderAddress
+      , sendDate              => sendDate
+      , subject               => subject
+      , messageText           => messageText
+      , url                   => url
+      , password              => password
+      , recipientAddress      => recipientAddress
+      , isGotMessageDeleted   => isGotMessageDeleted
+      , expireDate            => expireDate
+      , isGetMessageData      => true
     );
 end getMessage;
 
@@ -1247,6 +1266,8 @@ end getMessage;
   recipientAddress            - адрес получателя, по которому выбираются
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
+  isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   expireDate                  - дата истечения срока жизни, которая
                                 устанавливается при изменении статуса сообщения
                                 ( если null, то не изменяется)
@@ -1265,6 +1286,7 @@ function getMessage(
   , url varchar2
   , password varchar2 := null
   , recipientAddress varchar2 := null
+  , isGotMessageDeleted integer := null
   , expireDate date := null
 )
 return integer
@@ -1324,15 +1346,16 @@ begin
   -- Получаем сообщение
   messageId :=
     getMessage(
-      senderAddress       => senderAddress
-      , sendDate          => sendDate
-      , subject           => subject
-      , messageText       => messageText
-      , url               => url
-      , password          => password
-      , recipientAddress  => recipientAddress
-      , expireDate        => expireDate
-      , isGetMessageData  => true
+      senderAddress           => senderAddress
+      , sendDate              => sendDate
+      , subject               => subject
+      , messageText           => messageText
+      , url                   => url
+      , password              => password
+      , recipientAddress      => recipientAddress
+      , isGotMessageDeleted   => isGotMessageDeleted
+      , expireDate            => expireDate
+      , isGetMessageData      => true
     )
   ;
 
