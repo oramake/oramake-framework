@@ -1415,7 +1415,6 @@ begin
         Received_MessageStateCode
         , Processed_MessageStateCode
         , ProcessError_MessageStateCode
-        , WaitSend_MessageStateCode
       )
   ;
   if SQL%ROWCOUNT = 0 then
