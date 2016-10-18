@@ -10,7 +10,7 @@
     <option short_name="MaxMessageCount" type="number" name=" оличество отправл€емых сообщений">
       <value>500</value>
     </option>
-    <option short_name="SmtpServer" type="string" name="SMTP-сервер">
+    <option short_name="SmtpServerList" type="string" name="—писок имен ( ip-адресов) SMTP-серверов ( разделить &quot;,&quot;, по умолчанию используетс€ SMTP-сервер, возвращаемый pkg_Common.getSmtpServer)">
       <value></value>
     </option>
   </batch_config>

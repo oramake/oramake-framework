@@ -1,19 +1,16 @@
 -- Обработчик отправки почтовых сообщений
--- Обработчик отправки почтовых сообщений.
--- 
--- SmtpServer                    - SMTP-сервер
 declare
-                                        --ID источника данных
-  smtpServerList varchar2( 1024) := pkg_Scheduler.GetContextString(
+
+  smtpServerList varchar2( 1024) := pkg_Scheduler.getContextString(
     'SmtpServerList'
   );
 
-  maxMessageCount integer := pkg_Scheduler.GetContextInteger(
+  maxMessageCount integer := pkg_Scheduler.getContextNumber(
     'MaxMessageCount'
   );
 
 begin
-  pkg_MailHandler.SendHandler(
+  pkg_MailHandler.sendHandler(
     smtpServerList => smtpServerList
     , maxMessageCount => maxMessageCount
   );
