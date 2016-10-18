@@ -259,6 +259,7 @@ is
     msg ml_message%rowtype;
 
   begin
+    msg.incoming_flag       := 0;
     msg.sender_text         := sender;
     msg.sender              := pkg_MailUtility.getEncodedAddressList( sender);
     msg.sender_address      := pkg_MailUtility.getAddress( msg.sender);
@@ -1382,14 +1383,19 @@ end getMessage;
   messageId                   - Id сообщения
   errorCode                   - код ошибки
   errorMessage                - сообщение об ошибке
-  expireDate                  - дата истечения срока жизни ( если null, то
-                                не изменяется)
+  expireDate                  - дата истечения срока жизни
+                                ( если null, то не изменяется)
+  mailboxForDeleteFlag        - Флаг необходимости удаления сообщения из
+                                почтового ящика в случае его наличия
+                                ( 1 удалить, 0 не удалять)
+                                ( если null, то не изменяется)
 */
 procedure setProcessError(
   messageId integer
   , errorCode integer
   , errorMessage varchar2
   , expireDate date := null
+  , mailboxForDeleteFlag number := null
 )
 is
 begin
@@ -1400,6 +1406,8 @@ begin
     , ms.error_code = errorCode
     , ms.error_message = errorMessage
     , ms.expire_date = coalesce( expireDate, ms.expire_date)
+    , ms.mailbox_for_delete_flag
+        = coalesce( mailboxForDeleteFlag, ms.mailbox_for_delete_flag)
   where
     ms.message_id = messageId
     and ms.message_state_code in
@@ -1421,14 +1429,52 @@ exception when others then
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
         'Ошибка при установке ошибки обработки сообщения ('
-        || ' message_id=' || to_char( messageId)
-        || ', error_code=' || to_char( errorCode)
-        || ', error_message="' || substr( errorMessage, 1, 400) || '"'
+        || ' messageId=' || to_char( messageId)
+        || ', errorCode=' || to_char( errorCode)
+        || ', errorMessage="' || substr( errorMessage, 1, 400) || '"'
         || ').'
       )
     , true
   );
 end setProcessError;
+
+/* proc: deleteMailboxMessage
+  Устанавливает флаг удаления сообщения из почтового ящике. Фактически
+  удаление будет выполненено при очередном получении сообщений из почтового
+  ящика в случае наличия в нем данного сообщения.
+
+  Параметры:
+  messageId                   - Id сообщения
+*/
+procedure deleteMailboxMessage(
+  messageId integer
+)
+is
+begin
+  update
+    ml_message ms
+  set
+    ms.mailbox_for_delete_flag = 1
+  where
+    ms.message_id = messageId
+  ;
+  if sql%rowcount = 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Сообщение не найдено.'
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при установке флага удаления сообщения из почтового ящика ('
+        || ' messageId=' || to_char( messageId)
+        || ').'
+      )
+    , true
+  );
+end deleteMailboxMessage;
 
 end pkg_Mail;
 /

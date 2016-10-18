@@ -517,8 +517,12 @@ return integer;
   messageId                   - Id сообщения
   errorCode                   - код ошибки
   errorMessage                - сообщение об ошибке
-  expireDate                  - дата истечения срока жизни ( если null, то
-                                не изменяется)
+  expireDate                  - дата истечения срока жизни
+                                ( если null, то не изменяется)
+  mailboxForDeleteFlag        - Флаг необходимости удаления сообщения из
+                                почтового ящика в случае его наличия
+                                ( 1 удалить, 0 не удалять)
+                                ( если null, то не изменяется)
 
   ( <body::setProcessError>)
 */
@@ -527,6 +531,21 @@ procedure setProcessError(
   , errorCode integer
   , errorMessage varchar2
   , expireDate date := null
+  , mailboxForDeleteFlag number := null
+);
+
+/* pproc: deleteMailboxMessage
+  Устанавливает флаг удаления сообщения из почтового ящике. Фактически
+  удаление будет выполненено при очередном получении сообщений из почтового
+  ящика в случае наличия в нем данного сообщения.
+
+  Параметры:
+  messageId                   - Id сообщения
+
+  ( <body::deleteMailboxMessage>)
+*/
+procedure deleteMailboxMessage(
+  messageId integer
 );
 
 end pkg_Mail;

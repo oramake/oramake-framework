@@ -337,8 +337,8 @@ is
             )
         , recipient             =>
             coalesce(
-              opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+              opt.getString( TestRecipient_OptSName)
+              , pkg_Common.getMailAddressDestination()
             )
         , copyRecipient         => null
         , subject               =>
@@ -424,6 +424,12 @@ is
         end if;
 
         pkg_TestUtility.compareChar(
+          actualString        => msg.incoming_flag
+          , expectedString    => 0
+          , failMessageText   =>
+              cinfo || 'Некорректное значение incoming_flag'
+        );
+        pkg_TestUtility.compareChar(
           actualString        => msg.message_state_code
           , expectedString    => pkg_Mail.Send_MessageStateCode
           , failMessageText   =>
@@ -488,6 +494,9 @@ is
   -- Адрес тестового ящика
   mailboxAddress varchar2(100);
 
+  -- Id последнего проверявшегося сообщения
+  lastMessageId integer;
+
 
 
   /*
@@ -495,6 +504,9 @@ is
   */
   procedure checkCase(
     caseDescription varchar2
+    , isGotMessageDeleted integer := 1
+    , deleteMailboxMessageId integer := null
+    , existsMailboxMessageId integer := null
     , errorMessageMask varchar2 := null
     , nextCaseUsedCount pls_integer := null
   )
@@ -563,6 +575,13 @@ is
     ;
     begin
 
+      if deleteMailboxMessageId is not null then
+        pkg_Mail.deleteMailboxMessage(
+          messageId => deleteMailboxMessageId
+        );
+        commit;
+      end if;
+
       -- Отправка письма для тестового ящика
       pkg_Mail.sendMail(
         sender                  =>
@@ -590,7 +609,7 @@ is
           url                     => opt.getString( TestFetchUrl_OptSName)
           , password              => opt.getString( TestFetchPassword_OptSName)
           , recipientAddress      => null
-          , isGotMessageDeleted   => null
+          , isGotMessageDeleted   => isGotMessageDeleted
         );
         exit when findMessage() or coalesce( nFetch != 0, true);
       end loop;
@@ -668,13 +687,70 @@ is
         end if;
 
         pkg_TestUtility.compareChar(
+          actualString        => msg.incoming_flag
+          , expectedString    => 1
+          , failMessageText   =>
+              cinfo || 'Некорректное значение incoming_flag'
+              || ' ( message_id=' || messageId || ')'
+        );
+        pkg_TestUtility.compareChar(
           actualString        => msg.message_state_code
           , expectedString    => pkg_Mail.Received_MessageStateCode
           , failMessageText   =>
               cinfo || 'Некорректное значение message_state_code'
+              || ' ( message_id=' || messageId || ')'
         );
+        pkg_TestUtility.compareChar(
+          actualString        => msg.mailbox_delete_date
+          , expectedString    =>
+              case when coalesce( isGotMessageDeleted, 1) = 1 then
+                coalesce( msg.mailbox_delete_date, sysdate)
+              end
+          , failMessageText   =>
+              cinfo || 'Некорректное значение mailbox_delete_date'
+              || ' ( message_id=' || messageId || ')'
+        );
+        pkg_TestUtility.compareChar(
+          actualString        => msg.mailbox_for_delete_flag
+          , expectedString    =>
+              case when isGotMessageDeleted = 0 then
+                0
+              end
+          , failMessageText   =>
+              cinfo || 'Некорректное значение mailbox_for_delete_flag'
+              || ' ( message_id=' || messageId || ')'
+        );
+        if deleteMailboxMessageId is not null then
+          pkg_TestUtility.compareRowCount(
+            tableName           => 'ml_message'
+            , filterCondition   =>
+                'message_id =' || deleteMailboxMessageId
+                || ' and mailbox_delete_date is not null'
+                || ' and mailbox_for_delete_flag = 1'
+            , expectedRowCount  => 1
+            , failMessageText   =>
+                cinfo || 'Некорректное заполнение mailbox_delete_date'
+                || ' или mailbox_for_delete_flag удаляемого сообщения'
+                || ' ( deleteMailboxMessageId=' || deleteMailboxMessageId || ')'
+          );
+        end if;
+        if existsMailboxMessageId is not null then
+          pkg_TestUtility.compareRowCount(
+            tableName           => 'ml_message'
+            , filterCondition   =>
+                'message_id =' || existsMailboxMessageId
+                || ' and mailbox_delete_date is null'
+                || ' and mailbox_for_delete_flag = 0'
+            , expectedRowCount  => 1
+            , failMessageText   =>
+                cinfo || 'Некорректное заполнение mailbox_delete_date'
+                || ' или mailbox_for_delete_flag сохраняемого сообщения'
+                || ' ( existsMailboxMessageId=' || existsMailboxMessageId || ')'
+          );
+        end if;
       end if;
     end if;
+    lastMessageId := messageId;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -690,6 +766,49 @@ is
 
 
 
+  /*
+    Выполняет тест.
+  */
+  procedure processTest
+  is
+
+    savedMessageId integer;
+
+  begin
+    checkCase(
+      'Без вложения'
+    );
+
+    checkCase(
+      'Без удаления при получении'
+      , isGotMessageDeleted     => 0
+      , nextCaseUsedCount       => 2
+    );
+    savedMessageId := lastMessageId;
+
+    checkCase(
+      'С сохранением ранее полученного'
+      , isGotMessageDeleted     => 1
+      , existsMailboxMessageId  => savedMessageId
+      , nextCaseUsedCount       => 1
+    );
+
+    checkCase(
+      'Удаление только ранее полученого'
+      , deleteMailboxMessageId  => savedMessageId
+      , isGotMessageDeleted     => 0
+      , nextCaseUsedCount       => 1
+    );
+
+    checkCase(
+      'Удаление нового и ранее полученного'
+      , deleteMailboxMessageId  => lastMessageId
+      , isGotMessageDeleted     => 1
+    );
+  end processTest;
+
+
+
 -- testFetchMessage
 begin
   pkg_TestUtility.beginTest( Test_Name);
@@ -702,15 +821,10 @@ begin
       || ')'
     );
   else
-
     mailboxAddress := pkg_MailUtility.getMailboxAddress(
       opt.getString( TestFetchUrl_OptSName)
     );
-
-    checkCase(
-      'Без вложения'
-    );
-
+    processTest();
   end if;
 
   pkg_TestUtility.endTest();

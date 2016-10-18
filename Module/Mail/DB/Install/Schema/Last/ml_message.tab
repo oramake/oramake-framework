@@ -16,6 +16,7 @@
 create table ml_message  (
    message_id                     integer                         not null
    , parent_message_id            integer
+   , incoming_flag                number(1)                       not null
    , sender_address               varchar2(50)
    , recipient_address            varchar2(50)
    , message_state_code           varchar2(10)
@@ -39,6 +40,8 @@ create table ml_message  (
    , error_message                varchar2(4000)
    , is_html 			                number(1,0)
    , fetch_request_id	            integer
+   , mailbox_delete_date          date
+   , mailbox_for_delete_flag      number(1)
    , date_ins                     date default sysdate not null
    , operator_id                  integer not null
    , constraint
@@ -47,6 +50,8 @@ create table ml_message  (
        message_id
      )
 	   using index tablespace &indexTablespace
+  , constraint ml_message_ck_incoming_flag check
+    ( incoming_flag in ( 0, 1))
    , constraint
        ml_message_chk_sender_address
      check(
@@ -84,6 +89,10 @@ create table ml_message  (
        and sender_address is not null
        and recipient_address is not null
      )
+  , constraint ml_message_ck_mb_delete_date check
+    ( mailbox_delete_date is null or incoming_flag = 1 and parent_message_id is null)
+  , constraint ml_message_ck_mb_for_del_flg check
+    ( mailbox_for_delete_flag is null or mailbox_for_delete_flag in ( 0, 1) and incoming_flag = 1 and parent_message_id is null)
 )
 /
 
@@ -97,6 +106,9 @@ comment on column ml_message.message_id is
 /
 comment on column ml_message.parent_message_id is
   'Id родительского сообщени€ ( дл€ вложенного сообщени€)'
+/
+comment on column ml_message.incoming_flag is
+  '‘лаг вход€щего сообщени€ ( 1 вход€щее, 0 исход€щее)'
 /
 comment on column ml_message.sender_address is
   'јдрес отравител€ ( в нормализованном виде)'
@@ -170,6 +182,12 @@ comment on column ml_message.is_html is
 comment on column ml_message.fetch_request_id is
   'Id запроса извлечени€ сообщени€'
 /
+comment on column ml_message.mailbox_delete_date is
+  'ƒата удалени€ сообщени€ из почтового €щика'
+/
+comment on column ml_message.mailbox_for_delete_flag is
+  '‘лаг необходимости удалени€ сообщени€ из почтового €щика в случае его наличи€ ( 1 - сообщение будет удалено, 0 - сообщение не будет удалено)'
+/
 comment on column ml_message.date_ins is
   'ƒата добавлени€ записи'
 /
@@ -196,14 +214,22 @@ create index ml_message_ix_fetch on ml_message (
 ) tablespace &indexTablespace
 ;
 
---index: ml_message_ux
-create unique index ml_message_ux on ml_message (
-   substr( sender, 1, 1000 ) asc,
-   substr( recipient, 1, 1000 ) asc,
-   send_date asc,
-   message_uid asc,
-   case when message_state_code in ( 'N', 'WS', 'S', 'SE') then message_id end asc
-) tablespace &indexTablespace;
+-- index: ml_message_ux
+-- »ндекс дл€ исключени€ повторной загрузки вход€щих сообщений.
+create unique index
+  ml_message_ux
+on
+  ml_message (
+    substr( sender, 1, 1000)
+    , substr( recipient, 1, 1000)
+    , send_date
+    , message_uid
+    , case when incoming_flag = 0 or parent_message_id is not null then
+        message_id
+      end
+  )
+tablespace &indexTablespace
+/
 
 
 --index: ml_message_ux_rcadr_state_id

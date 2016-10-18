@@ -5,6 +5,9 @@ title: Версии
 group: 2.0.0 ( 2016-10-12)
 (<Установка::2.0.0>)
 
+[+] Добавлена возможность удаления ранее полученных сообщений из почтового
+    ящика ( <pkg_Mail.deleteMailboxMessage>).
+
 [*] В функции fetchMessage и getMessage пакта <pkg_Mail> добавлен параметр
     isGotMessageDeleted, процедура pkg_MailInternal.setIsGotMessageDeleted
     удалена.

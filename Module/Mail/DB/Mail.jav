@@ -798,6 +798,94 @@ throws
     );
 }
 
+/** func: prepareForDelete
+ * Проверяет необходимость удаления ранее полученного сообщения и в случае
+ * необходимости его удаления устанавливает дату удаления.
+ *
+ * Возврат:
+ * true если сообщение нужно удалить, иначе false.
+ **/
+static boolean
+prepareForDelete(
+  Message msg
+)
+throws java.lang.Exception
+{
+  try {
+    Address[] fromAddresses = msg.getFrom();
+    String sender = InternetAddress.toString( fromAddresses);
+    Address[] toAddresses = msg.getRecipients( Message.RecipientType.TO);
+    String recipient = InternetAddress.toString( toAddresses);
+    String messageUId = getMessageUId( msg);
+    Date dt = msg.getSentDate();
+    long sendDate = ( dt != null ? dt.getTime() : -1);
+    BigDecimal messageId = null;
+    #sql {
+      declare
+        senderClob clob := :sender;
+        recipientClob clob := :recipient;
+        messageId integer;
+
+        cursor dataCur is
+          select /*+ index( m) */
+            m.message_id
+            , m.mailbox_for_delete_flag
+          from
+            ml_message m
+          where
+            substr( m.sender, 1, 1000 )
+              = dbms_lob.substr( senderClob, 1000, 1)
+            and substr( m.recipient, 1, 1000 )
+              = dbms_lob.substr( recipientClob, 1000, 1)
+            and (
+              :sendDate = -1
+                and m.send_date is null
+              or :sendDate != -1
+                and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'
+                  + NumToDSInterval( :sendDate / 1000, 'SECOND')
+            )
+            and m.message_uid = :messageUId
+            and m.incoming_flag = 1
+            and m.parent_message_id is null
+            -- Необходимо удалить из ящика
+            and m.mailbox_for_delete_flag = 1
+          for update of mailbox_delete_date nowait
+        ;
+
+      begin
+        for rec in dataCur loop
+          if messageId is null then
+            messageId := rec.message_id;
+          else
+            raise_application_error(
+              pkg_Error.ProcessError
+              , 'Found few record for message ('
+                || ' message_id=' || messageId
+                || ', second message_id=' || rec.message_id
+                || ').'
+            );
+          end if;
+          update
+            ml_message m
+          set
+            m.mailbox_delete_date = sysdate
+          where current of dataCur;
+        end loop;
+        :OUT( messageId) := messageId;
+      end;
+    };
+    return ( messageId != null);
+  }
+  catch( Exception e) {
+    throw new RuntimeException(
+      exceptionDebug(
+        "Error while prepareForDelete:"
+        + "\n" + e
+      )
+    );
+  }
+}
+
 /** func: fetchMessage
  * Получает почтовые сообщения и сохраняет их содержимое в БД.
  **/
@@ -848,24 +936,33 @@ try
   StringBuffer processMessage = new StringBuffer();
   Message[] msgs = folder.getMessages();
   if ( msgs != null) {
+    BigDecimal deleteMessageFlag = new BigDecimal(
+        ( isGotMessageDeleted == null
+          ? true
+          : isGotMessageDeleted.intValue() == 1
+        ) ? 1 : 0
+      )
+    ;
                                         //Сохраняем сообщения
 	for ( int i = 0; i < msgs.length; i++) {
       #sql { begin savepoint pkg_MailJava_SaveMessage; end; };
       try {
+        boolean isDelete = false;
         if ( saveMessage(
-          recipientAddress
-          , msgs[i]
-          , null
-          , fetchMessageId
-        ))
+              recipientAddress
+              , msgs[i]
+              , null
+              , fetchMessageId
+              , deleteMessageFlag
+            )) {
           ++nSaved;
-        if
-          ( isGotMessageDeleted == null
-            ? true
-            : isGotMessageDeleted.intValue() == 1
-          ) {
-    	    msgs[i].setFlag( Flags.Flag.DELETED, true);
+          isDelete = deleteMessageFlag.intValue() == 1;
         }
+        else {
+          isDelete = prepareForDelete( msgs[i]);
+        }
+        if ( isDelete)
+    	    msgs[i].setFlag( Flags.Flag.DELETED, true);
       }
       catch( Exception e) {
         #sql { begin rollback to pkg_MailJava_SaveMessage; end; };
@@ -987,6 +1084,7 @@ saveMessage(
   , Part p
   , BigDecimal parentMessageId
   , BigDecimal fetchRequestId
+  , BigDecimal deleteMessageFlag
 )
 throws java.lang.Exception
 {
@@ -1011,6 +1109,7 @@ try
       , (Message)p
       , parentMessageId
       , fetchRequestId
+      , deleteMessageFlag
     );
     if ( messageId == null) {
       logDebug( "Message not unique in ml_message" );
@@ -1025,7 +1124,7 @@ try
     if ( p.isMimeType( "message/rfc822")) {
       logDebug("saveMessage: getting message/rfc822");
       saveMessage( null, (Part) p.getContent()
-        , messageId, fetchRequestId
+        , messageId, fetchRequestId, null
       );
     }
     else if ( p.isMimeType( "multipart/*")) {
@@ -1034,7 +1133,7 @@ try
       int count = mp.getCount();
       for (int i = 0; i < count; i++)
         saveMessage( recipientAddress, mp.getBodyPart(i)
-          , messageId, fetchRequestId
+          , messageId, fetchRequestId, null
         );
     }
     else {
@@ -1095,6 +1194,7 @@ createMessage(
   , String errorMessage
   , BigDecimal parentMessageId
   , BigDecimal fetchRequestId
+  , BigDecimal deleteMessageFlag
 )
 throws SQLException
 {
@@ -1130,16 +1230,22 @@ try
                                        -- для dbms_lob.substr
         substr( sender, 1, 1000 ) = dbms_lob.substr( senderClob, 1000, 1)
         and substr( recipient, 1, 1000 ) = dbms_lob.substr( recipientClob, 1000, 1)
-        and send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'
-          + NumToDSInterval( nullif( :sendDate, -1) / 1000, 'SECOND')
-        and message_uid = :messageUId
-                                       -- Соответствие уникальному индексу
-        and not( messageStateCode in ( 'N', 'WS', 'S', 'SE'))
+        and (
+          :sendDate = -1
+            and m.send_date is null
+          or :sendDate != -1
+            and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'
+              + NumToDSInterval( :sendDate / 1000, 'SECOND')
+        )
+        and m.message_uid = :messageUId
+        and m.incoming_flag = 1
+        and m.parent_message_id is null
       ;
       if duplicateCount = 0 then
         insert into ml_message
         (
-          message_state_code
+          incoming_flag
+          , message_state_code
           , sender_address
           , recipient_address
           , sender
@@ -1157,13 +1263,15 @@ try
           , error_message
           , parent_message_id
           , fetch_request_id
+          , mailbox_delete_date
+          , mailbox_for_delete_flag
         )
         values
         (
-                                       -- В случае необходимости
-                                       -- следует пересмотреть хранение
-                                       -- обрезаемых полей
-          messageStateCode
+          -- В случае необходимости следует пересмотреть хранение
+          -- обрезаемых полей
+          1
+          , messageStateCode
           , senderAddressClob
           , recipientAddressClob
           , substr( senderClob, 1, 2000)
@@ -1186,6 +1294,8 @@ try
           , substr( :errorMessage, 1, 4000)
           , :parentMessageId
           , :fetchRequestId
+          , case when :deleteMessageFlag = 1 then sysdate end
+          , nullif( :deleteMessageFlag, 1)
         )
         returning message_id into messageId;
         :OUT( messageId) := messageId;
@@ -1222,6 +1332,7 @@ createMessage(
   , Message msg
   , BigDecimal parentMessageId
   , BigDecimal fetchRequestId
+  , BigDecimal deleteMessageFlag
 )
 throws java.lang.Exception
 {
@@ -1309,6 +1420,7 @@ try
       , ( errorMessage == null ? null : errorMessage.toString())
       , parentMessageId
       , fetchRequestId
+      , deleteMessageFlag
     );
   logDebug( "createMessage: messageId=" + messageId);
   return messageId;
