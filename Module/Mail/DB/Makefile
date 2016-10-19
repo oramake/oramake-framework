@@ -324,9 +324,9 @@ loadJavaUsedLibJar  =                    \
 # build var: LOCAL_DB_DIR
 # Имя подкаталога для загрузки локальных скриптов, относящихся к определенной
 # БД.
-# Определяется автоматически на основе значения параметра <LOAD_DB>
-# ( <LOAD_USERID>).
-LOCAL_DB_DIR = $(call getProductionDbName,$(LOAD_DB))
+# Определяется автоматически на основе значения параметра <LOAD_DB9>
+# ( <LOAD_USERID9>).
+LOCAL_DB_DIR = $(call getProductionDbName,$(LOAD_DB9))
 
 # Обеспечиваем корректное значение переменной
 override LOCAL_DB_DIR := $(call getLocalDbDir,$(LOCAL_DB_DIR))
@@ -647,9 +647,6 @@ installBatchTarget = \
     $(wildcard Install/Batch/Last/*.job.sql) \
     $(wildcard Install/Batch/Last/*/*.job.sql) \
     $(wildcard Install/Batch/Last/*/batch.xml) \
-    $(wildcard Install/Batch/Last/Local/$(LOCAL_DB_DIR)/*/*.job.sql) \
-    $(wildcard Install/Batch/Last/Local/$(LOCAL_DB_DIR)/*/batch.xml) \
-    $(wildcard Install/Batch/Last/Local/$(LOCAL_DB_DIR)/*/batch_config.xml) \
   )
   $(addsuffix .$(lu2), \
   ) \
