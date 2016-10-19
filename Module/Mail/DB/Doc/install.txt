@@ -76,6 +76,7 @@ $ make install INSTALL_VERSION=2.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???
 group: Первоначальная установка
 
 Предварительные требования:
+- наличие Oracle JVM ( Oracle JAVA Virtual Machine) в БД Oracle;
 - установка модуля Common;
 - установка модуля Logging;
 - установка модуля AccessOperator;

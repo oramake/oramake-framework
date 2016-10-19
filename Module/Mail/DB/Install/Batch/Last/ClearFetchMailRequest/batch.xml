@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="ClearFetchMailRequest">
+  <name>Очистка данных обработанных запросов извлечения электронных писем</name>
+  <batch_config>
+    <retry_count>2</retry_count>
+    <retry_interval>60</retry_interval>
+    <schedule>
+      <name>every night at 00:15</name>
+      <interval type="hh24">
+        <value>0</value>
+      </interval>
+      <interval type="mi">
+        <value>15</value>
+      </interval>
+    </schedule>
+    <option short_name="NumDays" type="number" name="Количество дней от текущей даты">
+      <value>60</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="process">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">skip</condition>
+    <condition id="3">error</condition>
+  </content>
+</batch>
