@@ -6,7 +6,7 @@ set define on
 
 @oms-default dropTypeScript "' || case when '&forceOption' = '--' then './oms-drop-type.sql' else '' end || '"
 
-@oms-run "&dropTypeScript" opt_option_list_t
+@oms-run "&dropTypeScript" opt_option_value_t
 
 create or replace type
   opt_option_value_t
