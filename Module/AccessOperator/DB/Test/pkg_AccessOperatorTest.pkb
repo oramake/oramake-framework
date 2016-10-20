@@ -171,7 +171,7 @@ begin
   from
     op_operator t
   where
-    t.login = operatorLogin
+    upper( t.login) = upper( operatorLogin)
   ;
   if operatorId is null then
     createOperator();
