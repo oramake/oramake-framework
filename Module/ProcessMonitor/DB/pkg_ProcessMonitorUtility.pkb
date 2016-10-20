@@ -19,8 +19,6 @@ create or replace package body pkg_ProcessMonitorUtility is
 
 /* group: Функции */
 
-
-
 /* func: getOperatorId
   Получение id текущего оператора
 */
@@ -414,20 +412,12 @@ function getOptionStringValue(
 )
 return varchar2
 is
-  -- Значение опции
-  stringValue v_opt_option.string_value%type;
 begin
-  select
-    string_value
-  into
-    stringValue
-  from
-    v_opt_option
-  where
-    option_short_name = optionShortName
-  ;
   return
-    stringValue;
+    opt_option_list_t(
+      pkg_ProcessMonitorBase.Module_Name
+    ).getString( optionShortName)
+  ;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
