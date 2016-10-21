@@ -131,6 +131,15 @@ Group: Скрипты  {
 
       }  # Group: Install
 
+   Group: Test  {
+
+      Group: Grant  {
+
+         File: run  (no auto-title, Test/Grant/run.sql)
+         }  # Group: Grant
+
+      }  # Group: Test
+
    }  # Group: Скрипты
 
 Group: Индекс  {

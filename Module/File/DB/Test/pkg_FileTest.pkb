@@ -719,24 +719,28 @@ end testLoadTxtByLine;
                                 выгрузке с помощью процедуры unloadClobToFile
                                 ( по умолчанию тестируется выгрузка без указания
                                   кодировки и выгрузка в кодировке utf8)
-
+  fileName                    - имя файла ( по-умолчанию 'testUnloadData.txt')
 */
 procedure testUnloadData(
   unloadFunctionName varchar2 := null
-  , skip0x98CheckFlag integer := null
-  , charEncoding varchar2 := null
+, skip0x98CheckFlag  integer := null
+, charEncoding       varchar2 := null
+, fileName           varchar2 := null
 )
 is
 
   -- Полный путь к тестовому файлу
   File_Path constant varchar2(32767) :=
-    pkg_FileOrigin.getFilePath( testDirectory, 'testUnloadData.txt')
+    pkg_FileOrigin.getFilePath(
+      testDirectory
+      , coalesce( fileName, 'testUnloadData.txt')
+    )
   ;
 
   -- Имена функций для тестирования
   UnloadBlob_FuncName constant varchar2(30) := 'unloadBlobToFile';
   UnloadClob_FuncName constant varchar2(30) := 'unloadClobToFile';
-  UnloadTxt_FuncName constant varchar2(30) := 'unloadTxt';
+  UnloadTxt_FuncName  constant varchar2(30) := 'unloadTxt';
 
   -- Число протестированных функций
   testedFunctionCount integer := 0;
@@ -928,6 +932,9 @@ is
         'testUnloadData: ' || functionName
         || case when charEncoding is not null then
             ':' || charEncoding
+          end
+        || case when fileName is not null then
+            ':' || fileName
           end
     );
 
@@ -1295,8 +1302,8 @@ begin
   testUnloadTxt( fileSize => fileSize, stringSize => 10000);
   testExecCommand();
   testEncodingLoad(
-    fileSize => fileSize
-    , charEncoding => 'cp866'
+    fileSize          => fileSize
+    , charEncoding    => 'cp866'
   );
 exception when others then
   raise_application_error(

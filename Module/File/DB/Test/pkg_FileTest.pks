@@ -114,14 +114,15 @@ procedure testLoadTxtByLine(
                                 выгрузке с помощью процедуры unloadClobToFile
                                 ( по умолчанию тестируется выгрузка без указания
                                   кодировки и выгрузка в кодировке utf8)
-
+  fileName                    - имя файла ( по-умолчанию 'testUnloadData.txt')
 
   ( <body::testUnloadData>)
 */
 procedure testUnloadData(
   unloadFunctionName varchar2 := null
-  , skip0x98CheckFlag integer := null
-  , charEncoding varchar2 := null
+, skip0x98CheckFlag  integer := null
+, charEncoding       varchar2 := null
+, fileName           varchar2 := null
 );
 
 /* pproc: testUnloadTxt
