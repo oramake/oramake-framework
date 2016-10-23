@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: AccessOperator
-SubTitle: Версия 3.15.0
+SubTitle: Версия 3.16.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]

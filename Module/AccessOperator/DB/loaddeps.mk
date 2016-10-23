@@ -29,7 +29,8 @@
 #
 
 pkg_AccessOperator.pkb.$(lu): \
-  pkg_AccessOperator.pks.$(lu)
+  pkg_AccessOperator.pks.$(lu) \
+	pkg_Operator.pks.$(lu)
 
 
 pkg_Operator.pkb.$(lu): \

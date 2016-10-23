@@ -14,8 +14,8 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
-group: 3.15.0
-(<Версии::3.15.0 ( 2016-10-07)>)
+group: 3.16.0
+(<Версии::3.16.0 ( 2016-10-24)>)
 
 Порядок установки:
 
@@ -23,7 +23,7 @@ group: 3.15.0
 
 (code)
 
-make install INSTALL_VERSION=3.15.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=3.16.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
 

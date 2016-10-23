@@ -23,6 +23,93 @@ FullAccess_GroupId constant integer := 1;
 
 /* group: Функции */
 
+
+
+/* group: Функции для обратной совместимости */
+
+/* pfunc: getHash
+  Возвращает hex-строку с MD5 контрольной суммой.
+
+  Параметры:
+
+  inputString                 - исходная строка для расчета контрольной суммы;
+
+  Возврат:
+  - возвращает hex-строку с MD5 контрольной суммой;
+
+  ( <body::getHash>)
+*/
+function getHash(
+  inputString varchar2
+)
+return varchar2;
+
+/* pfunc: getOperator
+  Получение данных по операторам. В настоящее время *не реализовано* (
+  является заглушкой для других модулей).
+
+  Параметры:
+  operatorName                - ФИО оператора
+                                ( поиск по like без учета регистра)
+                                ( по умолчанию без ограничений)
+  maxRowCount                 - максимальное число возвращаемых поиском записей
+                                ( по умолчанию без ограничений)
+
+  Возврат ( курсор):
+  operator_id                 - Id оператора
+  operator_name               - ФИО оператора
+
+  ( <body::getOperator>)
+*/
+function getOperator(
+  operatorName varchar2 := null
+  , maxRowCount integer := null
+)
+return sys_refcursor;
+
+/* pfunc: createOperator
+  Создание пользователя. Обертка для <pkg_AccessOperator::createOperator>.
+  Не использовать.
+
+  ( <body::createOperator>)
+*/
+function createOperator(
+  operatorName      varchar2
+, operatorNameEn  varchar2
+, login           varchar2
+, password        varchar2
+, changePassword  integer
+, operatorIdIns   integer
+)
+return integer;
+
+/* pproc: deleteOperator
+   Удаление пользователя. Обёртка для <pkg_AccessOperator::deleteOperator>.
+   Не использовать.
+
+  ( <body::deleteOperator>)
+*/
+procedure deleteOperator(
+  operatorId        integer
+  , operatorIdIns   integer
+);
+
+/* pproc: createOperatorGroup
+  Процедура назначения группы оператору. Обёртка для
+  <pkg_AccessOperator::createOperatorGroup>.  Не использовать.
+
+  ( <body::createOperatorGroup>)
+*/
+procedure createOperatorGroup(
+  operatorId      integer
+  , groupId       integer
+  , operatorIdIns integer
+);
+
+
+
+/* group: Регистрация */
+
 /* pfunc: login
   Регистрирует оператора в базе. Устаревшая функция. Использовать процедуру
   <login(password)>. Оставлена для обратной совместимости.
@@ -131,28 +218,9 @@ function getCurrentUserName(
 )
 return varchar2;
 
-/* pfunc: getOperator
-  Получение данных по операторам. В настоящее время *не реализовано* (
-  является заглушкой для других модулей).
 
-  Параметры:
-  operatorName                - ФИО оператора
-                                ( поиск по like без учета регистра)
-                                ( по умолчанию без ограничений)
-  maxRowCount                 - максимальное число возвращаемых поиском записей
-                                ( по умолчанию без ограничений)
 
-  Возврат ( курсор):
-  operator_id                 - Id оператора
-  operator_name               - ФИО оператора
-
-  ( <body::getOperator>)
-*/
-function getOperator(
-  operatorName varchar2 := null
-  , maxRowCount integer := null
-)
-return sys_refcursor;
+/* group: Проверка */
 
 /* pfunc: isRole(operatorId)
   Проверяет наличие роли у оператора.

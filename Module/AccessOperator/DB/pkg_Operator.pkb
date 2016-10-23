@@ -24,7 +24,9 @@ currentOperatorName op_operator.operator_name%type;
 
 /* group: Функции */
 
-/* ifunc: getHash
+/* group: Функции для обратной совместимости */
+
+/* func: getHash
   Возвращает hex-строку с MD5 контрольной суммой.
 
   Параметры:
@@ -57,6 +59,110 @@ exception when others then
     , true
   );
 end getHash;
+
+/* func: getOperator
+  Получение данных по операторам. В настоящее время *не реализовано* (
+  является заглушкой для других модулей).
+
+  Параметры:
+  operatorName                - ФИО оператора
+                                ( поиск по like без учета регистра)
+                                ( по умолчанию без ограничений)
+  maxRowCount                 - максимальное число возвращаемых поиском записей
+                                ( по умолчанию без ограничений)
+
+  Возврат ( курсор):
+  operator_id                 - Id оператора
+  operator_name               - ФИО оператора
+*/
+function getOperator(
+  operatorName varchar2 := null
+  , maxRowCount integer := null
+)
+return sys_refcursor
+is
+begin
+  raise_application_error(
+    pkg_Error.IllegalArgument
+    , 'Not implemented'
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    ,  'Ошибка при получении данных по операторам ('
+      || ' operatorName="' || operatorName || '"'
+      || ', maxRowCount=' || maxRowCount
+      || ').'
+    , true
+  );
+end getOperator;
+
+/* func: createOperator
+  Создание пользователя. Обертка для <pkg_AccessOperator::createOperator>.
+  Не использовать.
+*/
+function createOperator(
+  operatorName      varchar2
+, operatorNameEn  varchar2
+, login           varchar2
+, password        varchar2
+, changePassword  integer
+, operatorIdIns   integer
+)
+return integer
+is
+-- createOperator
+begin
+  return
+    pkg_AccessOperator.createOperator(
+      operatorName        => operatorName
+    , operatorNameEn      => operatorNameEn
+    , login               => login
+    , password            => password
+    , changePassword      => changePassword
+    , operatorIdIns       => operatorIdIns
+    );
+end createOperator;
+
+/* proc: deleteOperator
+   Удаление пользователя. Обёртка для <pkg_AccessOperator::deleteOperator>.
+   Не использовать.
+*/
+procedure deleteOperator(
+  operatorId        integer
+  , operatorIdIns   integer
+)
+is
+-- deleteOperator
+begin
+  pkg_AccessOperator.deleteOperator(
+    operatorId      => operatorId
+    , operatorIdIns => operatorIdIns
+  );
+end deleteOperator;
+
+/* proc: createOperatorGroup
+  Процедура назначения группы оператору. Обёртка для
+  <pkg_AccessOperator::createOperatorGroup>.  Не использовать.
+*/
+procedure createOperatorGroup(
+  operatorId      integer
+  , groupId       integer
+  , operatorIdIns integer
+)
+is
+-- createOperatorGroup
+begin
+  pkg_AccessOperator.createOperatorGroup(
+    operatorId      => operatorId
+    , groupId       => groupId
+    , operatorIdIns => operatorIdIns
+  );
+end createOperatorGroup;
+
+
+
+/* group: Регистрация */
 
 /* iproc: login(internal)
   Выполняет проверку и регистрирует оператора в БД. В случае успешной
@@ -346,42 +452,9 @@ begin
   return currentOperatorName;
 end getCurrentUserName;
 
-/* func: getOperator
-  Получение данных по операторам. В настоящее время *не реализовано* (
-  является заглушкой для других модулей).
 
-  Параметры:
-  operatorName                - ФИО оператора
-                                ( поиск по like без учета регистра)
-                                ( по умолчанию без ограничений)
-  maxRowCount                 - максимальное число возвращаемых поиском записей
-                                ( по умолчанию без ограничений)
 
-  Возврат ( курсор):
-  operator_id                 - Id оператора
-  operator_name               - ФИО оператора
-*/
-function getOperator(
-  operatorName varchar2 := null
-  , maxRowCount integer := null
-)
-return sys_refcursor
-is
-begin
-  raise_application_error(
-    pkg_Error.IllegalArgument
-    , 'Not implemented'
-  );
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    ,  'Ошибка при получении данных по операторам ('
-      || ' operatorName="' || operatorName || '"'
-      || ', maxRowCount=' || maxRowCount
-      || ').'
-    , true
-  );
-end getOperator;
+/* group: Проверка */
 
 /* ifunc: isRole
   Проверяет наличие роли у оператора.
