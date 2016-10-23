@@ -23,10 +23,13 @@ logger lg_logger_t := lg_logger_t.getLogger(
   выданные ему роли корректируются согласно списку ( если он указан).
 
   Параметры:
+  login                       - Логин оператора ( при задании используется
+                                в качестве пароля)
   baseName                    - Уникальное базовое имя оператора
                                 ( используется для формирования логина,
                                   по которому затем проверяется наличие
-                                  оператора)
+                                  оператора). Может быть задан либо
+                                login либо baseName.
   roleSNameList               - Список кратких наименований ролей, которые
                                 должны быть выданы оператору
                                 ( по умолчанию роли не проверяются)
@@ -35,7 +38,8 @@ logger lg_logger_t := lg_logger_t.getLogger(
   Id оператора
 */
 function getTestOperatorId(
-  baseName varchar2
+  baseName        varchar2           := null
+  , login         varchar2           := null
   , roleSNameList cmn_string_table_t := null
 )
 return integer
@@ -67,8 +71,14 @@ is
     values
     (
       operatorLogin
-      , baseName || ' ( тестовый оператор)'
-      , 'ADB831A7FDD83DD1E2A309CE7591DFF8'
+      , coalesce( login, baseName) || ' ( тестовый оператор)'
+      , case when
+          login is null
+        then
+          'ADB831A7FDD83DD1E2A309CE7591DFF8'
+        else
+          pkg_Operator.getHash( login)
+        end
       , coalesce( pkg_Operator.getCurrentUserId( isRaiseException => 0), 1)
     )
     returning
@@ -164,7 +174,13 @@ is
 
 -- getTestOperatorId
 begin
-  operatorLogin := TestOperator_LoginPrefix || baseName;
+  if baseName is not null and login is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'baseName и login не могут быть заданы одновременно'
+    );
+  end if;
+  operatorLogin := coalesce( login, TestOperator_LoginPrefix || baseName);
   select
     min( t.operator_id)
   into operatorId

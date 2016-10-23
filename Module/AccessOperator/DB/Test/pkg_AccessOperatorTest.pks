@@ -20,10 +20,13 @@ TestOperator_LoginPrefix constant varchar2(50) := 'TestOp-';
   выданные ему роли корректируютс€ согласно списку ( если он указан).
 
   ѕараметры:
+  login                       - Ћогин оператора ( при задании используетс€
+                                в качестве парол€)
   baseName                    - ”никальное базовое им€ оператора
                                 ( используетс€ дл€ формировани€ логина,
                                   по которому затем провер€етс€ наличие
-                                  оператора)
+                                  оператора). ћожет быть задан либо
+                                login либо baseName.
   roleSNameList               - —писок кратких наименований ролей, которые
                                 должны быть выданы оператору
                                 ( по умолчанию роли не провер€ютс€)
@@ -34,7 +37,8 @@ TestOperator_LoginPrefix constant varchar2(50) := 'TestOp-';
   ( <body::getTestOperatorId>)
 */
 function getTestOperatorId(
-  baseName varchar2
+  baseName        varchar2           := null
+  , login         varchar2           := null
   , roleSNameList cmn_string_table_t := null
 )
 return integer;
