@@ -3,11 +3,12 @@
 --
 -- Выполянемые действия:
 --  - в случае STOP_JOB=1 останавливает выполнение всех заданий БД;
---    ( вызывает <Install/Config/stop-batches.sql>);
---  - в противном случае деактивирует пакетные задания модуля;
+--    ( вызывает <Install/Config/stop-job.sql>);
+--  - в противном случае деактивирует пакетные задания модуля
+--    ( с ожиданием остановки обработчиков);
 --
 
 define runScript = ""
-@oms-default runScript "' || case when '&STOP_JOB' = '1' then 'stop-batches.sql' else 'deactivate-batch.sql' end || '"
+@oms-default runScript "' || case when '&STOP_JOB' = '1' then 'stop-job.sql' else 'stop-batch.sql' end || '"
 
 @@&runScript "v_ml_save_job_queue"

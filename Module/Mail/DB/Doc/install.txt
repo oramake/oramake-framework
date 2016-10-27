@@ -27,9 +27,9 @@ JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
 
 
 В случае указания STOP_JOB=1 перед установкой обновления модуля останавливается
-выполнение заданий в БД ( см.  <Install/Config/stop-batches.sql>), а после
+выполнение заданий в БД ( см.  <Install/Config/stop-job.sql>), а после
 успешной установки их выполнение восстанавливается ( см.
-<Install/Config/resume-batches.sql>). При повторном запуске установки возможно
+<Install/Config/resume-job.sql>). При повторном запуске установки возможно
 появление сообщения "Warning. There's a non-zero value saved in view...",
 которое говорит о том, что используется значение параметра JOB_QUEUE_PROCESSES,
 запомненного при предыдущем запуске установки.
