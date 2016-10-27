@@ -143,6 +143,7 @@ Group: Скрипты  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
             File: create-batch  (no auto-title, Install/Grant/Last/create-batch.sql)
+            File: manage-batch  (no auto-title, Install/Grant/Last/manage-batch.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
