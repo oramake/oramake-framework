@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Scheduler
-SubTitle: Версия 4.3.5
+SubTitle: Версия 4.4.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -124,13 +124,25 @@ Group: Скрипты  {
 
          File: after-action  (no auto-title, Install/Config/after-action.sql)
          File: before-action  (no auto-title, Install/Config/before-action.sql)
-         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
-         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         File: resume-all-batch  (no auto-title, Install/Config/resume-all-batch.sql)
+         File: resume-job  (no auto-title, Install/Config/resume-job.sql)
+         File: stop-all-batch  (no auto-title, Install/Config/stop-all-batch.sql)
+         File: stop-job  (no auto-title, Install/Config/stop-job.sql)
          }  # Group: Config
 
       Group: Data  {
 
          Group: Last  {
+
+            Group: AccessOperatorDb  {
+
+               File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
+               }  # Group: AccessOperatorDb
+
+            Group: Custom  {
+
+               File: set-schDbRoleSuffixList  (no auto-title, Install/Data/Last/Custom/set-schDbRoleSuffixList.sql)
+               }  # Group: Custom
 
             File: opt_option  (no auto-title, Install/Data/Last/opt_option.sql)
             }  # Group: Last

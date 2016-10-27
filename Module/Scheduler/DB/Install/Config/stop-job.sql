@@ -1,4 +1,4 @@
---script: Install/Config/stop-batches.sql
+--script: Install/Config/stop-job.sql
 --Останавливает выполнение заданий в БД.
 --
 --Выполняемые действия:
@@ -11,14 +11,14 @@
 --	кроме постоянно работающих заданий (обработчиков)
 --  - в случае, если задания не завершились за установленное время,
 --    восстанавливает запуск заданий с помощью
---    <Install/Config/resume-batches.sql> и генерит ошибку;
+--    <Install/Config/resume-job.sql> и генерит ошибку;
 --  - посылает команду остановки постоянно запущенным заданиям ( с помощью
 --    модуля TaskHandler);
 --  - ожидает остановки выполнения всех заданий, запущенных через модуль Scheduler
 --    ( максимум в течении maxBatchWait секунд);
 --  - в случае, если задания не завершились за установленное время,
 --    восстанавливает запуск заданий с помощью
---    <Install/Config/resume-batches.sql> и генерит ошибку;
+--    <Install/Config/resume-job.sql> и генерит ошибку;
 --
 --Параметры:
 --viewName                    - имя представления для временного сохранения
@@ -37,7 +37,7 @@ prompt Getting JOB_QUEUE_PROCESSES value...
 
 @@get-saved-value.sql "&viewName" "jobQueueProcessesDef"
 
-declare 
+declare
   savedJobQueueProcesses number := to_number('&jobQueueProcessesDef');
   param varchar2(100) := lower('job_queue_processes');
   strval varchar2(100);
@@ -46,62 +46,62 @@ declare
   procedure CreateOrReplaceView is
   begin
 
-    execute immediate 
+    execute immediate
 'create or replace view &viewName
-as 
-select 
+as
+select
   to_number( ' || to_char( jobQueueProcessesVal ) || ' )
-  as &viewColumnName   
+  as &viewColumnName
 from
   dual
 ';
-    execute immediate 
-'comment on table &viewName is 
+    execute immediate
+'comment on table &viewName is
 ''Сохранённое значение для параметра JOB_QUEUE_PROCESSES
 на время установки модуля''';
     dbms_output.put_line('Value saved in view &viewName.');
   end CreateOrReplaceView;
-  
+
   procedure DropView is
-  begin 
+  begin
     execute immediate 'drop view &viewName';
   end DropView;
 
 begin
-  if 
+  if
     dbms_utility.get_parameter_value(
       param, jobQueueProcessesVal , strval ) <> 0 then
-    raise_application_error( 
+    raise_application_error(
       -20000
-      , 'Unexcected result of get_parameter_value.'  
+      , 'Unexcected result of get_parameter_value.'
     );
   end if;
-  dbms_output.put_line('JOB_QUEUE_PROCESSES: ' 
+  dbms_output.put_line('JOB_QUEUE_PROCESSES: '
     || to_char( jobQueueProcessesVal ) );
   if jobQueueProcessesVal  = 0 and savedJobQueueProcesses <> 0 then
     dbms_output.put_line(
-      'Warning. There''s a non-zero value saved in view &viewName' || '.'  
+      'Warning. There''s a non-zero value saved in view &viewName' || '.'
     );
-  else 
+  else
     CreateOrReplaceView;
     dbms_output.put_line('Set JOB_QUEUE_PROCESSES = 0');
     begin
-      execute immediate 
+      execute immediate
         'alter system set JOB_QUEUE_PROCESSES = 0';
       dbms_output.put_line('System altered');
     exception when others then
       DropView;
       raise;
     end;
-  end if; 
+  end if;
 end;
 /
 
-prompt Working batches... 
+prompt Working batches...
 
-select 
+select
   sid
-   , batch_short_name 
+   , batch_short_name
 from
   v_sch_batch ss
 where
@@ -115,16 +115,16 @@ timing start
 
 declare
                                         --Максимальное время ожидания в секундах
-  maxWaitSecond constant integer := 
+  maxWaitSecond constant integer :=
     coalesce( to_number( trim( '&&maxBatchWait')), 60);
                                         --Время завершения ожидания
   limitDate date := sysdate + maxWaitSecond / 86400;
-                                        --Число сессий модуля 
+                                        --Число сессий модуля
   nSession integer;
 
 begin
-  dbms_output.put_line( 'maxWaitSecond=' 
-    || to_char( maxWaitSecond ) ); 
+  dbms_output.put_line( 'maxWaitSecond='
+    || to_char( maxWaitSecond ) );
   :resumedViewName := '';
   loop
     select
@@ -152,12 +152,12 @@ begin
           where
             iv.schedule_id = sd.schedule_id
           )
-      )	
+      )
     ;
     exit when nSession = 0 or sysdate >= limitDate;
     dbms_lock.sleep( 1);
   end loop;
-  if sysdate >= limitDate then 
+  if sysdate >= limitDate then
     :resumedViewName := '&viewName';
   end if;
 end;
@@ -168,7 +168,7 @@ timing stop
 						    --батчи запускаются
 define resumedViewNameDef= ""
 @oms-default resumedViewNameDef "' || :resumedViewName || '"
-@@resume-batches.sql "&resumedViewNameDef"
+@@resume-job.sql "&resumedViewNameDef"
 
 begin
   if :resumedViewName is not null then
@@ -185,7 +185,7 @@ prompt Send stop command for all handlers...
 declare
 
   isAccesible integer;
-  
+
 begin
                                         --Проверяем доступность пакета
   select
@@ -211,7 +211,7 @@ begin
   end if;
 end;
 /
-prompt * Waiting all batch stop... 
+prompt * Waiting all batch stop...
 
 var resumedViewName varchar2( 30 )
 
@@ -219,16 +219,16 @@ timing start
 
 declare
                                         --Максимальное время ожидания в секундах
-  maxWaitSecond constant integer := 
+  maxWaitSecond constant integer :=
     coalesce( to_number( trim( '&&maxBatchWait')), 60);
                                         --Время завершения ожидания
   limitDate date := sysdate + maxWaitSecond / 86400;
-                                        --Число сессий модуля 
+                                        --Число сессий модуля
   nSession integer;
 
 begin
-  dbms_output.put_line( 'maxWaitSecond=' 
-    || to_char( maxWaitSecond ) ); 
+  dbms_output.put_line( 'maxWaitSecond='
+    || to_char( maxWaitSecond ) );
   :resumedViewName := '';
   loop
     select
@@ -242,7 +242,7 @@ begin
     exit when nSession = 0 or sysdate >= limitDate;
     dbms_lock.sleep( 1);
   end loop;
-  if sysdate >= limitDate then 
+  if sysdate >= limitDate then
     :resumedViewName := '&viewName';
   end if;
 end;
@@ -252,7 +252,7 @@ timing stop
 						    --батчи запускаются
 define resumedViewNameDef= ""
 @oms-default resumedViewNameDef "' || :resumedViewName || '"
-@@resume-batches.sql "&resumedViewNameDef"
+@@resume-job.sql "&resumedViewNameDef"
 
 begin
   if :resumedViewName is not null then
