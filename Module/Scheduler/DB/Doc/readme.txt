@@ -98,6 +98,24 @@ group: Реализация батча
   должны существовать/быть доступны); Для того, чтобы игнорировать ошибки компиляции
   PL/SQL следует задать make-параметр <SKIP_CHECK_JOB>;
 
+  Пример файла *.job.sql
+  ( Oracle/Module/Mail/DB/Install/Batch/Last/ClearFetchMailRequest/process.job.sql)
+
+(code)
+-- Очистка данных обработанных запросов извлечения электронных писем
+declare
+
+  numDays number := pkg_Scheduler.getContextNumber(
+    'NumDays'
+  );
+
+begin
+  pkg_MailHandler.clearFetchRequest(
+    beforeDate => sysdate - numDays
+  );
+end;
+(end code)
+
 - *формирование файла batch.xml*.
 
   Файл должен располагаться в директории батча.  В batch.xml могуть быть заданы
@@ -277,3 +295,40 @@ group: Реализация батча
                                 один элемент может быть задан без указания либо
                                 с пустым значением атрибута "instance");
 
+
+  Пример файла batch.xml
+  ( Oracle/Module/Mail/DB/Install/Batch/Last/ClearFetchMailRequest/batch.xml):
+
+(code)
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="ClearFetchMailRequest">
+  <name>Очистка данных обработанных запросов извлечения электронных писем</name>
+  <batch_config>
+    <retry_count>2</retry_count>
+    <retry_interval>60</retry_interval>
+    <schedule>
+      <name>every night at 00:15</name>
+      <interval type="hh24">
+        <value>0</value>
+      </interval>
+      <interval type="mi">
+        <value>15</value>
+      </interval>
+    </schedule>
+    <option short_name="NumDays" type="number" name="Количество дней от текущей даты">
+      <value>60</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="process">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">skip</condition>
+    <condition id="3">error</condition>
+  </content>
+</batch>
+(end code)
