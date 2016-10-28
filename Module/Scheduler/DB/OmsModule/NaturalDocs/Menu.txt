@@ -213,6 +213,11 @@ Group: Скрипты  {
             File: v_sch_role_privilege  (no auto-title, Install/Schema/Last/v_sch_role_privilege.vw)
             }  # Group: Last
 
+         Group: 4.4.0  {
+
+            File: run  (no auto-title, Install/Schema/4.4.0/run.sql)
+            }  # Group: 4.4.0
+
          }  # Group: Schema
 
       }  # Group: Install

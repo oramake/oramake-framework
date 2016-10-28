@@ -16,7 +16,7 @@ begin
       )
       loop
     dbms_output.put_line(
-      'drop: ' || rec.object_type || ': ' || rec.object_name
+      'drop: ' || lower( rec.object_type) || ': ' || rec.object_name
     );
     execute immediate
       'drop ' || rec.object_type || ' ' || rec.object_name
