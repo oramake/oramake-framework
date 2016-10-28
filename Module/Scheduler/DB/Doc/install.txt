@@ -180,6 +180,29 @@ $ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=??? GRANT_S
 
 
 
+group: Выполнение тестов
+
+Предварительные требования:
+- установка модуля TestUtility;
+
+Команда установки объектов для выполнения тестов:
+
+(code)
+
+$ make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Команда для выполнения всех тестов:
+
+(code)
+
+$ make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: Удаление модуля из БД
 
 Команда удаления модуля из БД:

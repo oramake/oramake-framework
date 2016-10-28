@@ -101,6 +101,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_SchedulerMain.pkb)
       }  # Group: pkg_SchedulerMain
 
+   Group: Test  {
+
+      Group: pkg_SchedulerTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_SchedulerTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_SchedulerTest.pkb)
+         }  # Group: pkg_SchedulerTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -223,6 +233,12 @@ Group: Скрипты  {
       File: log  (no auto-title, Show/log.sql)
       File: option  (no auto-title, Show/option.sql)
       }  # Group: Show
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: test-batch  (no auto-title, Test/test-batch.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
