@@ -636,8 +636,14 @@ procedure loadJob(
   , skipCheckJob number := null
 )
 is
+
   -- Id результирующего job
   destJobId integer;
+
+  -- Флаг интерфейсного задания ( новое значение)
+  newPublicFlag sch_job.public_flag%type;
+
+
 
   /*
     Проверка корректности ( компиляции) PL/SQL-блока задания.
@@ -667,34 +673,28 @@ is
     );
   end checkJobWhat;
 
+
+
 -- loadJob
 begin
+  newPublicFlag := coalesce( publicFlag, 0);
   if ( coalesce( skipCheckJob, 0) = 0) then
     checkJobWhat();
   end if;
   select
-    max( job_id)
+    max( j.job_id)
   into
     destJobId
   from
-    sch_job
+    sch_job j
   where
-    -- Уровень видимости батча
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and batch_short_name = batchShortName
-    or
-    -- Уровень видимости модуля
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and coalesce( publicFlag, 0) = 0
-    and batchShortName is null
-    and batch_short_name is null
-    or
-    -- Публичный job
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and publicFlag = 1
+    j.job_short_name = jobShortName
+    and j.module_id = moduleId
+    and (
+      j.batch_short_name = batchShortName
+      or batchShortName is null
+        and j.batch_short_name is null
+    )
   ;
   if destJobId is null then
     insert into sch_job(
@@ -711,7 +711,7 @@ begin
     values(
       sch_job_seq.nextval
       , jobShortName
-      , coalesce( publicFlag, 0)
+      , newPublicFlag
       , moduleId
       , batchShortName
       , jobName
@@ -724,19 +724,19 @@ begin
     update
       sch_job j
     set
-      job_name = jobName
-      , job_what = jobWhat
+      j.public_flag = newPublicFlag
+      , j.job_name = jobName
+      , j.job_what = jobWhat
       , j.description = loadJob.description
-      , j.module_id = moduleId
     where
       job_id = destJobId
-      and not
-       (
-       job_name = jobName
-       and job_what = jobWhat
-       and nullif( j.description, loadJob.description) is null
-       and nullif( loadJob.description, j.description) is null
-       )
+      and not (
+        j.public_flag = newPublicFlag
+        and j.job_name = jobName
+        and j.job_what = jobWhat
+        and nullif( j.description, loadJob.description) is null
+        and nullif( loadJob.description, j.description) is null
+      )
     ;
     if sql%rowcount !=0 then
       outputInfo( 'sch_job: * ' || to_char( sql%rowcount) || ' row');

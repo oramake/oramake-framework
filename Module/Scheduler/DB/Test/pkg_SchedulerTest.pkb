@@ -611,33 +611,128 @@ is
 
   batch sch_batch%rowtype;
 
-   /*
-     Получение данных батча.
-   */
-   procedure getBatch
-   is
-   begin
-    select
-      *
-    into
-      batch
-    from
-      sch_batch
-    where
-      batch_short_name = Batch_ShortName
+
+
+  /*
+    Получение данных батча.
+  */
+  procedure getBatch
+  is
+  begin
+   select
+     *
+   into
+     batch
+   from
+     sch_batch
+   where
+     batch_short_name = Batch_ShortName
+   ;
+  end getBatch;
+
+
+
+  /*
+    Загружает тестовый job.
+  */
+  procedure loadJob(
+    moduleName varchar2 := null
+    , moduleSvnRoot varchar2 := pkg_SchedulerMain.Module_SvnRoot
+    , moduleInitialSvnPath varchar2 := null
+    , jobShortName varchar2
+    , jobName varchar2 := 'Тестовый job'
+    , jobWhat varchar2 := 'null;'
+    , description varchar2 := 'Тестовый job'
+    , publicFlag number := null
+    , batchShortName varchar2 := null
+    , skipCheckJob number := null
+  )
+  is
+
+    jobInfo varchar2(200) :=
+      ' ( job_short_name="' || jobShortName || '"'
+      || ', batch_short_name="' || batchShortName || '"'
+      || ')'
     ;
-   end getBatch;
+
+
+    jbr sch_job%rowtype;
+
+  begin
+    pkg_SchedulerLoad.loadJob(
+      moduleName                => moduleName
+      , moduleSvnRoot           => moduleSvnRoot
+      , moduleInitialSvnPath    => moduleInitialSvnPath
+      , jobShortName            => jobShortName
+      , jobName                 => jobName
+      , jobWhat                 => jobWhat
+      , description             => description
+      , publicFlag              => publicFlag
+      , batchShortName          => batchShortName
+      , skipCheckJob            => skipCheckJob
+    );
+    pkg_TestUtility.compareRowCount(
+      tableName               => 'sch_job'
+      , filterCondition       =>
+          'module_id = ' || pkg_SchedulerMain.getModuleId()
+          || ' and job_short_name = ''' || jobShortName || ''''
+          || ' and batch_short_name'
+            || case when batchShortName is not null  then
+                ' = ''' || batchShortName || ''''
+              else
+                ' is null'
+              end
+      , expectedRowCount      => 1
+      , failMessageText       =>
+          'Задание не найдено'
+          || jobInfo
+    );
+    if not pkg_TestUtility.isTestFailed() then
+      select
+        t.*
+      into jbr
+      from
+        sch_job t
+      where
+        t.module_id = pkg_SchedulerMain.getModuleId()
+        and t.job_short_name = jobShortName
+        and (
+          t.batch_short_name = batchShortName
+          or coalesce( batchShortName, t.batch_short_name) is null
+        )
+      ;
+      pkg_TestUtility.compareChar(
+        actualString      => jbr.public_flag
+        , expectedString  => coalesce( publicFlag, 0)
+        , failMessageText =>
+            'Некорректное значение public_flag'
+            || jobInfo
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при загрузке тестового задания ('
+          || ' jobShortName="' || jobShortName || '"'
+          || ', batchShortName="' || batchShortName || '"'
+          || ', publicFlag=' || publicFlag
+          || ').'
+        )
+      , true
+    );
+  end loadJob;
+
+
 
 -- testLoadBatch
 begin
   pkg_TestUtility.beginTest( 'testLoadBatch');
-  pkg_SchedulerLoad.loadJob(
-    moduleName => pkg_Scheduler.Module_Name
-    , batchShortName => Batch_ShortName
-    , jobShortName => 'process'
-    , jobName => 'Тестовый job'
-    , description => 'Тестовый job'
-    , jobWhat => coalesce(
+
+  loadJob(
+    batchShortName  => Batch_ShortName
+    , jobShortName  => 'process'
+    , jobWhat       => coalesce(
         jobWhat
         ,
 'declare
@@ -821,6 +916,32 @@ to_clob(
     , actualString => to_char( batch.retrial_count)
     , failMessageText => 'compare retrial count after config loading'
   );
+
+  -- изменение видимости задания
+  loadJob(
+    jobShortName      => 'testMovedJob'
+    , batchShortName  => Batch_ShortName
+  );
+
+  -- ... : батч -> модуль
+  loadJob(
+    jobShortName      => 'testMovedJob'
+    , batchShortName  => null
+  );
+
+  -- ... : модуль -> public
+  loadJob(
+    jobShortName      => 'testMovedJob'
+    , batchShortName  => null
+    , publicFlag      => 1
+  );
+
+  -- ... : public -> батч
+  loadJob(
+    jobShortName      => 'testMovedJob'
+    , batchShortName  => Batch_ShortName
+  );
+
   pkg_SchedulerLoad.deleteBatch( Batch_ShortName);
   pkg_TestUtility.endTest();
   commit;
