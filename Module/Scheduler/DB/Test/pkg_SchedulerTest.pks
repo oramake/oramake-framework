@@ -130,12 +130,17 @@ procedure testBatch(
   ѕараметры:
   jobWhat                     - plsql-код задани€ ( job)
   batchXmlText                - спефикаци€ пакетного задани€ в виде xml
+  testCaseNumber              - Ќомер провер€емого тестового случа€
+                                ( по умолчанию без ограничений если не указаны
+                                  параметры jobWhat и batchXmlText, иначе
+                                  только 1 тест ( загрузка задани€ и батча))
 
   ( <body::testLoadBatch>)
 */
 procedure testLoadBatch(
   jobWhat varchar2 := null
   , batchXmlText clob := null
+  , testCaseNumber integer := null
 );
 
 /* pproc: testNlsLanguage

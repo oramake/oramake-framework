@@ -1000,6 +1000,7 @@ is
   opt2 sch_batch_option_t;
 
 begin
+  logger.trace( 'changeOptionModule: ...');
   opt := sch_batch_option_t(
     batchShortName      => batchShortName
     , moduleId          => oldModuleId
@@ -1096,9 +1097,6 @@ is
   -- Нужно ли модицифировать запись
   modifyRowFlag boolean := false;
 
-  -- Признак изменения модуля у батча
-  isChangeModule boolean := false;
-
 begin
   logger.trace( 'updateBatch: updateMainAttributeFlag=' || to_char( updateMainAttributeFlag));
   if updateMainAttributeFlag = 1 then
@@ -1109,13 +1107,19 @@ begin
       and dbBatchRecord.module_id = newBatchRecord.module_id
     )
     then
+      if dbBatchRecord.module_id != newBatchRecord.module_id then
+        changeOptionModule(
+          batchShortName  => newBatchRecord.batch_short_name
+          , oldModuleId   => dbBatchRecord.module_id
+          , newModuleId   => newBatchRecord.module_id
+        );
+      end if;
       logger.trace( 'updateBatch: main field change');
       dbBatchRecord.batch_name_rus := newBatchRecord.batch_name_rus;
       dbBatchRecord.batch_name_eng := newBatchRecord.batch_name_eng;
       dbBatchRecord.batch_type_id := newBatchRecord.batch_type_id;
       dbBatchRecord.module_id := newBatchRecord.module_id;
       modifyRowFlag := true;
-      isChangeModule := dbBatchRecord.module_id != newBatchRecord.module_id;
     end if;
   end if;
   if updateConfigFlag = 1 then
@@ -1160,13 +1164,6 @@ begin
       batch_id = dbBatchRecord.batch_id
     ;
     outputInfo( 'sch_batch: * ' || to_char( sql%rowcount) || ' row');
-  end if;
-  if isChangeModule then
-    changeOptionModule(
-      batchShortName  => newBatchRecord.batch_short_name
-      , oldModuleId   => dbBatchRecord.module_id
-      , newModuleId   => newBatchRecord.module_id
-    );
   end if;
 exception when others then
   raise_application_error(

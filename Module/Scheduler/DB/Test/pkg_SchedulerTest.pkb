@@ -593,13 +593,18 @@ end testBatch;
   Параметры:
   jobWhat                     - plsql-код задания ( job)
   batchXmlText                - спефикация пакетного задания в виде xml
-  batchConfigText             - текст конфигурации батча
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений если не указаны
+                                  параметры jobWhat и batchXmlText, иначе
+                                  только 1 тест ( загрузка задания и батча))
 */
 procedure testLoadBatch(
   jobWhat varchar2 := null
   , batchXmlText clob := null
+  , testCaseNumber integer := null
 )
 is
+
   pragma autonomous_transaction;
 
   Batch_ShortName constant varchar2(50) := 'TestBatch';
@@ -609,7 +614,34 @@ is
   Config_RetrialCount1 constant integer := 11;
   Config_RetrialCount2 constant integer := 17;
 
+  -- Порядковый номер очередного тестового случая
+  checkCaseNumber integer := 0;
+
+  -- Модули для тестирования
+  moduleName1 varchar2(100);
+  moduleName2 varchar2(100);
+
   batch sch_batch%rowtype;
+
+
+
+  /*
+    Подготовка данных для теста.
+  */
+  procedure prepareData
+  is
+  begin
+    moduleName1 := pkg_ModuleInfoTest.getTestModuleName( 'Module1');
+    moduleName2 := pkg_ModuleInfoTest.getTestModuleName( 'Module2');
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при подгоовке данных для теста.'
+        )
+      , true
+    );
+  end prepareData;
 
 
 
@@ -636,8 +668,9 @@ is
     Загружает тестовый job.
   */
   procedure loadJob(
-    moduleName varchar2 := null
-    , moduleSvnRoot varchar2 := pkg_SchedulerMain.Module_SvnRoot
+    cinfo varchar2
+    , moduleName varchar2 := moduleName1
+    , moduleSvnRoot varchar2 := null
     , moduleInitialSvnPath varchar2 := null
     , jobShortName varchar2
     , jobName varchar2 := 'Тестовый job'
@@ -655,6 +688,7 @@ is
       || ')'
     ;
 
+    moduleId integer;
 
     jbr sch_job%rowtype;
 
@@ -671,10 +705,15 @@ is
       , batchShortName          => batchShortName
       , skipCheckJob            => skipCheckJob
     );
+    moduleId := pkg_ModuleInfo.getModuleId(
+      moduleName          => moduleName
+      , svnRoot           => moduleSvnRoot
+      , initialSvnPath    => moduleInitialSvnPath
+    );
     pkg_TestUtility.compareRowCount(
       tableName               => 'sch_job'
       , filterCondition       =>
-          'module_id = ' || pkg_SchedulerMain.getModuleId()
+          'module_id = ' || moduleId
           || ' and job_short_name = ''' || jobShortName || ''''
           || ' and batch_short_name'
             || case when batchShortName is not null  then
@@ -684,7 +723,7 @@ is
               end
       , expectedRowCount      => 1
       , failMessageText       =>
-          'Задание не найдено'
+          cinfo || 'Задание не найдено'
           || jobInfo
     );
     if not pkg_TestUtility.isTestFailed() then
@@ -694,7 +733,7 @@ is
       from
         sch_job t
       where
-        t.module_id = pkg_SchedulerMain.getModuleId()
+        t.module_id = moduleId
         and t.job_short_name = jobShortName
         and (
           t.batch_short_name = batchShortName
@@ -705,7 +744,7 @@ is
         actualString      => jbr.public_flag
         , expectedString  => coalesce( publicFlag, 0)
         , failMessageText =>
-            'Некорректное значение public_flag'
+            cinfo || 'Некорректное значение public_flag'
             || jobInfo
       );
     end if;
@@ -714,7 +753,8 @@ is
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка при загрузке тестового задания ('
-          || ' jobShortName="' || jobShortName || '"'
+          || ' cinfo="' || cinfo || '"'
+          || ', jobShortName="' || jobShortName || '"'
           || ', batchShortName="' || batchShortName || '"'
           || ', publicFlag=' || publicFlag
           || ').'
@@ -725,16 +765,109 @@ is
 
 
 
--- testLoadBatch
-begin
-  pkg_TestUtility.beginTest( 'testLoadBatch');
+  /*
+    Загружает тестовый батч
+  */
+  procedure loadBatch(
+    cinfo varchar2
+    , moduleName varchar2 := moduleName1
+    , batchShortName varchar2 := Batch_ShortName
+    , xmlText varchar2
+    , updateScheduleFlag number := null
+    , skipLoadOption number := null
+    , updateOptionValue number := null
+  )
+  is
+  begin
+    pkg_SchedulerLoad.loadBatch(
+      moduleName              => moduleName
+      , moduleSvnRoot         => null
+      , moduleInitialSvnPath  => null
+      , batchShortName        => batchShortName
+      , xmlText               => xmlText
+      , updateScheduleFlag    => updateScheduleFlag
+      , skipLoadOption        => skipLoadOption
+      , updateOptionValue     => updateOptionValue
+    );
+    getBatch();
+    pkg_TestUtility.compareChar(
+      actualString        => batch.module_id
+      , expectedString    => pkg_ModuleInfo.getModuleId( moduleName)
+      , failMessageText   =>
+          cinfo || 'Некорректное значение module_id'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при загрузке тестового батча ('
+          || ' cinfo="' || cinfo || '"'
+          || ', moduleName="' || moduleName || '"'
+          || ', batchShortName="' || batchShortName || '"'
+          || ').'
+        )
+      , true
+    );
+  end loadBatch;
 
-  loadJob(
-    batchShortName  => Batch_ShortName
-    , jobShortName  => 'process'
-    , jobWhat       => coalesce(
-        jobWhat
-        ,
+
+
+
+  /*
+    Определяет необходимость проверки тестового случая.
+  */
+  function isCheckCase(
+    caseInfo out varchar2
+    , caseDescription varchar2
+    , nextCaseUsedCount pls_integer := null
+  )
+  return boolean
+  is
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    caseInfo :=
+      'CASE ' || to_char( checkCaseNumber)
+      || ' "' || caseDescription || '": '
+    ;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return false;
+    end if;
+    logger.info( '*** ' || caseInfo);
+    return true;
+  end isCheckCase;
+
+
+
+  /*
+    Проверка загрузки батча.
+  */
+  procedure checkLoadBatch(
+    nextCaseUsedCount integer
+  )
+  is
+
+    Case_Name constant varchar2(100) :=
+      'загрузка батча'
+    ;
+
+    cinfo varchar2(200);
+
+  begin
+    if not isCheckCase( cinfo, Case_Name, nextCaseUsedCount) then
+      return;
+    end if;
+    loadJob(
+      cinfo             => cinfo
+      , batchShortName  => Batch_ShortName
+      , jobShortName    => 'process'
+      , jobWhat         => coalesce(
+          jobWhat
+          ,
 'declare
 
   procedure compareChar(
@@ -799,12 +932,11 @@ begin
     , ''getContextValueCount: bad value for CheckPointList''
   );
 end;'
-      )
-  );
-  pkg_SchedulerLoad.loadBatch(
-    moduleName => pkg_Scheduler.Module_Name
-    , batchShortName => Batch_ShortName
-    , xmlText => coalesce( batchXmlText,
+        )
+    );
+    loadBatch(
+      cinfo             => cinfo
+      , xmlText         => coalesce( batchXmlText,
 to_clob(
 '<?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="' || Batch_ShortName || '">
@@ -882,65 +1014,232 @@ to_clob(
     <condition id="3">skip</condition>
   </content>
 </batch>'))
-  );
-  commit;
-  pkg_SchedulerTest.testBatch( Batch_ShortName);
-  if jobWhat is null then
-    pkg_TestUtility.compareChar(
-      expectedString => Check_String
-      , actualString =>
-          sch_batch_option_t( Batch_ShortName).getString( Option_Name)
-      , failMessageText => 'compare option'
     );
-  end if;
-  getBatch();
-  pkg_TestUtility.compareChar(
-    expectedString => to_char( Config_RetrialCount1)
-    , actualString => to_char( batch.retrial_count)
-    , failMessageText => 'compare retrial count before config loading'
-  );
-  pkg_SchedulerLoad.loadBatchConfig(
-    moduleName => pkg_Scheduler.Module_Name
-    , xmlText =>
+    commit;
+    pkg_SchedulerTest.testBatch( Batch_ShortName);
+    if jobWhat is null then
+      pkg_TestUtility.compareChar(
+        expectedString => Check_String
+        , actualString =>
+            sch_batch_option_t( Batch_ShortName).getString( Option_Name)
+        , failMessageText =>
+            cinfo || 'compare option'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке: ' || Case_Name
+        )
+      , true
+    );
+  end checkLoadBatch;
+
+
+
+  /*
+    Проверка загрузки конфигурации
+  */
+  procedure checkLoadBatchConfig
+  is
+
+    Case_Name constant varchar2(100) :=
+      'загрузка конфигурации'
+    ;
+
+    cinfo varchar2(200);
+
+  begin
+    if not isCheckCase( cinfo, Case_Name) then
+      return;
+    end if;
+    getBatch();
+    pkg_TestUtility.compareChar(
+      expectedString => to_char( Config_RetrialCount1)
+      , actualString => to_char( batch.retrial_count)
+      , failMessageText =>
+          cinfo || 'compare retrial count before config loading'
+    );
+    pkg_SchedulerLoad.loadBatchConfig(
+      moduleName => moduleName1
+      , xmlText =>
 '<?xml version="1.0" encoding="Windows-1251"?>
 <batch_config short_name="' || Batch_ShortName || '">
   <retry_count>' || to_char( Config_RetrialCount2) || '</retry_count>
   <retry_interval>30</retry_interval>
  </batch_config>
 '
-    , updateScheduleFlag => 1
-  );
-  getBatch();
-  pkg_TestUtility.compareChar(
-    expectedString => to_char( Config_RetrialCount2)
-    , actualString => to_char( batch.retrial_count)
-    , failMessageText => 'compare retrial count after config loading'
-  );
+      , updateScheduleFlag => 1
+    );
+    getBatch();
+    pkg_TestUtility.compareChar(
+      expectedString => to_char( Config_RetrialCount2)
+      , actualString => to_char( batch.retrial_count)
+      , failMessageText =>
+          cinfo || 'compare retrial count after config loading'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке: ' || Case_Name
+        )
+      , true
+    );
+  end checkLoadBatchConfig;
 
-  -- изменение видимости задания
-  loadJob(
-    jobShortName      => 'testMovedJob'
-    , batchShortName  => Batch_ShortName
-  );
 
-  -- ... : батч -> модуль
-  loadJob(
-    jobShortName      => 'testMovedJob'
-    , batchShortName  => null
-  );
 
-  -- ... : модуль -> public
-  loadJob(
-    jobShortName      => 'testMovedJob'
-    , batchShortName  => null
-    , publicFlag      => 1
-  );
+  /*
+    Проверка изменения видимости задания.
+  */
+  procedure checkChangeJobVisibility
+  is
 
-  -- ... : public -> батч
-  loadJob(
-    jobShortName      => 'testMovedJob'
-    , batchShortName  => Batch_ShortName
-  );
+    Case_Name constant varchar2(100) :=
+      'изменение видимости задания'
+    ;
+
+    cinfo varchar2(200);
+
+  begin
+    if not isCheckCase( cinfo, Case_Name) then
+      return;
+    end if;
+    loadJob(
+      cinfo             => cinfo
+      , jobShortName    => 'testMovedJob'
+      , batchShortName  => Batch_ShortName
+    );
+
+    -- ... : батч -> модуль
+    loadJob(
+      cinfo             => cinfo
+      , jobShortName    => 'testMovedJob'
+      , batchShortName  => null
+    );
+
+    -- ... : модуль -> public
+    loadJob(
+      cinfo             => cinfo
+      , jobShortName    => 'testMovedJob'
+      , batchShortName  => null
+      , publicFlag      => 1
+    );
+
+    -- ... : public -> батч
+    loadJob(
+      cinfo             => cinfo
+      , jobShortName    => 'testMovedJob'
+      , batchShortName  => Batch_ShortName
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке: ' || Case_Name
+        )
+      , true
+    );
+  end checkChangeJobVisibility;
+
+
+
+  /*
+    Проверка изменения модуля батча.
+  */
+  procedure checkChangeModule
+  is
+
+    Case_Name constant varchar2(100) := 'изменение модуля батча';
+
+    -- Описание тестового случая
+    cinfo varchar2(200);
+
+  begin
+    if not isCheckCase( cinfo, Case_Name) then
+      return;
+    end if;
+
+    loadBatch(
+      cinfo                 => cinfo
+      , moduleName          => moduleName1
+      , xmlText             =>
+'<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="' || Batch_ShortName || '">
+  <name>Test batch</name>
+  <batch_config>
+    <option short_name="NumOpt" type="number" name="Числовой параметр">
+      <value>101</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+</batch>'
+    );
+
+    -- Делаем батч "не новым", чтобы по нему не менялись значения параметров
+    -- при загрузке спецификации ( если не указан updateOptionValue => 1)
+    update
+      sch_batch t
+    set
+      t.date_ins = t.date_ins - 1
+    where
+      t.batch_short_name = Batch_ShortName
+      and t.date_ins > sysdate - 1
+    ;
+    commit;
+
+    sch_batch_option_t( Batch_ShortName).setNumber( 'NumOpt', 1049);
+    loadBatch(
+      cinfo                 => cinfo
+      , moduleName          => moduleName2
+      , xmlText             =>
+'<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="' || Batch_ShortName || '">
+  <name>Test batch</name>
+  <batch_config>
+    <option short_name="NumOpt" type="number" name="Числовой параметр">
+      <value>102</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+</batch>'
+      , updateOptionValue   => null
+    );
+    pkg_TestUtility.compareChar(
+      actualString      =>
+          sch_batch_option_t( Batch_ShortName).getNumber( 'NumOpt')
+      , expectedString  => to_char( 1049)
+      , failMessageText =>
+          cinfo || 'Не сохранено значение параметра'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке: ' || Case_Name
+        )
+      , true
+    );
+  end checkChangeModule;
+
+
+
+-- testLoadBatch
+begin
+  pkg_TestUtility.beginTest( 'testLoadBatch');
+
+  prepareData();
+
+  checkLoadBatch( nextCaseUsedCount => 1);
+
+  if jobWhat is null and batchXmlText is null then
+    checkLoadBatchConfig();
+
+    checkChangeJobVisibility();
+    checkChangeModule();
+  end if;
 
   pkg_SchedulerLoad.deleteBatch( Batch_ShortName);
   pkg_TestUtility.endTest();
