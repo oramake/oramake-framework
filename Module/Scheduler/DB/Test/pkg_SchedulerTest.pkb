@@ -608,6 +608,7 @@ is
   pragma autonomous_transaction;
 
   Batch_ShortName constant varchar2(50) := 'TestBatch';
+  Batch_ShortName2 constant varchar2(50) := 'TestBatch_2';
   Check_String constant varchar2(50) := 'Hello world!';
   Option_Name constant varchar2(50) := 'Hello';
 
@@ -630,9 +631,29 @@ is
   */
   procedure prepareData
   is
+
+    cursor batchCur is
+      select
+        t.batch_id
+      from
+        sch_batch t
+      where
+        t.batch_short_name in (
+          Batch_ShortName
+          , Batch_ShortName2
+        )
+      order by
+        t.batch_short_name
+    ;
+
   begin
     moduleName1 := pkg_ModuleInfoTest.getTestModuleName( 'Module1');
     moduleName2 := pkg_ModuleInfoTest.getTestModuleName( 'Module2');
+    for rec in batchCur loop
+      pkg_SchedulerLoad.deleteBatch(
+        batchId => rec.batch_id
+      );
+    end loop;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -648,18 +669,20 @@ is
   /*
     Получение данных батча.
   */
-  procedure getBatch
+  procedure getBatch(
+    batchShortName varchar2 := Batch_ShortName
+  )
   is
   begin
-   select
-     *
-   into
-     batch
-   from
-     sch_batch
-   where
-     batch_short_name = Batch_ShortName
-   ;
+    select
+      *
+    into
+      batch
+    from
+      sch_batch
+    where
+      batch_short_name = batchShortName
+    ;
   end getBatch;
 
 
@@ -772,6 +795,7 @@ is
     cinfo varchar2
     , moduleName varchar2 := moduleName1
     , batchShortName varchar2 := Batch_ShortName
+    , setNewBatchFlag pls_integer := null
     , xmlText varchar2
     , updateScheduleFlag number := null
     , skipLoadOption number := null
@@ -789,7 +813,25 @@ is
       , skipLoadOption        => skipLoadOption
       , updateOptionValue     => updateOptionValue
     );
-    getBatch();
+
+    -- Если нужно корректируем date_ins, т.к. по нему определяется "новый"
+    -- батч или нет, что влияет на обновление значений параметров
+    if setNewBatchFlag is not null then
+      update
+        sch_batch t
+      set
+        t.date_ins =
+          case when setNewBatchFlag = 1 then
+            greatest( t.date_ins, sysdate - 23/24)
+          else
+            least( t.date_ins, sysdate - 1)
+          end
+      where
+        t.batch_short_name = Batch_ShortName
+      ;
+    end if;
+
+    getBatch( batchShortName => batchShortName);
     pkg_TestUtility.compareChar(
       actualString        => batch.module_id
       , expectedString    => pkg_ModuleInfo.getModuleId( moduleName)
@@ -1165,6 +1207,7 @@ to_clob(
     loadBatch(
       cinfo                 => cinfo
       , moduleName          => moduleName1
+      , setNewBatchFlag     => 0
       , xmlText             =>
 '<?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="' || Batch_ShortName || '">
@@ -1177,18 +1220,6 @@ to_clob(
   <content id="1" job="initialization" module="Scheduler"/>
 </batch>'
     );
-
-    -- Делаем батч "не новым", чтобы по нему не менялись значения параметров
-    -- при загрузке спецификации ( если не указан updateOptionValue => 1)
-    update
-      sch_batch t
-    set
-      t.date_ins = t.date_ins - 1
-    where
-      t.batch_short_name = Batch_ShortName
-      and t.date_ins > sysdate - 1
-    ;
-    commit;
 
     sch_batch_option_t( Batch_ShortName).setNumber( 'NumOpt', 1049);
     loadBatch(
@@ -1226,6 +1257,97 @@ to_clob(
 
 
 
+  /*
+    Проверка переименования батча.
+  */
+  procedure checkRenameBatch
+  is
+
+    Case_Name constant varchar2(100) := 'переименование батча';
+
+    -- Описание тестового случая
+    cinfo varchar2(200);
+
+    batchId integer;
+
+  begin
+    if not isCheckCase( cinfo, Case_Name) then
+      return;
+    end if;
+
+    loadBatch(
+      cinfo                 => cinfo
+      , xmlText             =>
+'<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="' || Batch_ShortName || '">
+  <name>Test batch</name>
+  <batch_config>
+    <option short_name="SaveDay" type="number" name="Срок хранения">
+      <value>30</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+</batch>'
+      , updateOptionValue   => 1
+    );
+    sch_batch_option_t( Batch_ShortName).setNumber( 'SaveDay', 62);
+    batchId := batch.batch_id;
+
+    pkg_SchedulerLoad.renameBatch(
+      batchShortName      => Batch_ShortName
+      , newBatchShortName => Batch_ShortName2
+    );
+    pkg_TestUtility.compareRowCount(
+      tableName               => 'sch_batch'
+      , filterCondition       =>
+          'batch_id = ' || batchId
+          || ' and batch_short_name = ''' || Batch_ShortName2 || ''''
+      , expectedRowCount      => 1
+      , failMessageText       =>
+          cinfo || 'Переименование не выполнено'
+    );
+    pkg_TestUtility.compareChar(
+      actualString      =>
+          sch_batch_option_t( Batch_ShortName2).getNumber( 'SaveDay')
+      , expectedString  => to_char( 62)
+      , failMessageText =>
+          cinfo || 'Не сохранено значение параметра'
+    );
+
+    sch_batch_option_t( Batch_ShortName2).setNumber( 'SaveDay', 63);
+
+    pkg_SchedulerLoad.renameBatch(
+      batchId             => batchId
+      , newBatchShortName => Batch_ShortName
+    );
+    pkg_TestUtility.compareRowCount(
+      tableName               => 'sch_batch'
+      , filterCondition       =>
+          'batch_id = ' || batchId
+          || ' and batch_short_name = ''' || Batch_ShortName || ''''
+      , expectedRowCount      => 1
+      , failMessageText       =>
+          cinfo || 'Переименование по Id не выполнено'
+    );
+    pkg_TestUtility.compareChar(
+      actualString      =>
+          sch_batch_option_t( Batch_ShortName).getNumber( 'SaveDay')
+      , expectedString  => to_char( 63)
+      , failMessageText =>
+          cinfo || 'Не сохранено значение параметра'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке: ' || Case_Name
+        )
+      , true
+    );
+  end checkRenameBatch;
+
+
+
 -- testLoadBatch
 begin
   pkg_TestUtility.beginTest( 'testLoadBatch');
@@ -1239,6 +1361,7 @@ begin
 
     checkChangeJobVisibility();
     checkChangeModule();
+    checkRenameBatch();
   end if;
 
   pkg_SchedulerLoad.deleteBatch( Batch_ShortName);
