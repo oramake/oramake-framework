@@ -14,6 +14,23 @@ TestOperator_LoginPrefix constant varchar2(50) := 'TestOp-';
 
 /* group: Функции */
 
+/* pfunc: getCurrentUserId
+  Возвращает идентификатор текущего оператора.
+
+  Входные параметры:
+  isRaiseException            - флаг выбрасывания исключения в случае, если
+                                текущий оператор не определен
+
+  Возврат:
+  oprator_id                  - идентификатор текущего оператора
+
+  ( <body::getCurrentUserId>)
+*/
+function getCurrentUserId(
+  isRaiseException integer default null
+)
+return integer;
+
 /* pfunc: getTestOperatorId
   Возвращает Id тестового оператора.
   Если тестового оператора не существует, он создается, если существует, то

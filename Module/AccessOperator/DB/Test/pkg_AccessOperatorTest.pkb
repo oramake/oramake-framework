@@ -9,13 +9,43 @@ create or replace package body pkg_AccessOperatorTest is
   Логер пакета.
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName    => pkg_Operator.Module_Name
+  moduleName    => 'AccessOperator'
   , objectName  => 'pkg_AccessOperatorTest'
 );
 
 
 
 /* group: Функции */
+
+/* func: getCurrentUserId
+  Возвращает идентификатор текущего оператора.
+
+  Входные параметры:
+  isRaiseException            - флаг выбрасывания исключения в случае, если
+                                текущий оператор не определен
+
+  Возврат:
+  oprator_id                  - идентификатор текущего оператора
+*/
+function getCurrentUserId(
+  isRaiseException integer default null
+)
+return integer
+is
+  -- Id оператора
+  operatorId integer;
+
+-- getCurrentUserId
+begin
+  operatorId := pkg_Operator.getCurrentUserId();
+  return operatorId;
+exception when others then
+  if ( isRaiseException = 1) then
+    raise;
+  else
+    return null;
+  end if;
+end getCurrentUserId;
 
 /* func: getTestOperatorId
   Возвращает Id тестового оператора.
@@ -52,8 +82,6 @@ is
   -- Признак создания оператора
   isCreated boolean := false;
 
-
-
   /*
     Создает тестового оператора.
   */
@@ -79,7 +107,7 @@ is
         else
           pkg_Operator.getHash( login)
         end
-      , coalesce( pkg_Operator.getCurrentUserId( isRaiseException => 0), 1)
+      , coalesce( getCurrentUserId( isRaiseException => 0), 1)
     )
     returning
       operator_id
@@ -116,9 +144,9 @@ is
             rl.role_id
           from
             table( roleSNameList) t
-            , v_op_role rl
+            , op_role rl
           where
-            rl.role_short_name = t.column_value
+            rl.short_name = t.column_value
           )
       ;
     end if;
@@ -137,13 +165,13 @@ is
         select
           operatorId as operator_id
           , rl.role_id
-          , coalesce( pkg_Operator.getCurrentUserId( isRaiseException => 0), 1)
+          , coalesce( getCurrentUserId( isRaiseException => 0), 1)
             as operator_id_ins
         from
           table( roleSNameList) t
-          , v_op_role rl
+          , op_role rl
         where
-          rl.role_short_name = t.column_value
+          rl.short_name = t.column_value
         ) a
       where
         not exists
