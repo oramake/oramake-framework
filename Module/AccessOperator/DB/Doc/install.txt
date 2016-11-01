@@ -14,62 +14,13 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
-group: 3.16.0
-(<Версии::3.16.0 ( 2016-10-24)>)
-
-Порядок установки:
-
-- установка в основную схему;
+group: Установка тестового пакета
 
 (code)
 
-make install INSTALL_VERSION=3.16.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install-test LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
-(end code)
-
-
-
-group: 3.14.0
-(<Версии::3.14.0 ( 2016-05-26)>)
-
-Порядок установки:
-
-- установка в основную схему;
-
-(code)
-
-make install INSTALL_VERSION=3.14.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end code)
-
-
-
-group: 3.12.1
-(<Версии::3.12.1 ( 2016-04-21)>)
-
-Порядок установки:
-
-- установка в основную схему;
-
-(code)
-
-make install INSTALL_VERSION=3.12.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end code)
-
-
-
-group: Первоначальная установка
-
-- установка в основную схему
-
-(code)
-
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID= SKIP_FILE_MASK=*/oms-save-install-info.sql
-
-$ make install-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end code)
+(end)
 
 
 
@@ -81,14 +32,4 @@ group: Выдача прав на использование модуля
 
 
 
-group: Удаление модуля из БД
 
-Команда для удаления модуля из БД:
-
-(code)
-
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? SKIP_FILE_MASK=*/oms-save-uninstall-info.sql
-
-$ make uninstall-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=
-
-(end)

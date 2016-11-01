@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: AccessOperator
-SubTitle: Версия 3.16.0
+SubTitle: Версия 3.0.1.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -47,111 +47,27 @@ SubTitle: Версия 3.16.0
 
 Group: О модуле  {
 
-   File: Описание  (Doc/readme.txt)
-   File: Установка  (Doc/install.txt)
-   File: Ошибки  (Doc/bugs.txt)
-   File: Доработки  (Doc/todo.txt)
    File: Сборка  (Makefile)
-   File: Версии  (Doc/version.txt)
+
+   Group: Doc  {
+
+      File: Описание  (Doc/readme.txt)
+      File: Установка  (Doc/install.txt)
+      File: Ошибки  (Doc/bugs.txt)
+      File: Доработки  (Doc/todo.txt)
+      File: Версии  (Doc/version.txt)
+      }  # Group: Doc
+
+   Group: Test  {
+
+      File: pkg_AccessOperatorTest  (Test/pkg_AccessOperatorTest.pks)
+      File: pkg_AccessOperatorTest::body  (Test/pkg_AccessOperatorTest.pkb)
+      File: Test/Grant/run.sql  (Test/Grant/run.sql)
+      }  # Group: Test
+
    }  # Group: О модуле
 
-Group: Пакеты  {
-
-   Group: pkg_AccessOperator  {
-
-      File: Спецификация  (no auto-title, pkg_AccessOperator.pks)
-      File: Реализация  (no auto-title, pkg_AccessOperator.pkb)
-      }  # Group: pkg_AccessOperator
-
-   Group: pkg_Operator  {
-
-      File: Спецификация  (no auto-title, pkg_Operator.pks)
-      File: Реализация  (no auto-title, pkg_Operator.pkb)
-      }  # Group: pkg_Operator
-
-   Group: Test  {
-
-      Group: pkg_AccessOperatorTest  {
-
-         File: Спецификация  (no auto-title, Test/pkg_AccessOperatorTest.pks)
-         File: Реализация  (no auto-title, Test/pkg_AccessOperatorTest.pkb)
-         }  # Group: pkg_AccessOperatorTest
-
-      }  # Group: Test
-
-   }  # Group: Пакеты
-
-Group: Скрипты  {
-
-   Group: Install  {
-
-      Group: Data  {
-
-         Group: 1.0.0  {
-
-            File: op_group  (no auto-title, Install/Data/1.0.0/op_group.sql)
-            File: op_operator  (no auto-title, Install/Data/1.0.0/op_operator.sql)
-            }  # Group: 1.0.0
-
-         }  # Group: Data
-
-      Group: Schema  {
-
-         Group: Last  {
-
-            File: run  (no auto-title, Install/Schema/Last/run.sql)
-            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-            File: op_group  (no auto-title, Install/Schema/Last/op_group.con)
-            File: op_group  (no auto-title, Install/Schema/Last/op_group.tab)
-            File: op_group_bi_define  (no auto-title, Install/Schema/Last/op_group_bi_define.trg)
-            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.con)
-            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.tab)
-            File: op_group_role_bi_define  (no auto-title, Install/Schema/Last/op_group_role_bi_define.trg)
-            File: op_group_seq  (no auto-title, Install/Schema/Last/op_group_seq.sqs)
-            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.con)
-            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.tab)
-            File: op_operator_bi_define  (no auto-title, Install/Schema/Last/op_operator_bi_define.trg)
-            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.con)
-            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.tab)
-            File: op_operator_group_bi_define  (no auto-title, Install/Schema/Last/op_operator_group_bi_define.trg)
-            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.con)
-            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.tab)
-            File: op_operator_role_bi_define  (no auto-title, Install/Schema/Last/op_operator_role_bi_define.trg)
-            File: op_operator_seq  (no auto-title, Install/Schema/Last/op_operator_seq.sqs)
-            File: op_role  (no auto-title, Install/Schema/Last/op_role.con)
-            File: op_role  (no auto-title, Install/Schema/Last/op_role.tab)
-            File: op_role_bi_define  (no auto-title, Install/Schema/Last/op_role_bi_define.trg)
-            File: op_role_seq  (no auto-title, Install/Schema/Last/op_role_seq.sqs)
-            File: v_op_operator  (no auto-title, Install/Schema/Last/v_op_operator.vw)
-            File: v_op_operator_role  (no auto-title, Install/Schema/Last/v_op_operator_role.vw)
-            File: v_op_role  (no auto-title, Install/Schema/Last/v_op_role.vw)
-            }  # Group: Last
-
-         }  # Group: Schema
-
-      }  # Group: Install
-
-   Group: Test  {
-
-      Group: Grant  {
-
-         File: run  (no auto-title, Test/Grant/run.sql)
-         }  # Group: Grant
-
-      }  # Group: Test
-
-   }  # Group: Скрипты
-
 Group: Индекс  {
-
-   Group: Объекты БД  {
-
-      Database View Index: Представления
-      Database Table Index: Таблицы
-      Database Trigger Index: Триггеры
-      Database Index Index: Индексы
-      Database Sequence Index: Последовательности
-      }  # Group: Объекты БД
 
    Group: Открытые объявления  {
 
