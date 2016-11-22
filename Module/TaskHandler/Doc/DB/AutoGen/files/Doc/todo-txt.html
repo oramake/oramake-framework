@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CSection"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Доработки"></a>Доработки</h1><div class=CBody></div></div></div>
+<div id=Content><div class="CSection"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Доработки"></a>Доработки</h1><div class=CBody><p>[*] Исключить из представлений <a href="../Install/Schema/Last/v_th_session-vw.html#v_th_session" class=LDatabaseView id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">v_th_session</a> и <a href="../Install/Schema/Last/v_th_command_pipe-vw.html#v_th_command_pipe" class=LDatabaseView id=link2 onMouseOver="ShowTip(event, 'tt2', 'link2')" onMouseOut="HideTip('tt2')">v_th_command_pipe</a> данные по сессиям, относящимся к другим установкам модуля ( выполненным в этой же БД для других пользователей).</p></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([1, 3, 12, 16], 17);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CDatabaseView>Сессии обработки задач.</div></div><div class=CToolTip id="tt2"><div class=CDatabaseView>Командные пайпы обработчиков заданий.</div></div><!--END_ND_TOOLTIPS-->
 
 
 

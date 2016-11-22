@@ -6,8 +6,26 @@
 --                              выполняемая установка ( значение параметра
 --                              установки <PRODUCTION_DB_NAME>)
 --
+-- Замечания:
+--  - значение для параметра <pkg_SchedulerMain.LocalRoleSuffix_OptSName>
+--    определяется согласно настройкам, заданным скриптом
+--    <Install/Data/Last/Custom/set-schDbRoleSuffixList.sql>,
+--    по значению productionDbName с учетом текущей схемы, при этом
+--    если параметру уже было присвоено значение, отличное от null, то оно не
+--    изменяется;
+--
 
 define productionDbName = "&1"
+
+
+
+prompt get local roles config...
+
+@Install/Data/Last/Custom/set-schDbRoleSuffixList.sql
+
+
+
+prompt refresh options...
 
 declare
 
@@ -20,27 +38,74 @@ declare
 
 
   /*
-    Добавляет опцию LocalRoleSuffix, если она не существует.
+    Устанавливает значение параметра LocalRoleSuffix согласно настройкам.
   */
-  procedure addLocalRoleSuffix
+  procedure setLocalRoleSuffix
   is
 
-    localRoleSuffix varchar2(30);
+    newValue varchar2(100);
 
-  begin
-    if opt.existsOption( pkg_SchedulerMain.LocalRoleSuffix_OptionSName) = 0 then
-      dbms_output.put_line(
-        'productionDbName: "' || productionDbName || '"'
-      );
-      localRoleSuffix :=
-        case when productionDbName like '%___P' then
-          substr( productionDbName, 1, length( productionDbName) - 1)
-        else
-          productionDbName
-        end
+
+
+    /*
+      Определяет новое значение параметра.
+    */
+    procedure getNewValue
+    is
+
+      findDbName varchar2(100);
+      findSchema varchar2(100);
+
+      prodDbName varchar2(100);
+      roleSuffix varchar2(100);
+
+    begin
+      findDbName := upper( trim( productionDbName));
+      findSchema :=
+        upper( sys_context( 'USERENV', 'CURRENT_SCHEMA'))
+        || '@' || findDbName
       ;
+      loop
+        fetch :schDbRoleSuffixList into prodDbName, roleSuffix;
+        exit when :schDbRoleSuffixList%notfound;
+        if upper( trim( prodDbName)) = findSchema then
+          newValue := roleSuffix;
+          -- выходим, т.к. найдено наиболее точное совпадение
+          exit;
+        elsif upper( trim( prodDbName)) = findDbName then
+          newValue := roleSuffix;
+        end if;
+      end loop;
+      close :schDbRoleSuffixList;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , 'Ошибка при определении значения параметра согласно настройкам.'
+        , true
+      );
+    end getNewValue;
+
+
+
+  -- setLocalRoleSuffix
+  begin
+    if productionDbName is null then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Не удалось определить имя промышленной БД, к которой относится'
+          || ' установка ('
+          || ' можно указать с помощью параметра установки PRODUCTION_DB_NAME'
+          || ').'
+      );
+    end if;
+    dbms_output.put_line(
+      'productionDbName: "' || productionDbName || '"'
+    );
+    getNewValue();
+
+    if opt.existsOption( pkg_SchedulerMain.LocalRoleSuffix_OptSName) = 0 then
       opt.addString(
-        optionShortName       => pkg_SchedulerMain.LocalRoleSuffix_OptionSName
+        optionShortName       => pkg_SchedulerMain.LocalRoleSuffix_OptSName
         , optionName          =>
             'Суффикс для ролей, с помощью которых выдаются права на все пакетные задания, созданные в локально установленном модуле Scheduler'
         , accessLevelCode     => opt_option_list_t.getReadAccessLevelCode()
@@ -51,40 +116,46 @@ AdminAllBatch<LocalRoleSuffix>    - полные права
 ExecuteAllBatch<LocalRoleSuffix>  - выполнение пакетных заданий
 ShowAllBatch<LocalRoleSuffix>     - просмотр данных
 
-где <LocalRoleSuffix> это значение опции.
+где <LocalRoleSuffix> это значение данного параметра.
 
-Права даются на все пакетные задания, создаваемые в модуле Scheduler, в
-котором используется значение опции. При этом подразумевается, что в
-различных БД данная опция имеет различное значение, которое задается при
-установке модуля Scheduler.
+Права даются на все пакетные задания, создаваемые в модуле Scheduler, в котором задан данный параметр. При этом подразумевается, что для различных установок модуля параметр может иметь различное значение, которое задается при установке модуля Scheduler.
 
 Пример:
-в БД DbNameP опция имеет значение "DbName", в результате права на
-все пакетные задания, созданные в БД DbNameP, можно выдать с помощью
-ролей "AdminAllBatchDbName", "ExecuteAllBatchDbName",
-"ShowAllBatchDbName".
+для установок в БД ProdDb параметр имеет значение "Prod", в результате права на все пакетные задания, созданные в БД ProdDb, можно выдать с помощью ролей "AdminAllBatchProd", "ExecuteAllBatchProd", "ShowAllBatchProd".
 '
-        , stringValue         => localRoleSuffix
+        , stringValue         => newValue
       );
       dbms_output.put_line(
-        '"' || pkg_SchedulerMain.LocalRoleSuffix_OptionSName || '"'
-        || ' option created with value: "' || localRoleSuffix || '"'
+        '"' || pkg_SchedulerMain.LocalRoleSuffix_OptSName || '"'
+        || ' option created with value: "' || newValue || '"'
+      );
+    elsif newValue is not null then
+      opt.setString(
+        optionShortName => pkg_SchedulerMain.LocalRoleSuffix_OptSName
+        , stringValue   => newValue
+      );
+      dbms_output.put_line(
+        '"' || pkg_SchedulerMain.LocalRoleSuffix_OptSName || '"'
+        || ' option set value: "' || newValue || '"'
       );
     end if;
-  end addLocalRoleSuffix;
+  end setLocalRoleSuffix;
 
 
 
 -- main
 begin
-  if productionDbName is null then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Не указано имя промышленной БД, к которой относится установка'
-        || ' ( productionDbName).'
-    );
+
+  --  Устанавливает значение параметра LocalRoleSuffix, если оно не было
+  --  задано ранее отличным от null.
+  if opt.getString(
+          pkg_SchedulerMain.LocalRoleSuffix_OptSName
+          , raiseNotFoundFlag => 0
+        )
+        is null
+      then
+    setLocalRoleSuffix();
   end if;
-  addLocalRoleSuffix();
 
   commit;
 end;

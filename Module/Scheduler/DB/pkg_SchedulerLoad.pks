@@ -352,6 +352,48 @@ procedure loadBatch(
   , updateOptionValue number := null
 );
 
+/* pproc: renameBatch( INTERNAL)
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchRec                    - данные пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+
+  ( <body::renameBatch( INTERNAL)>)
+*/
+procedure renameBatch(
+  batchRec sch_batch%rowtype
+  , newBatchShortName varchar2
+);
+
+/* pproc: renameBatch( batchId)
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchId                     - Id пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+
+  ( <body::renameBatch( batchId)>)
+*/
+procedure renameBatch(
+  batchId integer
+  , newBatchShortName varchar2
+);
+
+/* pproc: renameBatch
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchShortName              - короткое наименование пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+
+  ( <body::renameBatch>)
+*/
+procedure renameBatch(
+  batchShortName varchar2
+  , newBatchShortName varchar2
+);
+
 /* pproc: deleteBatch(batchId)
   Удаление батча.
 

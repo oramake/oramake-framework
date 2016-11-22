@@ -33,8 +33,8 @@ Batch_OptionObjTypeSName constant varchar2(50) := 'batch';
 
 /* group: Настроечные параметры */
 
-/* const: LocalRoleSuffix_OptionSName
-  Короткое наименование опции
+/* const: LocalRoleSuffix_OptSName
+  Краткое наименование параметра
   "Суффикс для ролей, с помощью которых выдаются права на все пакетные задания,
   созданные в локально установленном модуле Scheduler".
 
@@ -45,20 +45,24 @@ Batch_OptionObjTypeSName constant varchar2(50) := 'batch';
   ExecuteAllBatch<LocalRoleSuffix>  - выполнение пакетных заданий
   ShowAllBatch<LocalRoleSuffix>     - просмотр данных
 
-  где <LocalRoleSuffix> это значение опции.
+  где <LocalRoleSuffix> это значение данного параметра.
 
   Права даются на все пакетные задания, создаваемые в модуле Scheduler, в
-  котором используется значение опции. При этом подразумевается, что в
-  различных БД данная опция имеет различное значение, которое задается при
-  установке модуля Scheduler.
+  котором задан данный параметр.  При этом подразумевается, что для различных
+  установок модуля параметр может иметь различное значение, которое задается
+  при установке модуля Scheduler.
 
   Пример:
-  в БД DbNameP опция имеет значение "DbName", в результате права на
-  все пакетные задания, созданные в БД DbNameP, можно выдать с помощью
-  ролей "AdminAllBatchDbName", "ExecuteAllBatchDbName",
-  "ShowAllBatchDbName".
+  для установок в  БД ProdDb параметр имеет значение "Prod", в результате
+  права на все пакетные задания, созданные в БД ProdDb, можно выдать с помощью
+  ролей "AdminAllBatchProd", "ExecuteAllBatchProd", "ShowAllBatchProd".
+
+  Замечания:
+  - настройки, определяющие БД, для которых создаются роли указаного вида,
+    и используемые суффиксы ролей, задаются в скрипте
+    <Install/Data/Last/Custom/set-schDbRoleSuffixList.sql>;
 */
-LocalRoleSuffix_OptionSName constant varchar2(50) := 'LocalRoleSuffix';
+LocalRoleSuffix_OptSName constant varchar2(50) := 'LocalRoleSuffix';
 
 
 

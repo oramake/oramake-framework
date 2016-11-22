@@ -1,4 +1,4 @@
---script: Install/Config/resume-batches.sql
+--script: Install/Config/resume-job.sql
 --Восстанавливает выполнение заданий в БД.
 --
 --Выполняемые действия:
@@ -21,7 +21,7 @@ define resumedViewName="&1"
 
 begin
   if '&resumedViewName' is null then
-    dbms_output.put_line('No actions in resume-batches');
+    dbms_output.put_line('No actions in resume-job');
   else
     dbms_output.put_line('Getting saved JOB_QUEUE_PROCESSES...');
   end if;
@@ -44,21 +44,21 @@ begin
        -20000
         , 'There is no saved value in view &resumedViewName'
       );
-    else 
-      if 
+    else
+      if
         dbms_utility.get_parameter_value(
           param, jobQueueProcessesVal , strval ) <> 0 then
-        raise_application_error( 
+        raise_application_error(
           -20000
-          , 'Unexcected result of get_parameter_value.'  
+          , 'Unexcected result of get_parameter_value.'
         );
       end if;
-      if savedJobQueueProcesses = 0 
-         and coalesce( jobQueueProcessesVal, 0 )  <> 0 
+      if savedJobQueueProcesses = 0
+         and coalesce( jobQueueProcessesVal, 0 )  <> 0
       then
-        raise_application_error( 
+        raise_application_error(
           -20000
-          , 'Current parameter JOB_QUEUE_PROCESSES value <> 0.'  
+          , 'Current parameter JOB_QUEUE_PROCESSES value <> 0.'
         );
       end if;
       newJobQueueProcesses := coalesce(
@@ -68,7 +68,7 @@ begin
       dbms_output.put_line(
         'Set JOB_QUEUE_PROCESSES = ' || newJobQueueProcesses
       );
-      execute immediate 
+      execute immediate
         'alter system set JOB_QUEUE_PROCESSES = ' || newJobQueueProcesses
       ;
       dbms_output.put_line('System altered');

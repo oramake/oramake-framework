@@ -1,7 +1,18 @@
---script: Install/Config/before-action.sql
---ƒействи€ выполн€емые перед установкой обновлени€ модул€.
+-- script: Install/Config/before-action.sql
+-- ƒействи€, выполн€емые перед установкой обновлени€ модул€.
 --
---¬ыполн€емые действи€:
---  - останавливает запуск заданий
+-- ¬ыпол€немые действи€:
+--  - в случае STOP_JOB=1 останавливает выполнение всех заданий Ѕƒ;
+--    ( вызывает <Install/Config/stop-job.sql>);
+--  - в противном случае деактивирует пакетные задани€ всех модулей
+--    ( с ожиданием остановки обработчиков);
+--
+-- «амечани€:
+--  - при первоначальной установке модул€ ( INSTALL_VERSION=Last) скрипт не
+--    выполн€етс€;
+--
 
-@@stop-batches.sql "v_sch_save_job_queue"
+define runScript = ""
+@oms-default runScript "' || case when '&STOP_JOB' = '1' then 'stop-job.sql' else 'stop-all-batch.sql' end || '"
+
+@@&runScript "v_sch_save_job_queue"

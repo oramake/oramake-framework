@@ -20,7 +20,8 @@ where
   and ov.object_type_short_name = 'batch'
   and ov.object_short_name like '&batchPattern'
 order by
-  ov.object_short_name
+  ov.module_name
+  , ov.object_short_name
   , ov.option_short_name
 /
 

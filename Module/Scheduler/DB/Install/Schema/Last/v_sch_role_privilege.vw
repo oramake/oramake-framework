@@ -61,7 +61,7 @@ from
       where
         ov.module_svn_root = 'Oracle/Module/Scheduler'
         and ov.object_short_name is null
-        -- константа pkg_SchedulerMain.LocalRoleSuffix_OptionSName
+        -- константа pkg_SchedulerMain.LocalRoleSuffix_OptSName
         and ov.option_short_name = 'LocalRoleSuffix'
       ) opt
     cross join mod_module md

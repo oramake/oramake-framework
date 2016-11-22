@@ -636,8 +636,14 @@ procedure loadJob(
   , skipCheckJob number := null
 )
 is
+
   -- Id результирующего job
   destJobId integer;
+
+  -- Флаг интерфейсного задания ( новое значение)
+  newPublicFlag sch_job.public_flag%type;
+
+
 
   /*
     Проверка корректности ( компиляции) PL/SQL-блока задания.
@@ -667,34 +673,28 @@ is
     );
   end checkJobWhat;
 
+
+
 -- loadJob
 begin
+  newPublicFlag := coalesce( publicFlag, 0);
   if ( coalesce( skipCheckJob, 0) = 0) then
     checkJobWhat();
   end if;
   select
-    max( job_id)
+    max( j.job_id)
   into
     destJobId
   from
-    sch_job
+    sch_job j
   where
-    -- Уровень видимости батча
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and batch_short_name = batchShortName
-    or
-    -- Уровень видимости модуля
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and coalesce( publicFlag, 0) = 0
-    and batchShortName is null
-    and batch_short_name is null
-    or
-    -- Публичный job
-    job_short_name = jobShortName
-    and module_id = moduleId
-    and publicFlag = 1
+    j.job_short_name = jobShortName
+    and j.module_id = moduleId
+    and (
+      j.batch_short_name = batchShortName
+      or batchShortName is null
+        and j.batch_short_name is null
+    )
   ;
   if destJobId is null then
     insert into sch_job(
@@ -711,7 +711,7 @@ begin
     values(
       sch_job_seq.nextval
       , jobShortName
-      , coalesce( publicFlag, 0)
+      , newPublicFlag
       , moduleId
       , batchShortName
       , jobName
@@ -724,19 +724,19 @@ begin
     update
       sch_job j
     set
-      job_name = jobName
-      , job_what = jobWhat
+      j.public_flag = newPublicFlag
+      , j.job_name = jobName
+      , j.job_what = jobWhat
       , j.description = loadJob.description
-      , j.module_id = moduleId
     where
       job_id = destJobId
-      and not
-       (
-       job_name = jobName
-       and job_what = jobWhat
-       and nullif( j.description, loadJob.description) is null
-       and nullif( loadJob.description, j.description) is null
-       )
+      and not (
+        j.public_flag = newPublicFlag
+        and j.job_name = jobName
+        and j.job_what = jobWhat
+        and nullif( j.description, loadJob.description) is null
+        and nullif( loadJob.description, j.description) is null
+      )
     ;
     if sql%rowcount !=0 then
       outputInfo( 'sch_job: * ' || to_char( sql%rowcount) || ' row');
@@ -972,22 +972,28 @@ exception when others then
   );
 end loadJob;
 
-/* iproc: changeOptionModule
-  Изменяет модуль, к которым относятся параметры пакетного задания.
-  Изменение выполняется созданием нового настроечного параметра на основе
+/* iproc: moveOption
+  Переносит существующие параметры пакетного задания в случае изменения модуля
+  или короткого наименования пакетного задания.
+  Перенос выполняется созданием нового настроечного параметра на основе
   данных существующего и удалением существующего параметра.
 
   Параметры:
   batchShortName              - короткое имя пакетного задания
-  oldModuleId                 - Id модуля, к которому относятся существующие
+  moduleId                    - Id модуля, к которому относятся существующие
                                 параметры
+  newBatchShortName           - короткое наименование пакетного задания, к
+                                которому должны относиться параметры
+                                ( null если не изменяется ( по умолчанию))
   newModuleId                 - Id модуля, к которому должны относиться
                                 параметры
+                                ( null если не изменяется ( по умолчанию))
 */
-procedure changeOptionModule(
+procedure moveOption(
   batchShortName varchar2
-  , oldModuleId integer
-  , newModuleId integer
+  , moduleId integer
+  , newBatchShortName varchar2 := null
+  , newModuleId integer := null
 )
 is
 
@@ -996,17 +1002,18 @@ is
   -- Список существующих параметров
   opt sch_batch_option_t;
 
-  -- Список новых параметров
+  -- Список для новых параметров
   opt2 sch_batch_option_t;
 
 begin
+  logger.trace( 'moveOption: ...');
   opt := sch_batch_option_t(
     batchShortName      => batchShortName
-    , moduleId          => oldModuleId
+    , moduleId          => moduleId
   );
   opt2 := sch_batch_option_t(
-    batchShortName      => batchShortName
-    , moduleId          => newModuleId
+    batchShortName      => coalesce( newBatchShortName, batchShortName)
+    , moduleId          => coalesce( newModuleId, moduleId)
   );
   for opr in
         (
@@ -1058,7 +1065,19 @@ begin
     nMove := nMove + 1;
   end loop;
   if nMove > 0 then
-    outputInfo( 'option moved ( module_id): ' || nMove || ' row');
+    outputInfo(
+      'option moved ('
+      || ltrim(
+          case when newBatchShortName != batchShortName then
+              ', batch_short_name'
+            end
+          || case when newModuleId != moduleId then
+              ', module_id'
+            end
+          , ','
+        )
+      || '): ' || nMove || ' row'
+    );
   end if;
 exception when others then
   raise_application_error(
@@ -1066,13 +1085,14 @@ exception when others then
     , logger.errorStack(
         'Ошибка при изменения модуля для параметров пакетного задания ('
         || ' batchShortName="' || batchShortName || '"'
-        || ', oldModuleId=' || oldModuleId
+        || ', moduleId=' || moduleId
+        || ', newBatchShortName="' || newBatchShortName || '"'
         || ', newModuleId=' || newModuleId
         || ').'
       )
     , true
   );
-end changeOptionModule;
+end moveOption;
 
 /* iproc: updateBatch
   Обновление записи батча.
@@ -1096,9 +1116,6 @@ is
   -- Нужно ли модицифировать запись
   modifyRowFlag boolean := false;
 
-  -- Признак изменения модуля у батча
-  isChangeModule boolean := false;
-
 begin
   logger.trace( 'updateBatch: updateMainAttributeFlag=' || to_char( updateMainAttributeFlag));
   if updateMainAttributeFlag = 1 then
@@ -1109,13 +1126,19 @@ begin
       and dbBatchRecord.module_id = newBatchRecord.module_id
     )
     then
+      if dbBatchRecord.module_id != newBatchRecord.module_id then
+        moveOption(
+          batchShortName  => newBatchRecord.batch_short_name
+          , moduleId      => dbBatchRecord.module_id
+          , newModuleId   => newBatchRecord.module_id
+        );
+      end if;
       logger.trace( 'updateBatch: main field change');
       dbBatchRecord.batch_name_rus := newBatchRecord.batch_name_rus;
       dbBatchRecord.batch_name_eng := newBatchRecord.batch_name_eng;
       dbBatchRecord.batch_type_id := newBatchRecord.batch_type_id;
       dbBatchRecord.module_id := newBatchRecord.module_id;
       modifyRowFlag := true;
-      isChangeModule := dbBatchRecord.module_id != newBatchRecord.module_id;
     end if;
   end if;
   if updateConfigFlag = 1 then
@@ -1160,13 +1183,6 @@ begin
       batch_id = dbBatchRecord.batch_id
     ;
     outputInfo( 'sch_batch: * ' || to_char( sql%rowcount) || ' row');
-  end if;
-  if isChangeModule then
-    changeOptionModule(
-      batchShortName  => newBatchRecord.batch_short_name
-      , oldModuleId   => dbBatchRecord.module_id
-      , newModuleId   => newBatchRecord.module_id
-    );
   end if;
 exception when others then
   raise_application_error(
@@ -2534,10 +2550,7 @@ is
 -- loadBatchConfig
 begin
   getBatch();
-  logger.trace( 'batch.retrial_count=' || to_char( batch.retrial_count));
-  logger.trace(
-    'loadBatchConfig: batchDateIns={' || to_char(  batch.date_ins, 'dd.mm.yyyy hh24:mi:ss') || '}'
-  );
+  logger.trace( 'batch.retrial_count=' || to_char( batch.retrial_count)); logger.trace( 'loadBatchConfig: batchDateIns={' || to_char(  batch.date_ins, 'dd.mm.yyyy hh24:mi:ss') || '}');
   usedBatchNewFlag := coalesce( batchNewFlag, 0) = 1 or batch.date_ins > sysdate - 1;
   if ( updateScheduleFlag = 1) or usedBatchNewFlag then
     logger.trace( 'updateSchedule');
@@ -3403,6 +3416,123 @@ begin
   );
 end loadBatch;
 
+/* proc: renameBatch( INTERNAL)
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchRec                    - данные пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+*/
+procedure renameBatch(
+  batchRec sch_batch%rowtype
+  , newBatchShortName varchar2
+)
+is
+begin
+  update
+    sch_batch b
+  set
+    b.batch_short_name = newBatchShortName
+  where
+    b.batch_id = batchRec.batch_id
+  ;
+  if sql%rowcount = 0 then
+    raise_application_error(
+      pkg_Error.BatchNotFound
+      , 'Пакетное задание не найдено ('
+        || ' batch_id=' || batchRec.batch_id
+        || ').'
+    );
+  end if;
+  moveOption(
+    batchShortName        => batchRec.batch_short_name
+    , moduleId            => batchRec.module_id
+    , newBatchShortName   => newBatchShortName
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при переименовывании пакетного задания ('
+        || ' batch_id=' || batchRec.batch_id
+        || ', batch_short_name="' || batchRec.batch_short_name || '"'
+        || ', newBatchShortName="' || newBatchShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end renameBatch;
+
+/* proc: renameBatch( batchId)
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchId                     - Id пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+*/
+procedure renameBatch(
+  batchId integer
+  , newBatchShortName varchar2
+)
+is
+
+  -- Данные пакетного задания
+  btr sch_batch%rowtype;
+
+begin
+  pkg_SchedulerMain.getBatch( btr, batchId => batchId);
+  renameBatch(
+    batchRec            => btr
+    , newBatchShortName => newBatchShortName
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при переименовывании пакетного задания ('
+        || ' batchId=' || batchId
+        || ', newBatchShortName="' || newBatchShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end renameBatch;
+
+/* proc: renameBatch
+  Переименовывает пакетное задание.
+
+  Параметры:
+  batchShortName              - короткое наименование пакетного задания
+  newBatchShortName           - новое короткое наименование пакетного задания
+*/
+procedure renameBatch(
+  batchShortName varchar2
+  , newBatchShortName varchar2
+)
+is
+
+  -- Данные пакетного задания
+  btr sch_batch%rowtype;
+
+begin
+  pkg_SchedulerMain.getBatch( btr, batchShortName => batchShortName);
+  renameBatch(
+    batchRec            => btr
+    , newBatchShortName => newBatchShortName
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при переименовывании пакетного задания ('
+        || ' batchShortName="' || batchShortName || '"'
+        || ', newBatchShortName="' || newBatchShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end renameBatch;
+
 /* proc: deleteBatch(batchId)
   Удаление батча.
 
@@ -3553,19 +3683,13 @@ procedure deleteBatch(
   batchShortName varchar2
 )
 is
-  batchId integer;
--- deleteBatch
+
+  -- Данные пакетного задания
+  btr sch_batch%rowtype;
+
 begin
-  select
-    batch_id
-  into
-    batchId
-  from
-    sch_batch
-  where
-    batch_short_name = batchShortName
-  ;
-  deleteBatch( batchId => batchId);
+  pkg_SchedulerMain.getBatch( btr, batchShortName => batchShortName);
+  deleteBatch( batchId => btr.batch_id);
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo

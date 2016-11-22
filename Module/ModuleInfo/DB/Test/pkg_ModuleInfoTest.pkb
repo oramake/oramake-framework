@@ -17,6 +17,96 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* iproc: getTestModule
+  Возвращает параметры тестового модуля.
+  Если тестового модуля не существует, он создается.
+
+  Параметры:
+  moduleId                    - Id модуля
+                                ( возврат)
+  moduleName                  - Наименование модуля
+                                ( возврат)
+  baseName                    - Уникальное базовое имя модуля
+*/
+procedure getTestModule(
+  moduleId out integer
+  , moduleName out varchar2
+  , baseName varchar2
+)
+is
+begin
+  moduleName := Test_ModuleNamePrefix || baseName;
+  moduleId := pkg_ModuleInfoInternal.getModuleId(
+    svnRoot           => 'Oracle/Module/' || moduleName
+    , initialSvnPath  => 'Oracle/Module/' || moduleName || '@12345'
+    , isCreate        => 1
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении параметров тестового модуля ('
+        || ' baseName="' || baseName || '"'
+        || ').'
+      )
+    , true
+  );
+end getTestModule;
+
+/* func: getTestModuleId
+  Возвращает Id тестового модуля.
+  Если тестового модуля не существует, он создается.
+
+  Параметры:
+  baseName                    - Уникальное базовое имя модуля
+
+  Возврат:
+  Id модуля.
+*/
+function getTestModuleId(
+  baseName varchar2
+)
+return integer
+is
+
+  mdr v_mod_module%rowtype;
+
+begin
+  getTestModule(
+    moduleId        => mdr.module_id
+    , moduleName    => mdr.module_name
+    , baseName      => baseName
+  );
+  return mdr.module_id;
+end getTestModuleId;
+
+/* func: getTestModuleName
+  Возвращает наименование тестового модуля.
+  Если тестового модуля не существует, он создается.
+
+  Параметры:
+  baseName                    - Уникальное базовое имя модуля
+
+  Возврат:
+  наименование модуля ( module_name)
+*/
+function getTestModuleName(
+  baseName varchar2
+)
+return varchar2
+is
+
+  mdr v_mod_module%rowtype;
+
+begin
+  getTestModule(
+    moduleId        => mdr.module_id
+    , moduleName    => mdr.module_name
+    , baseName      => baseName
+  );
+  return mdr.module_name;
+end getTestModuleName;
+
 /* proc: testGetModuleId
   Тестирование функции <pkg_ModuleInfo.getModuleId>;
 */
