@@ -533,6 +533,12 @@ end remoteErrorStack;
 /* func: getErrorStack
   Получает строку стека ошибок и очищает информацию о стеке.
 
+  Параметры:
+  isStackPreserved            - оставлять ли данные по стеку. По-умолчанию (
+                                null) не оставлять ( т.е. очищать), таким
+                                образом по-умолчанию после вызова стек не
+                                может быть соединён далее.
+
   Возврат:
   - стек ошибок
 
@@ -540,12 +546,16 @@ end remoteErrorStack;
   - вызывает процедуру <pkg_LoggingErrorStack.getErrorStack>;
   - см. также <Описание::Логирование стека ошибок>;
 */
-member function getErrorStack
+member function getErrorStack(
+  isStackPreserved integer := null
+)
 return varchar2
 is
 begin
   return
-    pkg_LoggingErrorStack.getErrorStack();
+    pkg_LoggingErrorStack.getErrorStack(
+      isStackPreserved => isStackPreserved
+    );
 end getErrorStack;
 
 /* proc: clearErrorStack
@@ -558,7 +568,7 @@ end getErrorStack;
 member procedure clearErrorStack
 is
 begin
-  pkg_LoggingErrorStack.ClearLastStack();
+  pkg_LoggingErrorStack.clearLastStack();
 end clearErrorStack;
 
 end;

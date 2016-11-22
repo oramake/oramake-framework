@@ -440,6 +440,12 @@ return varchar2,
 /* pfunc: getErrorStack
   Получает строку стека ошибок и очищает информацию о стеке.
 
+  Параметры:
+  isStackPreserved            - оставлять ли данные по стеку. По-умолчанию (
+                                null) не оставлять ( т.е. очищать), таким
+                                образом по-умолчанию после вызова стек не
+                                может быть соединён далее.
+
   Возврат:
   - стек ошибок
 
@@ -449,7 +455,9 @@ return varchar2,
 
   ( <body::getErrorStack>)
 */
-member function getErrorStack
+member function getErrorStack(
+  isStackPreserved integer := null
+)
 return varchar2,
 
 /* pproc: clearErrorStack

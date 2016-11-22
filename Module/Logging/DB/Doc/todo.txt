@@ -28,9 +28,6 @@ group: Общие
 
 [*] Удаление лишних сообщений при установке. Использование скрипта oms-default.
 
-[*] Добавить параметр isStackPreserved в функцию <lg_logger_t.GetErrorStack>
-( аналогично <pkg_Logging.GetErrorStack>).
-
 
 
 group: Завершение доработок
