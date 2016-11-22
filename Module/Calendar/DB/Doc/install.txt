@@ -4,16 +4,28 @@ title: Установка
 group: Общие замечания
 
 Параметры установки:
-
-LOAD_USERID                   - Пользователь для загрузки ( формат: [userName[/password]][@dbName] )
-
-LOAD_USERDI2                  - схема в пользовательской БД
-
-LOAD_OPERATORID               - Оператор для загрузки ( формат: operatorName[/password] )
+INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
+                                первоначальной установке или номер при
+                                обновлении, например 1.1.0)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
+LOAD_USERID                   - основная схема для установки
+                                ( формат: username/password@dbName)
+LOAD_USERID2                  - схема для установки в пользовательской БД
+                                ( формат: username/password@dbName)
+LOAD_USERID4                  - пользователь, под которым создаются роли
+                                для модуля AccessOperator
+                                ( формат: username/password@dbName)
+TO_USERNAME                   - имя пользователя, которому выдаются права
+                                ( формат: username)
 
 
 
 group: Первоначальная установка
+
+Предварительные требования:
+- установка модуля Common;
+- установка модуля AccessOperator;
 
 Порядок установки:
 
@@ -25,7 +37,51 @@ $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/
 
 (end)
 
-- установка в пользовательскую схему ( БД, соединяющуюся по линку)
+- создание ролей для модуля AccessOperator
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID4=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: Выдача прав на использование модуля
+
+Команда для выдачи прав:
+
+(code)
+
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: Первоначальная установка в пользовательскую БД
+
+Предварительные требования:
+- установка модуля Common;
+- установка модуля Logging;
+- установка модуля Option;
+- установка модуля Scheduler;
+
+Порядок установки:
+
+- установка в схему пользовательской БД ( обращающейся к основной по линку)
 
 (code)
 
@@ -37,6 +93,18 @@ $ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???
 
 (code)
 
-$ make grant LOAD_USERID=userName/password@dbName TO_USERNAME=??? LOAD_OPERATORID=operatorName/password
+$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+
+
+group: Удаление модуля из пользовательской БД
+
+Команда для удаления модуля:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

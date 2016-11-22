@@ -5,17 +5,11 @@ declare
   );
 
 begin
-  optionList.addOptionString(
-    moduleOptionName => pkg_Calendar.SourceDbLink_OptionName
+  optionList.addString(
+    optionShortName => pkg_Calendar.SourceDbLink_OptionName
     , optionName => 'Линк к основной БД'
-    , defaultStringValue =>
-        case when
-          pkg_Common.isProduction() = 1
-        then
-          'ProdDb'
-        else
-          'TestDb'
-        end
+    , prodStringValue => 'ProdDb'
+    , testStringValue => 'TestDb'
   );
 end;
 /

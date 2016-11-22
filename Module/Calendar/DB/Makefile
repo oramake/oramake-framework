@@ -466,6 +466,9 @@ installBeforeTarget =                          \
   $(addsuffix .$(ru3),                        \
     $(installBeforeOmsAction)                  \
   )                                            \
+  $(addsuffix .$(ru4),                        \
+    $(installBeforeOmsAction)                  \
+  )                                            \
 
 
 
@@ -561,9 +564,12 @@ installDataTarget = \
     $(call getInstallDataFile) \
   ) \
   $(addsuffix .$(lu2), \
-	  $(wildcard Install/Data/UserDb/*.sql) \
+    $(call getInstallDataFile,UserDb) \
   ) \
   $(addsuffix .$(lu3), \
+  ) \
+  $(addsuffix .$(lu4), \
+    $(call getInstallDataFile,AccessOperatorDb) \
   ) \
 
 
@@ -671,6 +677,9 @@ installAfterTarget =                          \
   $(addsuffix .$(ru3),                        \
     $(installAfterOmsAction)                  \
   )                                            \
+  $(addsuffix .$(ru4), \
+    $(installAfterOmsAction) \
+  ) \
 
 
 
@@ -811,6 +820,7 @@ uninstallSchemaTarget = \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/UserDb/revert.sql) \
   ) \
   $(addsuffix .$(ru3), \
   ) \

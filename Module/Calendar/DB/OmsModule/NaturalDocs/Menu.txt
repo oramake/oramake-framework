@@ -79,6 +79,19 @@ Group: Скрипты  {
 
    Group: Install  {
 
+      Group: Data  {
+
+         Group: Last  {
+
+            Group: AccessOperatorDb  {
+
+               File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
+               }  # Group: AccessOperatorDb
+
+            }  # Group: Last
+
+         }  # Group: Data
+
       Group: Grant  {
 
          Group: Last  {
@@ -91,6 +104,11 @@ Group: Скрипты  {
       Group: Schema  {
 
          Group: Last  {
+
+            Group: UserDb  {
+
+               File: revert  (no auto-title, Install/Schema/Last/UserDb/revert.sql)
+               }  # Group: UserDb
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)

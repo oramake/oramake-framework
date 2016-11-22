@@ -1,51 +1,68 @@
+-- script: Install/Data/Last/AccessOperatorDb/op_role.sql
+-- —оздает роли, используемые модулем.
+--
+
+declare
+
+  -- „исло изменений
+  nChanged integer := 0;
+
+
+
+  /*
+    ƒобавление или обновление роли.
+  */
+  procedure mergeRole(
+    roleShortName varchar2
+    , roleName varchar2
+    , roleNameEn varchar2
+    , description varchar2
+  )
+  is
+
+    changedFlag integer;
+
+  begin
+    changedFlag := pkg_AccessOperator.mergeRole(
+      roleShortName   => roleShortName
+      , roleName      => roleName
+      , roleNameEn    => roleNameEn
+      , description   => description
+    );
+    if changedFlag = 1 then
+      dbms_output.put_line(
+        'changed role: ' || roleShortName
+      );
+      nChanged := nChanged + 1;
+    else
+      dbms_output.put_line(
+        'checked role: ' || roleShortName
+      );
+    end if;
+  end mergeRole;
+
+
+
+-- main
 begin
-  merge into op_role d
-  using
-  (
-    select
-      'CdrUser' as role_short_name
-      , 'ѕользователь модул€ Calendar' as role_name
-      , 'Calendar user' as role_name_en
-      , 'ƒает права на просмотр данных по справочнику отклонений рабочих/выходных дней' as description
-    from op_role
-    union all
-    select
-      'CdrAdministrator' as role_short_name
-      , 'јдминистратор модул€ Calendar' as role_name
-      , 'Calendar administrator' as role_name_en
-      , 'ƒает права на просмотр, редактирование, добавление и удаление данных по справочнику отклонений рабочих/выходных дней ' as description
-    from op_role
-    minus
-    select
-      t.role_short_name
-      , t.role_name
-      , t.role_name_en
-      , t.description
-    from
-      op_role t
-  ) s
-  on (d.role_short_name = s.role_short_name)
-  when not matched then insert
-  (
-    role_id
-    , role_short_name
-    , role_name
-    , role_name_en
-    , description
-  )
-  values
-  (
-    op_role_seq.nextval
-    , s.role_short_name
-    , s.role_name
-    , s.role_name_en
-    , s.description
-  )
-  when matched then update set
-    d.role_name         = s.role_name
-    , d.role_name_en    = s.role_name_en
-    , d.description     = nvl (d.description, s.description)
-  ;
+  mergeRole(
+    roleShortName => 'CdrUser'
+    , roleName    =>
+        'ѕользователь модул€ Calendar'
+    , roleNameEn  =>
+        'Calendar user'
+    , description =>
+        'ƒает права на просмотр данных по справочнику отклонений рабочих/выходных дней'
+  );
+  mergeRole(
+    roleShortName => 'CdrAdministrator'
+    , roleName    =>
+        'јдминистратор модул€ Calendar'
+    , roleNameEn  =>
+        'Calendar administrator'
+    , description =>
+        'ƒает права на просмотр, редактирование, добавление и удаление данных по справочнику отклонений рабочих/выходных дней'
+  );
   commit;
 end;
 /

@@ -1,13 +1,29 @@
--- Script: Install/Grant/Last/run.sql
--- Выдача прав и создание синонимов на объекты модуля
--- схеме с именем, определяемым параметром destUser
+-- script: Install/Grant/Last/run.sql
+-- Выдает необходимые права на использование модуля.
 --
 -- Параметры:
--- 	destUser - имя пользователя для выдачи прав и создания синонимов
-define destUserInternal = &1
+-- toUserName                  - имя пользователя, которому выдаются права
+--
+-- Замечания:
+--  - скрипт запускается под пользователем, которому принадлежат объекты модуля
+--   ;
+--
 
-grant all on pkg_Calendar to &destUserInternal;
-grant select on cdr_day to &destUserInternal;
+define toUserName = "&1"
 
-create or replace synonym &destUserInternal..pkg_Calendar for pkg_Calendar;
-create or replace synonym &destUserInternal..cdr_day for cdr_day;
+
+
+grant execute on pkg_Calendar to &toUserName
+/
+create or replace synonym &toUserName..pkg_Calendar for pkg_Calendar
+/
+
+
+grant select on cdr_day to &toUserName
+/
+create or replace synonym &toUserName..cdr_day for cdr_day
+/
+
+
+
+undefine toUserName

@@ -34,7 +34,7 @@ begin
     sourceDbLink :=
       opt_option_list_t(
         moduleName => Module_Name
-      ).getOptionString( SourceDbLink_OptionName)
+      ).getString( SourceDbLink_OptionName)
     ;
   end if;
 exception when others then
