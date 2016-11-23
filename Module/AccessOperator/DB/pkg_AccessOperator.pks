@@ -88,7 +88,6 @@ procedure updateOperator(
   , operatorNameEn  varchar2
   , login           varchar2
   , password        varchar2
-  , changePassword  integer
   , operatorIdIns   integer
   , operatorComment varchar2 := null
 );

@@ -183,7 +183,6 @@ exception
           || ', operatorNameEn="' || operatorNameEn || '"'
           || ', login="' || login || '"'
           || ', password="' || password || '"'
-          || ', changePassword="' || changePassword || '"'
           || ', operatorIdIns="' || operatorIdIns || '"'
           || ').'
         )
@@ -211,7 +210,6 @@ procedure updateOperator(
   , operatorNameEn  varchar2
   , login           varchar2
   , password        varchar2
-  , changePassword  integer
   , operatorIdIns   integer
   , operatorComment varchar2 := null
 )
