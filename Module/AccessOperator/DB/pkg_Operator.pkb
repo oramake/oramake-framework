@@ -496,25 +496,34 @@ begin
   currentOperatorNameRus      := null;
 end Logoff;
 
-/* func: GETCURRENTUSERID
-   Возвращает ID текущего оператора ( при отсутствии регистрации - выбрасывает
-исключение).
+/* func: getCurrentUserId
+  Возвращает идентификатор текущего оператора.
 
+  Входные параметры:
+  isRaiseException            - флаг выбрасывания исключения в случае, если
+                                текущий оператор не определен
+
+  Возврат:
+  oprator_id                  - идентификатор текущего оператора
 */
-FUNCTION GETCURRENTUSERID
- RETURN INTEGER
- IS
---GetCurrentUserID
+function getCurrentUserId(
+  isRaiseException integer default null
+)
+return integer
+is
+-- getCurrentUserId
 begin
-  if currentOperatorID is null then
+  if currentOperatorId is null
+    and coalesce(isRaiseException, 1) = 1
+  then
     raise_application_error(
       pkg_Error.OperatorNotRegister
       , 'Вы не зарегистрировались.'
         || ' Для регистрации в системе выполните функцию Login.'
     );
   end if;
-  return currentOperatorID;
-end GetCurrentUserID;
+  return currentOperatorId;
+end getCurrentUserId;
 
 /* func: GETCURRENTUSERNAME
 Возвращает имя текущего оператора ( при отсутствии регистрации - выбрасывает

@@ -5,6 +5,20 @@ create or replace package pkg_Operator is
   SVN root: RusFinanceInfo/Module/AccessOperator
 */
 
+
+
+/* group: Константы */
+
+/* const: Module_Name
+  Название модуля, к которому относится пакет.
+*/
+Module_Name constant varchar2(30) := 'AccessOperator';
+
+/* const: FullAccess_GroupId
+  Id группы "Полный доступ".
+*/
+FullAccess_GroupId constant integer := 1;
+
 /* const: ROLEADMIN_ROLEID
  ID роли "Администратор прав доступа" */
 ROLEADMIN_ROLEID CONSTANT INTEGER := 5;
@@ -20,6 +34,7 @@ USERADMIN_ROLEID CONSTANT INTEGER := 1;
 /* const: USERADMIN_ROLE
 Имя роли "Администратор пользователей" */
 USERADMIN_ROLE CONSTANT VARCHAR2(50) := 'UserAdmin';
+
 
 
 /* func: GETHASH
@@ -145,13 +160,22 @@ PROCEDURE REMOTELOGIN
 */
 PROCEDURE LOGOFF;
 
-/* func: GETCURRENTUSERID
-   Возвращает ID текущего оператора ( при отсутствии регистрации - выбрасывает
-исключение).
-(<body::GETCURRENTUSERID>)
+/* pfunc: getCurrentUserId
+  Возвращает идентификатор текущего оператора.
+
+  Входные параметры:
+  isRaiseException            - флаг выбрасывания исключения в случае, если
+                                текущий оператор не определен
+
+  Возврат:
+  oprator_id                  - идентификатор текущего оператора
+
+  ( <body::getCurrentUserId>)
 */
-FUNCTION GETCURRENTUSERID
- RETURN INTEGER;
+function getCurrentUserId(
+  isRaiseException integer default null
+)
+return integer;
 
 /* func: GETCURRENTUSERNAME
 Возвращает имя текущего оператора ( при отсутствии регистрации - выбрасывает
