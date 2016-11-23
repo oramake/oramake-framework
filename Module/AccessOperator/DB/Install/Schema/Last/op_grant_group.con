@@ -1,0 +1,9 @@
+alter table OP_GRANT_GROUP
+  add constraint OP_GRANT_GROUP_OP_GROUP_FK foreign key (GROUP_ID, CHECK_IS_GRANT_ONLY)
+  references OP_GROUP (GROUP_ID, IS_GRANT_ONLY);
+alter table OP_GRANT_GROUP
+  add constraint OP_GRANT_GROUP_OP_GROUP_FK2 foreign key (GRANT_GROUP_ID)
+  references OP_GROUP (GROUP_ID);
+alter table OP_GRANT_GROUP
+  add constraint OP_GRANT_GROUP_OP_OPERATOR_FK foreign key (OPERATOR_ID)
+  references OP_OPERATOR (OPERATOR_ID);

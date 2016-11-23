@@ -6,5 +6,6 @@ create table OP_OPERATOR_ROLE
   ROLE_ID         INTEGER not null,
   DATE_INS        DATE default SYSDATE not null,
   OPERATOR_ID_INS INTEGER not null
+  , constraint OP_OPERATOR_ROLE_PK primary key ( operator_id, role_id)
 )
 /

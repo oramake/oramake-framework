@@ -6,5 +6,7 @@ create table OP_GROUP_ROLE
   ROLE_ID     INTEGER not null,
   DATE_INS    DATE default SYSDATE not null,
   OPERATOR_ID INTEGER not null
+  , constraint op_group_role_pk primary key ( group_id, role_Id)
+    using index tablespace &indexTablespace
 )
 /

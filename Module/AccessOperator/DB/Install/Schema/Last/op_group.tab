@@ -6,7 +6,6 @@ create table op_group
   group_id                        integer                             not null
   , group_name                    varchar2(50)                        not null
   , group_name_en                 varchar2(50)                        not null
-  , description                   varchar2(4000)
   , date_ins                      date                default sysdate not null
   , operator_id                   integer                             not null
   , is_grant_only                 number(1)           default 0       not null
@@ -21,6 +20,8 @@ create table op_group
     unique ( group_id, is_grant_only)
     using index tablespace
       &indexTablespace
+  , constraint OP_GROUP_CK_IS_GRANT_ONLY
+  check (is_grant_only in ( 0, 1))
 )
 /
 
@@ -36,9 +37,6 @@ comment on column op_group.group_name is
 comment on column op_group.group_name_en is
   'Наименование группы на английском языке'
 /
-comment on column op_group.description is
-  'Описание группы на языке по-умолчанию'
-/
 comment on column op_group.date_ins is
   'Дата создания записи'
 /
@@ -52,10 +50,10 @@ comment on column op_group.group_name_eng is
   'Наименование группы на английском языке'
 /
 
--- index: op_group_ix_name
+-- index: OP_GROUP_UX_GROUP_NAME
 -- Индекс для доступа по названию группы (верхний регистр)
 create index
-  op_group_ix_name
+  OP_GROUP_UX_GROUP_NAME
 on
   op_group ( upper( group_name))
 tablespace

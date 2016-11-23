@@ -16,7 +16,7 @@ create table op_role
       ( role_id)
     using index tablespace
       &indexTablespace
-  , constraint op_role_uk_sname   unique
+  , constraint op_role_uk unique
       ( short_name)
     using index tablespace
       &indexTablespace

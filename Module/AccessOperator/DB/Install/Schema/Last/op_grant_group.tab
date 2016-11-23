@@ -11,3 +11,10 @@ create table OP_GRANT_GROUP
 )
 /
 
+alter table OP_GRANT_GROUP
+  add constraint OP_GRANT_GROUP_CK_CHECK_IS_GRA
+  check (nullif( check_is_grant_only, 1) is null);
+
+create index OP_GRANT_GROUP_IX_GRANT_GROUP on OP_GRANT_GROUP (GRANT_GROUP_ID)
+  tablespace &indexTablespace;
+
