@@ -17,6 +17,8 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+
+
 /* group: Роли */
 
 /* func: mergeRole
@@ -115,13 +117,9 @@ end mergeRole;
     operatorNameEn              - Наименование пользователя на английском языке
     login                       - Логин
     password                    - Пароль
-    changePassword              - Признак необходимости изменения пароля
-                                  пользователем:
-                                  1 – пользователю необходимо изменить пароль;
-                                  0 – пользователю нет необходимости менять пароль.
     operatorIdIns               - Пользователь, создавший запись
                                   ожидающего привязки к сотруднику
-    operatorComment             - коментарий оператора
+    operatorComment             - комментарий оператора
 
    Возврат:
      operator_id                - ID созданного оператора
@@ -131,7 +129,6 @@ function createOperator(
   , operatorNameEn  varchar2
   , login           varchar2
   , password        varchar2
-  , changePassword  integer
   , operatorIdIns   integer
   , operatorComment varchar2 := null
 )
@@ -203,12 +200,8 @@ end createOperator;
     operatorNameEn              - Наименование пользователя на английском языке
     login                       - Логин
     password                    - Пароль
-    changePassword              - Признак необходимости изменения пароля
-                                  пользователем:
-                                  1 – пользователю необходимо изменить пароль;
-                                  0 – пользователю нет необходимости менять пароль.
     operatorIdIns               - Пользователь, создавший запись
-    operatorComment             - коментарий оператора
+    operatorComment             - комментарий оператора
 
    Выходные параметры отсутствуют.
 */
@@ -232,7 +225,6 @@ begin
     t.operator_name        = operatorName
     , t.operator_name_en   = operatorNameEn
     , t.login              = updateOperator.login
-    , t.change_password    = changePassword
     , t.operator_comment   = operatorComment
   where
     t.operator_id = operatorId
