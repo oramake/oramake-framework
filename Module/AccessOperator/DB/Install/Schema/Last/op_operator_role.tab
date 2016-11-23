@@ -1,41 +1,10 @@
--- table: op_operator_role
--- Роли операторов.
-
-create table op_operator_role
+--table: OP_OPERATOR_ROLE
+-- create table OP_OPERATOR_ROLE
+create table OP_OPERATOR_ROLE
 (
-  operator_id                     integer                             not null
-  , role_id                       integer                             not null
-  , date_ins                      date                default sysdate not null
-  , operator_id_ins               integer                             not null
-  , constraint op_operator_role_pk primary key
-      ( operator_id, role_id)
-    using index tablespace
-      &indexTablespace
+  OPERATOR_ID     INTEGER not null,
+  ROLE_ID         INTEGER not null,
+  DATE_INS        DATE default SYSDATE not null,
+  OPERATOR_ID_INS INTEGER not null
 )
-/
-
-comment on table op_operator_role is
-  'Роли операторов [SVN root: Oracle/Module/AccessOperator]'
-/
-comment on column op_operator_role.operator_id is
-  'Идентификатор оператора'
-/
-comment on column op_operator_role.role_id is
-  'Идентификатор роли'
-/
-comment on column op_operator_role.date_ins is
-  'Дата создания записи'
-/
-comment on column op_operator_role.operator_id_ins is
-  'Идентификатор оператора, создания запись'
-/
-
--- index: op_operator_role_ix_op_id
--- Индекс для доступа по идентификатору оператора, создавшего запись.
-create index
-  op_operator_role_ix_op_id
-on
-  op_operator_role ( operator_id_ins)
-tablespace
-  &indexTablespace
 /

@@ -7,7 +7,7 @@ as
 select
   -- SVN root: Oracle/Module/AccessOperator
   role_id
-  , role_short_name
+  , short_name as role_short_name
   , role_name
   , role_name_en
   , description

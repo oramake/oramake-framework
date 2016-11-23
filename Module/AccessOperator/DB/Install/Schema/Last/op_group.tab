@@ -9,8 +9,16 @@ create table op_group
   , description                   varchar2(4000)
   , date_ins                      date                default sysdate not null
   , operator_id                   integer                             not null
+  , is_grant_only                 number(1)           default 0       not null
+  , group_name_rus                varchar2(50)                        not null
+  , group_name_eng                varchar2(50)        default 'N/A'   not null
   , constraint op_group_pk        primary key
       ( group_id)
+    using index tablespace
+      &indexTablespace
+  , constraint
+      op_group_uk
+    unique ( group_id, is_grant_only)
     using index tablespace
       &indexTablespace
 )
@@ -36,6 +44,12 @@ comment on column op_group.date_ins is
 /
 comment on column op_group.operator_id is
   'Идентификатор оператора, создавшего запись'
+/
+comment on column op_group.group_name_rus is
+  'Наименование группы на языке по-умолчанию'
+/
+comment on column op_group.group_name_eng is
+  'Наименование группы на английском языке'
 /
 
 -- index: op_group_ix_name

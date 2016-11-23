@@ -26,7 +26,8 @@ begin
       from
         (
         select
-          pkg_Operator.FullAccess_GroupId as group_id
+          -- pkg_Operator.FullAccess_GroupId
+          1 as group_id
           , 'Полный доступ' as group_name
           , 'Full Access'   as group_name_en
         from
@@ -49,17 +50,23 @@ begin
       , dest.group_name
       , dest.group_name_en
       , dest.operator_id
+      , dest.group_name_rus
+      , dest.group_name_eng
     )
     values (
       src.group_id
       , src.group_name
       , src.group_name_en
       , src.operator_id
+      , src.group_name
+      , src.group_name_en
       )
   when matched then
     update set
       dest.group_name = src.group_name
       , dest.group_name_en = src.group_name_en
+      , dest.group_name_rus = src.group_name
+      , dest.group_name_eng = src.group_name_en
   ;
   nChanged := sql%rowcount;
 

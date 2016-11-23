@@ -35,7 +35,12 @@ pkg_AccessOperator.pkb.$(lu): \
 
 pkg_Operator.pkb.$(lu): \
   pkg_Operator.pks.$(lu) \
+  pkg_OperatorInternal.pkb.$(lu) \
   Install/Schema/Last/v_op_operator_role.vw.$(lu)
+
+
+pkg_OperatorInternal.pkb.$(lu): \
+  pkg_OperatorInternal.pks.$(lu)
 
 
 Install/Schema/Last/op_group_bi_define.trg.$(lu): \
@@ -60,6 +65,10 @@ Install/Schema/Last/op_operator_role_bi_define.trg.$(lu): \
 
 Install/Schema/Last/op_role_bi_define.trg.$(lu): \
   pkg_Operator.pks.$(lu)
+
+
+Install/Schema/Last/op_role_ai_grant_to_admin.trg.$(lu): \
+  pkg_OperatorInternal.pks.$(lu)
 
 
 Install/Data/1.0.0/op_group.sql.$(lu): \

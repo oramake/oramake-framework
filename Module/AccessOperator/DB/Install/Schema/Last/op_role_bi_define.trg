@@ -1,24 +1,27 @@
--- trigger: op_role_bi_define
--- Инициализация полей таблицы <op_role> при вставке записи.
-create or replace trigger op_role_bi_define
-  before insert
-  on op_role
-  for each row
-begin
+--trigger: OP_ROLE_BI_DEFINE
+-- create trigger OP_ROLE_BI_DEFINE
+CREATE OR REPLACE TRIGGER OP_ROLE_BI_DEFINE
+ BEFORE INSERT
+ ON OP_ROLE
+ FOR EACH ROW
+BEGIN
 
-  -- Определяем значение первичного ключа
-  if :new.role_id is null then
-    :new.role_id := op_role_seq.nextval;
+ if :new.ROLE_ID is null
+  then
+ 
+    select op_role_seq.nextval
+     into :new.ROLE_ID
+    from dual;
+
   end if;
 
-  -- Id оператора, добавившего запись
-  if :new.operator_id is null then
-    :new.operator_id := pkg_Operator.getCurrentUserId();
-  end if;
+if :new.Operator_ID is null then        --Оператор, создавший строку.
+  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
+end if;
 
-  -- Определяем дату добавления записи
-  if :new.date_ins is null then
-    :new.date_ins := sysdate;
-  end if;
-end;
+if :new.Date_Ins is null then           --Определяем дату создания строки.
+  :new.Date_Ins := SysDate;
+end if;
+
+END;--trigger;
 /

@@ -9,7 +9,7 @@ create or replace package body pkg_AccessOperator is
   Логер пакета.
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName    => pkg_Operator.Module_Name
+  moduleName    => 'AccessOperator'
   , objectName  => 'pkg_AccessOperator'
 );
 
@@ -60,7 +60,7 @@ begin
     dual
   minus
   select
-    role_short_name
+    short_name as role_short_name
     , role_name
     , role_name_en
     , description
@@ -68,10 +68,10 @@ begin
     op_role
   ) s
   on (
-    s.role_short_name = r.role_short_name
+    s.role_short_name = r.short_name
   )
   when not matched then insert (
-    role_short_name
+    short_name
     , role_name
     , role_name_en
     , description
@@ -146,7 +146,6 @@ begin
     , password
     , date_begin
     , operator_id_ins
-    , operator_comment
   )
   values(
     login
@@ -155,7 +154,6 @@ begin
     , pkg_Operator.getHash( password)
     , sysdate
     , operatorIdIns
-    , operatorComment
   )
   returning
     operator_id
@@ -183,7 +181,6 @@ exception
           || ', operatorNameEn="' || operatorNameEn || '"'
           || ', login="' || login || '"'
           || ', password="' || password || '"'
-          || ', changePassword="' || changePassword || '"'
           || ', operatorIdIns="' || operatorIdIns || '"'
           || ').'
         )
@@ -225,7 +222,6 @@ begin
     t.operator_name        = operatorName
     , t.operator_name_en   = operatorNameEn
     , t.login              = updateOperator.login
-    , t.operator_comment   = operatorComment
   where
     t.operator_id = operatorId
   ;
@@ -275,7 +271,6 @@ begin
     op_operator t
   set
     t.date_finish        = sysdate
-    , t.operator_comment = operatorComment
   where
     t.operator_id = operatorId
   ;

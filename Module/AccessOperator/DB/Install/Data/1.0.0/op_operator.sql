@@ -81,6 +81,8 @@ begin
       , dest.date_begin
       , dest.date_finish
       , dest.operator_id_ins
+      , dest.operator_name_rus
+      , dest.operator_name_eng
       )
     values
       (
@@ -92,6 +94,8 @@ begin
       , src.date_begin
       , src.date_finish
       , src.operator_id_ins
+      , src.operator_name
+      , src.operator_name_en
       )
   when matched then
     update set
@@ -101,6 +105,8 @@ begin
       , dest.password = src.password
       , dest.date_begin = src.date_begin
       , dest.date_finish = src.date_finish
+      , dest.operator_name_rus = src.operator_name
+      , dest.operator_name_eng = src.operator_name_en
   ;
   nChanged := sql%rowcount;
 

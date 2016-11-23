@@ -1,19 +1,18 @@
--- trigger: op_group_role_bi_define
--- Инициализация полей таблицы <op_group_role> при вставке записи.
-create or replace trigger op_group_role_bi_define
-  before insert
-  on op_group_role
-  for each row
-begin
+--trigger: OP_GROUP_ROLE_BI_DEFINE
+-- create trigger OP_GROUP_ROLE_BI_DEFINE
+CREATE OR REPLACE TRIGGER OP_GROUP_ROLE_BI_DEFINE
 
-  -- Id оператора, добавившего запись
-  if :new.operator_id is null then
-    :new.operator_id := pkg_Operator.getCurrentUserId();
-  end if;
+ BEFORE INSERT
+ ON OP_GROUP_ROLE
+ FOR EACH ROW
+BEGIN
+if :new.Operator_ID is null then        --Оператор, создавший строку.
+  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
+end if;
 
-  -- Определяем дату добавления записи
-  if :new.date_ins is null then
-    :new.date_ins := sysdate;
-  end if;
-end;
+if :new.Date_Ins is null then           --Определяем дату создания строки.
+  :new.Date_Ins := SysDate;
+end if;
+
+END;--trigger;
 /

@@ -1,0 +1,13 @@
+--table: OP_GRANT_GROUP
+-- create table OP_GRANT_GROUP
+create table OP_GRANT_GROUP
+(
+  GROUP_ID            INTEGER not null,
+  GRANT_GROUP_ID      INTEGER not null,
+  CHECK_IS_GRANT_ONLY NUMBER(1) default 1 not null,
+  DATE_INS            DATE default sysdate not null,
+  OPERATOR_ID         INTEGER not null,
+  constraint OP_GRANT_GROUP_PK primary key (GROUP_ID, GRANT_GROUP_ID)
+)
+/
+
