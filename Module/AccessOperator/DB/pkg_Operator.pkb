@@ -24,8 +24,6 @@ currentOperatorName op_operator.operator_name%type;
 
 /* group: Функции */
 
-/* group: Функции для обратной совместимости */
-
 /* func: getHash
   Возвращает hex-строку с MD5 контрольной суммой.
 
@@ -96,69 +94,6 @@ exception when others then
     , true
   );
 end getOperator;
-
-/* func: createOperator
-  Создание пользователя. Обертка для <pkg_AccessOperator::createOperator>.
-  Не использовать.
-*/
-function createOperator(
-  operatorName      varchar2
-, operatorNameEn  varchar2
-, login           varchar2
-, password        varchar2
-, changePassword  integer
-, operatorIdIns   integer
-)
-return integer
-is
--- createOperator
-begin
-  return
-    pkg_AccessOperator.createOperator(
-      operatorName        => operatorName
-    , operatorNameEn      => operatorNameEn
-    , login               => login
-    , password            => password
-    , changePassword      => changePassword
-    , operatorIdIns       => operatorIdIns
-    );
-end createOperator;
-
-/* proc: deleteOperator
-   Удаление пользователя. Обёртка для <pkg_AccessOperator::deleteOperator>.
-   Не использовать.
-*/
-procedure deleteOperator(
-  operatorId        integer
-  , operatorIdIns   integer
-)
-is
--- deleteOperator
-begin
-  pkg_AccessOperator.deleteOperator(
-    operatorId      => operatorId
-    , operatorIdIns => operatorIdIns
-  );
-end deleteOperator;
-
-/* proc: createOperatorGroup
-  Процедура назначения группы оператору. Обёртка для
-  <pkg_AccessOperator::createOperatorGroup>.  Не использовать.
-*/
-procedure createOperatorGroup(
-  operatorId      integer
-  , groupId       integer
-  , operatorIdIns integer
-)
-is
--- createOperatorGroup
-begin
-  pkg_AccessOperator.createOperatorGroup(
-    operatorId      => operatorId
-    , groupId       => groupId
-    , operatorIdIns => operatorIdIns
-  );
-end createOperatorGroup;
 
 
 

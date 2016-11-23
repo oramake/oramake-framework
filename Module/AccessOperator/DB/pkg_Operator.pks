@@ -1,6 +1,7 @@
 create or replace package pkg_Operator is
 /* package: pkg_Operator
-  Интерфейсный пакет модуля Operator.
+  Интерфейсный пакет модуля Operator. Содержит только read-only функции (
+  функции, не меняющие данные модуля).
 
   SVN root: Oracle/Module/AccessOperator
 */
@@ -22,10 +23,6 @@ FullAccess_GroupId constant integer := 1;
 
 
 /* group: Функции */
-
-
-
-/* group: Функции для обратной совместимости */
 
 /* pfunc: getHash
   Возвращает hex-строку с MD5 контрольной суммой.
@@ -66,45 +63,6 @@ function getOperator(
   , maxRowCount integer := null
 )
 return sys_refcursor;
-
-/* pfunc: createOperator
-  Создание пользователя. Обертка для <pkg_AccessOperator::createOperator>.
-  Не использовать.
-
-  ( <body::createOperator>)
-*/
-function createOperator(
-  operatorName      varchar2
-, operatorNameEn  varchar2
-, login           varchar2
-, password        varchar2
-, changePassword  integer
-, operatorIdIns   integer
-)
-return integer;
-
-/* pproc: deleteOperator
-   Удаление пользователя. Обёртка для <pkg_AccessOperator::deleteOperator>.
-   Не использовать.
-
-  ( <body::deleteOperator>)
-*/
-procedure deleteOperator(
-  operatorId        integer
-  , operatorIdIns   integer
-);
-
-/* pproc: createOperatorGroup
-  Процедура назначения группы оператору. Обёртка для
-  <pkg_AccessOperator::createOperatorGroup>.  Не использовать.
-
-  ( <body::createOperatorGroup>)
-*/
-procedure createOperatorGroup(
-  operatorId      integer
-  , groupId       integer
-  , operatorIdIns integer
-);
 
 
 
