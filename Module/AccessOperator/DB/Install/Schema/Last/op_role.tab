@@ -54,12 +54,4 @@ comment on column op_role.role_name_eng is
   'Ќаименование роли на английском €зыке'
 /
 
--- index: op_role_ix_name
--- »ндекс дл€ доступа по названию роли (верхний регистр)
-create index
-  op_role_ix_name
-on
-  op_role ( upper( role_name))
-tablespace
-  &indexTablespace
-/
+

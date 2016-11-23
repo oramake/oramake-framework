@@ -1,4 +1,0 @@
-alter table OP_OPERATOR
-  add constraint OP_OPERATOR_OP_OPERATOR_FK foreign key (OPERATOR_ID_INS)
-  references OP_OPERATOR (OPERATOR_ID)
-/  

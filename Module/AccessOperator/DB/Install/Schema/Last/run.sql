@@ -23,7 +23,6 @@
 @oms-run op_grant_group.con
 @oms-run op_group.con
 @oms-run op_group_role.con
-@oms-run op_operator.con
 @oms-run op_operator_group.con
 @oms-run op_operator_role.con
 @oms-run op_role.con

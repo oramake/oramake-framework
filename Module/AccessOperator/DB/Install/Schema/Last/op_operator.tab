@@ -10,7 +10,6 @@ create table op_operator
   , date_finish                   date
   , operator_name                 varchar2(100)                       not null
   , operator_name_en              varchar2(100)
-  , operator_comment              varchar2(1000)
   , operator_id_ins               integer not null
   , date_ins                      date                default sysdate not null
   , operator_name_eng             varchar2(100)       default 'N/A'
@@ -23,11 +22,8 @@ create table op_operator
   , constraint op_operator_ch1 check (change_password in (0,1))
 )
 /
-comment on table op_operator is
-  'Операторы [SVN root: Oracle/Module/AccessOperator]'
-/
 comment on column op_operator.operator_id is
-  'Первичный ключ. Идентификатор пользователя'
+  'Primary Key. Идентификатор пользователя'
 /
 comment on column op_operator.login is
   'Логин пользователя'
@@ -42,19 +38,16 @@ comment on column op_operator.date_finish is
   'Дата окончания действия записи'
 /
 comment on column op_operator.operator_name is
-  'Наименование пользователя на языке по умолчанию'
+  'наименование пользователя на языке по умолчанию'
 /
 comment on column op_operator.operator_name_rus is
   'Наименование пользователя на языке по умолчанию'
 /
 comment on column op_operator.operator_name_en is
-  'Наименование пользователя на английском языке'
-/
-comment on column op_operator.operator_comment is
-  'Комментарий'
+  'наименование пользователя на английском языке'
 /
 comment on column op_operator.operator_id_ins is
-  'Id пользователя, создавшего запись'
+  'Пользователь, создавший запись'
 /
 comment on column op_operator.date_ins is
   'Дата создания записи'
@@ -68,7 +61,7 @@ comment on column op_operator.operator_name_eng is
 
 -- Индекс для контроля уникальности логина (верхний регистр)
 create unique index
-  op_operator_ux_login
+  op_operator_ux_upper_login
 on
   op_operator (
     upper( login)

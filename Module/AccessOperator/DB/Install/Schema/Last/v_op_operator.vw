@@ -11,7 +11,6 @@ select
   , date_finish
   , operator_name
   , operator_name_en
-  , operator_comment
   , operator_id_ins
   , date_ins
 from
@@ -43,9 +42,6 @@ comment on column v_op_operator.operator_name is
 /
 comment on column v_op_operator.operator_name_en is
   'Наименование пользователя на английском языке'
-/
-comment on column v_op_operator.operator_comment is
-  'Комментарий'
 /
 comment on column v_op_operator.operator_id_ins is
   'Id пользователя, создавшего запись'

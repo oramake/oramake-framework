@@ -52,7 +52,7 @@ comment on column op_group.group_name_eng is
 
 -- index: OP_GROUP_UX_GROUP_NAME
 -- Индекс для доступа по названию группы (верхний регистр)
-create index
+create unique index
   OP_GROUP_UX_GROUP_NAME
 on
   op_group ( upper( group_name))
