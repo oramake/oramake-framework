@@ -791,13 +791,15 @@ return sys_refcursor;
    operator_id - ID оператора;
    Operator_Name - ФИО оператора;
    Operator_Name_en - ФИО оператора (END);
+   maxRowCount                - максимальное количество записей
 
 (<body::getOperator>)
 */
 FUNCTION getOperator
  (
   operatorName        varchar2 := null
- ,operatorName_en     varchar2 := null
+ , operatorName_en    varchar2 := null
+ , maxRowCount        integer  := null
  )
 return sys_refcursor;
 

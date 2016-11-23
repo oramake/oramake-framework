@@ -2570,6 +2570,7 @@ end getRolesShortName;
    operator_Id - ID оператора;
    Operator_Name - ФИО оператора;
    Operator_Name_en - ФИО оператора (END);
+   maxRowCount                - максимальное количество записей
 
 (<body::getOperator>)
 */
@@ -2577,6 +2578,7 @@ FUNCTION getOperator
  (
   operatorName        varchar2 := null
  ,operatorName_en     varchar2 := null
+ , maxRowCount        integer  := null
  )
 return sys_refcursor is
 
@@ -2595,11 +2597,13 @@ select v.operator_id
 
  AddSqlCondition( SQLstr, ' upper(v.operator_name_rus)', 'like', operatorName is null,'operatorName');
  AddSqlCondition( SQLstr, ' upper(v.operator_name_eng)', 'like', operatorName_en is null,'operatorName_en');
+ AddSqlCondition( SQLstr, ' rownum', '<=', maxRowCount is null,'maxRowCount');
 
  open  curResult FOR SQLstr
 	using
 		upper(operatorName)
-		, upper(operatorName_en);
+		, upper(operatorName_en)
+    , maxRowCount;
 
 
   return curResult;--Выдаем результат
