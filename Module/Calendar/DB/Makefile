@@ -373,14 +373,14 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
+    $(wildcard Common/*.pk[s,b]) \
     $(wildcard *.pk[s,b])                \
     $(wildcard Install/Schema/Last/*.trg)                \
-    $(wildcard Data/*.sql)               \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard UserDb/*.pk[s,b])        \
   )                                      \
   $(addsuffix .$(lu3),                  \
+    $(wildcard Common/*.pk[s,b]) \
   )                                      \
 
 # Список параметров для загружаемых файлов.
@@ -485,8 +485,10 @@ installSchemaTarget =                   \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu2),                  \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/UserDb/BatchUser/run.sql) \
   )                                      \
   $(addsuffix .$(lu3),                  \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/UserDb/run.sql) \
   )                                      \
 
 
@@ -564,7 +566,6 @@ installDataTarget = \
     $(call getInstallDataFile) \
   ) \
   $(addsuffix .$(lu2), \
-    $(call getInstallDataFile,UserDb) \
   ) \
   $(addsuffix .$(lu3), \
   ) \
@@ -634,12 +635,10 @@ UPDATE_SCHEDULE =
 # Скрипты для загрузки пакетных заданий и их параметров в БД.
 installBatchTarget = \
   $(addsuffix .$(lu), \
-    $(wildcard Install/Batch/Last/*.job.sql) \
-    $(wildcard Install/Batch/Last/*/*.job.sql) \
-    $(wildcard Install/Batch/Last/*/batch.xml) \
+    $(wildcard Install/Batch/Last/Common/BatchUser/*/*.job.sql) \
   ) \
   $(addsuffix .$(lu2), \
-    $(wildcard Install/Batch/Last/UserDb/*/*.job.sql) \
+    $(wildcard Install/Batch/Last/Common/BatchUser/*/*.job.sql) \
   ) \
   $(addsuffix .$(lu3), \
   ) \
@@ -804,6 +803,9 @@ uninstallBeforeTarget = \
   $(addsuffix .$(ru3), \
     $(uninstallBeforeOmsAction) \
   ) \
+  $(addsuffix .$(ru4), \
+    $(uninstallBeforeOmsAction) \
+  ) \
 
 
 
@@ -817,12 +819,18 @@ uninstall-before: uninstall-before.oms
 # Скрипты для отмены установки схемы
 uninstallSchemaTarget = \
   $(addsuffix .$(ru), \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Common/BatchUser/revert.sql) \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Common/revert.sql) \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/UserDb/revert.sql) \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Common/BatchUser/revert.sql) \
   ) \
   $(addsuffix .$(ru3), \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Common/revert.sql) \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/UserDb/revert.sql) \
+  ) \
+  $(addsuffix .$(ru4), \
   ) \
 
 
@@ -904,6 +912,9 @@ uninstallAfterTarget = \
   $(addsuffix .$(ru3), \
     $(uninstallAfterOmsAction) \
   ) \
+  $(addsuffix .$(ru4), \
+    $(uninstallAfterOmsAction) \
+  ) \
 
 
 
@@ -963,6 +974,7 @@ grantTarget =                           \
   $(addsuffix .$(ru2),                  \
   )                                     \
   $(addsuffix .$(ru3),                  \
+    $(wildcard Install/Grant/$(grantVersion)/UserDb/$(grantScript)) \
   )                                     \
 
 

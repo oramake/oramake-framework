@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Calendar
-SubTitle: Версия 1.4.0
+SubTitle: Версия 2.1.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -57,21 +57,21 @@ Group: О модуле  {
 
 Group: Пакеты  {
 
-   Group: pkg_Calendar  {
-
-      File: Спецификация  (no auto-title, pkg_Calendar.pks)
-      File: Реализация  (no auto-title, pkg_Calendar.pkb)
-      }  # Group: pkg_Calendar
-
-   Group: UserDb  {
+   Group: Common  {
 
       Group: pkg_Calendar  {
 
-         File: Спецификация  (no auto-title, UserDb/pkg_Calendar.pks)
-         File: Реализация  (no auto-title, UserDb/pkg_Calendar.pkb)
+         File: Спецификация  (no auto-title, Common/pkg_Calendar.pks)
+         File: Реализация  (no auto-title, Common/pkg_Calendar.pkb)
          }  # Group: pkg_Calendar
 
-      }  # Group: UserDb
+      }  # Group: Common
+
+   Group: pkg_CalendarEdit  {
+
+      File: Спецификация  (no auto-title, pkg_CalendarEdit.pks)
+      File: Реализация  (no auto-title, pkg_CalendarEdit.pkb)
+      }  # Group: pkg_CalendarEdit
 
    }  # Group: Пакеты
 
@@ -96,8 +96,29 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Common  {
+
+               File: run  (no auto-title, Install/Grant/Last/Common/run.sql)
+               }  # Group: Common
+
+            Group: UserDb  {
+
+               File: run  (no auto-title, Install/Grant/Last/UserDb/run.sql)
+               }  # Group: UserDb
+
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: link-user  (no auto-title, Install/Grant/Last/link-user.sql)
+            File: master-table  (no auto-title, Install/Grant/Last/master-table.sql)
             }  # Group: Last
+
+         Group: 2.1.0  {
+
+            Group: UserDb  {
+
+               File: run  (no auto-title, Install/Grant/2.1.0/UserDb/run.sql)
+               }  # Group: UserDb
+
+            }  # Group: 2.1.0
 
          }  # Group: Grant
 
@@ -105,20 +126,57 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Common  {
+
+               Group: BatchUser  {
+
+                  File: revert  (no auto-title, Install/Schema/Last/Common/BatchUser/revert.sql)
+                  }  # Group: BatchUser
+
+               File: revert  (no auto-title, Install/Schema/Last/Common/revert.sql)
+               File: v_cdr_day  (no auto-title, Install/Schema/Last/Common/v_cdr_day.sql)
+               File: v_cdr_day_type  (no auto-title, Install/Schema/Last/Common/v_cdr_day_type.sql)
+               }  # Group: Common
+
             Group: UserDb  {
 
+               Group: Custom  {
+
+                  File: set-sourceDbLink  (no auto-title, Install/Schema/Last/UserDb/Custom/set-sourceDbLink.sql)
+                  File: set-sourceSchema  (no auto-title, Install/Schema/Last/UserDb/Custom/set-sourceSchema.sql)
+                  }  # Group: Custom
+
+               File: run  (no auto-title, Install/Schema/Last/UserDb/run.sql)
                File: revert  (no auto-title, Install/Schema/Last/UserDb/revert.sql)
+               File: mv_cdr_day  (no auto-title, Install/Schema/Last/UserDb/mv_cdr_day.snp)
+               File: mv_cdr_day_type  (no auto-title, Install/Schema/Last/UserDb/mv_cdr_day_type.snp)
+               File: v_cdr_day  (no auto-title, Install/Schema/Last/UserDb/v_cdr_day.vw)
+               File: v_cdr_day_type  (no auto-title, Install/Schema/Last/UserDb/v_cdr_day_type.vw)
                }  # Group: UserDb
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: cdr_day  (no auto-title, Install/Schema/Last/cdr_day.tab)
             File: cdr_day_bi_define  (no auto-title, Install/Schema/Last/cdr_day_bi_define.trg)
-            File: cdr_day_biu_format  (no auto-title, Install/Schema/Last/cdr_day_biu_format.trg)
             File: cdr_day_type  (no auto-title, Install/Schema/Last/cdr_day_type.tab)
             File: cdr_day_type_bi_define  (no auto-title, Install/Schema/Last/cdr_day_type_bi_define.trg)
-            File: cdr_day_type_seq  (no auto-title, Install/Schema/Last/cdr_day_type_seq.sqs)
+            File: v_cdr_day  (no auto-title, Install/Schema/Last/v_cdr_day.vw)
+            File: v_cdr_day_type  (no auto-title, Install/Schema/Last/v_cdr_day_type.vw)
             }  # Group: Last
+
+         Group: 2.1.0  {
+
+            Group: UserDb  {
+
+               Group: BatchUser  {
+
+                  File: run  (no auto-title, Install/Schema/2.1.0/UserDb/BatchUser/run.sql)
+                  }  # Group: BatchUser
+
+               }  # Group: UserDb
+
+            File: run  (no auto-title, Install/Schema/2.1.0/run.sql)
+            }  # Group: 2.1.0
 
          }  # Group: Schema
 
@@ -130,9 +188,11 @@ Group: Индекс  {
 
    Group: Объекты БД  {
 
+      Database View Index: Представления
+      Database Materialized View Index: М-Представления
       Database Table Index: Таблицы
       Database Trigger Index: Триггеры
-      Database Sequence Index: Последовательности
+      Database Index Index: Индексы
       }  # Group: Объекты БД
 
    Group: Открытые объявления  {

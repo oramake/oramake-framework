@@ -11,7 +11,11 @@ LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основная схема для установки
                                 ( формат: username/password@dbName)
-LOAD_USERID2                  - схема для установки в пользовательской БД
+LOAD_USERID2                  - пользователь, под которым выполняются
+                                пакетные задания в пользовательской БД
+                                ( формат: username/password@dbName)
+LOAD_USERID3                  - схема для установки объектов модуля
+                                в пользовательской БД
                                 ( формат: username/password@dbName)
 LOAD_USERID4                  - пользователь, под которым создаются роли
                                 для модуля AccessOperator
@@ -19,13 +23,97 @@ LOAD_USERID4                  - пользователь, под которым создаются роли
 TO_USERNAME                   - имя пользователя, которому выдаются права
                                 ( формат: username)
 
+Используемые макропеременные SQL*Plus ( устанавливаются в <SQL_DEFINE>):
+indexTablespace               - табличное пространство для индексов
+                                ( значение по умолчанию определяется скриптом
+                                  oms-set-indexTablespace.sql модуля
+                                  OraMakeSystem)
+sourceDbLink                  - имя линка из пользовательской БД к основной БД,
+                                доступного пользователю, указываемому в
+                                параметре LOAD_USERID3
+                                ( значение по умолчанию определяется скриптом
+                                  <Install/Schema/Last/UserDb/Custom/set-sourceDbLink.sql>)
+sourceSchema                  - схема в основной БД, в которую установлены
+                                объекты модуля, используется при установке
+                                под LOAD_USERID3
+                                ( значение по умолчанию определяется скриптом
+                                  <Install/Schema/Last/UserDb/Custom/set-sourceSchema.sql>)
+
+
+
+group: 2.1.0
+
+Порядок установки в основной БД:
+
+- установка в основную схему
+
+(code)
+
+$ make install INSTALL_VERSION=2.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- повторная выдача прав на использование модуля пользователям
+  ( отдельной командой для каждого пользователя, имя пользователя указывается в
+  TO_USERNAME)
+
+(code)
+
+$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+- выдача прав пользователям, под которыми работают линки из пользовательских БД
+  ( отдельной командой для каждого пользователя, имя пользователя указывается в
+  TO_USERNAME)
+
+(code)
+
+$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=link-user TO_USERNAME=???
+
+(end)
+
+Порядок установки в пользовательской БД:
+
+- установка объектов модуля ( включая материализованные представления)
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID3=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- выдача прав пользователю, под которым выполняются пакетные задания
+  ( у пользователя, указываемого в LOAD_USERID3, должна быть привилегия
+    "create any synonym")
+
+(code)
+
+$ make grant INSTALL_VERSION=2.1.0 LOAD_USERID3=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+- установка в схему пользователя, под которым выполняются пакетные задания
+
+(code)
+
+$ make install INSTALL_VERSION=2.1.0 LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
 
 
 group: Первоначальная установка
 
 Предварительные требования:
 - установка модуля Common;
+- установка модуля Logging;
 - установка модуля AccessOperator;
+- установка модуля DynamicSql;
+- установка модуля Scheduler
+  ( опционально, если модуль не используется в БД, то нужно исключить создание
+    публичного задания, добавив в команду установки строку
+    " SKIP_FILE_MASK=Install/Batch/*")
 
 Порядок установки:
 
@@ -71,17 +159,42 @@ $ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=??
 
 
 
-group: Первоначальная установка в пользовательскую БД
+group: Первоначальная установка для пользовательской БД
 
 Предварительные требования:
 - установка модуля Common;
 - установка модуля Logging;
-- установка модуля Option;
-- установка модуля Scheduler;
 
 Порядок установки:
 
-- установка в схему пользовательской БД ( обращающейся к основной по линку)
+- выдача прав пользователю основной БД, под которым работает линк из
+  пользовательской БД
+
+(code)
+
+$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=link-user TO_USERNAME=???
+
+(end)
+
+- установка объектов модуля ( включая материализованные представления)
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID3=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Если в БД используются пакетные задания ( установлен модуль Scheduler), то выполняем:
+
+- выдача прав пользователю, под которым выполняются пакетные задания
+
+(code)
+
+$ make grant LOAD_USERID3=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+- установка в схему пользователя, под которым выполняются пакетные задания
 
 (code)
 
@@ -89,11 +202,15 @@ $ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???
 
 (end)
 
-- выдача прав пользователю, под которым работает линк из пользовательской БД
+
+
+group: Выдача прав на использование модуля в пользователькой БД
+
+Команда для выдачи прав:
 
 (code)
 
-$ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+$ make grant LOAD_USERID3=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 (end)
 
@@ -101,10 +218,20 @@ $ make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 group: Удаление модуля из пользовательской БД
 
-Команда для удаления модуля:
+Порядок удаления модуля:
+
+- удаление из схемы пользователя, под которым выполняются пакетные задания
 
 (code)
 
 $ make uninstall INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- удаление объектов модуля
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID3=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

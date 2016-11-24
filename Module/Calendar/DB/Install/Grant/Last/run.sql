@@ -13,16 +13,15 @@ define toUserName = "&1"
 
 
 
-grant execute on pkg_Calendar to &toUserName
-/
-create or replace synonym &toUserName..pkg_Calendar for pkg_Calendar
-/
-
-
+-- Оставлено для совместимости, лучше использовать представление v_cdr_day
 grant select on cdr_day to &toUserName
 /
 create or replace synonym &toUserName..cdr_day for cdr_day
 /
+
+
+
+@oms-run Install/Grant/Last/Common/run.sql
 
 
 

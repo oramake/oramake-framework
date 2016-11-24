@@ -28,10 +28,44 @@
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
 
-pkg_Calendar.pkb.$(lu):                 \
-  pkg_Calendar.pks.$(lu)                \
+Common/pkg_Calendar.pkb.$(lu): \
+  Common/pkg_Calendar.pks.$(lu) \
+  Install/Schema/Last/v_cdr_day.vw.$(lu) \
+  Install/Schema/Last/v_cdr_day_type.vw.$(lu) \
 
 
-UserDb/pkg_Calendar.pkb.$(lu2):                 \
-  UserDb/pkg_Calendar.pks.$(lu2)                \
+pkg_CalendarEdit.pkb.$(lu): \
+  pkg_CalendarEdit.pks.$(lu) \
+
+
+# зависимость от вызываемого скрипта
+Install/Schema/Last/v_cdr_day.vw.$(lu): \
+  Install/Schema/Last/Common/v_cdr_day.sql \
+
+
+# зависимость от вызываемого скрипта
+Install/Schema/Last/v_cdr_day_type.vw.$(lu): \
+  Install/Schema/Last/Common/v_cdr_day_type.sql \
+
+
+
+#
+# Зависимости для UserDb
+#
+
+Common/pkg_Calendar.pkb.$(lu3): \
+  Common/pkg_Calendar.pks.$(lu3) \
+  Install/Schema/Last/UserDb/v_cdr_day.vw.$(lu3) \
+  Install/Schema/Last/UserDb/v_cdr_day_type.vw.$(lu3) \
+
+
+# зависимость от вызываемого скрипта
+Install/Schema/Last/UserDb/v_cdr_day.vw.$(lu3): \
+  Install/Schema/Last/Common/v_cdr_day.sql \
+
+
+# зависимость от вызываемого скрипта
+Install/Schema/Last/UserDb/v_cdr_day_type.vw.$(lu3): \
+  Install/Schema/Last/Common/v_cdr_day_type.sql \
+
 

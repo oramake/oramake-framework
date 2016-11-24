@@ -4,7 +4,15 @@
 
 -- Пакеты
 
-drop package pkg_Calendar
+drop package pkg_CalendarEdit
+/
+
+
+-- Представления
+
+drop view v_cdr_day
+/
+drop view v_cdr_day_type
 /
 
 
@@ -19,10 +27,4 @@ drop package pkg_Calendar
 drop table cdr_day
 /
 drop table cdr_day_type
-/
-
-
--- Последовательности
-
-drop sequence cdr_day_type_seq
 /

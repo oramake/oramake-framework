@@ -1,17 +1,22 @@
---trigger: CDR_DAY_BI_DEFINE
---Триггер CDR_DAY_BI_DEFINE
+-- trigger: cdr_day_bi_define
+-- Инициализация полей таблицы <cdr_day> при вставке записи.
+create or replace trigger cdr_day_bi_define
+  before insert
+  on cdr_day
+  for each row
+begin
 
-CREATE OR REPLACE TRIGGER CDR_DAY_BI_DEFINE
-	BEFORE INSERT
-	ON CDR_DAY
-	FOR EACH ROW
-BEGIN
-	if :new.Operator_ID is null then        --Оператор, создавший строку.
-	  :new.Operator_ID := pkg_Operator.GetCurrentUserID;
-	end if;
-	
-	if :new.Date_Ins is null then           --Определяем дату создания строки.
-	  :new.Date_Ins := SysDate;
-	end if;
-END;
+  -- Обрезаем часы и минуты
+	:new.day := trunc( :new.day);
+
+  -- Id оператора, добавившего запись
+  if :new.operator_id is null then
+    :new.operator_id := pkg_Operator.getCurrentUserId();
+  end if;
+
+  -- Определяем дату добавления записи
+  if :new.date_ins is null then
+    :new.date_ins := sysdate;
+  end if;
+end;
 /

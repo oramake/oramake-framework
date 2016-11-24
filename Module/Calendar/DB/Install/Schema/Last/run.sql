@@ -16,8 +16,3 @@
 
 @oms-run cdr_day.con
 @oms-run cdr_day_type.con
-
-
--- Последовательности
-
-@oms-run cdr_day_type_seq.sqs

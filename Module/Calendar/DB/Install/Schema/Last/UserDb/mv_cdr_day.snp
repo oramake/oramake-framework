@@ -1,0 +1,41 @@
+-- mview: mv_cdr_day
+-- Дни календаря.
+--
+-- Используемые макропеременные:
+-- sourceDbLink               - линк к исходной БД
+-- sourceSchema               - схема исходной таблицы
+-- indexTablespace            - табличное пространство для индексов
+--
+create materialized view
+  mv_cdr_day
+build deferred
+using no index
+refresh fast on demand
+as
+select
+  t.day
+  , t.day_type_id
+  , t.date_ins
+  , t.operator_id
+from
+  &sourceSchema..cdr_day@&sourceDbLink t
+/
+
+
+
+comment on materialized view mv_cdr_day is
+  'Дни календаря [ SVN root: Oracle/Module/Calendar]'
+/
+
+
+
+-- index: mv_cdr_day_pk
+alter table
+  mv_cdr_day
+add constraint
+  mv_cdr_day_pk
+primary key
+  ( day)
+using index tablespace &indexTablespace
+pctfree 0
+/

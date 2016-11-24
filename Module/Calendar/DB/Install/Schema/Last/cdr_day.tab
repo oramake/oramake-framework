@@ -1,11 +1,42 @@
---table: CDR_DAY 
---Таблица CDR_DAY
-
-create table CDR_DAY
+-- table: cdr_day
+-- Дни календаря.
+create table
+  cdr_day
 (
-  	DAY         DATE not null
-  , DAY_TYPE_ID INTEGER not null
-  , DATE_INS    DATE default sysdate not null
-  , OPERATOR_ID INTEGER not null
-  , constraint CDR_DAY_PK primary key (DAY)
-);
+  day                             date                                not null
+  , day_type_id                   integer                             not null
+  , date_ins                      date                default sysdate not null
+  , operator_id                   integer                             not null
+  , constraint cdr_day_pk primary key
+    ( day)
+    using index tablespace &indexTablespace
+  , constraint cdr_day_ck_day check
+    ( day = trunc( day))
+)
+/
+
+
+
+comment on table cdr_day is
+  'Дни календаря [ SVN root: Oracle/Module/Calendar]'
+/
+comment on column cdr_day.day is
+  'День календаря'
+/
+comment on column cdr_day.day_type_id is
+  'Id типа дня'
+/
+comment on column cdr_day.date_ins is
+  'Дата добавления записи'
+/
+comment on column cdr_day.operator_id is
+  'Id оператора, добавившего запись'
+/
+
+
+
+create materialized view log on
+  cdr_day
+with
+  primary key
+/

@@ -1,6 +1,19 @@
-alter table CDR_DAY
-  add constraint CDR_DAY_CDR_DAY_TYPE_FK foreign key (DAY_TYPE_ID)
-  references CDR_DAY_TYPE (DAY_TYPE_ID);
-alter table CDR_DAY
-  add constraint CDR_DAY_OP_OPERATOR_FK foreign key (OPERATOR_ID)
-  references OP_OPERATOR (OPERATOR_ID);
+alter table
+  cdr_day
+add constraint
+  cdr_day_cdr_day_type_fk
+foreign key
+  ( day_type_id)
+references
+  cdr_day_type ( day_type_id)
+/
+
+alter table
+  cdr_day
+add constraint
+  cdr_day_op_operator_fk
+foreign key
+  ( operator_id)
+references
+  op_operator ( operator_id)
+/
