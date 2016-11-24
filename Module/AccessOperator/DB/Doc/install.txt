@@ -11,6 +11,8 @@ LOAD_OPERATORID               - логин и пароль оператора, выполн€ющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основной пользователь дл€ установки в Ѕƒ
                                 ( формат: username/password@dbName)
+TO_USERNAME                   - им€ пользовател€, которому выдаютс€ права
+                                ( формат: username)
 
 
 
@@ -61,6 +63,8 @@ make install INSTALL_VERSION=3.12.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/
 
 group: ѕервоначальна€ установка
 
+ѕор€док установки:
+
 - установка в основную схему
 
 (code)
@@ -75,6 +79,18 @@ $ make install-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERA
 
 group: ¬ыдача прав на использование модул€
 
+ оманда дл€ выдачи прав:
+
+(code)
+
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+«амечани€:
+- дл€ выдачи прав всем пользовател€м в качестве значени€ TO_USERNAME нужно
+  указать PUBLIC ( при этом у пользовател€ должно быть право на создание
+  публичных синонимов, "create public synonym");
 - выдача прав на использование тестовых утилит AccessOperator выполн€етс€ с
   помощью скрипта <Test/Grant/run.sql> с указанием в качестве первого параметра
   пользовател€, которому выдаютс€ права;
