@@ -37,7 +37,7 @@ begin
         select
           t.owner
         from
-          all_tables t
+          all_tables@' || sourceDbLink || ' t
         where
           t.table_name = upper( :tableName)
       '
