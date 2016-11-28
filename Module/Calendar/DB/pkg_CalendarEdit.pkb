@@ -174,7 +174,7 @@ begin
   sqlQuery.addCondition( 'd.day >=', dateBegin is null, 'dateBegin' );
   sqlQuery.addCondition( 'd.day <=', dateEnd is null, 'dateEnd' );
   sqlQuery.addCondition( 'rownum <=', maxRowCount is null, 'maxRowCount' );
-  sqlQuery.useCondition( '$(filterCondition)' );
+  sqlQuery.useCondition( 'filterCondition' );
 
   open rc for
     sqlQuery.getSqlText()
