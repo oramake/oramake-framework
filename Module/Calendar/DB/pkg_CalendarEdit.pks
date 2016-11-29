@@ -7,6 +7,26 @@ create or replace package pkg_CalendarEdit is
 
 
 
+
+/* group: Константы */
+
+
+
+/* group: Роли */
+
+/* const: Admin_RoleSName
+  Краткое наименование роли, дающей права на редактирование данных.
+*/
+Admin_RoleSName constant varchar2(50) := 'CdrAdministrator';
+
+/* const: Show_RoleSName
+  Краткое наименование роли, дающей права на просмотр данных
+  ( проверяется в App-части).
+*/
+Show_RoleSName constant varchar2(50) := 'CdrUser';
+
+
+
 /* group: Функции */
 
 /* pfunc: createDay
@@ -75,6 +95,10 @@ return sys_refcursor;
 /* pfunc: getDayType
   Возвращает типы дней календаря.
 
+  Параметры:
+  operatorId                  - Id оператора
+                                ( по умолчанию текущий)
+
   Возврат (курсор):
   day_type_id                 - Id типа дня
   day_type_name               - Наименование типа дня
@@ -83,7 +107,9 @@ return sys_refcursor;
 
   ( <body::getDayType>)
 */
-function getDayType
+function getDayType(
+  operatorId integer := null
+)
 return sys_refcursor;
 
 end pkg_CalendarEdit;

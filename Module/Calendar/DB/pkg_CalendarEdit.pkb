@@ -3,15 +3,6 @@ create or replace package body pkg_CalendarEdit is
 
 
 
-/* group: Роли */
-
-/* const: Edit_RoleSName
-  Краткое наименование роли, дающей права на редактирование данных.
-*/
-Edit_RoleSName constant varchar2(50) := 'CdrAdministrator';
-
-
-
 /* group: Переменные */
 
 /* ivar: logger
@@ -50,7 +41,7 @@ is
   calendarDay cdr_day.day%type;
 
 begin
-  pkg_Operator.isRole( operatorId, Edit_RoleSName);
+  pkg_Operator.isRole( operatorId, Admin_RoleSName);
   insert into
     cdr_day
   (
@@ -98,7 +89,7 @@ procedure deleteDay(
 )
 is
 begin
-  pkg_Operator.isRole( operatorId, Edit_RoleSName);
+  pkg_Operator.isRole( operatorId, Admin_RoleSName);
   delete from
     cdr_day t
   where
@@ -203,13 +194,19 @@ end findDay;
 /* func: getDayType
   Возвращает типы дней календаря.
 
+  Параметры:
+  operatorId                  - Id оператора
+                                ( по умолчанию текущий)
+
   Возврат (курсор):
   day_type_id                 - Id типа дня
   day_type_name               - Наименование типа дня
 
   ( сортировка по day_type_id)
 */
-function getDayType
+function getDayType(
+  operatorId integer := null
+)
 return sys_refcursor
 is
   rc sys_refcursor;

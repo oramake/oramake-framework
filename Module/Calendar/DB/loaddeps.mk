@@ -38,6 +38,12 @@ pkg_CalendarEdit.pkb.$(lu): \
   pkg_CalendarEdit.pks.$(lu) \
 
 
+Test/pkg_CalendarTest.pkb.$(lu): \
+  Test/pkg_CalendarTest.pks.$(lu) \
+  Common/pkg_Calendar.pks.$(lu) \
+  pkg_CalendarEdit.pks.$(lu) \
+
+
 # зависимость от вызываемого скрипта
 Install/Schema/Last/v_cdr_day.vw.$(lu): \
   Install/Schema/Last/Common/v_cdr_day.sql \

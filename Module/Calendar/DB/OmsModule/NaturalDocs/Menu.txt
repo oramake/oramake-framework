@@ -73,6 +73,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_CalendarEdit.pkb)
       }  # Group: pkg_CalendarEdit
 
+   Group: Test  {
+
+      Group: pkg_CalendarTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_CalendarTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_CalendarTest.pkb)
+         }  # Group: pkg_CalendarTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -181,6 +191,11 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
