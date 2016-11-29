@@ -35,16 +35,17 @@ is
 
   -- Id оператора, указываемый при изменении данных
   adminOperatorId integer := pkg_AccessOperatorTest.getTestOperatorId(
-    'CalendarAdmin'
-    , cmn_string_table_t(
-        pkg_CalendarEdit.Admin_RoleSName
-      )
+    baseName        => 'CalendarAdmin'
+    , roleSNameList =>
+        cmn_string_table_t(
+          pkg_CalendarEdit.Admin_RoleSName
+        )
   );
 
   -- Id оператора без прав на модуль
   guestOperatorId integer := pkg_AccessOperatorTest.getTestOperatorId(
-    'Guest'
-    , cmn_string_table_t()
+    baseName        => 'Guest'
+    , roleSNameList => cmn_string_table_t()
   );
 
 
