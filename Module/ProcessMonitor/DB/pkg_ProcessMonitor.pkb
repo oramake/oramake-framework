@@ -1720,9 +1720,10 @@ is
     -- Находим объём памяти по PID
     if commandOutput is not null then
       csvIterator := tpr_csv_iterator_t(
-        textData => commandOutput
-        , headerRecordNumber => 1
-        , fieldSeparator => ','
+        -- Удаляем первые пустые строки
+        textData => ltrim( commandOutput, chr(10) || chr(13))
+      , headerRecordNumber => 1
+      , fieldSeparator => ','
       );
       while csvIterator.next() loop
         if csvIterator.getNumber(2) = oracleOsPid then
