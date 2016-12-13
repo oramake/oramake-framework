@@ -18,6 +18,12 @@ to
   opt_option_pk
 /
 
+-- предварительно компилируем для исключения в Oracle 12.1.0.1.0 ошибки
+-- ORA-00600: internal error code, arguments: [kotaty805], [OPT_OPTION], [],
+-- [], [], [], [], [], [], [], [], []
+--
+@oms-compile-invalid
+
 alter trigger
   opt_option_new_bi_define
 rename to
