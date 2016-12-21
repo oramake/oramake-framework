@@ -5871,24 +5871,26 @@ is
 
   -- Id оператора, указываемый при изменении данных
   adminOperatorId integer := pkg_AccessOperatorTest.getTestOperatorId(
-    'OptionAdmin'
-    , cmn_string_table_t(
-        pkg_OptionMain.Admin_RoleSName
-      )
+    baseName          => 'OptionAdmin'
+    , roleSNameList   =>
+        cmn_string_table_t(
+          pkg_OptionMain.Admin_RoleSName
+        )
   );
 
   -- Id оператора, указываемый при просмотре данных
   showOperatorId integer := pkg_AccessOperatorTest.getTestOperatorId(
-    'OptionShow'
-    , cmn_string_table_t(
-        pkg_OptionMain.Show_RoleSName
-      )
+    baseName          => 'OptionShow'
+    , roleSNameList   =>
+        cmn_string_table_t(
+          pkg_OptionMain.Show_RoleSName
+        )
   );
 
   -- Id оператора без прав на модуль
   guestOperatorId integer := pkg_AccessOperatorTest.getTestOperatorId(
-    'Guest'
-    , cmn_string_table_t()
+    baseName          => 'Guest'
+    , roleSNameList   => cmn_string_table_t()
   );
 
   -- Id модуля для тестирования
