@@ -430,8 +430,14 @@ patchFile()
             -i "$patchDir/$patchFile"       \
             -r "$tmpFile"                   \
             "$dstFile"                      \
-            | gawk '{ if ( index( $0, "FAILED") == 0) print; }'
-        else
+            | gawk '
+{
+  if ( index( $0, "FAILED") == 0 \
+    && index( $0, "Skipping patch") == 0 \
+    && index( $0, "saving rejects") == 0) {
+    print;
+  }
+}'      else
           $runCmd patch                     \
             $patchOption                    \
             -i "$patchDir/$patchFile"       \
