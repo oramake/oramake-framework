@@ -60,6 +60,7 @@ grant create any table to developer
 -- links
 grant create database link to developer with admin option
 /
+
 -- Module: OraMakeSystem( recommended)
 grant select on dba_ddl_locks to developer with grant option
 /
@@ -95,6 +96,9 @@ grant java_admin to developer
 grant javauserpriv to developer with admin option
 /
 grant javasyspriv to developer with admin option
+/
+-- Module: Option
+grant execute on sys.dbms_crypto to &userName with grant option
 /
 -- Module: TaskHandler
 grant select on sys.v_$db_pipes to developer with grant option

@@ -49,7 +49,12 @@ grant create view to &userName
 /
 grant query rewrite to &userName
 /
--- OMS
+
+-- Module: Option
+grant execute on sys.dbms_crypto to &userName
+/
+
+-- Module: OraMakeSystem
 grant select on dba_ddl_locks to &userName
 /
 grant select on dba_dml_locks to &userName
@@ -62,6 +67,7 @@ grant select on dba_objects to &userName
 /
 grant select on dba_jobs_running to &userName
 /
+
 -- Explore running sql
 grant select on sys.v_$sqltext_with_newlines to &userName
 /
