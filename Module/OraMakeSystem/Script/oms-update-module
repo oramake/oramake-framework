@@ -437,7 +437,8 @@ patchFile()
     && index( $0, "saving rejects") == 0) {
     print;
   }
-}'      else
+}'
+        else
           $runCmd patch                     \
             $patchOption                    \
             -i "$patchDir/$patchFile"       \
