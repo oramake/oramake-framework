@@ -45,14 +45,21 @@ begin
 exception when others then
   if isAccessOperatorFound is null
       and (
-        SQLERRM like
-          '%PLS-00201: identifier ''PKG_OPERATOR'' must be declared%'
-        or SQLERRM like
-          '%PLS-00201: identifier ''PKG_OPERATOR.%'' must be declared%'
-        or SQLERRM like
-          '%PLS-00904: insufficient privilege to access object %.PKG_OPERATOR%'
-        or SQLERRM like
-          '%ORA-06508: PL/SQL: could not find program unit being called:%'
+        -- PLS-00201: identifier 'PKG_OPERATOR' must be declared
+        sqlerrm like
+          '%PLS-00201: % ''PKG_OPERATOR'' %'
+        -- PLS-00201: identifier 'PKG_OPERATOR.%' must be declared
+        or sqlerrm like
+          '%PLS-00201: % ''PKG_OPERATOR.%'' %'
+        -- PLS-00904: insufficient privilege to access object %.PKG_OPERATOR%
+        or sqlerrm like
+          '%PLS-00904: % %.PKG_OPERATOR%'
+        -- ORA-06508: PL/SQL: could not find program unit being called:%
+        or sqlerrm like
+          '%ORA-06508: %:%'
+        -- PLS-00302: component 'GETCURRENTUSERID' must be declared
+        or sqlerrm like
+          '%PLS-00302: % ''GETCURRENTUSERID'' %'
       )
       then
     isAccessOperatorFound := false;
