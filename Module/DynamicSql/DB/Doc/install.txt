@@ -31,10 +31,19 @@ $ make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 (end)
 
-- выдача прав на объекты модуля пользователю PUBLIC и создание public-синонимов
+
+
+group: Выдача прав на использование модуля
+
+Команда для выдачи прав:
 
 (code)
 
-$ make grant INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=public
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 (end)
+
+Замечания:
+- для выдачи прав всем пользователям в TO_USERNAME нужно указать public
+  ( " TO_USERNAME=public"), при этом у пользователя, в схему которого
+  установлен модуль, должна быть системная привилегия "CREATE PUBLIC SYNONYM";
