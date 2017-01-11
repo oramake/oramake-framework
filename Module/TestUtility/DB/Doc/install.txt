@@ -1,5 +1,9 @@
 title: Установка
 
+
+
+group: Общие замечания
+
 Реализуется с помощью целей сборки модуля из make-целей <Установка модуля в БД>.
 Для корректной установки должна быть установлена актуальная версия OMS
 ( см. <Версия OMS-файлов>).
@@ -24,6 +28,34 @@ group: Первоначальная установка
 (code)
 
 $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
-$ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/??? TO_USERNAME=public
+
+(end)
+
+
+
+group: Выдача прав на использование модуля
+
+Команда для выдачи прав:
+
+(code)
+
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+Замечания:
+- для выдачи прав всем пользователям в TO_USERNAME нужно указать public
+  ( " TO_USERNAME=public"), при этом у пользователя, в схему которого
+  установлен модуль, должна быть системная привилегия "CREATE PUBLIC SYNONYM";
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

@@ -84,6 +84,15 @@ Group: Скрипты  {
 
          }  # Group: Grant
 
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            }  # Group: Last
+
+         }  # Group: Schema
+
       }  # Group: Install
 
    }  # Group: Скрипты
