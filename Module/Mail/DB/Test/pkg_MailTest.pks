@@ -85,6 +85,19 @@ procedure testSendMessage(
   testCaseNumber integer := null
 );
 
+/* pproc: testSendHtmlMessage
+  Тестирование отправки почтовых сообщений в формате HTML.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+
+  ( <body::testSendHtmlMessage>)
+*/
+procedure testSendHtmlMessage(
+  testCaseNumber integer := null
+);
+
 /* pproc: testFetchMessage
   Тестирование получения почтовых сообщений.
 

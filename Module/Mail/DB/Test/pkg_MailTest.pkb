@@ -295,6 +295,9 @@ is
   */
   procedure checkCase(
     caseDescription varchar2
+    , addFileData blob := null
+    , addFileName varchar2 := null
+    , addFileType varchar2 := null
     , errorMessageMask varchar2 := null
     , nextCaseUsedCount pls_integer := null
   )
@@ -310,6 +313,8 @@ is
 
     -- Id созданного сообщения
     messageId integer;
+
+    attachmentId integer;
 
     nSend integer;
 
@@ -329,6 +334,7 @@ is
     logger.info( '*** ' || cinfo);
 
     begin
+      savepoint pkg_MailTestSendMessage;
       messageId := pkg_Mail.sendMessage(
         sender                  =>
             coalesce(
@@ -354,6 +360,14 @@ is
         , smtpServer            => opt.getString( TestSmtpServer_OptSName)
         , expireDate            => add_months( sysdate, 1)
       );
+      if addFileData is not null then
+        attachmentId := pkg_Mail.addAttachment(
+          messageId             => messageId
+          , attachmentFileName  => addFileName
+          , attachmentType      => addFileType
+          , attachmentData      => addFileData
+        );
+      end if;
       commit;
       if errorMessageMask is not null then
         pkg_TestUtility.failTest(
@@ -362,6 +376,7 @@ is
         );
       end if;
     exception when others then
+      rollback to pkg_MailTestSendMessage;
       if errorMessageMask is not null then
         errorMessage := logger.getErrorStack();
         if errorMessage not like errorMessageMask then
@@ -460,6 +475,29 @@ begin
     'Без вложения'
   );
 
+  checkCase(
+    'С добавлением текстового файла'
+    , addFileData   => hextoraw( '54657374')
+    , addFileName   => 'add-file.txt'
+  );
+
+  checkCase(
+    'С добавлением картинки'
+    , addFileData   =>
+        hextoraw( translate(
+'
+89 50 4e 47 0d 0a 1a 0a  00 00 00 0d 49 48 44 52
+00 00 00 01 00 00 00 01  08 02 00 00 00 90 77 53
+de 00 00 00 04 67 41 4d  41 00 00 b1 8f 0b fc 61
+05 00 00 00 09 70 48 59  73 00 00 0e c3 00 00 0e
+c3 01 c7 6f a8 64 00 00  00 0c 49 44 41 54 18 57
+63 78 2b a3 02 00 03 27  01 2e 15 6b be e9 00 00
+00 00 49 45 4e 44 ae 42  60 82
+'
+        , '. ' || chr(10) || chr(13), '.'))
+    , addFileName   => 'red-pixel.png'
+  );
+
   pkg_TestUtility.endTest();
 exception when others then
   raise_application_error(
@@ -472,6 +510,241 @@ exception when others then
     , true
   );
 end testSendMessage;
+
+/* proc: testSendHtmlMessage
+  Тестирование отправки почтовых сообщений в формате HTML.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+*/
+procedure testSendHtmlMessage(
+  testCaseNumber integer := null
+)
+is
+
+  -- Имя выполняемого теста
+  Test_Name constant varchar2(50) := 'send HTML message';
+
+  -- Порядковый номер очередного тестового случая
+  checkCaseNumber integer := 0;
+
+
+
+  /*
+    Проверяет тестовый случай.
+  */
+  procedure checkCase(
+    caseDescription varchar2
+    , htmlText clob := null
+    , image blob := null
+    , imageFileName varchar2 := null
+    , imageContentType varchar2 := null
+    , errorMessageMask varchar2 := null
+    , nextCaseUsedCount pls_integer := null
+  )
+  is
+
+    -- Описание тестового случая
+    cinfo varchar2(200) :=
+      'CASE ' || to_char( checkCaseNumber + 1)
+      || ' "' || caseDescription || '": '
+    ;
+
+    errorMessage varchar2(32000);
+
+    -- Id созданного сообщения
+    messageId integer;
+
+    attachmentId integer;
+
+    nSend integer;
+
+    msg ml_message%rowtype;
+
+  -- checkCase
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return;
+    end if;
+    logger.info( '*** ' || cinfo);
+
+    begin
+      savepoint pkg_MailTestSendHtmlMessage;
+      messageId := pkg_Mail.sendHtmlMessage(
+        sender                  =>
+            coalesce(
+              opt.getString( TestSender_OptSName)
+              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+            )
+        , recipient             =>
+            coalesce(
+              opt.getString( TestRecipient_OptSName)
+              , pkg_Common.getMailAddressDestination()
+            )
+        , copyRecipient         => null
+        , subject               =>
+            'Mail test'
+            || ': ' || Test_Name
+            || ': CASE ' || checkCaseNumber
+            || ', uid=' || dbms_utility.get_time()
+        , htmlText              =>
+            coalesce( htmlText, '<body><h1>Test message</h1></body>')
+        , smtpServer            => opt.getString( TestSmtpServer_OptSName)
+        , expireDate            => add_months( sysdate, 1)
+      );
+      if image is not null then
+        attachmentId := pkg_Mail.addHtmlImageAttachment(
+          messageId             => messageId
+          , attachmentFileName  => imageFileName
+          , contentType         => imageContentType
+          , image               => image
+        );
+      end if;
+      commit;
+      if errorMessageMask is not null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Успешное выполнение вместо ошибки'
+        );
+      end if;
+    exception when others then
+      rollback to pkg_MailTestSendHtmlMessage;
+      if errorMessageMask is not null then
+        errorMessage := logger.getErrorStack();
+        if errorMessage not like errorMessageMask then
+          pkg_TestUtility.compareChar(
+            actualString        => errorMessage
+            , expectedString    => errorMessageMask
+            , failMessageText   =>
+                cinfo || 'Сообщение об ошибке не соответствует маске'
+          );
+        end if;
+      else
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Выполнение завершилось с ошибкой:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end if;
+    end;
+
+    -- Проверка успешного результата
+    if errorMessageMask is null then
+
+      if messageId is null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Функция вернула null вместо Id сообщения'
+        );
+      else
+        pkg_TestUtility.compareRowCount(
+          tableName           => 'ml_message'
+          , filterCondition   => 'message_id =' || messageId
+          , expectedRowCount  => 1
+          , failMessageText   =>
+              cinfo || 'Сообщение не найдено в ml_message'
+              || ' ( message_id=' || messageId || ')'
+        );
+      end if;
+
+      if not coalesce( pkg_TestUtility.isTestFailed(), false) then
+
+        -- Отправляем все ожидающие отправки сообщения
+        nSend := pkg_MailHandler.sendMessage();
+
+        select
+          t.*
+        into msg
+        from
+          ml_message t
+        where
+          t.message_id = messageId
+        ;
+
+        if msg.error_message is not null then
+          pkg_TestUtility.failTest(
+            failMessageText   =>
+              cinfo || 'Ошибка при отправке сообщения:'
+              || msg.error_message
+              || ' ( message_id=' || messageId || ')'
+          );
+        end if;
+
+        pkg_TestUtility.compareChar(
+          actualString        => msg.incoming_flag
+          , expectedString    => 0
+          , failMessageText   =>
+              cinfo || 'Некорректное значение incoming_flag'
+        );
+        pkg_TestUtility.compareChar(
+          actualString        => msg.message_state_code
+          , expectedString    => pkg_Mail.Send_MessageStateCode
+          , failMessageText   =>
+              cinfo || 'Некорректное значение message_state_code'
+        );
+      end if;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке тестового случая ('
+          || ' caseNumber=' || checkCaseNumber
+          || ', caseDescription="' || caseDescription || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkCase;
+
+
+
+-- testSendHtmlMessage
+begin
+  pkg_TestUtility.beginTest( Test_Name);
+
+  checkCase(
+    'Без вложения'
+  );
+
+  checkCase(
+    'HTML c использованием фоновой картинки'
+    , htmlText =>
+        '<body background="red-pixel.png"><h1>Test message</h1></body>'
+    , image             =>
+        hextoraw( translate(
+'
+89 50 4e 47 0d 0a 1a 0a  00 00 00 0d 49 48 44 52
+00 00 00 01 00 00 00 01  08 02 00 00 00 90 77 53
+de 00 00 00 04 67 41 4d  41 00 00 b1 8f 0b fc 61
+05 00 00 00 09 70 48 59  73 00 00 0e c3 00 00 0e
+c3 01 c7 6f a8 64 00 00  00 0c 49 44 41 54 18 57
+63 78 2b a3 02 00 03 27  01 2e 15 6b be e9 00 00
+00 00 49 45 4e 44 ae 42  60 82
+'
+        , '. ' || chr(10) || chr(13), '.'))
+    , imageFileName     => 'red-pixel.png'
+  );
+
+  pkg_TestUtility.endTest();
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при тестировании отправки почтовых сообщений в формате HTML ('
+        || ' testCaseNumber=' || testCaseNumber
+        || ').'
+      )
+    , true
+  );
+end testSendHtmlMessage;
 
 /* proc: testFetchMessage
   Тестирование получения почтовых сообщений.

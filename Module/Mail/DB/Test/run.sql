@@ -27,4 +27,5 @@ set feedback on
 @oms-run Test/AutoTest/email-validation.sql
 @oms-run Test/AutoTest/send-mail.sql
 @oms-run Test/AutoTest/send-message.sql
+@oms-run Test/AutoTest/send-html-message.sql
 @oms-run Test/AutoTest/fetch-message.sql

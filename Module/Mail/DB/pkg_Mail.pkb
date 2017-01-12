@@ -565,20 +565,29 @@ end sendReplyMessage;
 
   Параметры:
   messageId                   - Id сообщения, к которому добавляется вложение
+  checkHtmlMessageFlag        - Флаг проверки что сообщение отправляется как
+                                HTML ( 1 проверять что HTML, 0 не проверять
+                                ( по умолчанию))
 */
 procedure checkAddAttachment(
   messageId integer
+  , checkHtmlMessageFlag integer := null
 )
 is
 
   -- Текущее состояние сообщения
   messageStateCode ml_message.message_state_code%type;
 
+  -- Признак HTML-сообщения
+  isHtml ml_message.is_html%type;
+
 begin
   select
     ms.message_state_code
+    , ms.is_html
   into
     messageStateCode
+    , isHtml
   from
     ml_message ms
   where
@@ -590,6 +599,12 @@ begin
     raise_application_error(
       pkg_Error.IllegalArgument
       , 'Сообщение не находится в состоянии ожидания отправки.'
+    );
+  end if;
+  if checkHtmlMessageFlag = 1 and coalesce( isHtml, 0 ) <> 1 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Сообщение не является HTML-сообщением.'
     );
   end if;
 end checkAddAttachment;
@@ -623,7 +638,7 @@ is
   attachmentId ml_attachment.attachment_id%type;
 
 begin
-  checkAddAttachment( messageId);
+  checkAddAttachment( messageId => messageId);
   attachmentId := createAttachment(
     messageId             => messageId
     , attachmentFileName  => attachmentFileName
@@ -674,17 +689,11 @@ is
   -- Id вложения
   attachmentId ml_attachment.attachment_id%type;
 
-  -- Признак HTML-сообщения
-  isHtml integer;
-
 begin
-  checkAddAttachment( messageId);
-  if coalesce( isHtml, 0 ) <> 1 then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Сообщение не является HTML-сообщением.'
-    );
-  end if;
+  checkAddAttachment(
+    messageId               => messageId
+    , checkHtmlMessageFlag  => 1
+  );
   attachmentId := createAttachment(
     messageId             => messageId
     , attachmentFileName  => attachmentFileName
