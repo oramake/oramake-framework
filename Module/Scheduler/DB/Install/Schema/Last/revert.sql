@@ -32,6 +32,8 @@ drop package pkg_Scheduler
 /
 drop package pkg_SchedulerLoad
 /
+drop package pkg_SchedulerMain
+/
 
 
 -- Типы
@@ -39,13 +41,13 @@ drop package pkg_SchedulerLoad
 @oms-drop-type sch_log_t
 @oms-drop-type sch_log_table_t
 @oms-drop-type sch_batch_log_info_t
+@oms-drop-type sch_batch_option_t
 
 
 -- Представления
 
 drop view sch_message_type
 /
-
 drop view v_sch_batch
 /
 drop view v_sch_batch_result
@@ -80,7 +82,6 @@ drop synonym sch_log
 @oms-drop-foreign-key sch_load_condition_tmp
 @oms-drop-foreign-key sch_load_interval_tmp
 @oms-drop-foreign-key sch_load_schedule_tmp
-@oms-drop-foreign-key sch_log
 @oms-drop-foreign-key sch_message_type
 @oms-drop-foreign-key sch_module_role_privilege
 @oms-drop-foreign-key sch_privilege
@@ -112,8 +113,6 @@ drop table sch_load_interval_tmp
 /
 drop table sch_load_schedule_tmp
 /
-drop table sch_log
-/
 drop table sch_message_type
 /
 drop table sch_module_role_privilege
@@ -141,8 +140,6 @@ drop sequence sch_condition_seq
 drop sequence sch_interval_seq
 /
 drop sequence sch_job_seq
-/
-drop sequence sch_log_seq
 /
 drop sequence sch_module_role_privilege_seq
 /
