@@ -61,6 +61,18 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 
+group: 2.0.2
+
+Команда для установки обновления:
+
+(code)
+
+$ make install INSTALL_VERSION=2.0.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 2.0.1
 
 Команда для установки обновления:

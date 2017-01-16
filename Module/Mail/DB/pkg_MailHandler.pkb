@@ -189,6 +189,7 @@ begin
     coalesce( smtpServer, pkg_Common.getSmtpServer())
     , maxMessageCount - nSend
   );
+  commit;
   return nSend;
 exception when others then
   raise_application_error(
@@ -635,6 +636,7 @@ begin
          end
       || ': ' || errorMessage;
   end if;
+  commit;
   return nFetched;
 end fetchMessageImmediate;
 
