@@ -1,1 +1,5 @@
 Title: Ошибки
+
+[!] Переименовать ( исправить префикс с "mon" на "mod") индексы
+    mon_install_action_ix_date_ins, mon_install_action_ix_module_i таблицы
+    mod_install_action.
