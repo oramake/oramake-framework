@@ -27,9 +27,7 @@ $ make install-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERA
 
 <div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.Выдачаправнаиспользованиемодуля"></a>Выдача прав на использование модуля</h3><div class=CBody><h4 class=CHeading>Команда для выдачи прав</h4><blockquote><pre>$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???</pre></blockquote><h4 class=CHeading>Замечания</h4><ul><li>для выдачи прав всем пользователям в качестве значения TO_USERNAME нужно указать PUBLIC ( при этом у пользователя должно быть право на создание публичных синонимов, &ldquo;create public synonym&rdquo;);</li><li>выдача прав на использование тестовых утилит AccessOperator выполняется с помощью скрипта <a href="../Test/Grant/run-sql.html#Test/Grant/run.sql" class=LFile id=link7 onMouseOver="ShowTip(event, 'tt4', 'link7')" onMouseOut="HideTip('tt4')">Test/Grant/run.sql</a> с указанием в качестве первого параметра пользователя, которому выдаются права;</li></ul></div></div></div>
 
-<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УдалениемодуляизБД"></a>Удаление модуля из БД</h3><div class=CBody><h4 class=CHeading>Команда для удаления модуля из БД</h4><blockquote><pre>$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? SKIP_FILE_MASK=*/oms-save-uninstall-info.sql
-
-$ make uninstall-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=</pre></blockquote></div></div></div>
+<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УдалениемодуляизБД"></a>Удаление модуля из БД</h3><div class=CBody><h4 class=CHeading>Команда для удаления модуля из БД</h4><blockquote><pre>$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???</pre></blockquote></div></div></div>
 
 </div><!--Content-->
 
