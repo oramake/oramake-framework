@@ -47,3 +47,15 @@ $ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 - для выдачи прав всем пользователям в TO_USERNAME нужно указать public
   ( " TO_USERNAME=public"), при этом у пользователя, в схему которого
   установлен модуль, должна быть системная привилегия "CREATE PUBLIC SYNONYM";
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
