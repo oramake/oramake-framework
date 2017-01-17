@@ -131,6 +131,13 @@ is
       ;
       exit when nCount = 1;
     end loop;
+    if nCount = 0 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Превышен интервал ожидания ( 200сек.). Проверьте работающие'
+          || ' обработчики TaskProcessor'
+      );
+    end if;
   end waitForTask;
 
   /*
