@@ -597,9 +597,14 @@ getSvnModuleRoot()
     # Проверяем, что тэг <url> был найден
     if [[ $svnRootUrl != $svnInfo ]]; then
       svnRootUrl=${svnRootUrl%%</url>*}
-      svnPath=${svnRootUrl#svn://*/}
-      svnRootUrl=${svnRootUrl%/Trunk}
-      svnRoot=${svnRootUrl#svn://*/}
+      svnPath=$svnRootUrl
+      svnPath=${svnPath#svn://*/}
+      svnPath=${svnPath#http://*/}
+      svnPath=${svnPath#https://*/}
+      svnRoot=${svnRootUrl%/Trunk}
+      svnRoot=${svnRoot#svn://*/}
+      svnRoot=${svnRoot#http://*/}
+      svnRoot=${svnRoot#https://*/}
     fi
   fi
 
@@ -641,13 +646,21 @@ getSvnInitialPath()
     logDebug3 "Set initialRevision: $initialRevision"
     local initialInfo=$($svnCmd info -r "$initialRevision" --xml "$rootUrl")
     if (( $? == 0 )); then
-      initialPath=${initialInfo#*<url>svn://*/}
+      initialPath=$initialInfo
+      # Для симметрии дальше работаем с initialPath
+      initialPath=${initialPath#*<url>svn://*/}
+      initialPath=${initialPath#*<url>http://*/}
+      initialPath=${initialPath#*<url>https://*/}
       initialPath="${initialPath%%</url>*}@${initialRevision}"
     fi
   fi
-                                        # Возврат значения
+  # Возврат значения
   svnInitialPath=$initialPath
   logDebug2 "Set svnInitialPath: '$svnInitialPath'"
+  # Проверка, что svnInitialPath - одна строка
+  if (( $(expr index "$svnInitialPath" $'\n') != 0 )); then
+    exitError "svnInitialPath contains a line end"
+  fi
 }
 
 
@@ -697,43 +710,5 @@ getFileObject()
 }
 
 
-
-# func: getSvnInitialPath
-# Определяет первоначальный путь к корневому каталогу модуля в Subversion.
-#
-# Параметры:
-# rootUrl                     - URL корневого каталога модуля
-#
-# Возврат:
-# <svnInitialPath>            - первоначальный путь к корневому каталогу модуля
-#                               ( включая номер правки, в которой он был создан,
-#                               например, "Oracle/Module/OraMakeSystem@350")
-#
-# Замечания:
-# - первоначальный путь определяется только по текущему репозитарию, переносы
-#   между репозитариями не учитываются;
-#
-getSvnInitialPath()
-{
-  local rootUrl="$1"
-  logDebug3 "start: rootUrl='$rootUrl'"
-  local initialPath=""
-  local firstLog=$($svnCmd log -r 1:HEAD --limit 1 --xml "$rootUrl")
-  if (( $? == 0 )); then
-    local initialRevision=${firstLog#*revision=\"}
-    initialRevision=${initialRevision%%\"*}
-    logDebug3 "Set initialRevision: $initialRevision"
-    local initialInfo=$($svnCmd info -r "$initialRevision" --xml "$rootUrl")
-    if (( $? == 0 )); then
-      initialPath=${initialInfo#*<url>svn://*/}
-      initialPath="${initialPath%%</url>*}@${initialRevision}"
-    fi
-  fi
-                                        # Возврат значения
-  svnInitialPath=$initialPath
-  logDebug2 "Set svnInitialPath: '$svnInitialPath'"
-}
-
-
-                                        # Вывод стартовой отладочной информации
+# Вывод стартовой отладочной информации
 logInitDebugInfo
