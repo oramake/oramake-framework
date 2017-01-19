@@ -11,6 +11,10 @@ group: ?.? ?
     локальных файлов ( oms-update-module, помимо содержание подстроки "FAIL"
     условие содержание подстроки "Skipping patch", "saving rejects").
 
+[!] ¬ случае если работа с репозиторием SVN происходила по протоколам
+    HTTP или HTTPS при запуске oms-create-module выдавалась ошибка "sed:
+    ... unterminated `s' command".
+
 
 
 group: 1.8.0 ( 2016-05-24)
