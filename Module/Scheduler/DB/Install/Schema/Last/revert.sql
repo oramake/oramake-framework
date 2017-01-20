@@ -82,7 +82,6 @@ drop synonym sch_log
 @oms-drop-foreign-key sch_load_condition_tmp
 @oms-drop-foreign-key sch_load_interval_tmp
 @oms-drop-foreign-key sch_load_schedule_tmp
-@oms-drop-foreign-key sch_message_type
 @oms-drop-foreign-key sch_module_role_privilege
 @oms-drop-foreign-key sch_privilege
 @oms-drop-foreign-key sch_result
@@ -112,8 +111,6 @@ drop table sch_load_condition_tmp
 drop table sch_load_interval_tmp
 /
 drop table sch_load_schedule_tmp
-/
-drop table sch_message_type
 /
 drop table sch_module_role_privilege
 /
