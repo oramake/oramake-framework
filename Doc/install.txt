@@ -1,52 +1,48 @@
-совместимость в Ѕƒ Oracle - 11.1.0.7
+—овместимость с Ѕƒ Oracle - 11.1.0.7
+
+ѕоследовательность первоначальной установки ( команды выполн€ютс€ в каталоге
+Module):
+
+- создание вспомогательного пользовател€ с расширенными привилеги€ми
+  ( om_admin)
+
+(code)
+
+SQL> @UserCreate/create-user-admin.sql om_admin
+
+(end)
+
+( выполн€етс€ в SQL*Plus под пользователем, имеющим достаточно привилегий дл€
+  успешного выполнени€ скрипта)
+
+- создание основного пользовател€ дл€ установки модулей ( om_main)
+
+(code)
+
+SQL> @UserCreate/create-user-main.sql om_main
+
+(end)
+
+( выполн€етс€ в SQL*Plus под пользователем om_admin, созданным на предыдущем
+  шаге установки, либо под любым другим пользователем, имеющим достаточно
+  привилегий дл€ успешного выполнени€ скрипта; при запросе имени табличного
+  пространства указываетс€ USERS)
+
+- установка модулей
+
+(code)
+
+$ make install MAIN_USERID=om_main@TestDb ADMIN_USERID=om_admin@TestDb SQL_DEFINE=indexTablespace=USERS
+
+(end)
+
+( дл€ индексов используетс€ €вно заданное табличное пространство USERS,
+  описание дополнительных параметров установки есть в комментари€х
+  в файле Module/Makefile)
 
 
-ѕоследовательность первоначальной установки модулей:
-
-- ModuleInfo ( с указанием NO_ACCESSOPERATOR=1)
-
-- Common
-
-- Logging
-
-- AccessOperator
-
-- DynamicSql
-
-- Option
-
-- Scheduler
-
-- TaskHandler
-
-- TestUtility
-
-- File
-
-- TextParser
-
-- ProcessMonitor
-
-- TextService
-
-- ScriptUtility
-
-- Mail
-
-- DataSize
-
-- ConvertNameInCase
-
-- FormatData
-
-- TextCreate
-
-- Subversion
-
-- TaskProcessor
-
-- ExcelCreate
-
-- DataSync
-
-
+¬ результате будут установлены основные модули ( перечисленные в настроечном
+параметре allModuleList файла Module/Makefile).
+ќстальные модули устанавливаютс€ индивидуально согласно документации по
+их установке ( см. Module/<moduleName>/Doc/DB/AutoGen/index.html, раздел
+"O модуле -> ”становка").
