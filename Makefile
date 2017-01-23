@@ -1,6 +1,6 @@
 #
-# Настройки выполнения типовых операций для нескольких модулей
-# ( установка в БД, удаление из БД и т.д.)
+# Настройки выполнения операций уровня проекта, включая выполнение типовых
+# операций для нескольких модулей ( установка в БД, удаление из БД и т.д.)
 #
 
 # Абстрактные цели
@@ -166,7 +166,7 @@ processModuleList = $(strip \
 #
 # (code)
 #
-# SQL> @UserCreate/create-user-main.sql om_main
+# SQL> @Module/UserCreate/create-user-main.sql om_main
 #
 # (end)
 #
@@ -211,7 +211,7 @@ processModuleList = $(strip \
 #
 install:
 	@for module in $(processModuleList); do \
-		$(runCmd) cd $${module}/DB \
+		$(runCmd) cd Module/$${module}/DB \
 		&& grantSysPrivsFlag=0 \
 		&& addonLoadUser="" \
 		&& isUseOperator=1 \
@@ -280,7 +280,7 @@ install:
 					LOAD_OPERATORID="$(INSTALL_OPERATORID)" \
 				;; \
 		esac \
-		&& $(runCmd) cd ../.. \
+		&& $(runCmd) cd ../../.. \
 		|| { echo "Error on processing \"$@\" for \"$${module}\", stop"; exit 15; }; \
 	done; \
 
@@ -302,7 +302,7 @@ install:
 #
 grant:
 	@for module in $(processModuleList); do \
-		$(runCmd) cd $${module}/DB \
+		$(runCmd) cd Module/$${module}/DB \
 		&& grantScript="" \
 		&& case "$${module}" in \
 			ModuleInfo) \
@@ -318,7 +318,7 @@ grant:
 					TO_USERNAME="$(GRANT_USERNAME)"; \
 				;; \
 		esac \
-		&& $(runCmd) cd ../.. \
+		&& $(runCmd) cd ../../.. \
 		|| { echo "Error on processing \"$@\" for \"$${module}\", stop"; exit 15; }; \
 	done; \
 
@@ -365,7 +365,7 @@ grant:
 #
 uninstall:
 	@for module in $(call reverse,$(processModuleList)); do \
-		$(runCmd) cd $${module}/DB \
+		$(runCmd) cd Module/$${module}/DB \
 		&& isUseOperator=1 \
 		&& case "$${module}" in \
 			Common) \
@@ -385,7 +385,7 @@ uninstall:
 					$${isUseOperator:+ LOAD_OPERATORID="$(INSTALL_OPERATORID)"} \
 				;; \
 		esac \
-		&& $(runCmd) cd ../.. \
+		&& $(runCmd) cd ../../.. \
 		|| { echo "Error on processing \"$@\" for \"$${module}\", stop"; exit 15; }; \
 	done; \
 
@@ -404,13 +404,13 @@ uninstall:
 #
 load-clean:
 	@for module in $(processModuleList); do \
-		$(runCmd) cd $${module}/DB \
+		$(runCmd) cd Module/$${module}/DB \
 		&& case "$${module}" in \
 			*) \
 				$(runCmd) make load-clean \
 				;; \
 		esac \
-		&& $(runCmd) cd ../.. \
+		&& $(runCmd) cd ../../.. \
 		|| { echo "Error on processing \"$@\" for \"$${module}\", stop"; exit 15; }; \
 	done; \
 

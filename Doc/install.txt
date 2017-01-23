@@ -1,14 +1,14 @@
 —овместимость с Ѕƒ Oracle - 11.1.0.7
 
-ѕоследовательность первоначальной установки ( команды выполн€ютс€ в каталоге
-Module):
+ѕоследовательность первоначальной установки ( команды выполн€ютс€ в корневом
+каталоге проекта):
 
 - создание вспомогательного пользовател€ с расширенными привилеги€ми
   ( om_admin)
 
 (code)
 
-SQL> @UserCreate/create-user-admin.sql om_admin
+SQL> @Module/UserCreate/create-user-admin.sql om_admin
 
 (end)
 
@@ -19,7 +19,7 @@ SQL> @UserCreate/create-user-admin.sql om_admin
 
 (code)
 
-SQL> @UserCreate/create-user-main.sql om_main
+SQL> @Module/UserCreate/create-user-main.sql om_main
 
 (end)
 
@@ -38,11 +38,11 @@ $ make install MAIN_USERID=om_main@TestDb ADMIN_USERID=om_admin@TestDb SQL_DEFIN
 
 ( дл€ индексов используетс€ €вно заданное табличное пространство USERS,
   описание дополнительных параметров установки есть в комментари€х
-  в файле Module/Makefile)
+  в файле Makefile корневого каталога проекта)
 
 
 ¬ результате будут установлены основные модули ( перечисленные в настроечном
-параметре allModuleList файла Module/Makefile).
+параметре allModuleList файла Makefile корневого каталога проекта).
 ќстальные модули устанавливаютс€ индивидуально согласно документации по
 их установке ( см. Module/<moduleName>/Doc/DB/AutoGen/index.html, раздел
 "O модуле -> ”становка").
