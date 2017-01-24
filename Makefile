@@ -6,6 +6,7 @@
 # Абстрактные цели
 .PHONY:  \
   grant \
+  dist \
   install \
   load-clean \
   uninstall \
@@ -414,4 +415,65 @@ load-clean:
 		|| { echo "Error on processing \"$@\" for \"$${module}\", stop"; exit 15; }; \
 	done; \
 
+
+
+# group: Создание дистрибутива
+
+# build var: TAG_NAME
+# Имя тэга, по которому формируется дистрибутив.
+TAG_NAME=
+
+# build var: DIST_DIR
+# Каталог для дистрибутива, создаваемого при выполнении <dist>.
+DIST_DIR =
+
+
+# target: dist
+# Создает дистрибутив отдельного модуля по существующему тэгу.
+# Имя тэга указывается в параметре <TAG_NAME>, дистрибутив создается в каталоге
+# <DIST_DIR> в виде файла с именем "<TAG_NAME>.zip".
+#
+# Пример:
+# $ make dist TAG_NAME=Mail-2.0.2 DIST_DIR=..
+
+dist:
+	@showUsage() { \
+		echo '( for example usage: "make dist TAG_NAME=Mail-2.0.2 DIST_DIR=..")'; \
+	}; \
+	if [[ -z "$(TAG_NAME)" ]]; then \
+	  echo 'No value for parameter TAG_NAME'; \
+		showUsage; \
+	  exit 5; \
+	elif [[ -z "$(DIST_DIR)" ]]; then \
+	  echo "No value for parameter DIST_DIR"; \
+		showUsage; \
+	  exit 5; \
+	elif [[ ! -d "$(DIST_DIR)" ]]; then \
+	  echo "Directory \"$(DIST_DIR)\" not exists"; \
+	  exit 6; \
+	else \
+		moduleName="$(TAG_NAME)"; \
+		moduleName="$${moduleName%%-*}"; \
+		if [[ ! -d "Module/$$moduleName" ]]; then \
+			echo "Module \"$$moduleName\" not exists"; \
+			exit 6; \
+		fi; \
+		distFile="$(DIST_DIR)/$(TAG_NAME).zip"; \
+		if [[ -f "$$distFile" ]]; then \
+			echo "Distributive file \"$$distFile\" already exists"; \
+			exit 6; \
+		fi; \
+		{ cd "Module/$$moduleName" \
+			&& git archive \
+				--prefix="$(TAG_NAME)/" \
+				--format=zip \
+				"$(TAG_NAME)" \
+			; \
+		} >"$$distFile" \
+			&& echo "created: $$distFile" \
+			|| { echo "Error during creating distributive"; \
+					rm -f "$$distFile"; \
+					exit 7; \
+				}; \
+	fi
 
