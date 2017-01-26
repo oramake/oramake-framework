@@ -131,7 +131,6 @@ Group: Скрипты  {
             File: mod_install_result_bi_define  (no auto-title, Install/Schema/Last/mod_install_result_bi_define.trg)
             File: mod_install_result_seq  (no auto-title, Install/Schema/Last/mod_install_result_seq.sqs)
             File: mod_install_type  (no auto-title, Install/Schema/Last/mod_install_type.tab)
-            File: mod_install_type_bi_define  (no auto-title, Install/Schema/Last/mod_install_type_bi_define.trg)
             File: mod_module  (no auto-title, Install/Schema/Last/mod_module.tab)
             File: mod_module_bi_define  (no auto-title, Install/Schema/Last/mod_module_bi_define.trg)
             File: mod_module_part  (no auto-title, Install/Schema/Last/mod_module_part.tab)
@@ -152,6 +151,11 @@ Group: Скрипты  {
             File: v_mod_module  (no auto-title, Install/Schema/Last/v_mod_module.vw)
             File: v_mod_source_file  (no auto-title, Install/Schema/Last/v_mod_source_file.vw)
             }  # Group: Last
+
+         Group: 1.2.1  {
+
+            File: run  (no auto-title, Install/Schema/1.2.1/run.sql)
+            }  # Group: 1.2.1
 
          }  # Group: Schema
 

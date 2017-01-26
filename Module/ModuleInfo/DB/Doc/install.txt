@@ -1,5 +1,7 @@
 title: Установка
 
+
+
 group: Общие замечания
 
 Реализуется с помощью целей сборки модуля из make-целей <Установка модуля в БД>.
@@ -70,6 +72,10 @@ group: 1.2.1
 $ make install INSTALL_VERSION=1.2.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
+
+Замечания:
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;
 
 
 

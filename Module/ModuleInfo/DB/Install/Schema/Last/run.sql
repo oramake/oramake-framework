@@ -24,7 +24,6 @@
 @oms-run mod_install_action.con
 @oms-run mod_install_file.con
 @oms-run mod_install_result.con
-@oms-run mod_install_type.con
 @oms-run mod_module.con
 @oms-run mod_module_part.con
 @oms-run mod_source_file.con
@@ -39,18 +38,3 @@
 @oms-run mod_module_part_seq.sqs
 @oms-run mod_module_seq.sqs
 @oms-run mod_source_file_seq.sqs
-
-
--- Представления
-
-
--- Триггеры
---@oms-run mod_app_install_result_bi_def.trg
---@oms-run mod_deployment_bi_define.trg
---@oms-run mod_install_action_bi_define.trg
---@oms-run mod_install_file_bi_define.trg
---@oms-run mod_install_result_bi_define.trg
---@oms-run mod_install_type_bi_define.trg
---@oms-run mod_module_bi_define.trg
---@oms-run mod_module_part_bi_define.trg
---@oms-run mod_source_file_bi_define.trg
