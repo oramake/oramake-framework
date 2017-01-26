@@ -87,10 +87,10 @@ comment on column mod_install_action.operator_id is
 
 
 
--- index: mon_install_action_ix_module_i
+-- index: mod_install_action_ix_module_i
 -- Индекс для внешнего ключа.
 create index
-  mon_install_action_ix_module_i
+  mod_install_action_ix_module_i
 on
   mod_install_action (
     module_id
@@ -100,10 +100,10 @@ tablespace &indexTablespace
 
 
 
--- index: mon_install_action_ix_date_ins
+-- index: mod_install_action_ix_date_ins
 -- Индекс для эффективной выборки действий за период.
 create index
-  mon_install_action_ix_date_ins
+  mod_install_action_ix_date_ins
 on
   mod_install_action (
     date_ins

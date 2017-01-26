@@ -8,6 +8,8 @@ group: 1.2.1 ( 2016-12-27)
     pkg_Operator, не относящегося к модулю AccessOperator ( не содержащего
     функцию getCurrentUserId).
 
+[!] Исправлен префикс в именах индексов на таблице <mod_install_action>.
+
 [*] Из настроечной таблицы <mod_install_type> удалено поле operator_id
     ( для уменьшения зависимости от модуля AccessOperator).
 
