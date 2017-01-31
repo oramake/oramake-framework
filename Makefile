@@ -252,6 +252,7 @@ install:
 			Scheduler) \
 				grantSysPrivsFlag=1; \
 				addonLoadUser=2; \
+				addonOpt=" PRODUCTION_DB_NAME=ProdDb"; \
 				;; \
 			TaskHandler) \
 				grantSysPrivsFlag=1; \
