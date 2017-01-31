@@ -23,10 +23,11 @@ allModuleList = \
 	DynamicSql \
 	Option \
 	Scheduler \
-	Calendar \
 	TaskHandler \
-	DataSync \
+	File \
 	Mail \
+	DataSync \
+	Calendar \
 	TestUtility \
 
 
@@ -229,6 +230,9 @@ install:
 				grantSysPrivsFlag=1; \
 				isUseOperator=""; \
 				;; \
+			File) \
+				grantSysPrivsFlag=1; \
+				;; \
 			Logging) \
 				isUseOperator=""; \
 				addonOpt=" NO_ACCESSOPERATOR=1"; \
@@ -343,7 +347,7 @@ grant:
 # - в случае, если в другой схеме БД уже установлен модуль AccessOperator,
 #   права на его выданы всем пользователям ( public), то после удаления
 #   локального модуля AccessOperator при попытке удаления оставшихся модулей
-#   возникнет ошибка из-за отсутвтия регистрации оператора. Для решения
+#   возникнет ошибка из-за отсутствия регистрации оператора. Для решения
 #   проблемы под пользователем om_main нужно создать пакет-заглушку,
 #   исключающую использование пакета pkg_Operator модуля AccessOperator из
 #   другой схемы:
