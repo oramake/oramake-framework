@@ -69,6 +69,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_TextUtility.pkb)
       }  # Group: pkg_TextUtility
 
+   Group: Test  {
+
+      Group: pkg_TextUtilityTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_TextUtilityTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_TextUtilityTest.pkb)
+         }  # Group: pkg_TextUtilityTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -87,6 +97,12 @@ Group: Скрипты  {
          }  # Group: Grant
 
       }  # Group: Install
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: levenshtein  (no auto-title, Test/levenshtein.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
