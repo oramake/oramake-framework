@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Config/before-action.sql"></a>Install/<wbr>Config/<wbr>before-action.sql</h1><div class=CBody><p>Действия, выполняемые перед установкой обновления модуля.</p><h4 class=CHeading>Выполянемые действия</h4><ul><li>в случае STOP_JOB=1 останавливает выполнение всех заданий БД; ( вызывает &lt;Install/Config/stop-job.sql&gt;);</li><li>в противном случае деактивирует пакетные задания модуля ( с ожиданием остановки обработчиков);</li></ul></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Config/before-action.sql"></a>Install/<wbr>Config/<wbr>before-action.sql</h1><div class=CBody><p>Действия, выполняемые перед установкой обновления модуля.</p><h4 class=CHeading>Выполянемые действия</h4><ul><li>в случае STOP_JOB=1 останавливает выполнение всех заданий БД; ( вызывает <a href="stop-job-sql.html#Install/Config/stop-job.sql" class=LFile id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Install/Config/stop-job.sql</a>);</li><li>в противном случае деактивирует пакетные задания модуля ( с ожиданием остановки обработчиков);</li></ul></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([15, 23, 27], 32);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CFile>Останавливает выполнение заданий в БД.</div></div><!--END_ND_TOOLTIPS-->
 
 
 

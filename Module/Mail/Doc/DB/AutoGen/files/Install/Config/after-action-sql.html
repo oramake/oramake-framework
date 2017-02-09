@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Config/after-action.sql"></a>Install/<wbr>Config/<wbr>after-action.sql</h1><div class=CBody><p>ƒействи€, выполн€емые после установки обновлени€ модул€.</p><h4 class=CHeading>¬ыпол€немые действи€</h4><ul><li>в случае STOP_JOB=1 восстанавливает ранее отключенный запуск заданий через dbms_job ( вызывает &lt;Install/Config/resume-job.sql&gt;);</li><li>в противном случае повторно активирует пакетные задани€ модул€ ( с ожиданием запуска обработчиков);</li></ul><h4 class=CHeading>«амечани€</h4><ul><li>при первоначальной установке модул€ ( INSTALL_VERSION=Last) скрипт не выполн€етс€;</li></ul></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Config/after-action.sql"></a>Install/<wbr>Config/<wbr>after-action.sql</h1><div class=CBody><p>ƒействи€, выполн€емые после установки обновлени€ модул€.</p><h4 class=CHeading>¬ыпол€немые действи€</h4><ul><li>в случае STOP_JOB=1 восстанавливает ранее отключенный запуск заданий через dbms_job ( вызывает <a href="resume-job-sql.html#Install/Config/resume-job.sql" class=LFile id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Install/Config/resume-job.sql</a>);</li><li>в противном случае повторно активирует пакетные задани€ модул€ ( с ожиданием запуска обработчиков);</li></ul><h4 class=CHeading>«амечани€</h4><ul><li>при первоначальной установке модул€ ( INSTALL_VERSION=Last) скрипт не выполн€етс€;</li></ul></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([15, 23, 27], 32);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CFile>¬осстанавливает выполнение заданий в Ѕƒ.</div></div><!--END_ND_TOOLTIPS-->
 
 
 
