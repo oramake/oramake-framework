@@ -1,22 +1,32 @@
 -- script: Install/Grant/Last/run.sql
--- Выдача прав и создание синонимов на объекты модуля.
--- Выполняется под пользователем, где установлен модуль.
--- Параметры:
+-- Выдает права на использование модуля.
 --
---	toUserName - пользователь, которому выдаются права
+-- Параметры:
+-- toUserName                  - имя пользователя, которому выдаются права
+--
+-- Замечания:
+--  - скрипт запускается под пользователем, которому принадлежат объекты модуля
+--   ;
+--
 
 define toUserName = "&1"
 
-grant execute on pkg_TextService to &toUserName
+
+
+grant
+ execute
+on
+  pkg_TextUtility
+to
+  &toUserName
 /
 
-create or replace synonym &toUserName..pkg_TextService for pkg_TextService
+create or replace synonym
+  &toUserName..pkg_TextUtility
+for
+  pkg_TextUtility
 /
 
-grant execute on CTX_DDL to &toUserName
-/
 
-create or replace synonym &toUserName..CTX_DDL for CTX_DDL
-/
 
 undefine toUserName

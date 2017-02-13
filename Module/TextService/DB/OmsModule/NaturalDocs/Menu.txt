@@ -57,11 +57,15 @@ Group: О модуле  {
 
 Group: Пакеты  {
 
-   Group: pkg_TextService  {
+   Group: Ctxsys  {
 
-      File: Спецификация  (no auto-title, pkg_TextService.pks)
-      File: Реализация  (no auto-title, pkg_TextService.pkb)
-      }  # Group: pkg_TextService
+      Group: pkg_TextService  {
+
+         File: Спецификация  (no auto-title, Ctxsys/pkg_TextService.pks)
+         File: Реализация  (no auto-title, Ctxsys/pkg_TextService.pkb)
+         }  # Group: pkg_TextService
+
+      }  # Group: Ctxsys
 
    Group: pkg_TextUtility  {
 
@@ -90,6 +94,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: ctxsys  (no auto-title, Install/Grant/Last/ctxsys.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             File: text-utility-privs  (no auto-title, Install/Grant/Last/text-utility-privs.sql)
             }  # Group: Last

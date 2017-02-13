@@ -10,21 +10,39 @@ INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
                                 обновлении)
 LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
                                 ( формат: login/password)
-LOAD_USERID                   - пользователь для установки функционала TextService в БД
+LOAD_USERID                   - основная схема для установки модуля
                                 ( формат: username/password@dbName)
-LOAD_USERID2                  - пользователь для установки функционала TextUtility в БД
+LOAD_USERID2                  - пользователь для установки функционала TextService в БД
                                 ( формат: username/password@dbName)
+
+
 
 
 group: Первоначальная
 
+
+- установка модуля в основную схему:
+
+(code)
+
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+- установка пакета <pkg_TextService> в схему ctxsys:
+
 (code)
 -- Установка пакетов модуля в схему CTXSYS
-make load LOAD_USERID=ctxsys/<password>@dbName
+make load LOAD_USERID2=ctxsys/<password>@dbName
 
 -- Выдача права пользователю CTXSYS на создание синонима в произвольной пользовательской схеме
-make grant LOAD_USERID=sys/<password>@dbName TO_USERNAME=CTXSYS GRANT_SCRIPT=sys-privs
+make grant LOAD_USERID2=sys/<password>@dbName TO_USERNAME=CTXSYS GRANT_SCRIPT=sys-privs
 
--- Выдача прав на объекты модуля произвольному пользователю и создание синонима в пользовательской схеме
-make grant LOAD_USERID=ctxsys/<password>@dbName TO_USERNAME=<userSchema>
+-- Выдача прав на объекты модуля произвольному пользователю и создание синонима
+-- в пользовательской схеме
+make grant LOAD_USERID2=ctxsys/<password>@dbName TO_USERNAME=<userSchema> GRANT_SCRIPT=ctxsys
 (end)
+
+
+

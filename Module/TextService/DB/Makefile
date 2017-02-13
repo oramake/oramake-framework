@@ -373,10 +373,10 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
-    $(wildcard pkg_TextService.pks pkg_TextService.pkb) \
+    $(wildcard pkg_TextUtility.pk[sb]) \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard pkg_TextUtility.pks pkg_TextUtility.pkb) \
+    $(wildcard Ctxsys/pkg_TextService.pk[sb]) \
   )                                      \
   $(addsuffix .$(lu3),                  \
   )                                      \
@@ -698,13 +698,13 @@ install: install.oms
 # Скрипты для загрузки в БД объектов для тестирования
 installTestTarget = \
   $(addsuffix .$(lu), \
-  ) \
-  $(addsuffix .$(lu2), \
     $(wildcard \
       $(addprefix Test/, \
         *.typ *.pks *.tyb *.pkb \
       ) \
     ) \
+  ) \
+  $(addsuffix .$(lu2), \
   ) \
   $(addsuffix .$(lu3), \
   ) \
@@ -733,9 +733,9 @@ endif
 # Скрипты для запуска тестирования
 testTarget = \
   $(addsuffix .$(ru), \
+    $(wildcard Test/$(testScript)) \
   ) \
   $(addsuffix .$(ru2), \
-    $(wildcard Test/$(testScript)) \
   ) \
   $(addsuffix .$(ru3), \
   ) \
