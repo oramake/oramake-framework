@@ -27,8 +27,12 @@
 # - файлы в зависимости должны указываться с путем относительно каталога DB
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
+#
 
-pkg_TextService.pkb.$(lu): \
-  pkg_TextService.pks.$(lu)
+pkg_TextUtility.pkb.$(lu): \
+  pkg_TextUtility.pks.$(lu)
+
+pkg_TextService.pkb.$(lu2): \
+  pkg_TextService.pks.$(lu2)
 
 

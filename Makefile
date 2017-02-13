@@ -29,6 +29,7 @@ allModuleList = \
 	DataSync \
 	Calendar \
 	TestUtility \
+	TextService \
 
 
 
