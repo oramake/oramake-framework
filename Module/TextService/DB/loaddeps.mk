@@ -29,10 +29,13 @@
 #
 #
 
+pkg_ContextSearchUtility.pkb.$(lu): \
+  pkg_ContextSearchUtility.pks.$(lu)
+
 pkg_TextUtility.pkb.$(lu): \
   pkg_TextUtility.pks.$(lu)
 
-pkg_TextService.pkb.$(lu2): \
-  pkg_TextService.pks.$(lu2)
+Ctxsys/pkg_TextService.pkb.$(lu2): \
+  Ctxsys/pkg_TextService.pks.$(lu2)
 
 

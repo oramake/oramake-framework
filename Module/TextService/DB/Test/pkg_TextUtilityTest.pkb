@@ -321,5 +321,32 @@ begin
   pkg_TestUtility.endTest();
 end testWordListCloseness;
 
+
+
+/* group: Утилиты для работы с конектсным поиском */
+
+/* proc: testNormalizeSearchPhrase
+  Тестирование нормализации функции контекстного поиска.
+
+  Параметры:
+  searchPhrase                - исходная строка
+  expectedPhrase              - ожидаемая строка
+*/
+procedure testNormalizeSearchPhrase(
+  searchPhrase varchar2
+, expectedPhrase varchar2
+)
+is
+-- testNormalizeSearchPhrase
+begin
+  pkg_TestUtility.beginTest( 'normalizeSearchPhrase ("' || searchPhrase || '"');
+  pkg_TestUtility.compareChar(
+    actualString     => pkg_ContextSearchUtility.normalizeSearchPhrase( searchPhrase)
+  , expectedString   => expectedPhrase
+  , failMessageText  => 'function result'
+  );
+  pkg_TestUtility.endTest();
+end testNormalizeSearchPhrase;
+
 end pkg_TextUtilityTest;
 /

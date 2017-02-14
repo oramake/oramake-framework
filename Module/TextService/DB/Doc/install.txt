@@ -17,6 +17,28 @@ LOAD_USERID2                  - пользователь для установки функционала TextServi
 
 
 
+group: 1.3.0
+(<Версии::1.3.0 ( 2017-02-14)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+- выдача прав пользователям;
+
+(code)
+
+make grant LOAD_USERID=???/???@??? TO_USERNAME=??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
 
 group: Первоначальная
 
@@ -43,6 +65,7 @@ make grant LOAD_USERID2=sys/<password>@dbName TO_USERNAME=CTXSYS GRANT_SCRIPT=sy
 -- в пользовательской схеме
 make grant LOAD_USERID2=ctxsys/<password>@dbName TO_USERNAME=<userSchema> GRANT_SCRIPT=ctxsys
 (end)
+
 
 
 

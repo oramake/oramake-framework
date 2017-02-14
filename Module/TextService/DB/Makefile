@@ -373,10 +373,10 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
-    $(wildcard pkg_TextUtility.pk[sb]) \
+    $(wildcard *.pk[sb]) \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard Ctxsys/pkg_TextService.pk[sb]) \
+    $(wildcard Ctxsys/*.pk[sb]) \
   )                                      \
   $(addsuffix .$(lu3),                  \
   )                                      \

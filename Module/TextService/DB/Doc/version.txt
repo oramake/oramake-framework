@@ -2,9 +2,11 @@ title: Версии
 
 
 
-group: 1.2.0
+group: 1.3.0 ( 2017-02-14)
+(<Установка::1.3.0>)
 
-[+] Добавлена функция wordListCloseness.
+[+] Добавлен пакет <pkg_ContextSearchUtility>. Добавлена функция
+    <pkg_ContextSearchUtility::normalizeSearchPhrase>.
 
 
 

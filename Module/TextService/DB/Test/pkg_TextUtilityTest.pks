@@ -65,6 +65,12 @@ return integer;
   addonDelimiterList          - список дополнительных разделителей (
                                 по-умолчанию только пробел)
 
+  Реализация:
+  - функция нормализует исходные строки и разбирает их на слова, после этого
+    сравнивает каждую пару слов функцией Левенштейна с учётом количества букв
+    в словах и с учётом нахождения слова в строке ( более близкие к концу
+    слова имеют больший вес);
+
   ( <body::wordListCloseness>)
 */
 function wordListCloseness(
@@ -88,6 +94,24 @@ procedure testWordListCloseness(
   wordList1 varchar2
   , wordList2 varchar2
   , expectedCloseness number
+);
+
+
+
+/* group: Утилиты для работы с конектсным поиском */
+
+/* pproc: testNormalizeSearchPhrase
+  Тестирование нормализации функции контекстного поиска.
+
+  Параметры:
+  searchPhrase                - исходная строка
+  expectedPhrase              - ожидаемая строка
+
+  ( <body::testNormalizeSearchPhrase>)
+*/
+procedure testNormalizeSearchPhrase(
+  searchPhrase varchar2
+, expectedPhrase varchar2
 );
 
 end pkg_TextUtilityTest;
