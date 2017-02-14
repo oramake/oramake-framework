@@ -339,7 +339,7 @@ procedure testNormalizeSearchPhrase(
 is
 -- testNormalizeSearchPhrase
 begin
-  pkg_TestUtility.beginTest( 'normalizeSearchPhrase ("' || searchPhrase || '"');
+  pkg_TestUtility.beginTest( 'normalizeSearchPhrase ("' || searchPhrase || '")');
   pkg_TestUtility.compareChar(
     actualString     => pkg_ContextSearchUtility.normalizeSearchPhrase( searchPhrase)
   , expectedString   => expectedPhrase
