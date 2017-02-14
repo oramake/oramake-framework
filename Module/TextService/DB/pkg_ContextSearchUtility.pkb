@@ -30,8 +30,9 @@ logger lg_logger_t := lg_logger_t.getLogger(
   - если строка обрамлена в кавычки ( одинарные или двойные), то
     кавычки в начале и в конце удал€ютс€ и возвращаетс€ полученна€ строка
     как есть;
-  - иначе все специальные символы ( все символы, кроме пробела, букв и цифр)
-    замен€ютс€ на пробелы;
+  - иначе все специальные символы ( все символы, кроме пробела, зап€тых, букв
+    и цифр) замен€ютс€ на пробелы; несколько зап€тых подр€д или несколько
+    пробелов подр€д замен€ютс€ на соответствующий один символ;
 
   «амечание:
   - автотест к функции реализован в скрипте
@@ -44,7 +45,20 @@ return varchar2
 is
 -- normalizeSearchPhrase
 begin
-  return null;
+  if searchPhrase like '"%"' or searchPhrase like '''%''' then
+    return substr( searchPhrase, 2, length( searchPhrase) - 2);
+  else
+    return
+      regexp_replace(
+      regexp_replace(
+        -- ¬се символы кроме букв, цифр, зап€тых замен€ем на пробелы
+        regexp_replace( searchPhrase, '[^0-9^a-z^A-Z^ ^,]', ' ')
+        -- ”дал€ем повтор€ющиес€ пробелы и зап€тые
+        , '([ ])+', '\1'
+      )
+        , '([,])+', '\1'
+      );
+  end if;
 end normalizeSearchPhrase;
 
 end pkg_ContextSearchUtility;
