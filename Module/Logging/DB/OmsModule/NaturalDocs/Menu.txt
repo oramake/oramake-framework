@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Logging
-SubTitle: Версия 1.4.0
+SubTitle: Версия 1.4.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -23,6 +23,11 @@ SubTitle: Версия 1.4.0
 #   yy    - Two digit year.  2006 is "06"
 #   yyyy  - Four digit year.  2006 is "2006"
 #   year  - Four digit year.  2006 is "2006"
+
+# These are indexes you deleted, so Natural Docs will not add them again
+# unless you remove them from this line.
+
+Don't Index: Classes
 
 
 # --------------------------------------------------------------------------
@@ -85,7 +90,26 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_LoggingInternal.pkb)
       }  # Group: pkg_LoggingInternal
 
+   Group: Test  {
+
+      Group: pkg_LoggingTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_LoggingTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_LoggingTest.pkb)
+         }  # Group: pkg_LoggingTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
+
+Group: Java-исходники  {
+
+   Group: Test  {
+
+      File: LoggingTest  (no auto-title, Test/LoggingTest.jav)
+      }  # Group: Test
+
+   }  # Group: Java-исходники
 
 Group: Скрипты  {
 
@@ -97,6 +121,7 @@ Group: Скрипты  {
    Group: Do  {
 
       File: root-level  (no auto-title, Do/root-level.sql)
+      File: root-level-trace  (no auto-title, Do/root-level-trace.sql)
       }  # Group: Do
 
    Group: Install  {
@@ -141,6 +166,18 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: Test  {
+
+      Group: Error-Stack  {
+
+         File: error-stack  (no auto-title, Test/Error-Stack/error-stack.sql)
+         File: remote-db-stack  (no auto-title, Test/Error-Stack/remote-db-stack.sql)
+         File: stack-example  (no auto-title, Test/Error-Stack/stack-example.sql)
+         File: stack-resolve-debug  (no auto-title, Test/Error-Stack/stack-resolve-debug.sql)
+         }  # Group: Error-Stack
+
+      }  # Group: Test
 
    }  # Group: Скрипты
 

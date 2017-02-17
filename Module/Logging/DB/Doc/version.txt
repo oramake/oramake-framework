@@ -2,7 +2,11 @@ title: Версии
 
 
 
-group: ?.?.? ( ???-??-??)
+group: 1.4.1 ( 2017-02-07)
+
+[!] Исключена ошибка при попытке логирования сообщения длиной свыше 4000
+    символов ( выбрасывалось исключение
+    "ORA-01461: can bind a LONG value only for insert into a LONG column").
 
 [*] Добавление параметра isStackPreserved в <lg_logger_t.getErrorStack()>
     аналогично <pkg_Logging::GetErrorStack> для исключения лишних зависимостей
