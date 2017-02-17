@@ -7,18 +7,18 @@ Group: Логирование стека ошибок
 
 Для логирования стека рекомендуется
 передавать в процедуру raise_application_error в качестве второго параметра
-результат функции <lg_logger_t.ErrorStack>, передавая ей необходимое сообщение.
-При работе с удалённой БД, следует использовать <lg_logger_t.RemoteErrorStack>, указывая
+результат функции <lg_logger_t.errorStack>, передавая ей необходимое сообщение.
+При работе с удалённой БД, следует использовать <lg_logger_t.remoteErrorStack>, указывая
 в качестве второго параметра имя линка.
-Для получения информации о стеке следует использовать функцию <lg_logger_t.GetErrorStack>
+Для получения информации о стеке следует использовать функцию <lg_logger_t.getErrorStack>
 или <pkg_Logging.GetErrorStack>. При вызове информация о предыдущем стеке очищается.
-В случае, если после ряда вызовов <lg_logger_t.ErrorStack>, информация о стеке не была
+В случае, если после ряда вызовов <lg_logger_t.errorStack>, информация о стеке не была
 получена и возникло новое исключение, стек предыдущего исключения сбрасывается
 ( информация логируется с уровнем <pkg_Logging.Debug_LevelCode> ).
 
-Использование функции <lg_logger_t.GetErrorStack> аналогично использованию стандартной plsql-функции SQLERRM,
+Использование функции <lg_logger_t.getErrorStack> аналогично использованию стандартной plsql-функции SQLERRM,
 при условии если соблюдается правило вызова raise_application_error, то есть используется
-<lg_logger_t.ErrorStack>. Длина сообщения может достигать 32767 символов.
+<lg_logger_t.errorStack>. Длина сообщения может достигать 32767 символов.
 
 В случае, если исключение не было погашено на сервере, информация о стеке логируется с уровнем
 <pkg_Logging.Error_LevelCode> ( используется триггер on servererror <lg_after_server_error>).
@@ -29,70 +29,70 @@ Group: Логирование стека ошибок
 
 (start code)
 declare
-  lg lg_logger_t := lg_logger_t.GetLogger(
+  lg lg_logger_t := lg_logger_t.getLogger(
     moduleName => 'Test'
     , objectName => 'TestBlock'
   );
 
-  procedure Internal
+  procedure internal
   is
   begin
     raise_application_error(
       pkg_Error.ProcessError
-      , lg.ErrorStack( 'Произошла ошибка' || lpad( '!', 10000, '_'))
+      , lg.errorStack( 'Произошла ошибка' || lpad( '!', 10000, '_'))
     );
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , lg.ErrorStack( 'Ошибка "Internal_"' || lpad( '!', 10000, '_'))
+      , lg.errorStack( 'Ошибка "Internal_"' || lpad( '!', 10000, '_'))
       , true
     );
-  end Internal;
+  end internal;
 
 begin
-  Internal;
+  internal();
 exception when others then
-  pkg_Common.OutputMessage(
-    lg.GetErrorStack
+  pkg_Common.outputMessage(
+    lg.getErrorStack()
   );
 end;
 /
 
 declare
-  lg lg_logger_t := lg_logger_t.GetLogger(
+  lg lg_logger_t := lg_logger_t.getLogger(
     moduleName => 'Test'
     , objectName => 'TestBlock'
   );
 
-  procedure Internal
+  procedure internal
   is
   begin
     raise_application_error(
       pkg_Error.ProcessError
-      , lg.ErrorStack( 'Произошла ошибка' || lpad( '!', 1000, '_'))
+      , lg.errorStack( 'Произошла ошибка' || lpad( '!', 1000, '_'))
     );
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , lg.ErrorStack( 'Ошибка "Internal_"' || lpad( '!', 1000, '_'))
+      , lg.errorStack( 'Ошибка "Internal_"' || lpad( '!', 1000, '_'))
       , true
     );
-  end Internal;
+  end internal;
 
-  procedure Internal2
+  procedure internal2
   is
     errorMessage varchar2( 32267);
   begin
     begin
-      Internal;
+      internal();
     exception when others then
-      errorMessage := lg.GetErrorStack();
+      errorMessage := lg.getErrorStack();
     end;
-                                       -- Нужны промежуточные результаты
-                                       -- стека в errorMessage
+
+    -- Нужны промежуточные результаты стека в errorMessage
     raise_application_error(
       pkg_Error.ProcessError
-      , lg.ErrorStack(
+      , lg.errorStack(
           'Произошла ошибка обработки' || lpad( '!', 100, '_')
           || '"' || errorMessage || '"'
         )
@@ -100,16 +100,16 @@ declare
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , lg.ErrorStack( 'Ошибка "Internal_2"' || lpad( '!', 1000, '_'))
+      , lg.errorStack( 'Ошибка "Internal_2"' || lpad( '!', 1000, '_'))
       , true
     );
-  end Internal2;
+  end internal2;
 
 begin
-  Internal2;
+  internal2();
 exception when others then
-  pkg_Common.OutputMessage(
-    lg.GetErrorStack
+  pkg_Common.outputMessage(
+    lg.getErrorStack()
   );
 end;
 /
@@ -119,13 +119,13 @@ end;
 
 (code)
 declare
-  lg lg_logger_t := lg_logger_t.GetLogger(
+  lg lg_logger_t := lg_logger_t.getLogger(
     moduleName => 'Test'
     , objectName => 'TestBlock'
   );
   dblink varchar2( 30) := '&dblink';
 
-  procedure Internal
+  procedure internal
   is
     a integer;
   begin
@@ -135,16 +135,16 @@ declare
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , lg.RemoteErrorStack( 'Ошибка "Internal_"' || lpad( '!', 10000, '_'), dblink)
+      , lg.remoteErrorStack( 'Ошибка "Internal_"' || lpad( '!', 10000, '_'), dblink)
       , true
     );
-  end Internal;
+  end internal;
 
 begin
-  Internal;
+  internal();
 exception when others then
-  pkg_Common.OutputMessage(
-    lg.GetErrorStack
+  pkg_Common.outputMessage(
+    lg.getErrorStack()
   );
 end;
 (end)

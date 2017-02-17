@@ -25,8 +25,8 @@ group: Общие
     модулей ( например, TaskProcessor).
 
 [*] После прекращения использования в прикладных модулях удалить функцию
-    <lg_logger_t.GetLogger( MOD_PKG)> и параметр packageName в функции
-    <lg_logger_t.GetLogger( MOD_OBJ)>.
+    <lg_logger_t.getLogger( MOD_PKG)> и параметр packageName в функции
+    <lg_logger_t.getLogger( MOD_OBJ)>.
 
 [+] Добавить возможность выполнения логирования в рамках текущей транзакции
     ( полезно для предупреждений и т.д., связанных с изменением данных).

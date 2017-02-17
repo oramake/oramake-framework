@@ -56,6 +56,24 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 1.4.1
+
+Порядок установки:
+
+- установка в основную схему
+
+(code)
+
+$ make install INSTALL_VERSION=1.4.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Замечания:
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;
+
+
+
 group: Первоначальная установка
 
 Порядок первоначальной установки:

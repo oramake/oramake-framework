@@ -712,7 +712,7 @@ installTestTarget = \
   $(addsuffix .$(lu), \
     $(wildcard \
       $(addprefix Test/, \
-        *.typ *.pks *.tyb *.pkb \
+        *.jav *.typ *.pks *.tyb *.pkb \
       ) \
     ) \
   ) \
