@@ -102,7 +102,6 @@ Group: Скрипты  {
             File: run  (no auto-title, Install/Grant/Last/run.sql)
             File: ctxsys  (no auto-title, Install/Grant/Last/ctxsys.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
-            File: text-utility-privs  (no auto-title, Install/Grant/Last/text-utility-privs.sql)
             }  # Group: Last
 
          }  # Group: Grant
