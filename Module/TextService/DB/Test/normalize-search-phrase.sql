@@ -10,7 +10,7 @@
 --   pkg_TextUtilityTest.testNormalizeSearchPhrase( 'test,##test2', 'test,test2');
 --   pkg_TextUtilityTest.testNormalizeSearchPhrase(
 --      ', Бухгалтерия, 7.7,'
---      , 'Бухгалтерия, 7 7'
+--      , ', Бухгалтерия, 7 7,'
 --   );
 --   pkg_TextUtilityTest.testNormalizeSearchPhrase(
 --      'коплектовщики(ежедневные, мозг)'
@@ -32,7 +32,7 @@ begin
   pkg_TextUtilityTest.testNormalizeSearchPhrase( 'test,##test2', 'test,test2');
   pkg_TextUtilityTest.testNormalizeSearchPhrase(
      ', Бухгалтерия, 7.7,'
-     , 'Бухгалтерия, 7 7'
+     , ', Бухгалтерия, 7 7,'
   );
   pkg_TextUtilityTest.testNormalizeSearchPhrase(
      'коплектовщики(ежедневные, мозг)'

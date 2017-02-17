@@ -52,7 +52,7 @@ begin
       regexp_replace(
       regexp_replace(
         -- Все символы кроме букв, цифр, запятых заменяем на пробелы
-        regexp_replace( searchPhrase, '[^0-9^a-z^A-Z^ ^,]', ' ')
+        regexp_replace( searchPhrase, '[^[:alnum:]^,^ ]', ' ')
         -- Удаляем повторяющиеся пробелы и запятые
         , '([ ])+', '\1'
       )
