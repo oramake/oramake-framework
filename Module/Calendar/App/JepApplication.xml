@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<application name="Calendar" defaultDatasource="RFInfoDS" projectPackage="rfi" >
+	<modules>
+		<module id="Day" name="Справочник отклонений рабочих/выходных дней" nameEn="Specific working days and holidays" isBuild="off" >
+			<roles>
+				<role>CdrUser</role>
+				<role>CdrAdministrator</role>
+			</roles>
+			<db package="PKG_Calendar" >
+				<find parameters="DAY,DAY_TYPE_ID,DATE_BEGIN,DATE_END" />
+				<create parameters="DAY,DAY_TYPE_ID" />
+			</db>
+			<record primaryKey="DAY" >
+				<field id="DAY" type="Date" name="Дата" nameEn="Date" />
+				<field id="DAY_TYPE_ID" type="Integer" name="Тип дня" nameEn="Day type" />
+				<field id="DAY_TYPE_NAME" type="String" name="Тип дня" nameEn="Day type" />
+				<field id="DATE_BEGIN" type="Date" name="Дата с" nameEn="Begin date" />
+				<field id="DATE_END" type="Date" name="Дата по" nameEn="End date" />				
+			</record>
+			<forms>
+				<form-list>
+					<field id="DAY_TYPE_NAME" width="250" />
+					<field id="DAY" width="80" />
+				</form-list>
+				<form-detail>
+					<field id="DAY_TYPE_ID" widget="JepComboBoxField" mandatoryWorkstates="CREATE" />
+					<field id="DAY" widget="JepDateField" mandatoryWorkstates="CREATE" visibleWorkstates="CREATE,VIEW_DETAILS" />
+					<field id="DATE_BEGIN" widget="JepDateField" visibleWorkstates="SEARCH" />
+					<field id="DATE_END" widget="JepDateField" visibleWorkstates="SEARCH" />
+				</form-detail>
+			</forms>
+			<toolbar view="on" />
+		</module>
+	</modules>               
+</application>
