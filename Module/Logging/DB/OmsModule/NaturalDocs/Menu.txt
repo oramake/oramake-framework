@@ -177,6 +177,7 @@ Group: Скрипты  {
          File: stack-resolve-debug  (no auto-title, Test/Error-Stack/stack-resolve-debug.sql)
          }  # Group: Error-Stack
 
+      File: run  (no auto-title, Test/run.sql)
       File: java-trace-on  (no auto-title, Test/java-trace-on.sql)
       }  # Group: Test
 

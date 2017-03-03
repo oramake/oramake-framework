@@ -19,5 +19,18 @@ procedure updateJavaUtilLoggingLevel(
   , isTraceEnabled number
 );
 
+/* pproc: testLogger
+  Тестирование логирования с помощью типа <lg_logger_t>.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+
+  ( <body::testLogger>)
+*/
+procedure testLogger(
+  testCaseNumber integer := null
+);
+
 end pkg_LoggingTest;
 /

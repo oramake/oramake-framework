@@ -2,6 +2,34 @@
 -- Отменяет установку модуля, удаляя созданные объекты схемы.
 
 
+
+-- Удаление тестовых объектов ( при наличии)
+begin
+  for rec in (
+        select
+          ob.object_name
+          , ob.object_type
+        from
+          user_objects ob
+        where
+          ob.object_type = 'PACKAGE'
+            and ob.object_name = upper( 'pkg_LoggingTest')
+          or ob.object_type = 'JAVA SOURCE'
+            and ob.object_name = 'LoggingTest'
+      )
+      loop
+    dbms_output.put_line(
+      'drop: ' || rec.object_type || ': ' || rec.object_name
+    );
+    execute immediate
+      'drop ' || rec.object_type || ' "' || rec.object_name || '"'
+    ;
+  end loop;
+end;
+/
+
+
+
 -- Удаление общих объектов схемы
 @oms-run Install/Schema/Last/Common/revert.sql
 
