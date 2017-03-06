@@ -1,6 +1,6 @@
-@oms-drop-type lg_logger_t
-
-create or replace type lg_logger_t
+create or replace type
+  lg_logger_t
+force
 as object
 (
 /* db object type: lg_logger_t
