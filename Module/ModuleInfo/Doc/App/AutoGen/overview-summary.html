@@ -149,7 +149,7 @@ ModuleInfo API Reference
     <br/>
     <h3><a name="todo">Доработки</a></h3>
     <ul>
-      <li>Унифицировать терминалогию:
+      <li>Унифицировать терминологию:
         <ul>
           <li>ModuleInfo - название приложения.</li>
           <li>VersionServlet - сервелет, по GET-параметрам записывает информацию об установке.</li>
@@ -163,7 +163,7 @@ ModuleInfo API Reference
           <li>Рефакторинг кодирования/декодирования параметров login/password. 
           Кодирование в com.technology.jep.jepriatoolkit.util.JepRiaToolkitUtil.encode(String), декодирование скопировано в VersionServlet 
           (см. TODO в <A HREF="com/technology/oracle/moduleinfo/main/server/VersionServlet.html#decode(java.lang.String)"><CODE>decode</CODE></A>).</li>
-          <li>Рефакторинг обработки исключений в пакете com.technology.jep.jepriatoolkit.version.appinstall (выбрасываестя Exception, и он же отлавливается).</li>
+          <li>Рефакторинг обработки исключений в пакете com.technology.jep.jepriatoolkit.version.appinstall (выбрасывается Exception, и он же отлавливается).</li>
         </ul>
        </li>
       <li>Разбить VersionServlet на несколько сервлетов (отдельный сервлет на каждый appInstallAction, по аналогии с тасками). Из-за обратной совместимости используется /versionServlet (url-pattern)</li>
