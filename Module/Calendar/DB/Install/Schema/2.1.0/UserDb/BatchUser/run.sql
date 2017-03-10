@@ -10,6 +10,8 @@ declare
 
   objectSchema varchar2(30);
 
+  dropPackageFlag integer;
+
 begin
   select
     t.table_owner
@@ -30,11 +32,25 @@ begin
         and ob.object_type = 'PACKAGE'
       )
   ;
-  execute immediate
-    'drop package pkg_Calendar'
+  select
+    count(*)
+  into dropPackageFlag
+  from
+    user_objects ob
+  where
+    ob.object_name = upper( 'pkg_Calendar')
+    and ob.object_type = 'PACKAGE'
   ;
+  if dropPackageFlag = 1 then
+    execute immediate
+      'drop package pkg_Calendar'
+    ;
+    dbms_output.put_line(
+      'package droped: pkg_Calendar'
+    );
+  end if;
   execute immediate
-    'create synonym pkg_Calendar for ' || objectSchema || '.pkg_Calendar'
+    'create or replace synonym pkg_Calendar for ' || objectSchema || '.pkg_Calendar'
   ;
 end;
 /
@@ -47,4 +63,3 @@ begin
   commit;
 end;
 /
-
