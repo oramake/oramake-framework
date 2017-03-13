@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module rename-to="Day">
+  <inherits name="com.technology.rfi.calendar.main.Calendar"/>
+  <source path="client"/>
+  <source path="shared"/>
+</module>
