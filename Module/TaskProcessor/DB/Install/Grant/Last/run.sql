@@ -49,7 +49,7 @@ grant select on tp_task_log to &toUserName
 create or replace synonym &toUserName..tp_task_log for tp_task_log
 /
 
-grant select on tp_task_status to &toUserName
+grant select, references on tp_task_status to &toUserName
 /
 create or replace synonym &toUserName..tp_task_status for tp_task_status
 /
