@@ -222,24 +222,5 @@ procedure finishAppInstall(
   , javaReturnCode integer := null
 );
 
-/* pfunc: createAppInstallResult( DEPRECATED)
-  Устаревшая функция, будет удалена ( вместо нее следует использовать пару
-  функций <startAppInstall> и <finishAppInstall>).
-
-  ( <body::createAppInstallResult( DEPRECATED)>)
-*/
-function createAppInstallResult(
-  moduleSvnRoot varchar2
-  , moduleInitialSvnPath varchar2
-  , moduleVersion varchar2
-  , deploymentPath varchar2
-  , installVersion varchar2
-  , installDate date := null
-  , svnPath varchar2 := null
-  , svnVersionInfo varchar2 := null
-  , operatorId integer := null
-)
-return integer;
-
 end pkg_ModuleInfo;
 /

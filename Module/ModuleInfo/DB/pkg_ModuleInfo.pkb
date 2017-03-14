@@ -638,53 +638,5 @@ exception when others then
   );
 end finishAppInstall;
 
-/* func: createAppInstallResult( DEPRECATED)
-  Устаревшая функция, будет удалена ( вместо нее следует использовать пару
-  функций <startAppInstall> и <finishAppInstall>).
-*/
-function createAppInstallResult(
-  moduleSvnRoot varchar2
-  , moduleInitialSvnPath varchar2
-  , moduleVersion varchar2
-  , deploymentPath varchar2
-  , installVersion varchar2
-  , installDate date := null
-  , svnPath varchar2 := null
-  , svnVersionInfo varchar2 := null
-  , operatorId integer := null
-)
-return integer
-is
-
-  -- Id добавленной записи
-  appInstallResultId integer;
-
-begin
-  appInstallResultId := startAppInstall(
-    moduleSvnRoot             => moduleSvnRoot
-    , moduleInitialSvnPath    => moduleInitialSvnPath
-    , moduleVersion           => moduleVersion
-    , deploymentPath          => deploymentPath
-    , installVersion          => installVersion
-    , svnPath                 => svnPath
-    , svnVersionInfo          => svnVersionInfo
-    , operatorId              => operatorId
-  );
-  finishAppInstall(
-    appInstallResultId        => appInstallResultId
-    , javaReturnCode          => 0
-    , errorMessage            => null
-    , installDate             => installDate
-    , operatorId              => operatorId
-  );
-  return appInstallResultId;
-exception when others then
-  raise_application_error(
-    pkg_ModuleInfoInternal.ErrorStackInfo_Error
-    , 'Ошибка при добавлении результата установки приложения.'
-    , true
-  );
-end createAppInstallResult;
-
 end pkg_ModuleInfo;
 /
