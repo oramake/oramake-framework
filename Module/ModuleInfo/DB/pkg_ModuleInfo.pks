@@ -195,10 +195,9 @@ return integer;
   ѕараметры:
   appInstallResultId          - Id записи о начале установки приложени€,
                                 который был возвращен функцией <startAppInstall>
-  javaReturnCode              -  од результата выполнени€ установки
-                                Java-приложени€ ( 0 означает отсутствие ошибок,
-                                при этом устанавливаема€ верси€ становитс€
-                                текущей)
+  statusCode                  -  од результата выполнени€ установки
+                                ( 0 означает отсутствие ошибок, при этом
+                                  устанавливаема€ верси€ становитс€ текущей)
   errorMessage                - “екст сообщени€ об ошибках при выполнении
                                 установки
                                 ( сохран€ютс€ первые 4000 символов)
@@ -208,14 +207,19 @@ return integer;
   operatorId                  - Id оператора, выполн€ющего операцию
                                 ( по умолчанию текущий)
 
+  «амечани€:
+  - параметр javaReturnCode €вл€етс€ устаревшим и временно сохранен дл€
+    обеспечени€ совместимости, вместо него следует использовать statusCode;
+
   ( <body::finishAppInstall>)
 */
 procedure finishAppInstall(
   appInstallResultId integer
-  , javaReturnCode integer
+  , statusCode integer := null
   , errorMessage varchar2 := null
   , installDate date := null
   , operatorId integer := null
+  , javaReturnCode integer := null
 );
 
 /* pfunc: createAppInstallResult( DEPRECATED)

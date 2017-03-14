@@ -13,6 +13,12 @@ group: 1.2.1 ( 2016-12-27)
 [*] Из настроечной таблицы <mod_install_type> удалено поле operator_id
     ( для уменьшения зависимости от модуля AccessOperator).
 
+[*] В функции <pkg_ModuleInfo.finishAppInstall> параметр javaReturnCode
+    переименован в statusCode ( устаревший параметр javaReturnCode временно
+    сохранен для обеспечения совместимости), при этом в таблице
+    <mod_app_install_result> поле java_return_code также переименовано в
+    status_code.
+
 
 
 group: 1.2.0 ( 2015-03-04)

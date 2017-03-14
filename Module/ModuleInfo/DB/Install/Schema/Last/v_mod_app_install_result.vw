@@ -16,7 +16,7 @@ select
   , t.is_current_version
   , t.svn_path
   , t.svn_version_info
-  , t.java_return_code
+  , t.status_code
   , t.error_message
   , t.module_id
   , t.deployment_id
@@ -65,8 +65,8 @@ comment on column v_mod_app_install_result.svn_path is
 comment on column v_mod_app_install_result.svn_version_info is
   'Информация о версии файлов модуля из Subversion ( в формате вывода утилиты svnversion)'
 /
-comment on column v_mod_app_install_result.java_return_code is
-  'Код результата выполнения установки Java-приложения ( 0 означает отсутствие ошибок)'
+comment on column v_mod_app_install_result.status_code is
+  'Код результата выполнения установки ( 0 означает отсутствие ошибок)'
 /
 comment on column v_mod_app_install_result.error_message is
   'Текст сообщения об ошибках при выполнении установки'

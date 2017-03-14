@@ -548,10 +548,9 @@ end startAppInstall;
   ѕараметры:
   appInstallResultId          - Id записи о начале установки приложени€,
                                 который был возвращен функцией <startAppInstall>
-  javaReturnCode              -  од результата выполнени€ установки
-                                Java-приложени€ ( 0 означает отсутствие ошибок,
-                                при этом устанавливаема€ верси€ становитс€
-                                текущей)
+  statusCode                  -  од результата выполнени€ установки
+                                ( 0 означает отсутствие ошибок, при этом
+                                  устанавливаема€ верси€ становитс€ текущей)
   errorMessage                - “екст сообщени€ об ошибках при выполнении
                                 установки
                                 ( сохран€ютс€ первые 4000 символов)
@@ -560,13 +559,18 @@ end startAppInstall;
                                 текуща€)
   operatorId                  - Id оператора, выполн€ющего операцию
                                 ( по умолчанию текущий)
+
+  «амечани€:
+  - параметр javaReturnCode €вл€етс€ устаревшим и временно сохранен дл€
+    обеспечени€ совместимости, вместо него следует использовать statusCode;
 */
 procedure finishAppInstall(
   appInstallResultId integer
-  , javaReturnCode integer
+  , statusCode integer := null
   , errorMessage varchar2 := null
   , installDate date := null
   , operatorId integer := null
+  , javaReturnCode integer := null
 )
 is
 
@@ -576,6 +580,12 @@ is
   -- ‘лаг текущей версии
   isCurrentVersion mod_app_install_result.is_current_version%type;
 
+  --  од результата выполнени€ установки ( с учетом использовани€
+  -- javaReturnCode)
+  appStatusCode integer :=
+    coalesce( statusCode, javaReturnCode)
+  ;
+
 begin
   select
     t.*
@@ -584,11 +594,11 @@ begin
     mod_app_install_result t
   where
     t.app_install_result_id = appInstallResultId
-  for update of t.java_return_code wait 5
+  for update of t.status_code wait 5
   ;
   isCurrentVersion :=
     case when
-        javaReturnCode = 0
+        appStatusCode = 0
       then 1
     end
   ;
@@ -608,7 +618,7 @@ begin
   set
     t.install_date          = coalesce( installDate, sysdate)
     , t.is_current_version  = isCurrentVersion
-    , t.java_return_code    = javaReturnCode
+    , t.status_code         = appStatusCode
     , t.error_message       = substr( errorMessage, 1, 4000)
   where
     t.app_install_result_id = appInstallResultId
@@ -618,6 +628,7 @@ exception when others then
     pkg_ModuleInfoInternal.ErrorStackInfo_Error
     , 'ќшибка при сохранении информации о завершении установки приложени€ ('
       || ' appInstallResultId=' || appInstallResultId
+      || ', statusCode=' || statusCode
       || ', javaReturnCode=' || javaReturnCode
       || ', substr(errorMessage,1,200):'
         || chr(10) || '"' || substr( errorMessage, 1, 200) || '"' || chr(10)

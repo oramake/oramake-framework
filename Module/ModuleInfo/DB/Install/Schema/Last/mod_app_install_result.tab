@@ -12,7 +12,7 @@ create table
   , is_current_version            number(1)
   , svn_path                      varchar2(255)
   , svn_version_info              varchar2(50)
-  , java_return_code              integer
+  , status_code                   integer
   , error_message                 varchar2(4000)
   , date_ins                      date                default sysdate not null
   , operator_id                   integer
@@ -64,8 +64,8 @@ comment on column mod_app_install_result.svn_path is
 comment on column mod_app_install_result.svn_version_info is
   'Информация о версии файлов модуля из Subversion ( в формате вывода утилиты svnversion)'
 /
-comment on column mod_app_install_result.java_return_code is
-  'Код результата выполнения установки Java-приложения ( 0 означает отсутствие ошибок)'
+comment on column mod_app_install_result.status_code is
+  'Код результата выполнения установки ( 0 означает отсутствие ошибок)'
 /
 comment on column mod_app_install_result.error_message is
   'Текст сообщения об ошибках при выполнении установки'
