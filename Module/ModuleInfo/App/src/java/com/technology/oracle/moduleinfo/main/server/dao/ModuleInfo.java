@@ -34,15 +34,15 @@ public interface ModuleInfo {
   /**
    * Добавляет результат завершения установки приложения.
    * 
-   * @param appInstallResultId      идентификатор записи об установке
-   * @param javaReturnCode        дата завершения установки
-   * @param errorMessage          дата завершения установки
-   * @param operatorId          идентификатор пользователя
+   * @param appInstallResultId - Идентификатор записи об установке
+   * @param statusCode - Код результата выполнения установки
+   * @param errorMessage - Текст сообщения об ошибках 
+   * @param operatorId - Идентификатор пользователя
    * @throws ApplicationException
    */
   void finishAppInstall(
       Integer appInstallResultId
-      , Integer javaReturnCode
+      , Integer statusCode
       , String errorMessage
       , Integer operatorId) throws ApplicationException;
 }

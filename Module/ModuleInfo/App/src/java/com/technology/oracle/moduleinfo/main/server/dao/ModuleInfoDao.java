@@ -42,7 +42,7 @@ public class ModuleInfoDao implements ModuleInfo {
   
   public void finishAppInstall (
       Integer appInstallResultId
-      , Integer javaReturnCode
+      , Integer statusCode
       , String errorMessage
       , Integer operatorId) throws ApplicationException {
     
@@ -50,13 +50,13 @@ public class ModuleInfoDao implements ModuleInfo {
         "begin " 
           + " pkg_ModuleInfo.finishAppInstall(" 
             + "appInstallResultId => ? " 
-            + ", javaReturnCode => ? " 
+            + ", statusCode => ? " 
             + ", errorMessage => ? "
             + ", operatorId => ? "
           + ");"
         + "end;",
         appInstallResultId,
-        javaReturnCode, 
+        statusCode, 
         errorMessage, 
         operatorId);
     

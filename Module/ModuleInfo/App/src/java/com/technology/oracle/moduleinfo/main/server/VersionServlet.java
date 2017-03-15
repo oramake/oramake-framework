@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 
 import com.technology.jep.jepcommon.security.pkg_Operator;
 import com.technology.jep.jepria.server.db.Db;
+import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.oracle.moduleinfo.main.server.dao.ModuleInfo;
 
 public class VersionServlet extends HttpServlet {
@@ -121,18 +122,24 @@ public class VersionServlet extends HttpServlet {
     } else if (FINISH_APP_INSTALL_ACTION_NAME.equals(action)) {
 
       String appInstallResultIdParam = request.getParameter("appInstallResultId");
-      String javaReturnCode = request.getParameter("javaReturnCode");
-      String errorMessage;
       
-      logger.trace("BEGIN finishAppInstall(" + appInstallResultIdParam + ", " + javaReturnCode + ", " + operatorId + ")");
-
+      String statusCode = request.getParameter("statusCode");
+      if(statusCode == null) {
+        //Если не задан statusCode, используется параметр javaReturnCode.
+        //Обратная совместимость для установок на oas.
+        statusCode = request.getParameter("javaReturnCode");
+      }
+      
+      logger.trace("BEGIN finishAppInstall(" + appInstallResultIdParam + ", " + statusCode + ", " + operatorId + ")");
+      
+      String errorMessage;
       try {
         errorMessage = URLDecoder.decode(request.getParameter("errorMessage"), "UTF-8");
         
         // Cоздаем запись об устанавливаемом модуле.
         dao.finishAppInstall(
           Integer.parseInt(appInstallResultIdParam)
-          , Integer.parseInt(javaReturnCode)
+          , Integer.parseInt(statusCode)
           , errorMessage
           , operatorId);
         
@@ -146,7 +153,7 @@ public class VersionServlet extends HttpServlet {
         throw new ServletException(th);
       }
       
-      logger.trace("END finishAppInstall(" + appInstallResultIdParam + ", " + javaReturnCode + ", " + errorMessage + ", "  + operatorId + ")");
+      logger.trace("END finishAppInstall(" + appInstallResultIdParam + ", " + statusCode + ", " + errorMessage + ", "  + operatorId + ")");
     }
   }
   
