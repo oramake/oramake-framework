@@ -622,7 +622,7 @@
       <targetfiles path="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}.war" />
       
       <sequential>
-        <unzip src="${JEPRIA-RESOURCES_LIB}" dest="temp-jepria-resources"/>
+      
         <mkdir dir="temp-war" />
         
         <copy todir="temp-war/WEB-INF/lib">
