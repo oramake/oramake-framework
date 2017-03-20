@@ -1,104 +1,109 @@
 create or replace package body pkg_Logging is
 /* package body: pkg_Logging::body */
 
-/* proc: SetDestination
+
+
+/* group: Функции */
+
+/* proc: setDestination
   Устанавливает единственное назначения для вывода.
 
   Параметры:
   destinationCode             - код назначения
 
   Замечания:
-  - вызывает <pkg_LoggingInternal.SetDestination>;
+  - вызывает <pkg_LoggingInternal.setDestination>;
 */
-procedure SetDestination(
+procedure setDestination(
   destinationCode varchar2
 )
 is
 begin
-  pkg_LoggingInternal.SetDestination(
+  pkg_LoggingInternal.setDestination(
     destinationCode => destinationCode
   );
-end SetDestination;
+end setDestination;
 
-/* func: LogDebug
+/* proc: logDebug
   Логирует отладочное сообщение уровня <Debug_LevelCode>.
 
   Параметры:
-  Message - сообщение
+  message                     - сообщение
 
   Замечания:
-  - вызывает <pkg_LoggingInternal.LogMessage>;
+  - вызывает <pkg_LoggingInternal.logMessage>;
 */
-procedure LogDebug
- (Message varchar2
- )
- is
+procedure logDebug(
+  message varchar2
+)
+is
 begin
-  pkg_LoggingInternal.LogMessage(
+  pkg_LoggingInternal.logMessage(
     levelCode     => Debug_LevelCode
     , messageText => message
   );
-end LogDebug;
+end logDebug;
 
-
-/* proc: LogMessage
+/* proc: logMessage
   Логирует информационное сообщение уровня <Info_LevelCode>.
 
   Параметры:
-    Message - сообщение
+  message                         - сообщение
 
   Замечания:
-  - вызывает <pkg_LoggingInternal.LogMessage>;
+  - вызывает <pkg_LoggingInternal.logMessage>;
 */
-procedure LogMessage( Message varchar2 )
+procedure logMessage(
+  message varchar2
+)
 is
 begin
-  pkg_LoggingInternal.LogMessage(
+  pkg_LoggingInternal.logMessage(
     levelCode     => Info_LevelCode
     , messageText => message
   );
-end LogMessage;
+end logMessage;
 
-/* func: GetErrorStack
+/* func: getErrorStack
   Получает информацию о стеке ошибок.
 
   Параметры:
-    isStackPreserved         - оставлять ли данные по стеку.
-                               По-умолчанию ( null) не оставлять 
-                               ( т.е. очищать), 
-                               таким образом по-умолчанию 
-                               после вызова стек не может быть 
-                               соединён далее.
+  isStackPreserved            - оставлять ли данные по стеку.
+                                По-умолчанию ( null) не оставлять
+                                ( т.е. очищать),
+                                таким образом по-умолчанию
+                                после вызова стек не может быть
+                                соединён далее.
 
   Возврат:
-    - текст с информацией о стеке
+  - текст с информацией о стеке
 
   Замечания:
-  - вызывает <pkg_LoggingErrorStack.GetErrorStack>;
+  - вызывает <pkg_LoggingErrorStack.getErrorStack>;
 */
-function GetErrorStack( 
+function getErrorStack(
   isStackPreserved integer := null
 )
 return varchar2
 is
 begin
   return
-    pkg_LoggingErrorStack.GetErrorStack(
+    pkg_LoggingErrorStack.getErrorStack(
       isStackPreserved => isStackPreserved
     );
-end GetErrorStack;
+end getErrorStack;
 
-/* proc: ClearErrorStack
+/* proc: clearErrorStack
   Очищает( сбрасывает) стек ошибок.
 
   Замечания:
-  - вызывает <pkg_LoggingErrorStack.ClearLastStack>;
+  - вызывает <pkg_LoggingErrorStack.clearLastStack>;
 */
-procedure ClearErrorStack
+procedure clearErrorStack
 is
 begin
-  pkg_LoggingErrorStack.ClearLastStack();
-end ClearErrorStack;
+  pkg_LoggingErrorStack.clearLastStack();
+end clearErrorStack;
 
 end pkg_Logging;
 /

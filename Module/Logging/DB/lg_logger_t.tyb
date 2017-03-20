@@ -29,7 +29,7 @@ constructor function lg_logger_t(
 return self as result
 is
 begin
-  self.loggerUid := pkg_LoggingInternal.GetLoggerUid(
+  self.loggerUid := pkg_LoggingInternal.getLoggerUid(
     loggerName => loggerName
   );
   return;
@@ -180,7 +180,7 @@ is
 begin
   pkg_LoggingInternal.setAdditivity(
     loggerUid       => loggerUid
-    , additive          => additive
+    , additive      => additive
   );
 end setAdditivity;
 
@@ -325,7 +325,7 @@ member procedure log(
 )
 is
 begin
-  pkg_LoggingInternal.LogMessage(
+  pkg_LoggingInternal.logMessage(
     levelCode         => levelCode
     , messageText     => messageText
     , loggerUid       => loggerUid
@@ -478,7 +478,7 @@ end trace;
     возвращает messageText
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.ProcessStackElement>;
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
   - см. также <Описание::Логирование стека ошибок>;
 */
 member function errorStack(
@@ -488,7 +488,7 @@ return varchar2
 is
 begin
   return
-    pkg_LoggingErrorStack.ProcessStackElement(
+    pkg_LoggingErrorStack.processStackElement(
       messageText => messageText
     );
 end errorStack;
@@ -524,7 +524,7 @@ return varchar2
 is
 begin
   return
-    pkg_LoggingErrorStack.ProcessRemoteStackElement(
+    pkg_LoggingErrorStack.processRemoteStackElement(
       messageText => messageText
       , dbLink => dbLink
     );
@@ -562,7 +562,7 @@ end getErrorStack;
   Очищает (сбрасывает) предыдущую информацию о стеке ошибок.
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.ClearLastStack>;
+  - вызывает процедуру <pkg_LoggingErrorStack.clearLastStack>;
   - см. также <Описание::Логирование стека ошибок>;
 */
 member procedure clearErrorStack

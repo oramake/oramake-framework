@@ -12,7 +12,7 @@ import java.util.zip.GZIPOutputStream;
 import ru.rusfinance.netfile.*;
 
 /** class: LoggingTest
- * Java-реализация функций пакета <LoggingTest>.
+ * Java-реализация функций пакета <pkg_LoggingTest>.
  **/
 public class LoggingTest
 {
