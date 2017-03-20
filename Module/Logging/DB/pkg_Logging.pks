@@ -33,10 +33,10 @@ Fatal_LevelCode varchar2(10) := 'FATAL';
 */
 Error_LevelCode varchar2(10) := 'ERROR';
 
-/* const: Warning_LevelCode
+/* const: Warn_LevelCode
   Код уровня логирования "Предупреждение".
 */
-Warning_LevelCode varchar2(10) := 'WARN';
+Warn_LevelCode varchar2(10) := 'WARN';
 
 /* const: Info_LevelCode
   Код уровня логирования "Информация".
@@ -57,6 +57,11 @@ Trace_LevelCode varchar2(10) := 'TRACE';
   Код уровня логирования "Максимальный уровень логирования".
 */
 All_LevelCode varchar2(10) := 'ALL';
+
+/* const: Warning_LevelCode( DEPRECATED)
+  Устаревшая константа, следует использовать <Warn_LevelCode>.
+*/
+Warning_LevelCode varchar2(10) := Warn_LevelCode;
 
 
 

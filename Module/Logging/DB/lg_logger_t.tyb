@@ -76,7 +76,7 @@ static function getWarnLevelCode
 return varchar2
 is
 begin
-  return pkg_Logging.Warning_LevelCode;
+  return pkg_Logging.Warn_LevelCode;
 end getWarnLevelCode;
 
 /* func: getInfoLevelCode
@@ -466,7 +466,7 @@ member procedure warn(
 is
 begin
   log(
-    levelCode     => pkg_Logging.Warning_LevelCode
+    levelCode     => pkg_Logging.Warn_LevelCode
     , messageText => messageText
   );
 end warn;

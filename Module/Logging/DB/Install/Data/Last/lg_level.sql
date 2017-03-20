@@ -27,7 +27,7 @@ begin
       from dual
       union all
       select
-        pkg_Logging.Warning_LevelCode
+        pkg_Logging.Warn_LevelCode
         , 600
         , 'Предупреждение'
       from dual

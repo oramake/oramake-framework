@@ -204,7 +204,7 @@ is
                     pkg_LoggingInternal.Error_MessageTypeCode
                   when pkg_Logging.Error_LevelCode then
                     pkg_LoggingInternal.Error_MessageTypeCode
-                  when pkg_Logging.Warning_LevelCode then
+                  when pkg_Logging.Warn_LevelCode then
                     pkg_LoggingInternal.Warning_MessageTypeCode
                   when pkg_Logging.Info_LevelCode then
                     pkg_LoggingInternal.Info_MessageTypeCode

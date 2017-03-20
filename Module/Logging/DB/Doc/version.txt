@@ -9,14 +9,18 @@ group: 1.4.1 ( 2017-02-07)
     "ORA-01461: can bind a LONG value only for insert into a LONG column",
     ошибка внесена в версии 1.4.0).
 
-[*] ƒобавление параметра isStackPreserved в <lg_logger_t.getErrorStack()>
-    аналогично <pkg_Logging::getErrorStack> дл€ исключени€ лишних зависимостей
-    в прикладных модул€х.
-
 [+] ¬ тип <lg_logger_t> добавлены статические функции get%LevelCode,
     возвращающие коды уровней логировани€, дл€ исключени€ лишних зависимостей в
     прикладных модул€х ( чтобы при использовании типа lg_logger_t не
     требовалось использовать пакет pkg_Logging).
+
+[*] ƒобавление параметра isStackPreserved в <lg_logger_t.getErrorStack()>
+    аналогично <pkg_Logging::getErrorStack> дл€ исключени€ лишних зависимостей
+    в прикладных модул€х.
+
+[*] ƒл€ кода уровн€ предупреждени€ стала использоватьс€ константа
+    <pkg_Logging.Warn_LevelCode> ( устареша€ константа
+    pkg_Logging.Warning_LevelCode временно сохранена дл€ совместимости).
 
 
 
@@ -55,7 +59,7 @@ group: 1.2.1 ( 2012-12-14)
 
 
 
-group: 1.2.0( 2010-10-27)
+group: 1.2.0 ( 2010-10-27)
 
 [*] ¬ыдача прав всем пользователем
 <Install/Grant/Last/all-to-public.sql> осуществл€етс€ при

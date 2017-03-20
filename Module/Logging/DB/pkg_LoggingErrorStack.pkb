@@ -22,7 +22,7 @@ create or replace package body pkg_LoggingErrorStack is
 
   - ошибка при невозможности получения данных стека
     из удалённой БД ( см. <getRemoteStack>)
-    с уровнем <pkg_Logging.Warning_LevelCode>
+    с уровнем <pkg_Logging.Warn_LevelCode>
 */
 
 
