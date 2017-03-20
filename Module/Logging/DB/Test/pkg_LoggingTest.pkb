@@ -254,8 +254,8 @@ is
             lg_level t
           where
             t.level_code not in (
-              pkg_Logging.All_LevelCode
-              , pkg_Logging.Off_LevelCode
+              lg_logger_t.getAllLevelCode()
+              , lg_logger_t.getOffLevelCode()
             )
           order by
             t.level_order

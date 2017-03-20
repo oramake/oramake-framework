@@ -16,45 +16,45 @@ Module_Name constant varchar2(30) := 'Logging';
 
 
 
-/* group: Уровни сообщений лога */
+/* group: Уровни логирования */
 
 /* const: Off_LevelCode
-  Код уровня "Логирование отключено".
+  Код уровня логирования "Логирование отключено".
 */
 Off_LevelCode varchar2(10) := 'OFF';
 
 /* const: Fatal_LevelCode
-  Код уровня "Фатальная ошибка".
+  Код уровня логирования "Фатальная ошибка".
 */
 Fatal_LevelCode varchar2(10) := 'FATAL';
 
 /* const: Error_LevelCode
-  Код уровня "Ошибка".
+  Код уровня логирования "Ошибка".
 */
 Error_LevelCode varchar2(10) := 'ERROR';
 
 /* const: Warning_LevelCode
-  Код уровня "Предупреждение".
+  Код уровня логирования "Предупреждение".
 */
 Warning_LevelCode varchar2(10) := 'WARN';
 
 /* const: Info_LevelCode
-  Код уровня "Информация".
+  Код уровня логирования "Информация".
 */
 Info_LevelCode varchar2(10) := 'INFO';
 
 /* const: Debug_LevelCode
-  Код уровня "Отладка".
+  Код уровня логирования "Отладка".
 */
 Debug_LevelCode varchar2(10) := 'DEBUG';
 
 /* const: Trace_LevelCode
-  Код уровня "Трассировка".
+  Код уровня логирования "Трассировка".
 */
 Trace_LevelCode varchar2(10) := 'TRACE';
 
 /* const: All_LevelCode
-  Код уровня "Максимальный уровень логирования".
+  Код уровня логирования "Максимальный уровень логирования".
 */
 All_LevelCode varchar2(10) := 'ALL';
 
