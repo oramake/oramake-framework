@@ -892,7 +892,7 @@ on
 where
   instr(
     lower( ',' || ignoreColumnList || ',')
-    , lower( a.column_name)
+    , ',' || lower( a.column_name) || ','
   ) = 0
 order by
   column_id
@@ -1047,7 +1047,7 @@ rpad( '  ' || case when isCursorField = 1 then recInParams.column_name else recI
     isFirstColumn boolean;
   begin
     for recInParams in curFindField(
-      ignoreColumnList => 'date_ins'
+      ignoreColumnList => 'date_ins,' || ignoreColumnList
       , parameterFlag => 1
     )
     loop
@@ -1096,9 +1096,9 @@ rpad( '  ' || case when isCursorField = 1 then recInParams.column_name else recI
     )
     loop
       outputText(
-'  ' || case when not isFirstColumn or isFirstComma = 1 then ', ' end
+'    ' || case when not isFirstColumn or isFirstComma = 1 then ', ' end
        || case when recColumns.r_table_name is not null then recColumns.r_table_name else 't' end
-       || '.' || recColumns.column_name || ' as ' || recColumns.column_name
+       || '.' || recColumns.column_name
       );
       isFirstColumn := false;
     end loop;
@@ -1235,10 +1235,10 @@ end
       then
         rTableName := recField.r_table_name;
         outputText(
-'inner join
-  ' || lower( rTableName) || '
-on
-  ' || lower( rTableName) || '.' || lower( recField.source_column_name) || ' = t.' || lower( recField.source_column_name)
+'  inner join
+    ' || lower( rTableName) || '
+  on
+    ' || lower( rTableName) || '.' || lower( recField.source_column_name) || ' = t.' || lower( recField.source_column_name)
         );
       end if;
     end loop;
@@ -1292,13 +1292,6 @@ on
         firstColumn := false;
       end if;
     end loop;
-    outputText(
-'  dynamicSql.addCondition(
-    conditionText => ''rownum <= :maxRowCount''
-    , isNullValue => maxRowCount is null
-    , parameterName => ''maxRowCount''
-  );'
-    );
   end printConditions;
 
 begin
@@ -1458,17 +1451,22 @@ end delete' || entityName || ';
 
   Входные параметры:'
   );
-  printFindParametersDoc( ignoreColumnList => 'date_ins', isCursorField => 0);
+  printFindParametersDoc(
+    ignoreColumnList => 'date_ins,' || ignoreColumnList
+  , isCursorField => 0
+  );
   outputText(
 '  maxRowCount                - максимальное количество возвращаемых записей
   operatorId                 - id оператора
 
   Поля возвращаемого курсора:'
   );
-  printFindParametersDoc( ignoreColumnList => '', isCursorField => 1);
+  printFindParametersDoc( ignoreColumnList => ignoreColumnList, isCursorField => 1);
   outputText(
 '  operator_id                - id оператора, добавившего запись
   operator_name              - имя оператора, добавившего запись
+
+  ( сортировка по ' || idColumnName || ' в обратном порядке)
 */
 function find' || entityName || '('
   );
@@ -1490,32 +1488,53 @@ begin
   dynamicSql :=
      dyn_dynamic_sql_t(
        sqlText =>  ''
-select'
-  );
-  printFindColumns( ignoreColumnList => '', isFirstComma => 0);
-  outputText(
-'  , op.operator_id as operator_id
-  , op.operator_name as operator_name
+select
+  a.*
 from
-  ' || lower( tableName) || ' t'
+  (
+  select'
+  );
+  printFindColumns( ignoreColumnList => ignoreColumnList, isFirstComma => 0);
+  outputText(
+'    , op.operator_id
+    , op.operator_name
+  from
+    ' || lower( tableName) || ' t'
   );
   printReferenceTables();
   outputText(
-'inner join
-  op_operator op
-on
-  op.operator_id = t.operator_id''
-     );');
-  printConditions( ignoreColumnList => 'date_ins');
+'  inner join
+    op_operator op
+  on
+    op.operator_id = t.operator_id
+  where
+    $(condition)
+  order by
+    t.' || idColumnName  || ' desc
+  ) a
+where
+  $(rownumCondition)
+  ''
+  );');
+  printConditions(
+    ignoreColumnList => 'date_ins,' || ignoreColumnList
+  );
   outputText(
-'  logger.debug( ''sql="'' || dynamicSql.getSqlText() || ''"'');
+'  dynamicSql.useCondition( ''condition'');
+  dynamicSql.addCondition(
+    ''rownum <= :maxRowCount'', maxRowCount is null
+  );
+  dynamicSql.useCondition( ''rownumCondition'');
+  logger.debug( ''sql="'' || dynamicSql.getSqlText() || ''"'');
   open
     cur' || entityName || '
   for
     dynamicSql.getSqlText()
   using'
   );
-  printFindParameters( ignoreColumnList => 'operator_id,date_ins');
+  printFindParameters(
+    ignoreColumnList => 'operator_id,date_ins,' || ignoreColumnList
+  );
   outputText(
 '    , maxRowCount
   ;
@@ -1527,7 +1546,9 @@ exception when others then
     , logger.errorStack(
         ''Ошибка поиска записи ' || entityNameObjectiveCase || ' ( '''
   );
-  printExceptionFindParameters( ignoreColumnList => 'date_ins');
+  printExceptionFindParameters(
+    ignoreColumnList => 'date_ins,' || ignoreColumnList
+  );
   outputText(
 '        || '', maxRowCount='' || to_char( maxRowCount)
         || '')''
