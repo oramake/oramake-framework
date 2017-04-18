@@ -116,14 +116,7 @@ procedure generateApi(
 );
 
 /* pproc: generateHistoryStructure
-  Генерация файлов исторической структуры
-
-  outputType                 - тип вывода в dbms_output.
-                               null-не выводить информацию
-                               1-реализация процедур
-                               2-спецификация процедур
-                               3-удаление последовательностей
-                               4-удаление представлений
+  Генерация файлов исторической структуры.
 
   ( <body::generateHistoryStructure>)
 */
@@ -137,8 +130,6 @@ procedure generateHistoryStructure(
   , abbrTo varchar2 := null
   , abbrFrom2 varchar2 := null
   , abbrTo2 varchar2 := null
-  , historyProcedureName varchar2:= null
-  , outputType integer := null
 );
 
 

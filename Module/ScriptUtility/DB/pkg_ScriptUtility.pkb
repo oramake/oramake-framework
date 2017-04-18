@@ -979,7 +979,7 @@ order by
     for recInParams in curField( includeId => includeId)
     loop
       outputText(
-rpad( '  ' || recInParams.parameter_name, 29) || '- '  || transformParameterComment( recInParams.comments)
+rpad( '  ' || recInParams.parameter_name, 30) || '- '  || transformParameterComment( recInParams.comments)
       );
     end loop;
   exception when others then
@@ -1003,7 +1003,7 @@ rpad( '  ' || recInParams.parameter_name, 29) || '- '  || transformParameterComm
     loop
       if lower( recInParams.column_name) <> 'operator_id' then
         outputText(
-rpad( '  ' || case when isCursorField = 1 then recInParams.column_name else recInParams.parameter_name end, 29) || '- '
+rpad( '  ' || case when isCursorField = 1 then recInParams.column_name else recInParams.parameter_name end, 30) || '- '
    || transformParameterComment( recInParams.comments)
         );
       end if;
@@ -1409,10 +1409,10 @@ end update' || entityName || ';
   );
   outputText(
     rpad(
-'  ' || idParameterName, 29) || '- id ' || entityNameObjectiveCase
+'  ' || idParameterName, 30) || '- id ' || entityNameObjectiveCase
   );
   outputText(
-'  operatorId                 - id оператора
+'  operatorId                  - id оператора
 */
 procedure delete' || entityName || '(
   ' || idParameterName || ' integer
@@ -1560,14 +1560,7 @@ end find' || entityName || ';'
 end generateApi;
 
 /* proc: generateHistoryStructure
-  Генерация файлов исторической структуры
-
-  outputType                 - тип вывода в dbms_output.
-                               null-не выводить информацию
-                               1-реализация процедур
-                               2-спецификация процедур
-                               3-удаление последовательностей
-                               4-удаление представлений
+  Генерация файлов исторической структуры.
 */
 procedure generateHistoryStructure(
   tableName varchar2
@@ -1579,8 +1572,6 @@ procedure generateHistoryStructure(
   , abbrTo varchar2 := null
   , abbrFrom2 varchar2 := null
   , abbrTo2 varchar2 := null
-  , historyProcedureName varchar2:= null
-  , outputType integer := null
 )
 is
   subtype TOracleName is varchar2(30);
@@ -1592,7 +1583,6 @@ is
   viewName TOracleName;
   historyViewName TOracleName;
   historySequenceName TOracleName;
-  usedHistoryProcedureName TOracleName;
 
   cursor curField is
 select
@@ -1625,7 +1615,7 @@ order by
   cc.column_id
   ;
 
-  function CheckShrink(
+  function checkShrink(
     objectName varchar2
   )
   return varchar2
@@ -1700,9 +1690,9 @@ order by
       );
     end if;
     return resultName;
-  end CheckShrink;
+  end checkShrink;
 
-  procedure Init
+  procedure init
   is
     entityPart varchar2(100);
     entityName TOracleName;
@@ -1721,28 +1711,24 @@ order by
     viewName := CheckShrink( 'v_' || tableName);
     historyViewName := CheckShrink( 'v_' || tableName || '_history');
     historySequenceName := CheckShrink( historyTableName || '_seq');
-    usedHistoryProcedureName := coalesce(
-      historyProcedureName
-      , CheckShrink( 'add' || entityName || 'History')
-    );
-  end Init;
+  end init;
 
   procedure generateHistoryTable
   is
     isFirstColumn boolean := true;
   begin
     pkg_File.DeleteUnloadData;
-    Append(
+    append(
 '-- table: ' || historyTableName || '
 -- ' || tableComment || ' ( исторические данные).
 create table
   ' || historyTableName || '
 ('  );
-    Append(
+    append(
   rpad( '  ' || lower( historyIdColumnName), 34) || 'integer                             not null'
      );
     for recField in curField loop
-      Append(
+      append(
   rpad( '  ' || ', ' || lower( recField.column_name), 34)
     || rpad(
          getColumnDefinition(
@@ -1757,7 +1743,7 @@ create table
       );
       isFirstColumn := true;
     end loop;
-    Append(
+    append(
 '  , deleted                       number(1)                           not null
   , change_number                 integer                             not null
   , change_date                   date                                not null
@@ -1790,13 +1776,13 @@ comment on column ' || historyTableName || '.' || historyIdColumnName || ' is
     );
     for recField in curField
     loop
-      Append(
+      append(
 'comment on column ' || historyTableName || '.' || recField.column_name || ' is
   ''' || recField.comments || '''
 /'
       );
     end loop;
-    Append(
+    append(
 'comment on column ' || historyTableName || '.deleted is
   ''Флаг логического удаления записи ( 0 - существующая, 1 - удалена)''
 ' || ExecSql_Char || '
@@ -1820,14 +1806,7 @@ comment on column ' || historyTableName || '.date_ins is
 ' || ExecSql_Char || '
 comment on column ' || historyTableName || '.operator_id is
   ''Id оператора, добавившего запись''
-' || ExecSql_Char || '
-
--- sequence: ' || historySequenceName || '
--- Последовательность для генерации первичного ключа таблицы
--- <' || historyTableName || '>
-create sequence
-  ' || historySequenceName || '
-/'
+' || ExecSql_Char
     );
     pkg_File.UnloadTxt(
       toPath => pkg_File.GetFilePath( outputFilePath, historyTableName || '.tab')
@@ -1835,11 +1814,33 @@ create sequence
     );
   end generateHistoryTable;
 
+  /*
+    Генерация скрипта создания последовательности для первичного ключа
+    исторической таблицы.
+  */
+  procedure generateHistorySequence
+  is
+  begin
+    pkg_File.deleteUnloadData();
+    append(
+'-- sequence: ' || historySequenceName || '
+-- Последовательность для генерации первичного ключа таблицы
+-- <' || historyTableName || '>.
+create sequence
+  ' || historySequenceName || '
+' || ExecSql_Char
+    );
+    pkg_File.unloadTxt(
+      toPath => pkg_File.getFilePath( outputFilePath, historySequenceName || '.sqs')
+      , writeMode => pkg_File.Mode_Rewrite
+    );
+  end generateHistorySequence;
+
   procedure generateHistoryTrigger
   is
   begin
     pkg_File.DeleteUnloadData;
-    Append(
+    append(
 '-- trigger: ' || historyTriggerName || '
 -- При изменении записи в <' || lower( tableName) || '> добавляет историческую запись со
 -- старыми данными в <' || historyTableName || '>.
@@ -1869,13 +1870,14 @@ begin
   -- Заполняем поля с данными'
     );
     for recField in curField loop
-      Append(
+      append(
 rpad( '  hs.' || recField.column_name, 36) || ':= :old.' || recField.column_name || ';'
       );
     end loop;
-    Append(
+    append(
 '
   -- Устанавливаем служебные поля
+  ' || rpad( 'hs.' || historyIdColumnName, 34) || ':= ' || historySequenceName || '.nextval;
   hs.deleted                        := :old.deleted;
   hs.change_number                  := :old.change_number;
   hs.change_date                    := :old.change_date;
@@ -1885,8 +1887,12 @@ rpad( '  hs.' || recField.column_name, 36) || ':= :old.' || recField.column_name
   hs.date_ins                       := :new.change_date;
   hs.operator_id                    := :new.change_operator_id;
 
-  -- Сохраняем старые данные
-  pkg_' || moduleName || 'Internal.' || usedHistoryProcedureName || '( hs);
+  -- Добавляем историческую запись
+  insert into
+    ' || historyTableName || '
+  values
+    hs
+  ;
 end;
 /'
     );
@@ -1899,8 +1905,8 @@ end;
   procedure generateInsertTrigger
   is
   begin
-    pkg_File.DeleteUnloadData;
-    Append(
+    pkg_File.deleteUnloadData();
+    append(
 '-- trigger: ' || insertTriggerName || '
 -- Инициализация полей таблицы <' || lower( tableName) || '> при добавлении записи.
 create or replace trigger ' || insertTriggerName || '
@@ -1911,13 +1917,7 @@ begin
 
   -- Определяем значение первичного ключа
   if :new.' || idColumnName || ' is null then
-    select
-      ' || CheckShrink( lower(tableName) || '_seq') || '.nextval
-    into
-      :new.' || idColumnName || '
-    from
-      dual
-    ;
+    :new.' || idColumnName || ' := ' || checkShrink( lower(tableName) || '_seq') || '.nextval;
   end if;
 
   -- Id оператора, добавившего запись
@@ -1964,7 +1964,7 @@ end;
   is
   begin
     pkg_File.DeleteUnloadData;
-    Append(
+    append(
 'alter table
   ' || historyTableName || '
 add constraint
@@ -2016,7 +2016,7 @@ references
     isFirst boolean := true;
   begin
     pkg_File.DeleteUnloadData;
-    Append(
+    append(
 '-- view: ' || viewName || '
 -- ' || tableComment || ' ( актуальные данные).
 create or replace force view
@@ -2026,12 +2026,12 @@ select
   -- SVN root: ' || svnRoot
     );
     for recField in curField loop
-      Append(
+      append(
  '  ' || case when not isFirst then ', ' end || 't.' || recField.column_name
       );
       isFirst := false;
     end loop;
-    Append(
+    append(
 '  , t.change_number
   , t.change_date
   , t.change_operator_id
@@ -2049,13 +2049,13 @@ where
     );
     for recField in curField
     loop
-      Append(
+      append(
 'comment on column ' || viewName || '.' || recField.column_name || ' is
   ''' || recField.comments || '''
 /'
       );
     end loop;
-    Append(
+    append(
 'comment on column ' || viewName || '.change_number is
   ''Порядковый номер изменения записи ( начиная с 1)''
 ' || ExecSql_Char || '
@@ -2083,7 +2083,7 @@ comment on column ' || viewName || '.operator_id is
     isFirst boolean := true;
   begin
     pkg_File.DeleteUnloadData;
-    Append(
+    append(
 '-- view: ' || historyViewName || '
 -- ' || tableComment || ' ( актуальные и исторические данные).
 create or replace force view
@@ -2097,12 +2097,12 @@ from
   select'
   );
   for recField in curField loop
-    Append(
+    append(
  '    ' || case when not isFirst then ', ' end || 'h.' || recField.column_name
     );
     isFirst := false;
   end loop;
-  Append(
+  append(
 '    , h.deleted
     , h.change_number
     , h.change_date
@@ -2119,12 +2119,12 @@ from
   );
     isFirst := true;
   for recField in curField loop
-    Append(
+    append(
  '    ' || case when not isFirst then ', ' end || 't.' || recField.column_name
     );
     isFirst := false;
   end loop;
-  Append(
+  append(
 '    , t.deleted
     , t.change_number
     , t.change_date
@@ -2145,13 +2145,13 @@ comment on table ' || historyViewName || ' is
     );
     for recField in curField
     loop
-      Append(
+      append(
 'comment on column ' || historyViewName || '.' || recField.column_name || ' is
   ''' || recField.comments || '''
 /'
       );
     end loop;
-     Append(
+     append(
 'comment on column ' || historyViewName || '.deleted is
   ''Флаг логического удаления записи ( 0 - существующая, 1 - удалена)''
 ' || ExecSql_Char || '
@@ -2186,98 +2186,15 @@ comment on column ' || historyViewName || '.operator_id is
     );
   end generateHistoryView;
 
-  procedure generateHistoryProcedure
-  is
-  begin
-
-    outputText(
-'
-/* proc' || NDoc_Char || ' ' || usedHistoryProcedureName || '
-  Добавляет историческую запись в <' || historyTableName || '>.
-
-  Параметры:
-  historyData                - данные исторической записи
-*/
-procedure ' || usedHistoryProcedureName || '(
-  historyData in out nocopy ' || historyTableName || '%rowtype
-)
-is
 begin
-
-  -- Определяем Id записи
-  if historyData.' || historyIdColumnName || ' is null then
-    select
-      ' || historySequenceName || '.nextval
-    into
-      historyData.' || historyIdColumnName || '
-    from
-      dual
-    ;
-  end if;
-
-  -- Добавляем историческую запись
-  insert into
-    ' || historyTableName || '
-  values
-    historyData
-  ;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , ''Ошибка при добавлении исторической записи в ' || historyTableName || ' ( ''
-      || ''' || idColumnName || '='' || to_char( historyData.' || idColumnName || ')
-      || '').''
-    , true
-  );
-end ' || usedHistoryProcedureName || ';
-     ');
-  end generateHistoryProcedure;
-
-  procedure GenerateHistoryProcInterface
-  is
-  begin
-    outputText(
-'
-/* pproc: ' || usedHistoryProcedureName || '
-  Добавляет историческую запись в <' || historyTableName || '>.
-
-  Параметры:
-  historyData                - данные исторической записи
-
-  ( <body::' || usedHistoryProcedureName || '>)
-*/
-procedure ' || usedHistoryProcedureName || '(
-  historyData in out nocopy ' || historyTableName || '%rowtype
-);'
-    );
-  end GenerateHistoryProcInterface;
-
-begin
-  Init;
-  if outputType = 1 then
-    generateHistoryProcedure;
-  elsif outputType = 2 then
-    GenerateHistoryProcInterface;
-  elsif outputType = 3 then
-    outputText(
-'drop sequence ' || historySequenceName || '
-/'
-    );
-  elsif outputType = 4 then
-    outputText(
-'drop view ' || viewName || '
-' || ExecSql_Char || '
-drop view ' || historyViewName || '
-/'
-    );
-  else
-    generateHistoryTrigger();
-    generateHistoryTable();
-    generateInsertTrigger();
-    generateHistoryConstraints();
-    generateView();
-    generateHistoryView();
-  end if;
+  init();
+  generateHistoryTrigger();
+  generateHistoryTable();
+  generateHistorySequence();
+  generateInsertTrigger();
+  generateHistoryConstraints();
+  generateView();
+  generateHistoryView();
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
