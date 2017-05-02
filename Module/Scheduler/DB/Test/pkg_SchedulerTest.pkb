@@ -384,6 +384,12 @@ begin
     end case;
     batchCount := batchCount + 1;
   end loop;
+  if batchCount = 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'No batches found'
+    );
+  end if;
   commit;
   if operationCode in (
     Activate_OperCode, Deactivate_OperCode
