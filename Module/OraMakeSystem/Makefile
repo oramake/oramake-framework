@@ -77,14 +77,20 @@ install:
 	&& rm -rf "$(shareDir)"								\
 	&& mkdir -p "$(shareDir)"							\
 	&& mkdir -p "$(configDir)"	  				\
-	&& tar --create --file=- 							\
-				--exclude=.gitattributes 				\
-				--exclude=.gitignore 						\
-				--exclude=.svn 									\
-				--exclude=*~ 										\
-				--exclude=*.swp 								\
-				Data SqlScript UsedLib 				  \
-		| tar --extract --directory="$(shareDir)" \
+	&& cp \
+		--preserve=mode,ownership,timestamps \
+		--no-dereference --preserve=links \
+		--recursive \
+		--target-directory="$(shareDir)" \
+		Config SqlScript UsedLib \
+	&& find \
+		"$(shareDir)" \
+		\( -name ".gitignore"  \
+			-o -name ".gitattributes" \
+			-o -name "*~" \
+			-o -name "*.swp" \
+		\) \
+		-delete \
 	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
 	&& mkdir -p "$(shareDir)/Config"		 	\
 	&& cp --force Config/Legacy/* "$(shareDir)/Config"
