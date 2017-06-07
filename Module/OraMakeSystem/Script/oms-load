@@ -1143,18 +1143,26 @@ end;
 checkSqlplusOutput()
 {
   local checkResult=0
-                                        # Отключаем игнорирование пробелов
-                                        # с помощью IFS
+
+  # Используется для экранирования кириллической буквы "я", которая в
+  # следующим case вызывает ошибку компиляции
+  # "syntax error near unexpected token"
+  # в GNU bash, version 4.3.46(2)-release (i686-pc-msys)
+  # ( в GNU bash, version 4.1.10(4)-release (i686-pc-cygwin) ошибки нет)
+  local YaCyr=$'\xff'
+
+  # Отключаем игнорирование пробелов с помощью IFS
   while IFS=$'\n' read -r line; do
     logDebug3 "SQL-OUTPUT: $line"
-                                        # Фильтруем пустые строки
+
+    # Фильтруем пустые строки
     if [[ ${#line} -ne 0 ]]; then
       case "$line" in
         ERROR\ at\ line\ [1-9]*: \
         | ошибка\ в\ строке\ [1-9]*: \
         | SP2-[0-9][0-9][0-9][0-9]:\ * \
         | Warning:\ *\ created\ with\ compilation\ errors. \
-        | Предупреждение:\ *\ создано\ с\ ошибками\ компиляции. \
+        | Предупреждение:\ *\ создано\ с\ ошибками\ компил${YaCyr}ции. \
         )
           checkResult=$E_PROCESS_ERROR
           logDebug "SQL*Plus error detected"
