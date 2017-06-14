@@ -1222,7 +1222,16 @@ execSql()
     outSqlCommon "$@" | outSqlLog ;
   else
     outSqlCommon "$@" ;
-  fi | sqlplus -S /NOLOG |
+  fi |
+    if [[ "$OSTYPE" == "msys" ]]; then
+      # В MSYS2 ( GNU bash, version 4.3.46(2)-release (i686-pc-msys))
+      # при обычном запуске ( без cmd) sqlplus не видел команд из пайпа и
+      # завершался с ошибкой
+      logDebug "run sqlplus from cmd for look around pipe problem in MSYS"
+      cmd /c "sqlplus -S /NOLOG"
+    else
+      sqlplus -S /NOLOG
+    fi |
     sed --unbuffered -e 's/\r//g' | checkSqlplusOutput
   # sed используется для обхода бага с # зависанием команды read при наличии
   # двух подряд символов возврата каретки
