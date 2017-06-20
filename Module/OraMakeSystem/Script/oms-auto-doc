@@ -49,7 +49,7 @@
 #
 # Если настроечный файл для генерации меню не найден в модуле по пути
 # OmsModule/Menu/menu-config.txt, то используется настроечный файл
-# oms по умолчанию ( находится по пути <installDataDir>/Config/Doc/menu-config.txt,
+# oms по умолчанию ( находится по пути <installDataDir>/Data/Doc/menu-config.txt,
 # где <installDataDir> - директория, в которую установлен модуль).
 # Дописывает меню индексов из данных oms-файлов в конец файла меню.
 # Все используемые пути файлов можно посмотреть с помощью опции --debug-level 1.
@@ -257,7 +257,7 @@ function initMenuGenerator()
                                         # Путь к файлу меню шаблона
                                         # нового модуля
   moduleConfigMenuPath=\
-"$installDataDir/Config/NewModule/DB/OmsModule/NaturalDocs/Menu.txt";
+"$installDataDir/Data/NewModule/DB/OmsModule/NaturalDocs/Menu.txt";
   if ! [[ -f $moduleConfigMenuPath ]]; then
     echo "Could not find new module menu file \"$moduleConfigMenuPath\"">&2;
     exit 1;
@@ -268,7 +268,7 @@ function initMenuGenerator()
     menuTempPath="/tmp/oms-menu.MenuCopy.$$";
   fi;
                                        # Пути к настроечным файлам
-  commonConfigPath=$installDataDir/Config/Doc/menu-config.txt;
+  commonConfigPath=$installDataDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
   logMessage "menuPath = "$menuPath
   logMessage "menuOutputFile = "$menuOutputFile

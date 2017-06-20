@@ -2,9 +2,9 @@
 
 # script: create-patch
 # Создает файлы для обновления модуля.
-# Файлы для обновления создаются в каталоге Config/UpdateModule с помощью
+# Файлы для обновления создаются в каталоге Data/UpdateModule с помощью
 # svn diff на основе внесенных изменений в базовые файлы, находящиеся в
-# Config/NewModule ( при этом игнорируются файлы, которые просто копируются
+# Data/NewModule ( при этом игнорируются файлы, которые просто копируются
 # при обновлении модуля скриптом <oms-update-module>).
 #
 #
@@ -13,7 +13,7 @@
 #
 # Параметры:
 #   targetPath                - путь к файлу ( каталогу) относительтельно
-#                               Config/NewModule, для которого требуется создать
+#                               Data/NewModule, для которого требуется создать
 #                               обновления ( по умолчанию для всех обновляемых
 #                               изменений)
 #
@@ -58,10 +58,10 @@ isOverwrite=0
 tmpFile="/tmp/create-patch.$$"
 
 # Шаблон модуля
-templateDir="Config/NewModule"
+templateDir="Data/NewModule"
 
 # Данные для обновления файлов модуля
-updateDir="Config/UpdateModule"
+updateDir="Data/UpdateModule"
 
 # Каталог с файлами OMS
 omsDir="DB/OmsModule"
@@ -86,7 +86,7 @@ Usage:
   create-patch [options] [targetPath]
 
 Parameters:
-  targetPath                  path from Config/NewModule for used changes
+  targetPath                  path from Data/NewModule for used changes
 
 Options:
       --from-revision REV     start revision for used changes

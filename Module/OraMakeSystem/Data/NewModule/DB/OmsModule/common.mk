@@ -134,6 +134,10 @@ export OMS_DEBUG_LEVEL = 0
 # Путь к каталогу с установленными файлами OMS.
 export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
 
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
+
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
 # Информация сохраняется в случае загрузки файлов скриптом <oms-load> с помощью
@@ -1135,6 +1139,9 @@ load-start-log.oms:
 			   fi \
 			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
 			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \

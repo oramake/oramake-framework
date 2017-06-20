@@ -560,11 +560,12 @@ updateModule()
         isExpand=1
         ;;
     esac
-    dstPath="$rootDir/$dstFile"         # Путь к файлу назначения
+    # Путь к файлу назначения
+    dstPath="$rootDir/$dstFile"
     if ! ((isIgnore)); then
-                                        # Дополнительные действия до обработки
+      # Дополнительные действия до обработки
       doBeforeAction "$file" "$dstPath" "$fromRevision"
-                                        # Обрабатываем файл/каталог
+      # Обрабатываем файл/каталог
       if ((isDirectory)); then
         if [[ ! -d "$dstPath" ]] ; then
           $runCmd mkdir "$dstPath"
@@ -577,9 +578,12 @@ updateModule()
         if [[ -n "$fromRevision" ]] && [[ -d "$patchConfigDir/$dstFile" ]]; then
           patchFile "$file" "$dstPath" "$patchConfigDir/$dstFile" \
             "$fromRevision" "$isUnixFormat"
+        elif [[ -n "$fromRevision" ]] && [[ -d "$patchDataDir/$dstFile" ]]; then
+          patchFile "$file" "$dstPath" "$patchDataDir/$dstFile" \
+            "$fromRevision" "$isUnixFormat"
         fi
       fi || exitError "Cannot process file \"$dstPath\"."
-                                        # Действия с Subversion
+      # Действия с Subversion
       if (( isUseSubversion)) ; then
         cd "$rootDir" \
           && $runCmd $svnCmd add --non-recursive --quiet --force "$dstFile" \

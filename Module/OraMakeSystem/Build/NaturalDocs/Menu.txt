@@ -52,12 +52,34 @@ Don't Index: Constants
 
 Group: О проекте  {
 
-   File: Описание  (Doc/readme.txt)
-   File: Установка  (Doc/install.txt)
-   File: Доработки  (Doc/todo.txt)
-   File: Ошибки  (Doc/bugs.txt)
    File: Сборка  (Makefile)
-   File: Версии  (Doc/version.txt)
+
+   Group: Data  {
+
+      File: Инициализация OMS  (Data/NewModule/DB/OmsModule/init.mk)
+      File: Сборка  (Data/NewModule/DB/Makefile)
+      File: Сборка OMS  (Data/NewModule/DB/OmsModule/common.mk)
+
+      Group: Doc  {
+
+         File: Версии  (Data/NewModule/DB/Doc/version.txt)
+         File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
+         File: Описание  (Data/NewModule/DB/Doc/readme.txt)
+         File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
+         File: Установка  (Data/NewModule/DB/Doc/install.txt)
+         }  # Group: Doc
+
+      }  # Group: Data
+
+   Group: Doc  {
+
+      File: Описание  (Doc/readme.txt)
+      File: Установка  (Doc/install.txt)
+      File: Доработки  (Doc/todo.txt)
+      File: Ошибки  (Doc/bugs.txt)
+      File: Версии  (Doc/version.txt)
+      }  # Group: Doc
+
    }  # Group: О проекте
 
 Group: Соглашения по оформлению модуля  {
@@ -132,26 +154,10 @@ Group: SQL-скрипты  {
 
 Group: Настройки  {
 
-   File: Настройки сборки  (no auto-title, Config/localCustom.mk)
-   File: Настройки скриптов  (no auto-title, Config/custom.sh)
-   File: Локальная инициализация OMS  (Config/local.mk)
-
-   Group: Шаблон модуля  {
-
-      Group: О модуле  {
-
-         File: Описание  (Config/NewModule/DB/Doc/readme.txt)
-         File: Установка  (Config/NewModule/DB/Doc/install.txt)
-         File: Ошибки  (Config/NewModule/DB/Doc/bugs.txt)
-         File: Доработки  (Config/NewModule/DB/Doc/todo.txt)
-         File: Сборка  (Config/NewModule/DB/Makefile)
-         File: Версии  (Config/NewModule/DB/Doc/version.txt)
-         }  # Group: О модуле
-
-      File: Инициализация OMS  (Config/NewModule/DB/OmsModule/init.mk)
-      File: Сборка OMS  (Config/NewModule/DB/OmsModule/common.mk)
-      }  # Group: Шаблон модуля
-
+   File: Настройки сборки  (Config/Default/database.mk)
+   File: connect.sh  (Config/Default/connect.sh)
+   File: local.mk  (Config/Legacy/local.mk)
+   File: localCustom.mk  (Config/Legacy/localCustom.mk)
    }  # Group: Настройки
 
 Group: Индекс  {

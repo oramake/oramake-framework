@@ -46,6 +46,10 @@ tab := $(empty)	$(empty)
 # Путь к каталогу с установленными файлами OMS.
 export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
 
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
+
 
 
 
@@ -80,11 +84,8 @@ getDateFromKeyword = $(strip $(shell \
   ))
 
 
-# Включаем файл локальной инициализации
-include $(OMS_INSTALL_DATA_DIR)/Config/local.mk
-
-# Включаем пользовательские настройки OMS
-include $(OMS_INSTALL_DATA_DIR)/Config/localCustom.mk
+# Включаем пользовательские настройки БД
+include $(OMS_INSTALL_CONFIG_DIR)/database.mk
 
 
 

@@ -155,7 +155,7 @@ sqlScriptDir="${installDataDir}/SqlScript"
 
 # var: configDir
 # Каталог с настройками.
-configDir="${installDataDir}/Config"
+configDir="${OMS_CONFIG_DIR:-/usr/local/etc/oms}"
 
 # var: templateDir
 # Каталог с шаблоном нового модуля.
@@ -164,6 +164,10 @@ templateDir="${configDir}/NewModule"
 # var: templatePackageName
 # Базовое имя ( без расширения) файлов с шаблоном пакета Oracle.
 templatePackageName="pkg_NewModule"
+
+# var: patchDataDir
+# Каталог с патчами для обновления файлов модуля.
+patchDataDir="$dataDir/UpdateModule"
 
 # var: patchConfigDir
 # Настроечный каталог с патчами для обновления файлов модуля.

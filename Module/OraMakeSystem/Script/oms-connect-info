@@ -23,7 +23,7 @@
 # Замечания:
 # - при отсутствии имени пользователя для подключения используется пользователь
 #   по умолчанию для БД ( определяется в функции
-#   <custom.sh::cspGetDefaultUserName>);
+#   <connect.sh::cspGetDefaultUserName>);
 # - при отсутствии переданного в параметре --userid пароля пользователя БД для
 #   его получения будет вызвана функция <custom.sh::cspGetUserPassword>;
 # - при отсутствии переданного в параметре --operatorid пароля оператора для
@@ -56,7 +56,7 @@ fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 source oms-common.sh || exit 11
 
 # Подключение пользовательских настроечных функций
-source ${configDir}/custom.sh || exit 12
+source ${configDir}/connect.sh || exit 12
 
 
 
