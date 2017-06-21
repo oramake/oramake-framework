@@ -61,6 +61,7 @@ fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 # Подключение общих констант и функций
 source oms-common.sh || exit 11
 
+logDebug3 "templateDir: '$templateDir'"
 
 
 # group: Параметры вызова
@@ -613,9 +614,9 @@ updateModule()
 }
 
 
-                                        # Разбор параметров
+# Разбор параметров
 parseOption "$@"
-                                        # Выполняем обновление
+# Выполняем обновление
 updateModule
-                                        # Завершаем выполнение
+# Завершаем выполнение
 exitScript

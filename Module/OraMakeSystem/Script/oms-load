@@ -236,7 +236,7 @@ source oms-common.sh || exit 11
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
-sqlScriptDir="${installDataDir}/SqlScript"
+sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: tmpSqlFileNamePrefix
 # Префикс для имен временных файлов, используемых в скриптах SQL*Plus (

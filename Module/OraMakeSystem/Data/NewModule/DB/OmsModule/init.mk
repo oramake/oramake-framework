@@ -42,9 +42,9 @@ tab := $(empty)	$(empty)
 # group: Общие параметры
 #
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
 
 # build var: OMS_INSTALL_CONFIG_DIR
 # Путь к каталогу с настройками OMS.

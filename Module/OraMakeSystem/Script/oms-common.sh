@@ -145,13 +145,13 @@ scriptArgumentList=( "$@" )
 # Исполняемый файл Subversion.
 svnCmd="svn"
 
-# var: installDataDir
-# Путь к каталогу с данными OMS.
-installDataDir="${OMS_INSTALL_DATA_DIR:-/usr/local/share/oms}"
+# var: installShareDir
+# Путь к каталогу с данными OMS ( за исключением скриптов и настроек)
+installShareDir="${OMS_INSTALL_SHARE_DIR:-/usr/local/share/oms}"
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
-sqlScriptDir="${installDataDir}/SqlScript"
+sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: configDir
 # Каталог с настройками.
@@ -159,7 +159,7 @@ configDir="${OMS_CONFIG_DIR:-/usr/local/etc/oms}"
 
 # var: templateDir
 # Каталог с шаблоном нового модуля.
-templateDir="${configDir}/NewModule"
+templateDir="${installShareDir}/Data/NewModule"
 
 # var: templatePackageName
 # Базовое имя ( без расширения) файлов с шаблоном пакета Oracle.

@@ -49,8 +49,8 @@
 #
 # Если настроечный файл для генерации меню не найден в модуле по пути
 # OmsModule/Menu/menu-config.txt, то используется настроечный файл
-# oms по умолчанию ( находится по пути <installDataDir>/Data/Doc/menu-config.txt,
-# где <installDataDir> - директория, в которую установлен модуль).
+# oms по умолчанию ( находится по пути <installShareDir>/Data/Doc/menu-config.txt,
+# где <installShareDir> - директория, в которой находятся файлы модуля).
 # Дописывает меню индексов из данных oms-файлов в конец файла меню.
 # Все используемые пути файлов можно посмотреть с помощью опции --debug-level 1.
 # С помощью опции --menu-take-config ( см.) можно скопировать общий настроечный файл
@@ -108,6 +108,10 @@ fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
+
+# Подключение общих констант и функций
+source oms-common.sh || exit 11
+
 #
 # Режимы запуска скрипта
 #
@@ -119,10 +123,6 @@ RUN_MODE_TAKE_MENU_CONFIG=4
 RUN_MODE_REPLACE_INDEX=5
 RUN_MODE_CLEAN=6
 
-
-# Путь к каталогу с данными OMS
-#
-installDataDir="${OMS_INSTALL_DATA_DIR:-/usr/local/share/oms}"
 
 # Путь к gawk-скрипту для генерации меню
 #
@@ -257,7 +257,7 @@ function initMenuGenerator()
                                         # Путь к файлу меню шаблона
                                         # нового модуля
   moduleConfigMenuPath=\
-"$installDataDir/Data/NewModule/DB/OmsModule/NaturalDocs/Menu.txt";
+"$installShareDir/Data/NewModule/DB/OmsModule/NaturalDocs/Menu.txt";
   if ! [[ -f $moduleConfigMenuPath ]]; then
     echo "Could not find new module menu file \"$moduleConfigMenuPath\"">&2;
     exit 1;
@@ -268,7 +268,7 @@ function initMenuGenerator()
     menuTempPath="/tmp/oms-menu.MenuCopy.$$";
   fi;
                                        # Пути к настроечным файлам
-  commonConfigPath=$installDataDir/Data/Doc/menu-config.txt;
+  commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
   logMessage "menuPath = "$menuPath
   logMessage "menuOutputFile = "$menuOutputFile
@@ -334,7 +334,7 @@ function replaceMenuIndex()
 function initNaturalDocs()
 {
   # Строка запуска утилиты генерации
-  gendocRun="$installDataDir"/UsedLib/NaturalDocs/NaturalDocs/NaturalDocs
+  gendocRun="$installShareDir"/UsedLib/NaturalDocs/NaturalDocs/NaturalDocs
   # Путь для автодокументации
   gendocDir="${gendocDir:-${rootDir}/Doc/DB/AutoGen}"
   # Каталог с настройками утилиты генерации
