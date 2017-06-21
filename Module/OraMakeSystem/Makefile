@@ -163,7 +163,7 @@ gendoc-clean:
 	@(cd "$(GENDOC_DIR)"										\
 		&& [[ ! -d "styles/$(versionControlDir)" ]]	\
 		&& rm -rf 													\
-			files index javascript styles			\
+			files index javascript styles search	\
 			index.html menu.html							\
 	);																		\
 	rm -rf $(gendocCacheDir)/*						\

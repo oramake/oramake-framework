@@ -25,9 +25,9 @@
 #   по умолчанию для БД ( определяется в функции
 #   <connect.sh::cspGetDefaultUserName>);
 # - при отсутствии переданного в параметре --userid пароля пользователя БД для
-#   его получения будет вызвана функция <custom.sh::cspGetUserPassword>;
+#   его получения будет вызвана функция <connect.sh::cspGetUserPassword>;
 # - при отсутствии переданного в параметре --operatorid пароля оператора для
-#   его получения будет вызвана функция <custom.sh::cspGetOperatorPassword>;
+#   его получения будет вызвана функция <connect.sh::cspGetOperatorPassword>;
 #
 
 

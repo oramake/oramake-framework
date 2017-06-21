@@ -52,34 +52,12 @@ Don't Index: Constants
 
 Group: О проекте  {
 
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Ошибки  (Doc/bugs.txt)
    File: Сборка  (Makefile)
-
-   Group: Data  {
-
-      File: Инициализация OMS  (Data/NewModule/DB/OmsModule/init.mk)
-      File: Сборка  (Data/NewModule/DB/Makefile)
-      File: Сборка OMS  (Data/NewModule/DB/OmsModule/common.mk)
-
-      Group: Doc  {
-
-         File: Версии  (Data/NewModule/DB/Doc/version.txt)
-         File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
-         File: Описание  (Data/NewModule/DB/Doc/readme.txt)
-         File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
-         File: Установка  (Data/NewModule/DB/Doc/install.txt)
-         }  # Group: Doc
-
-      }  # Group: Data
-
-   Group: Doc  {
-
-      File: Описание  (Doc/readme.txt)
-      File: Установка  (Doc/install.txt)
-      File: Доработки  (Doc/todo.txt)
-      File: Ошибки  (Doc/bugs.txt)
-      File: Версии  (Doc/version.txt)
-      }  # Group: Doc
-
+   File: Версии  (Doc/version.txt)
    }  # Group: О проекте
 
 Group: Соглашения по оформлению модуля  {
@@ -154,11 +132,32 @@ Group: SQL-скрипты  {
 
 Group: Настройки  {
 
-   File: Настройки сборки  (Config/Default/database.mk)
-   File: connect.sh  (Config/Default/connect.sh)
-   File: local.mk  (Config/Legacy/local.mk)
-   File: localCustom.mk  (Config/Legacy/localCustom.mk)
+   File: Настройки баз данных  (no auto-title, Config/Default/database.mk)
+   File: Настройки соединения  (no auto-title, Config/Default/connect.sh)
+
+   Group: Файлы для обратной совместимости  {
+
+      File: local.mk  (Config/Legacy/local.mk)
+      File: localCustom.mk  (Config/Legacy/localCustom.mk)
+      }  # Group: Файлы для обратной совместимости
+
    }  # Group: Настройки
+
+Group: Шаблон модуля  {
+
+   Group: О модуле  {
+
+      File: Описание  (Data/NewModule/DB/Doc/readme.txt)
+      File: Установка  (Data/NewModule/DB/Doc/install.txt)
+      File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
+      File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
+      File: Сборка  (Data/NewModule/DB/Makefile)
+      File: Версии  (Data/NewModule/DB/Doc/version.txt)
+      }  # Group: О модуле
+
+   File: Инициализация OMS  (Data/NewModule/DB/OmsModule/init.mk)
+   File: Сборка OMS  (Data/NewModule/DB/OmsModule/common.mk)
+   }  # Group: Шаблон модуля
 
 Group: Индекс  {
 
