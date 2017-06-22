@@ -51,7 +51,7 @@ OMS Version Information:
   File revision   : 2132
   File change date: 2014-07-08 18:40:00 +0300
   oms-common.sh revision    : 2132
-  oms-common.sh change date : 2014-07-08 18:40:00 +0300</pre></blockquote><h4 class=CHeading>Требования к БД при использовании</h4><ul><li>в БД должен быть установлен модуль ModuleInfo для сохранения информации об установке модулей;</li><li>в БД должен быть установлен модуль Scheduler для возможности загрузки батчей;</li></ul></div></div></div>
+  oms-common.sh change date : 2014-07-08 18:40:00 +0300</pre></blockquote><ul><li>после установки может потребоваться отредактировать настроечные файлы в /usr/local/etc/oms <a href="../Config/Default/database-mk.html#Настройкибазданных" class=LMakefile id=link2 onMouseOver="ShowTip(event, 'tt2', 'link2')" onMouseOut="HideTip('tt2')">Настройки баз данных</a> или <a href="../Config/Default/connect-sh.html#connect.sh" class=LFile id=link3 onMouseOver="ShowTip(event, 'tt3', 'link3')" onMouseOut="HideTip('tt3')">connect.sh</a>, версии по-умолчанию которых копируются при установке, если данные файлы не существовали.&nbsp; Настроечные файлы могут быть заменены при использовании флага FORCE=1.</li></ul><h4 class=CHeading>Требования к БД при использовании</h4><ul><li>в БД должен быть установлен модуль ModuleInfo для сохранения информации об установке модулей;</li><li>в БД должен быть установлен модуль Scheduler для возможности загрузки батчей;</li></ul></div></div></div>
 
 </div><!--Content-->
 
@@ -67,7 +67,7 @@ HideAllBut([1, 2], 14);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<div class=CToolTip id="tt1"><div class=CGroup>[!]&nbsp; В bash ( версия 3.2.49 и ранее) встроенная команда read зависает при наличии во вводе двух идущих подряд символов возврата каретки. </div></div><!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CGroup>[!]&nbsp; В bash ( версия 3.2.49 и ранее) встроенная команда read зависает при наличии во вводе двух идущих подряд символов возврата каретки. </div></div><div class=CToolTip id="tt2"><div class=CMakefile>Настроечные функции и константы для make, которые могут модифицироваться после установки.</div></div><div class=CToolTip id="tt3"><div class=CFile>Внутренний скрипт, содержащий настроечные функции для соединения, которые могут модифицироваться после установки.</div></div><!--END_ND_TOOLTIPS-->
 
 
 
