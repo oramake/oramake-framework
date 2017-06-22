@@ -58,6 +58,7 @@ DESTDIR				=	/usr/local
 
 # build var: FORCE
 # Флаг затирания настроек приложения
+FORCE         =
 
 # Каталог для общих данных
 shareDir		 	= $(DESTDIR)/share/oms
