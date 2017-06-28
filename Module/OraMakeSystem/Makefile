@@ -82,7 +82,7 @@ install:
 		--no-dereference --preserve=links \
 		--recursive \
 		--target-directory="$(shareDir)" \
-		Config SqlScript UsedLib \
+		Data SqlScript UsedLib \
 	&& find \
 		"$(shareDir)" \
 		\( -name ".gitignore"  \
