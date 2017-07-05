@@ -48,6 +48,11 @@ Mode_Rewrite constant integer := 3;
 */
 Encoding_Utf8 constant varchar2( 10 ) := 'UTF-8';
 
+/* const: Encoding_Utf8Bom
+  Кодировка "UTF8" с маркером BOM.
+*/
+Encoding_Utf8Bom constant varchar2( 10 ) := 'UTF-8-BOM';
+
 /* const: Encoding_Unicode
   Кодировка "Encoding_Unicode"
 */
@@ -363,8 +368,8 @@ procedure loadBlobFromFile(
   Параметры:
   dstLob                      - LOB для загрузки данных ( возврат)
   fromPath                    - путь к файлу
-  charEncoding                - кодировка для выгрузки файла ( по-умолчанию
-                                используется кодировка базы)
+  charEncoding                - кодировка для выгрузки файла
+                                ( по-умолчанию используется кодировка базы)
 
   Замечание:
   - при передаче null в параметр dstLob, создаётся временный LOB;
@@ -374,9 +379,9 @@ procedure loadBlobFromFile(
   ( <body::loadClobFromFile>)
 */
 procedure loadClobFromFile(
-  dstLob in out nocopy clob
-  , fromPath varchar2
-  , charEncoding varchar2 := null
+  dstLob          in out nocopy clob
+, fromPath        varchar2
+, charEncoding    varchar2
 );
 
 /* pproc: loadTxt
@@ -476,11 +481,11 @@ procedure unloadBlobToFile(
   ( <body::unloadClobToFile>)
 */
 procedure unloadClobToFile(
-  fileText in clob
-  , toPath varchar2
-  , writeMode number := null
-  , charEncoding varchar2 := null
-  , isGzipped number := null
+  fileText      in clob
+, toPath        varchar2
+, writeMode     number := null
+, charEncoding  varchar2 := null
+, isGzipped     number := null
 );
 
 /* pproc: appendUnloadData
@@ -527,10 +532,10 @@ procedure deleteUnloadData;
   ( <body::unloadTxt>)
 */
 procedure unloadTxt(
-  toPath varchar2
-  , writeMode integer := Mode_Write
-  , charEncoding varchar2 := null
-  , isGzipped integer := null
+  toPath        varchar2
+, writeMode     integer := Mode_Write
+, charEncoding  varchar2 := null
+, isGzipped     integer := null
 );
 
 

@@ -764,6 +764,7 @@ language java name 'pkg_File.loadBlobFromFile(oracle.sql.BLOB[],java.lang.String
   dstLob                      - LOB для загрузки данных ( возврат)
   fromPath                    - путь к файлу
   charEncoding                - кодировка для выгрузки файла ( по-умолчанию
+  bomFlag                     - флаг выгрузки маркера BOM для UTF-8
                                 используется кодировка базы)
 
   Замечание:
@@ -771,16 +772,18 @@ language java name 'pkg_File.loadBlobFromFile(oracle.sql.BLOB[],java.lang.String
     файла на уровне Java;
 */
 procedure loadClobFromFileJava(
-  dstLob in out nocopy clob
-  , fromPath varchar2
-  , charEncoding varchar2
+  dstLob        in out nocopy clob
+, fromPath      varchar2
+, charEncoding  varchar2
+, bomFlag       number
 )
 is
 language java name '
   pkg_File.loadClobFromFile(
     oracle.sql.CLOB[]
-    , java.lang.String
-    , java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.math.BigDecimal
   )';
 
 /* proc: loadBlobFromFile
@@ -826,8 +829,8 @@ end loadBlobFromFile;
   Параметры:
   dstLob                      - LOB для загрузки данных ( возврат)
   fromPath                    - путь к файлу
-  charEncoding                - кодировка для выгрузки файла ( по-умолчанию
-                                используется кодировка базы)
+  charEncoding                - кодировка для выгрузки файла
+                                ( по-умолчанию используется кодировка базы)
 
   Замечание:
   - при передаче null в параметр dstLob, создаётся временный LOB;
@@ -835,9 +838,9 @@ end loadBlobFromFile;
     уровне Java ( см. <loadClobFromFileJava>);
 */
 procedure loadClobFromFile(
-  dstLob in out nocopy clob
-  , fromPath varchar2
-  , charEncoding varchar2 := null
+  dstLob          in out nocopy clob
+, fromPath        varchar2
+, charEncoding    varchar2
 )
 is
 begin
@@ -845,18 +848,31 @@ begin
     dbms_lob.createtemporary( dstLob, true);
   end if;
   loadClobFromFileJava(
-    dstLob => dstLob
-    , fromPath => fromPath
-    , charEncoding => charEncoding
+    dstLob        => dstLob
+  , fromPath      => fromPath
+  , charEncoding  =>
+  case when
+    charEncoding = Encoding_Utf8Bom
+  then
+    Encoding_Utf8
+  else
+    charEncoding
+  end
+  , bomFlag       =>
+  case when
+    charEncoding = Encoding_Utf8Bom
+  then
+    1
+  end
   );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
         'Ошибка при загрузке файла в CLOB ('
-        || ' fromPath="' || fromPath || '"'
-        || ', charEncoding="' || charEncoding || '"'
-        || ').'
+      || ' fromPath="' || fromPath || '"'
+      || ', charEncoding="' || charEncoding || '"'
+      || ').'
       )
     , true
   );
@@ -1020,8 +1036,9 @@ begin
     end if;
     loadClobFromFileJava(             --Считываем данные из файла
       dataLob
-      , FromPath
-      , null
+    , fromPath
+    , charEncoding => null
+    , bomFlag      => null
     );
     readCount := dbms_lob.getLength( dataLob);
                                       --Сохраняем данные построчно
@@ -1128,25 +1145,25 @@ end convertWriteMode;
   binaryData                  - данные для выгрузки
   toPath                      - путь для выгружаемого файла
   writeModeCode               - режим записи в существующий файл
-  isGzipped                   - флаг сжатия с помощью GZIP
+  gzipFlag                    - флаг сжатия с помощью GZIP
 
   Замечание:
   - для успешного выполнения у пользователя должны быть права на чтение/запись
     файла ( или всех элементов каталога) на уровне Java;
 */
 procedure unloadBlobToFileJava(
-  binaryData in blob
-  , toPath varchar2
-  , writeModeCode varchar2
-  , isGzipped number
+  binaryData    in blob
+, toPath        varchar2
+, writeModeCode varchar2
+, gzipFlag      number
 )
 is
 language java name
   'pkg_File.unloadBlobToFile(
      oracle.sql.BLOB
-     , java.lang.String
-     , java.lang.String
-     , java.math.BigDecimal
+   , java.lang.String
+   , java.lang.String
+   , java.math.BigDecimal
    )';
 
  /* proc: unloadBlobToFile
@@ -1173,10 +1190,10 @@ procedure unloadBlobToFile(
 is
 begin
   unloadBlobToFileJava(
-    binaryData => binaryData
-    , toPath => toPath
-    , writeModeCode => convertWriteMode( writeMode)
-    , isGzipped => isGzipped
+    binaryData    => binaryData
+  , toPath        => toPath
+  , writeModeCode => convertWriteMode( writeMode)
+  , gzipFlag      => isGzipped
   );
 exception when others then
   raise_application_error(
@@ -1198,30 +1215,33 @@ end unloadBlobToFile;
   Параметры:
   fileText                    - данные для выгрузки
   toPath                      - путь для выгружаемого файла
-  writeModeCod                - режим записи в существующий файл
+  writeModeCode               - режим записи в существующий файл
   charEncoding                - кодировка для выгрузки файла
                                 ( по-умолчанию используется кодировка базы)
-  isGzipped                   - флаг сжатия с помощью GZIP
+  bomFlag                     - флаг выгрузки маркера BOM для UTF-8
+  gzipFlag                    - флаг сжатия с помощью GZIP
 
   Замечание:
   - для успешного выполнения у пользователя должны быть права на чтение/запись
     файла ( или всех элементов каталога) на уровне Java;
 */
 procedure unloadClobToFileJava(
-  fileText in clob
-  , toPath varchar2
-  , writeModeCode varchar2
-  , charEncoding varchar2
-  , isGzipped number
+  fileText        in clob
+, toPath          varchar2
+, writeModeCode   varchar2
+, charEncoding    varchar2
+, bomFlag         number
+, gzipFlag        number
 )
 is
 language java name
   'pkg_File.unloadClobToFile(
      oracle.sql.CLOB
-     , java.lang.String
-     , java.lang.String
-     , java.lang.String
-     , java.math.BigDecimal
+   , java.lang.String
+   , java.lang.String
+   , java.lang.String
+   , java.math.BigDecimal
+   , java.math.BigDecimal
    )';
 
 /* proc: unloadClobToFile
@@ -1242,20 +1262,33 @@ language java name
     файла ( или всех элементов каталога) на уровне Java;
 */
 procedure unloadClobToFile(
-  fileText in clob
-  , toPath varchar2
-  , writeMode number := null
-  , charEncoding varchar2 := null
-  , isGzipped number := null
+  fileText      in clob
+, toPath        varchar2
+, writeMode     number := null
+, charEncoding  varchar2 := null
+, isGzipped     number := null
 )
 is
 begin
   unloadClobToFileJava(
-    fileText => fileText
-    , toPath => toPath
-    , writeModeCode => convertWriteMode( writeMode)
-    , charEncoding => charEncoding
-    , isGzipped => isGzipped
+  fileText      => fileText
+, toPath        => toPath
+, writeModeCode => convertWriteMode( writeMode)
+, charEncoding  =>
+case when
+  charEncoding = Encoding_Utf8Bom
+then
+  Encoding_Utf8
+else
+  charEncoding
+end
+, bomFlag       =>
+case when
+  charEncoding = Encoding_Utf8Bom
+then
+  1
+end
+, gzipFlag      => isGzipped
   );
 exception when others then
   raise_application_error(
@@ -1400,25 +1433,28 @@ end deleteUnloadData;
   writeModeCode               - режим записи в существующий файл
   charEncoding                - кодировка для выгрузки файла ( по-умолчанию используется
                                 кодировка базы)
-  izGzipped                   - сжимать ли с помощью GZIP (1-да,0-нет)
+  bomFlag                     - флаг выгрузки маркера BOM для UTF-8
+  gzipFlag                    - сжимать ли с помощью GZIP (1-да,0-нет)
 
   Замечание:
   - для успешного выполнения у пользователя должны быть права на чтение/запись
     файла ( или всех элементов каталога) на уровне Java;
 */
 procedure unloadTxtJava(
-  toPath varchar2
-  , writeModeCode varchar2
-  , charEncoding varchar2
-  , isGzipped number
+  toPath        varchar2
+, writeModeCode varchar2
+, charEncoding  varchar2
+, bomFlag       number
+, gzipFlag      number
 )
 is
 language java name
   'pkg_File.unloadTxt(
      java.lang.String
-     , java.lang.String
-     , java.lang.String
-     , java.math.BigDecimal
+   , java.lang.String
+   , java.lang.String
+   , java.math.BigDecimal
+   , java.math.BigDecimal
    )';
 
 /* proc: unloadTxt
@@ -1438,22 +1474,35 @@ language java name
     Java ( см. <unloadTxtJava>);
 */
 procedure unloadTxt(
-  toPath varchar2
-  , writeMode integer := Mode_Write
-  , charEncoding varchar2 := null
-  , isGzipped integer := null
+  toPath        varchar2
+, writeMode     integer := Mode_Write
+, charEncoding  varchar2 := null
+, isGzipped     integer := null
 )
 is
 
 begin
-                                        --Сбрасываем кэш в LOB ( если есть)
+  -- Сбрасываем кэш в LOB ( если есть)
   appendUnloadData( null);
-                                        --Выгружаем файл
+  -- Выгружаем файл
   unloadTxtJava(
-    ToPath
-    , convertWriteMode( writeMode)
-    , charEncoding
-    , isGzipped
+    toPath        => toPath
+  , writeModeCode => convertWriteMode( writeMode)
+  , charEncoding  =>
+  case when
+    charEncoding = Encoding_Utf8Bom
+  then
+    Encoding_Utf8
+  else
+    charEncoding
+  end
+  , bomFlag       =>
+  case when
+    charEncoding = Encoding_Utf8Bom
+  then
+    1
+  end
+  , gzipFlag     => isGzipped
   );
 end unloadTxt;
 

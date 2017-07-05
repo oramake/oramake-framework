@@ -562,11 +562,13 @@ public static void loadBlobFromFile(
  * clob                       - LOB дл€ записи данных ( должен быть уже открыт)
  * fromPath                   - путь загружаемому файлу
  * charEncoding               - кодировка символов ( по-умолчанию кодировка Ѕƒ)
+ * bomFlag                    - флаг выгрузки маркера BOM дл€ UTF-8
  **/
 public static void loadClobFromFile(
   oracle.sql.CLOB clob[]
-  , String fromPath
-  , String charEncoding
+, String          fromPath
+, String          charEncoding
+, BigDecimal      bomFlag
 )
   throws
     java.sql.SQLException
@@ -646,14 +648,14 @@ checkUnloadFile(
  *
  * blob                       - BLOB дл€ выгрузки ( должен быть открыт)
  * unloadPath                 - путь к каталогу
- * writeModeCode                  - режим записи существующего файла
- * izGzipped                  - сжимать использу€ алгоритм GZIP (1,0)
+ * writeModeCode              - режим записи существующего файла
+ * gzipFlag                   - сжимать использу€ алгоритм GZIP (1,0)
  */
 public static void unloadBlobToFile(
   oracle.sql.BLOB blob
   , String unloadPath
   , String writeModeCode
-  , BigDecimal isGzipped
+  , BigDecimal gzipFlag
 )
   throws
     java.sql.SQLException
@@ -676,8 +678,8 @@ public static void unloadBlobToFile(
       netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
     ;
     try {
-      int isGzippedInt = ( isGzipped == null ? 0 : isGzipped.intValue());
-      if ( isGzippedInt == 1) {
+      int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
+      if ( gzipFlagInt == 1) {
         outputStream = new GZIPOutputStream( outputStream);
       }
       StreamConverter.binaryToBinary( outputStream, inputStream);
@@ -697,17 +699,19 @@ public static void unloadBlobToFile(
  *
  * ѕараметры:
  * clob                       - CLOB дл€ выгрузки ( должен быть открыт)
- * unloadPath                     - путь к каталогу
- * writeModeCode                  - режим записи существуюего файла
+ * unloadPath                 - путь к каталогу
+ * writeModeCode              - режим записи существуюего файла
  * charEncoding               - кодировка символов ( по-умолчанию кодировка Ѕƒ)
- * izGzipped                  - сжимать использу€ алгоритм GZIP (1,0)
+ * bomFlag                    - флаг выгрузки маркера BOM дл€ UTF-8
+ * gzipFlag                   - сжимать использу€ алгоритм GZIP (1,0)
  */
 public static void unloadClobToFile(
-  oracle.sql.CLOB clob
-  , String unloadPath
-  , String writeModeCode
-  , String charEncoding
-  , BigDecimal isGzipped
+  oracle.sql.CLOB   clob
+, String            unloadPath
+, String            writeModeCode
+, String            charEncoding
+, BigDecimal        bomFlag
+, BigDecimal        gzipFlag
 )
   throws
     java.sql.SQLException
@@ -729,8 +733,8 @@ public static void unloadClobToFile(
       netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
     ;
     try {
-      int isGzippedInt = ( isGzipped == null ? 0 : isGzipped.intValue());
-      if ( isGzippedInt == 1) {
+      int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
+      if ( gzipFlagInt == 1) {
         outputStream = new GZIPOutputStream( outputStream);
       }
       StreamConverter.charToBinary( outputStream, reader, charEncoding);
@@ -750,17 +754,19 @@ public static void unloadClobToFile(
  *
  * ѕараметры:
  * unloadPath                 - путь к файлу
- * writeModeCode                  - режим записи существуюего файла
+ * writeModeCode              - режим записи существуюего файла
  * charEncoding               - кодировка символов, по-умолчанию, выгрузка
  *                              происходит в кодировке базы
- * izGzipped                  - сжимать использу€ алгоритм GZIP (1,0)
+ * bomFlag                    - флаг выгрузки маркера BOM дл€ UTF-8
+ * gzipFlag                   - сжимать использу€ алгоритм GZIP (1,0)
  **/
 public static void
 unloadTxt(
   String unloadPath
   , String writeModeCode
   , String charEncoding
-  , BigDecimal isGzipped
+  , BigDecimal bomFlag
+  , BigDecimal gzipFlag
 )
   throws
     java.sql.SQLException
@@ -787,8 +793,8 @@ unloadTxt(
     netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
   ;
   try {
-    int isGzippedInt = ( isGzipped == null ? 0 : isGzipped.intValue());
-    if ( isGzippedInt == 1) {
+    int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
+    if ( gzipFlagInt == 1) {
       outputStream = new GZIPOutputStream( outputStream);
     }
     logTrace( "unloadTxt: got outputStream");
