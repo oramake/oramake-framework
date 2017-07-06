@@ -25,6 +25,8 @@ public class pkg_File
   static public String WRITE_MODE_CODE_REWRITE  = "REWRITE";
   static public String WRITE_MODE_CODE_APPEND   = "APPEND";
 
+  // UTF8 BOM Marker
+  static public final byte[] UTF8_BOM = { (byte)0xEF, (byte)0xBB, (byte)0xBF};
 
   //Итератор для выборки поля типа CLOB
   #sql static private iterator ClobIter( oracle.sql.CLOB);
@@ -593,6 +595,19 @@ public static void loadClobFromFile(
   try {
     InputStream inputStream = netfile.getInputStream();
     try {
+      if ( BigDecimal.ONE.equals( bomFlag)) {
+        byte[] bom = new byte[3];
+        if ( inputStream.read( bom, 0, 3) != 3) {
+          throw new java.io.IOException(
+            "File too short for BOM"
+          );
+        }
+        if ( !Arrays.equals( bom, UTF8_BOM)) {
+          throw new java.io.IOException(
+            "BOM not found"
+          );
+        }
+      }
       StreamConverter.binaryToChar( writer, inputStream, charEncoding);
     }
     finally {
@@ -653,9 +668,9 @@ checkUnloadFile(
  */
 public static void unloadBlobToFile(
   oracle.sql.BLOB blob
-  , String unloadPath
-  , String writeModeCode
-  , BigDecimal gzipFlag
+, String          unloadPath
+, String          writeModeCode
+, BigDecimal      gzipFlag
 )
   throws
     java.sql.SQLException
@@ -678,8 +693,7 @@ public static void unloadBlobToFile(
       netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
     ;
     try {
-      int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
-      if ( gzipFlagInt == 1) {
+      if ( BigDecimal.ONE.equals( gzipFlag)) {
         outputStream = new GZIPOutputStream( outputStream);
       }
       StreamConverter.binaryToBinary( outputStream, inputStream);
@@ -733,9 +747,11 @@ public static void unloadClobToFile(
       netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
     ;
     try {
-      int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
-      if ( gzipFlagInt == 1) {
+      if ( BigDecimal.ONE.equals( gzipFlag)) {
         outputStream = new GZIPOutputStream( outputStream);
+      }
+      if ( BigDecimal.ONE.equals( bomFlag)) {
+        outputStream.write( UTF8_BOM);
       }
       StreamConverter.charToBinary( outputStream, reader, charEncoding);
     }
@@ -793,11 +809,13 @@ unloadTxt(
     netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
   ;
   try {
-    int gzipFlagInt = ( gzipFlag == null ? 0 : gzipFlag.intValue());
-    if ( gzipFlagInt == 1) {
+    if ( BigDecimal.ONE.equals( gzipFlag)) {
       outputStream = new GZIPOutputStream( outputStream);
     }
     logTrace( "unloadTxt: got outputStream");
+    if ( BigDecimal.ONE.equals( bomFlag)) {
+      outputStream.write( UTF8_BOM);
+    }
     oracle.sql.CLOB clob = null;
     boolean endFetch = false;
     while ( !endFetch) {
