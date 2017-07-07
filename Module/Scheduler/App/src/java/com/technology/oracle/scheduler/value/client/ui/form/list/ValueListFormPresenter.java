@@ -16,25 +16,25 @@ import com.technology.oracle.scheduler.batch.client.history.scope.BatchScope;
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.value.shared.service.ValueServiceAsync;
 public class ValueListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends ValueServiceAsync, F extends StandardClientFactory<E, S>> 
-	extends ListFormPresenter<V, E, S, F> {   
+  extends ListFormPresenter<V, E, S, F> {   
  
-	public ValueListFormPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+  public ValueListFormPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
  
-	@Override
-	public void onSearch(SearchEvent event) {
-		
-		searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-		JepRecord record = searchTemplate.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		record.set(BATCH_ID, BatchScope.instance.getBatchId());
-		
-		super.onSearch(event);
-	};
-	
-	@Override
-	public void rowDoubleClick(JepEvent event) {
-		placeController.goTo(new JepEditPlace());
-	};
+  @Override
+  public void onSearch(SearchEvent event) {
+    
+    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
+    JepRecord record = searchTemplate.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    record.set(BATCH_ID, BatchScope.instance.getBatchId());
+    
+    super.onSearch(event);
+  };
+  
+  @Override
+  public void rowDoubleClick(JepEvent event) {
+    placeController.goTo(new JepEditPlace());
+  };
 }

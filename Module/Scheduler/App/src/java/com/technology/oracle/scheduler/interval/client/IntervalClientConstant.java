@@ -6,5 +6,5 @@ import com.technology.oracle.scheduler.interval.shared.text.IntervalText;
  
 public class IntervalClientConstant extends IntervalConstant {
  
-	public static IntervalText intervalText = (IntervalText) GWT.create(IntervalText.class);
+  public static IntervalText intervalText = (IntervalText) GWT.create(IntervalText.class);
 }

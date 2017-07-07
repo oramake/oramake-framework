@@ -25,43 +25,43 @@ import com.technology.jep.jepria.shared.record.JepRecord;
  
 public class ScheduleListFormViewImpl extends ListFormViewImpl<GridManager> {
  
-	public ScheduleListFormViewImpl() {
-		super(new GridManager());
-		 
-		HeaderPanel gridPanel = new HeaderPanel();
-		setWidget(gridPanel);
+  public ScheduleListFormViewImpl() {
+    super(new GridManager());
+     
+    HeaderPanel gridPanel = new HeaderPanel();
+    setWidget(gridPanel);
  
-		gridPanel.setHeight("100%");
-		gridPanel.setWidth("100%");
+    gridPanel.setHeight("100%");
+    gridPanel.setWidth("100%");
  
-		JepGrid<JepRecord> grid = new JepGrid<JepRecord>(getGridId(), getColumnConfigurations(), true);
-		PagingStandardBar pagingBar = new PagingStandardBar(25);
+    JepGrid<JepRecord> grid = new JepGrid<JepRecord>(getGridId(), getColumnConfigurations(), true);
+    PagingStandardBar pagingBar = new PagingStandardBar(25);
  
-		gridPanel.setContentWidget(grid);
-		gridPanel.setFooterWidget(pagingBar);
+    gridPanel.setContentWidget(grid);
+    gridPanel.setFooterWidget(pagingBar);
  
-		list.setWidget(grid);
-		list.setPagingToolBar(pagingBar);
-	}
+    list.setWidget(grid);
+    list.setPagingToolBar(pagingBar);
+  }
  
-	private static DateTimeFormat defaultDateFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT);
-	private static DateTimeFormat dateWithTimeFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT+" "+DEFAULT_TIME_FORMAT);
-	private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");
-	
-	private static List<JepColumn> getColumnConfigurations() {
-		final List<JepColumn> columnConfigurations = new ArrayList<JepColumn>();
-		columnConfigurations.add(new JepColumn(SCHEDULE_ID, scheduleText.schedule_list_schedule_id(), 150, new NumberCell(defaultNumberFormatter)));
-		columnConfigurations.add(new JepColumn(SCHEDULE_NAME, scheduleText.schedule_list_schedule_name(), 150));
-		columnConfigurations.add(DateColumnConfig(DATE_INS, scheduleText.schedule_list_date_ins(), 150));
-		columnConfigurations.add(new JepColumn(OPERATOR_NAME, scheduleText.schedule_list_operator_name(), 150));
-		return columnConfigurations;
-	}
-	
-	private static JepColumn DateColumnConfig(String id, String name, int width) {
-		return new JepColumn(id, name, width, new DateCell(dateWithTimeFormatter));
-	}
-	 
-	private String getGridId() {
-		return this.getClass().toString().replace("class ", "");
-	}
+  private static DateTimeFormat defaultDateFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT);
+  private static DateTimeFormat dateWithTimeFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT+" "+DEFAULT_TIME_FORMAT);
+  private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");
+  
+  private static List<JepColumn> getColumnConfigurations() {
+    final List<JepColumn> columnConfigurations = new ArrayList<JepColumn>();
+    columnConfigurations.add(new JepColumn(SCHEDULE_ID, scheduleText.schedule_list_schedule_id(), 150, new NumberCell(defaultNumberFormatter)));
+    columnConfigurations.add(new JepColumn(SCHEDULE_NAME, scheduleText.schedule_list_schedule_name(), 150));
+    columnConfigurations.add(DateColumnConfig(DATE_INS, scheduleText.schedule_list_date_ins(), 150));
+    columnConfigurations.add(new JepColumn(OPERATOR_NAME, scheduleText.schedule_list_operator_name(), 150));
+    return columnConfigurations;
+  }
+  
+  private static JepColumn DateColumnConfig(String id, String name, int width) {
+    return new JepColumn(id, name, width, new DateCell(dateWithTimeFormatter));
+  }
+   
+  private String getGridId() {
+    return this.getClass().toString().replace("class ", "");
+  }
 }

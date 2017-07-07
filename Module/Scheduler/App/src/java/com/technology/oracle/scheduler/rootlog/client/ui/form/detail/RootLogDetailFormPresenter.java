@@ -15,29 +15,29 @@ import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.rootlog.shared.service.RootLogServiceAsync;
  
 public class RootLogDetailFormPresenter<E extends PlainEventBus, S extends RootLogServiceAsync> 
-		extends DetailFormPresenter<RootLogDetailFormView, E, S, StandardClientFactory<E, S>> { 
+    extends DetailFormPresenter<RootLogDetailFormView, E, S, StandardClientFactory<E, S>> { 
  
-	public RootLogDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
-		super(scopeModuleIds, place, clientFactory);
-	}
+  public RootLogDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
+    super(scopeModuleIds, place, clientFactory);
+  }
  
-	/* public void bind() {
-		super.bind();
-		// Здесь размещается код связывания presenter-а и view 
-	}
-	*/ 
+  /* public void bind() {
+    super.bind();
+    // Здесь размещается код связывания presenter-а и view 
+  }
+  */ 
 
-	@Override
-	public void onDoGetRecord(DoGetRecordEvent event) {
-		
-		//для корректной работы табов (ScopeModules)
-		final PagingConfig pagingConfig = event.getPagingConfig();
-		JepRecord record = pagingConfig.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		eventBus.list();
-	}
-	
-	protected void adjustToWorkstate(WorkstateEnum workstate) {
-	}
+  @Override
+  public void onDoGetRecord(DoGetRecordEvent event) {
+    
+    //для корректной работы табов (ScopeModules)
+    final PagingConfig pagingConfig = event.getPagingConfig();
+    JepRecord record = pagingConfig.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    eventBus.list();
+  }
+  
+  protected void adjustToWorkstate(WorkstateEnum workstate) {
+  }
  
 }

@@ -17,33 +17,33 @@ import com.technology.oracle.scheduler.option.client.history.scope.OptionScope;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
  
 public class OptionToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F> { 
+  extends ToolBarPresenter<V, E, S, F> { 
  
- 	public OptionToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
- 	
- 	public void edit() {
- 		OptionScope.instance.setIsEditValue(false);
- 		super.edit();
- 	}
- 	
-	public void bind() {
-		
-		super.bind();
-		
-		bindButton(
-			OPTION_CURRENT_VALUE,
-			new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
-			new ClickHandler() {
-				
-				@Override
-				public void onClick(ClickEvent event) {
-					OptionScope.instance.setIsEditValue(true);
-					placeController.goTo(new JepEditPlace());
-				}
-			});
+   public OptionToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
+   
+   public void edit() {
+     OptionScope.instance.setIsEditValue(false);
+     super.edit();
+   }
+   
+  public void bind() {
+    
+    super.bind();
+    
+    bindButton(
+      OPTION_CURRENT_VALUE,
+      new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
+      new ClickHandler() {
+        
+        @Override
+        public void onClick(ClickEvent event) {
+          OptionScope.instance.setIsEditValue(true);
+          placeController.goTo(new JepEditPlace());
+        }
+      });
  
-	}
+  }
  
 }

@@ -15,30 +15,30 @@ import com.technology.jep.jepria.client.widget.field.multistate.JepComboBoxField
 import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTextField;
  
-public class ScheduleDetailFormViewImpl extends DetailFormViewImpl {	
+public class ScheduleDetailFormViewImpl extends DetailFormViewImpl {  
  
-	public ScheduleDetailFormViewImpl() {
-		super(new FieldManager());
-		 
-		ScrollPanel scrollPanel = new ScrollPanel();
-		scrollPanel.setSize("100%", "100%");
-		VerticalPanel panel = new VerticalPanel();
-		panel.getElement().getStyle().setMarginTop(5, Unit.PX);
-		scrollPanel.add(panel);
+  public ScheduleDetailFormViewImpl() {
+    super(new FieldManager());
+     
+    ScrollPanel scrollPanel = new ScrollPanel();
+    scrollPanel.setSize("100%", "100%");
+    VerticalPanel panel = new VerticalPanel();
+    panel.getElement().getStyle().setMarginTop(5, Unit.PX);
+    scrollPanel.add(panel);
  
-		JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(batchText.batch_detail_data_source());
-		JepNumberField scheduleIdNumberField = new JepNumberField(scheduleText.schedule_detail_schedule_id());
-		JepTextField scheduleNameTextField = new JepTextField(scheduleText.schedule_detail_schedule_name());
-		
-		panel.add(dataSourceComboBoxField);
-		panel.add(scheduleIdNumberField);
-		panel.add(scheduleNameTextField);
-		
-		setWidget(scrollPanel);
+    JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(batchText.batch_detail_data_source());
+    JepNumberField scheduleIdNumberField = new JepNumberField(scheduleText.schedule_detail_schedule_id());
+    JepTextField scheduleNameTextField = new JepTextField(scheduleText.schedule_detail_schedule_name());
+    
+    panel.add(dataSourceComboBoxField);
+    panel.add(scheduleIdNumberField);
+    panel.add(scheduleNameTextField);
+    
+    setWidget(scrollPanel);
  
-		fields.put(DATA_SOURCE, dataSourceComboBoxField);
-		fields.put(SCHEDULE_ID, scheduleIdNumberField);
-		fields.put(SCHEDULE_NAME, scheduleNameTextField);
-	}
+    fields.put(DATA_SOURCE, dataSourceComboBoxField);
+    fields.put(SCHEDULE_ID, scheduleIdNumberField);
+    fields.put(SCHEDULE_NAME, scheduleNameTextField);
+  }
  
 }

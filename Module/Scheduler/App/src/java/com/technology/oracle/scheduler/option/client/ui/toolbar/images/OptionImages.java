@@ -6,6 +6,6 @@ import com.technology.jep.jepria.client.images.JepImages;
 
 public interface OptionImages extends JepImages {
 
-	@Source("optionValue.png")
-	ImageResource optionValue();
+  @Source("optionValue.png")
+  ImageResource optionValue();
 }

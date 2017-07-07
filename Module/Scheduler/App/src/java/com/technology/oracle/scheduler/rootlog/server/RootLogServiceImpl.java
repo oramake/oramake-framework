@@ -9,9 +9,9 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RemoteServiceRelativePath("RootLogService")
 public class RootLogServiceImpl extends JepDataServiceServlet implements RootLogService  {
  
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
  
-	public RootLogServiceImpl() {
-		super(RootLogRecordDefinition.instance, BEAN_JNDI_NAME);
-	}
+  public RootLogServiceImpl() {
+    super(RootLogRecordDefinition.instance, BEAN_JNDI_NAME);
+  }
 }

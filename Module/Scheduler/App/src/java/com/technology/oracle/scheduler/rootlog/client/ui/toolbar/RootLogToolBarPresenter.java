@@ -8,10 +8,10 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarView;
 import com.technology.oracle.scheduler.rootlog.shared.service.RootLogServiceAsync;
  
 public class RootLogToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends RootLogServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F>  {
+  extends ToolBarPresenter<V, E, S, F>  {
  
- 	public RootLogToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+   public RootLogToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
  
 }

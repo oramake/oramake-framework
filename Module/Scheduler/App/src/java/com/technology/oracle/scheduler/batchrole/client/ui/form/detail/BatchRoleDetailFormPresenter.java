@@ -28,92 +28,92 @@ import com.technology.oracle.scheduler.batchrole.shared.service.BatchRoleService
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
  
 public class BatchRoleDetailFormPresenter<E extends PlainEventBus, S extends BatchRoleServiceAsync> 
-	extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>>  { 
+  extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>>  { 
  
-	public BatchRoleDetailFormPresenter(Place place, StandardClientFactory<E,S> clientFactory) {
-		super(place, clientFactory);
-	}
+  public BatchRoleDetailFormPresenter(Place place, StandardClientFactory<E,S> clientFactory) {
+    super(place, clientFactory);
+  }
  
-	public void bind() {
-		super.bind();
-		// Здесь размещается код связывания presenter-а и view 
-		fields.addFieldListener(PRIVILEGE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				service.getPrivilege(SchedulerScope.instance.getDataSource().getName(), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-					public void onSuccessLoad(List<JepOption> result){
-						fields.setFieldOptions(PRIVILEGE_CODE, result);
-					}
-				});
-			}
-		});
-		
-		fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-					public void onSuccessLoad(List<JepOption> result){
-						fields.setFieldOptions(DATA_SOURCE, result);
-					}
-				});
-			}
-		});
-		
-		fields.addFieldListener(ROLE_ID, JepEventType.TYPING_TIMEOUT_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				setRole();
-			}
-			
-		});
-	}
-	
-	private void setRole(){
-		
-		JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
-		roleField.setLoadingImage(true);
-		String rawValue = roleField.getRawValue();
-		service.getRole(SchedulerScope.instance.getDataSource().getName(), rawValue + "%",  
-				new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)
-			) {
-				@SuppressWarnings("unchecked")
-				public void onSuccessLoad(List<JepOption> result){
-	
-					JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
-					roleField.setOptions(result);
-				}
-				@Override
-				public void onFailure(Throwable caught) {
-					super.onFailure(caught);
-				}
-		});
-		
-	}
-	
+  public void bind() {
+    super.bind();
+    // Здесь размещается код связывания presenter-а и view 
+    fields.addFieldListener(PRIVILEGE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        service.getPrivilege(SchedulerScope.instance.getDataSource().getName(), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result){
+            fields.setFieldOptions(PRIVILEGE_CODE, result);
+          }
+        });
+      }
+    });
+    
+    fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result){
+            fields.setFieldOptions(DATA_SOURCE, result);
+          }
+        });
+      }
+    });
+    
+    fields.addFieldListener(ROLE_ID, JepEventType.TYPING_TIMEOUT_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        setRole();
+      }
+      
+    });
+  }
+  
+  private void setRole(){
+    
+    JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
+    roleField.setLoadingImage(true);
+    String rawValue = roleField.getRawValue();
+    service.getRole(SchedulerScope.instance.getDataSource().getName(), rawValue + "%",  
+        new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)
+      ) {
+        @SuppressWarnings("unchecked")
+        public void onSuccessLoad(List<JepOption> result){
+  
+          JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
+          roleField.setOptions(result);
+        }
+        @Override
+        public void onFailure(Throwable caught) {
+          super.onFailure(caught);
+        }
+    });
+    
+  }
+  
  
-	protected void adjustToWorkstate(WorkstateEnum workstate) {
-		fields.setFieldAllowBlank(PRIVILEGE_CODE, !CREATE.equals(workstate));
-		fields.setFieldAllowBlank(ROLE_ID, !CREATE.equals(workstate));
+  protected void adjustToWorkstate(WorkstateEnum workstate) {
+    fields.setFieldAllowBlank(PRIVILEGE_CODE, !CREATE.equals(workstate));
+    fields.setFieldAllowBlank(ROLE_ID, !CREATE.equals(workstate));
  
-		fields.setFieldEditable(DATA_SOURCE, false);
-		fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		
-		if (EDIT.equals(workstate)){
+    fields.setFieldEditable(DATA_SOURCE, false);
+    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    
+    if (EDIT.equals(workstate)){
 
-			setRole();
-		}
-	}
+      setRole();
+    }
+  }
  
-	
-	public void onDoGetRecord(DoGetRecordEvent event) {
-		
-		//для корректной работы табов (ScopeModules)
-		final PagingConfig pagingConfig = event.getPagingConfig();
-		JepRecord record = pagingConfig.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		fields.setFieldEditable(DATA_SOURCE, false);
-		fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+  
+  public void onDoGetRecord(DoGetRecordEvent event) {
+    
+    //для корректной работы табов (ScopeModules)
+    final PagingConfig pagingConfig = event.getPagingConfig();
+    JepRecord record = pagingConfig.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    fields.setFieldEditable(DATA_SOURCE, false);
+    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
 
-		super.onDoGetRecord(event);
-	}
+    super.onDoGetRecord(event);
+  }
 }

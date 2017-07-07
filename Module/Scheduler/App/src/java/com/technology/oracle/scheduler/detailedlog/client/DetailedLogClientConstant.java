@@ -6,5 +6,5 @@ import com.technology.oracle.scheduler.detailedlog.shared.text.DetailedLogText;
  
 public class DetailedLogClientConstant extends DetailedLogConstant {
  
-	public static DetailedLogText detailedLogText = (DetailedLogText) GWT.create(DetailedLogText.class);
+  public static DetailedLogText detailedLogText = (DetailedLogText) GWT.create(DetailedLogText.class);
 }

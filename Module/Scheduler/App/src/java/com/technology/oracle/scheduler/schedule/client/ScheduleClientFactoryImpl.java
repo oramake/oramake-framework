@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.schedule.shared.service.ScheduleServiceAs
 import com.technology.oracle.scheduler.schedule.shared.record.ScheduleRecordDefinition;
  
 public class ScheduleClientFactoryImpl<E extends PlainEventBus, S extends ScheduleServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget scheduleDetailFormView = new ScheduleDetailFormViewImpl();
-	private static final IsWidget scheduleToolBarView = new ScheduleToolBarViewImpl();
-	private static final IsWidget scheduleListFormView = new ScheduleListFormViewImpl();
+  private static final IsWidget scheduleDetailFormView = new ScheduleDetailFormViewImpl();
+  private static final IsWidget scheduleToolBarView = new ScheduleToolBarViewImpl();
+  private static final IsWidget scheduleListFormView = new ScheduleListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public ScheduleClientFactoryImpl() {
-		super(ScheduleRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public ScheduleClientFactoryImpl() {
+    super(ScheduleRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(ScheduleClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(ScheduleClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(SCHEDULE_MODULE_ID, place, this);
+  return new StandardModulePresenter(SCHEDULE_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new ScheduleDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new ScheduleDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new ScheduleListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new ScheduleListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return scheduleToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return scheduleToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return scheduleDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return scheduleDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return scheduleListFormView;
-	}
+  public IsWidget getListFormView() {
+    return scheduleListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(ScheduleService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(ScheduleService.class);
+    }
+    return dataService;
+  }
 }

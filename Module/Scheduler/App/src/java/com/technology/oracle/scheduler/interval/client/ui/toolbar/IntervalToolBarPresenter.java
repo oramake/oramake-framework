@@ -8,9 +8,9 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarView;
 import com.technology.oracle.scheduler.interval.shared.service.IntervalServiceAsync;
  
 public class IntervalToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends IntervalServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F> {
-	
- 	public IntervalToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+  extends ToolBarPresenter<V, E, S, F> {
+  
+   public IntervalToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
 }

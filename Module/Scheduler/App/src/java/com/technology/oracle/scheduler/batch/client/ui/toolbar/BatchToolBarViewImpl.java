@@ -10,38 +10,38 @@ import com.technology.oracle.scheduler.batch.client.ui.toolbar.images.BatchImage
 
 public class BatchToolBarViewImpl extends ToolBarViewImpl {
   
-	public static final BatchImages batchImages = GWT.create(BatchImages.class);
+  public static final BatchImages batchImages = GWT.create(BatchImages.class);
  
-	final static String ACTIVATE_BATCH = "activateBatch"; 
-	final static String DEACTIVATE_BATCH = "deactivateBatch"; 
-	final static String EXECUTE_BATCH = "executeBatch"; 
-	final static String ABORT_BATCH = "abortBatch"; 
-	final static String ACTIVATE_BATCH_SEPARATOR_ID = "activateBatchSeparatorId"; 
-	final static String EXECUTE_BATCH_SEPARATOR_ID = "executeBatchSeparatorId"; 
+  final static String ACTIVATE_BATCH = "activateBatch"; 
+  final static String DEACTIVATE_BATCH = "deactivateBatch"; 
+  final static String EXECUTE_BATCH = "executeBatch"; 
+  final static String ABORT_BATCH = "abortBatch"; 
+  final static String ACTIVATE_BATCH_SEPARATOR_ID = "activateBatchSeparatorId"; 
+  final static String EXECUTE_BATCH_SEPARATOR_ID = "executeBatchSeparatorId"; 
  
-	public BatchToolBarViewImpl() {
-		super();
+  public BatchToolBarViewImpl() {
+    super();
 
-		removeItem(ADD_BUTTON_ID);
-		removeItem(DELETE_BUTTON_ID);
-		
-		addSeparator(ACTIVATE_BATCH_SEPARATOR_ID);
-		addButton(
-			ACTIVATE_BATCH, 
-			batchImages.activateBatch(),
-			batchText.activateBatch());
-		addButton(
-			DEACTIVATE_BATCH, 
-			batchImages.deactivateBatch(),
-			batchText.deactivateBatch());
-		addSeparator(EXECUTE_BATCH_SEPARATOR_ID);
-		addButton(
-			EXECUTE_BATCH, 
-			batchImages.executeBatch(),
-			batchText.executeBatch());
-		addButton(
-			ABORT_BATCH, 
-			batchImages.abortBatch(),
-			batchText.abortBatch());
-	}
+    removeItem(ADD_BUTTON_ID);
+    removeItem(DELETE_BUTTON_ID);
+    
+    addSeparator(ACTIVATE_BATCH_SEPARATOR_ID);
+    addButton(
+      ACTIVATE_BATCH, 
+      batchImages.activateBatch(),
+      batchText.activateBatch());
+    addButton(
+      DEACTIVATE_BATCH, 
+      batchImages.deactivateBatch(),
+      batchText.deactivateBatch());
+    addSeparator(EXECUTE_BATCH_SEPARATOR_ID);
+    addButton(
+      EXECUTE_BATCH, 
+      batchImages.executeBatch(),
+      batchText.executeBatch());
+    addButton(
+      ABORT_BATCH, 
+      batchImages.abortBatch(),
+      batchText.abortBatch());
+  }
 }

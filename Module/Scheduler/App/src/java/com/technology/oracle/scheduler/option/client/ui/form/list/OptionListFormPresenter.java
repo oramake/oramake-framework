@@ -13,18 +13,18 @@ import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
 
 public class OptionListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E, S>> 
-	extends ListFormPresenter<V, E, S, F> {  
+  extends ListFormPresenter<V, E, S, F> {  
  
-	public OptionListFormPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+  public OptionListFormPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
  
-	@Override
-	public void onSearch(SearchEvent event) {
-		
-		searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-		JepRecord record = searchTemplate.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		super.onSearch(event);
-	};
+  @Override
+  public void onSearch(SearchEvent event) {
+    
+    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
+    JepRecord record = searchTemplate.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    super.onSearch(event);
+  };
 }

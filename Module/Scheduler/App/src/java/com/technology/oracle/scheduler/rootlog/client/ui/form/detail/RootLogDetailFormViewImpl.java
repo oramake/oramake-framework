@@ -11,20 +11,20 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.technology.jep.jepria.client.widget.field.FieldManager;
  
 public class RootLogDetailFormViewImpl
-	extends DetailFormViewImpl 
-	implements RootLogDetailFormView {	
+  extends DetailFormViewImpl 
+  implements RootLogDetailFormView {  
  
-	public RootLogDetailFormViewImpl() {
-		super(new FieldManager());
+  public RootLogDetailFormViewImpl() {
+    super(new FieldManager());
  
-		ScrollPanel scrollPanel = new ScrollPanel();
-		scrollPanel.setSize("100%", "100%");
-		VerticalPanel panel = new VerticalPanel();
-		panel.getElement().getStyle().setMarginTop(5, Unit.PX);
-		scrollPanel.add(panel);
+    ScrollPanel scrollPanel = new ScrollPanel();
+    scrollPanel.setSize("100%", "100%");
+    VerticalPanel panel = new VerticalPanel();
+    panel.getElement().getStyle().setMarginTop(5, Unit.PX);
+    scrollPanel.add(panel);
  
-		setWidget(scrollPanel);
+    setWidget(scrollPanel);
  
-	}
+  }
  
 }

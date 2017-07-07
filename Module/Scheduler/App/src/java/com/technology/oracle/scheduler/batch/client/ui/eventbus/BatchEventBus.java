@@ -9,25 +9,25 @@ import com.technology.oracle.scheduler.batch.client.ui.eventbus.event.ExecuteBat
  
 public class BatchEventBus extends PlainEventBus {
  
-	public BatchEventBus(PlainClientFactory<?, ?> clientFactory) {
-		super(clientFactory);
-	}
+  public BatchEventBus(PlainClientFactory<?, ?> clientFactory) {
+    super(clientFactory);
+  }
  
-	
-	public void activateBatch() { 
-		fireEvent(new ActivateBatchEvent());
-	}
+  
+  public void activateBatch() { 
+    fireEvent(new ActivateBatchEvent());
+  }
  
-	public void deactivateBatch() { 
-		fireEvent(new DeactivateBatchEvent());
-	}
+  public void deactivateBatch() { 
+    fireEvent(new DeactivateBatchEvent());
+  }
  
-	public void executeBatch() { 
-		fireEvent(new ExecuteBatchEvent());
-	}
+  public void executeBatch() { 
+    fireEvent(new ExecuteBatchEvent());
+  }
  
-	public void abortBatch() { 
-		fireEvent(new AbortBatchEvent());
-	}
+  public void abortBatch() { 
+    fireEvent(new AbortBatchEvent());
+  }
  
 }

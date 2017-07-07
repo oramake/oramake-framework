@@ -7,7 +7,7 @@ import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.scheduler.main.shared.service.SchedulerServiceAsync;
  
 public interface ModuleRolePrivilegeServiceAsync extends SchedulerServiceAsync {
-	void getModule(String dataSource, AsyncCallback<List<JepOption>> callback);
-	void getPrivilege(String dataSource, AsyncCallback<List<JepOption>> callback);
-	void getRole(String dataSource, AsyncCallback<List<JepOption>> callback);
+  void getModule(String dataSource, AsyncCallback<List<JepOption>> callback);
+  void getPrivilege(String dataSource, AsyncCallback<List<JepOption>> callback);
+  void getRole(String dataSource, AsyncCallback<List<JepOption>> callback);
 }

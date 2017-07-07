@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.detailedlog.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'D:/svn/Oracle/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/detailedlog/shared/text/DetailedLogText.properties'.
+ *   'D:/svn/Oracle/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/detailedlog/shared/text/DetailedLogText.properties'.
  */
 public interface DetailedLogText extends com.google.gwt.i18n.client.Constants {
   

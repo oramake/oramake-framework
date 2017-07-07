@@ -5,19 +5,19 @@ import com.technology.jep.jepria.client.ui.eventbus.BusEvent;
  
 public class ActivateBatchEvent extends BusEvent<ActivateBatchEvent.Handler> {
  
-	public interface Handler extends EventHandler {
-		void onActivateBatchEvent(ActivateBatchEvent event);
-	}
+  public interface Handler extends EventHandler {
+    void onActivateBatchEvent(ActivateBatchEvent event);
+  }
  
-	public static final Type<Handler> TYPE = new Type<Handler>();
+  public static final Type<Handler> TYPE = new Type<Handler>();
  
-	@Override
-	public Type<Handler> getAssociatedType() {
-		return TYPE;
-	}
+  @Override
+  public Type<Handler> getAssociatedType() {
+    return TYPE;
+  }
  
-	@Override
-	protected void dispatch(Handler handler) {
-		handler.onActivateBatchEvent(this);
-	}
+  @Override
+  protected void dispatch(Handler handler) {
+    handler.onActivateBatchEvent(this);
+  }
 }

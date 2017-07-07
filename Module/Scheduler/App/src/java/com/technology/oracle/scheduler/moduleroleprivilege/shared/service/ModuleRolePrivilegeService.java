@@ -9,7 +9,7 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
  
 @RemoteServiceRelativePath("ModuleRolePrivilegeService")
 public interface ModuleRolePrivilegeService extends SchedulerService {
-	List<JepOption> getModule(String dataSource) throws ApplicationException;
-	List<JepOption> getPrivilege(String dataSource) throws ApplicationException;
-	List<JepOption> getRole(String dataSource) throws ApplicationException;
+  List<JepOption> getModule(String dataSource) throws ApplicationException;
+  List<JepOption> getPrivilege(String dataSource) throws ApplicationException;
+  List<JepOption> getRole(String dataSource) throws ApplicationException;
 }

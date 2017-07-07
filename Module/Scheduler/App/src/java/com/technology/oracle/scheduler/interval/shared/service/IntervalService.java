@@ -9,5 +9,5 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
  
 @RemoteServiceRelativePath("IntervalService")
 public interface IntervalService extends SchedulerService {
-	List<JepOption> getIntervalType(String dataSource) throws ApplicationException;
+  List<JepOption> getIntervalType(String dataSource) throws ApplicationException;
 }

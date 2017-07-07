@@ -8,10 +8,10 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarView;
 import com.technology.oracle.scheduler.schedule.shared.service.ScheduleServiceAsync;
  
 public class ScheduleToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends ScheduleServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F> {
+  extends ToolBarPresenter<V, E, S, F> {
  
- 	public ScheduleToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+   public ScheduleToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
  
 }

@@ -29,60 +29,60 @@ import com.technology.oracle.scheduler.interval.shared.service.IntervalServiceAs
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
  
 public class IntervalDetailFormPresenter<E extends PlainEventBus, S extends IntervalServiceAsync> 
-		extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> { 
+    extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> { 
   
-	public IntervalDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
-		super(place, clientFactory);
-	}
+  public IntervalDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
+    super(place, clientFactory);
+  }
  
-	public void bind() {
-		super.bind();
-		// Здесь размещается код связывания presenter-а и view 
-		fields.addFieldListener(INTERVAL_TYPE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				service.getIntervalType(SchedulerScope.instance.getDataSource().getName(), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-					public void onSuccessLoad(List<JepOption> result){
-						fields.setFieldOptions(INTERVAL_TYPE_CODE, result);
-					}
-				});
-			}
-		});
-		
-		
-		fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-					public void onSuccessLoad(List<JepOption> result){
-						fields.setFieldOptions(DATA_SOURCE, result);
-					}
-				});
-			}
-		});
-	}
-	
-	public void onDoGetRecord(DoGetRecordEvent event) {
-		
-		//для корректной работы табов (ScopeModules)
-		final PagingConfig pagingConfig = event.getPagingConfig();
-		JepRecord record = pagingConfig.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		fields.setFieldEditable(DATA_SOURCE, false);
-		fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+  public void bind() {
+    super.bind();
+    // Здесь размещается код связывания presenter-а и view 
+    fields.addFieldListener(INTERVAL_TYPE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        service.getIntervalType(SchedulerScope.instance.getDataSource().getName(), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result){
+            fields.setFieldOptions(INTERVAL_TYPE_CODE, result);
+          }
+        });
+      }
+    });
+    
+    
+    fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result){
+            fields.setFieldOptions(DATA_SOURCE, result);
+          }
+        });
+      }
+    });
+  }
+  
+  public void onDoGetRecord(DoGetRecordEvent event) {
+    
+    //для корректной работы табов (ScopeModules)
+    final PagingConfig pagingConfig = event.getPagingConfig();
+    JepRecord record = pagingConfig.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    fields.setFieldEditable(DATA_SOURCE, false);
+    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
 
-		super.onDoGetRecord(event);
-	}
+    super.onDoGetRecord(event);
+  }
  
-	protected void adjustToWorkstate(WorkstateEnum workstate) {
-		fields.setFieldVisible(INTERVAL_ID, VIEW_DETAILS.equals(workstate));
-		fields.setFieldEditable(DATA_SOURCE, false);
-		fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+  protected void adjustToWorkstate(WorkstateEnum workstate) {
+    fields.setFieldVisible(INTERVAL_ID, VIEW_DETAILS.equals(workstate));
+    fields.setFieldEditable(DATA_SOURCE, false);
+    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
  
-		fields.setFieldAllowBlank(INTERVAL_TYPE_CODE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
-		fields.setFieldAllowBlank(MIN_VALUE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
-		fields.setFieldAllowBlank(MAX_VALUE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
+    fields.setFieldAllowBlank(INTERVAL_TYPE_CODE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
+    fields.setFieldAllowBlank(MIN_VALUE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
+    fields.setFieldAllowBlank(MAX_VALUE, !(EDIT.equals(workstate) || CREATE.equals(workstate)));
  
-	}
+  }
  
 }

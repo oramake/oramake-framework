@@ -11,30 +11,30 @@ import java.util.Map;
  
 public class BatchRoleRecordDefinition extends JepRecordDefinition {
  
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
  
-	public static BatchRoleRecordDefinition instance = new BatchRoleRecordDefinition();
+  public static BatchRoleRecordDefinition instance = new BatchRoleRecordDefinition();
  
-	private BatchRoleRecordDefinition() {
-		super(buildTypeMap()
-			, new String[]{BATCH_ROLE_ID}
-		);
-	}
+  private BatchRoleRecordDefinition() {
+    super(buildTypeMap()
+      , new String[]{BATCH_ROLE_ID}
+    );
+  }
  
-	private static Map<String, JepTypeEnum> buildTypeMap() {
-		Map<String, JepTypeEnum> typeMap = new HashMap<String, JepTypeEnum>();
-		typeMap.put(BATCH_ROLE_ID, INTEGER);
-		typeMap.put(BATCH_ID, INTEGER);
-		typeMap.put(PRIVILEGE_CODE, STRING);
-		typeMap.put(ROLE_ID, INTEGER);
-		typeMap.put(ROLE_SHORT_NAME, STRING);
-		typeMap.put(PRIVILEGE_NAME, STRING);
-		typeMap.put(ROLE_NAME, STRING);
-		typeMap.put(DATE_INS, DATE);
-		typeMap.put(OPERATOR_ID, INTEGER);
-		typeMap.put(OPERATOR_NAME, STRING);
+  private static Map<String, JepTypeEnum> buildTypeMap() {
+    Map<String, JepTypeEnum> typeMap = new HashMap<String, JepTypeEnum>();
+    typeMap.put(BATCH_ROLE_ID, INTEGER);
+    typeMap.put(BATCH_ID, INTEGER);
+    typeMap.put(PRIVILEGE_CODE, STRING);
+    typeMap.put(ROLE_ID, INTEGER);
+    typeMap.put(ROLE_SHORT_NAME, STRING);
+    typeMap.put(PRIVILEGE_NAME, STRING);
+    typeMap.put(ROLE_NAME, STRING);
+    typeMap.put(DATE_INS, DATE);
+    typeMap.put(OPERATOR_ID, INTEGER);
+    typeMap.put(OPERATOR_NAME, STRING);
 
-		typeMap.put(DATA_SOURCE, STRING);
-		return typeMap;
-	}
+    typeMap.put(DATA_SOURCE, STRING);
+    return typeMap;
+  }
 }

@@ -7,7 +7,7 @@ import com.technology.oracle.scheduler.option.shared.text.OptionText;
  
 public class OptionClientConstant extends OptionConstant {
  
-	public static String[] scopeModuleIds = {OPTION_MODULE_ID, VALUE_MODULE_ID}; 
+  public static String[] scopeModuleIds = {OPTION_MODULE_ID, VALUE_MODULE_ID}; 
  
-	public static OptionText optionText = (OptionText) GWT.create(OptionText.class);
+  public static OptionText optionText = (OptionText) GWT.create(OptionText.class);
 }

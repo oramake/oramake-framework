@@ -6,5 +6,5 @@ import com.technology.oracle.scheduler.value.shared.text.ValueText;
  
 public class ValueClientConstant extends ValueConstant {
  
-	public static ValueText valueText = (ValueText) GWT.create(ValueText.class);
+  public static ValueText valueText = (ValueText) GWT.create(ValueText.class);
 }

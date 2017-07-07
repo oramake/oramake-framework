@@ -13,17 +13,17 @@ import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.OPTION_MODULE_ID;
  
 public class OptionFormContainerPresenter <E extends PlainEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E,S>> 
-	extends StandardModulePresenter<StandardModuleView, E, S, F> {
+  extends StandardModulePresenter<StandardModuleView, E, S, F> {
  
-	public OptionFormContainerPresenter(Place place, F clientFactory) {
-		super(OPTION_MODULE_ID, place, clientFactory);
-	}
-	
-	public void onSetCurrentRecord(SetCurrentRecordEvent event) {
+  public OptionFormContainerPresenter(Place place, F clientFactory) {
+    super(OPTION_MODULE_ID, place, clientFactory);
+  }
+  
+  public void onSetCurrentRecord(SetCurrentRecordEvent event) {
 
-		JepRecord currentRecord = event.getCurrentRecord();
-		OptionScope.instance.setCurruntValueOption(currentRecord);
-		
-		super.onSetCurrentRecord(event);
-	} 
+    JepRecord currentRecord = event.getCurrentRecord();
+    OptionScope.instance.setCurruntValueOption(currentRecord);
+    
+    super.onSetCurrentRecord(event);
+  } 
 }

@@ -6,16 +6,16 @@ import com.technology.jep.jepria.client.images.JepImages;
  
 public interface BatchImages extends JepImages {
   
-	@Source("activateBatch.png")
-	ImageResource activateBatch();
+  @Source("activateBatch.png")
+  ImageResource activateBatch();
  
-	@Source("deactivateBatch.png")
-	ImageResource deactivateBatch();
+  @Source("deactivateBatch.png")
+  ImageResource deactivateBatch();
  
-	@Source("executeBatch.png")
-	ImageResource executeBatch();
+  @Source("executeBatch.png")
+  ImageResource executeBatch();
  
-	@Source("abortBatch.png")
-	ImageResource abortBatch();
+  @Source("abortBatch.png")
+  ImageResource abortBatch();
  
 }

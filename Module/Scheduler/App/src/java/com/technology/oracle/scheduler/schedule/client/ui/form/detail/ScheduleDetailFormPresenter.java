@@ -26,46 +26,46 @@ import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.schedule.shared.service.ScheduleServiceAsync;
  
 public class ScheduleDetailFormPresenter<E extends PlainEventBus, S extends ScheduleServiceAsync> 
-		extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> { 
+    extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> { 
  
-	public ScheduleDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
-		super(scopeModuleIds, place, clientFactory);
-	}
-	
-	public void bind() {
-		super.bind();
-		
-		fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-			@Override
-			public void handleEvent(final JepEvent event) {
-				service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-					public void onSuccessLoad(List<JepOption> result){
-						fields.setFieldOptions(DATA_SOURCE, result);
-					}
-				});
-			}
-		});
-	}
-	
-	
-	public void onDoGetRecord(DoGetRecordEvent event) {
-	
-		//для корректной работы табов (ScopeModules)
-		final PagingConfig pagingConfig = event.getPagingConfig();
-		JepRecord record = pagingConfig.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+  public ScheduleDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
+    super(scopeModuleIds, place, clientFactory);
+  }
+  
+  public void bind() {
+    super.bind();
+    
+    fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
+      @Override
+      public void handleEvent(final JepEvent event) {
+        service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result){
+            fields.setFieldOptions(DATA_SOURCE, result);
+          }
+        });
+      }
+    });
+  }
+  
+  
+  public void onDoGetRecord(DoGetRecordEvent event) {
+  
+    //для корректной работы табов (ScopeModules)
+    final PagingConfig pagingConfig = event.getPagingConfig();
+    JepRecord record = pagingConfig.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
 
-		super.onDoGetRecord(event);
-	}
+    super.onDoGetRecord(event);
+  }
  
-	protected void adjustToWorkstate(WorkstateEnum workstate) {
-		fields.setFieldVisible(SCHEDULE_ID, !CREATE.equals(workstate));
-		fields.setFieldEditable(SCHEDULE_ID, false);
-		fields.setFieldEditable(DATA_SOURCE, false);
-		fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+  protected void adjustToWorkstate(WorkstateEnum workstate) {
+    fields.setFieldVisible(SCHEDULE_ID, !CREATE.equals(workstate));
+    fields.setFieldEditable(SCHEDULE_ID, false);
+    fields.setFieldEditable(DATA_SOURCE, false);
+    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
  
-		fields.setFieldAllowBlank(SCHEDULE_NAME, false);
+    fields.setFieldAllowBlank(SCHEDULE_NAME, false);
  
-	}
+  }
  
 }

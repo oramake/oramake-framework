@@ -6,5 +6,5 @@ import java.util.List;
 import com.technology.oracle.scheduler.main.shared.service.SchedulerServiceAsync;
  
 public interface OptionServiceAsync extends SchedulerServiceAsync {
-	void getValueType(String dataSource, AsyncCallback<List<JepOption>> callback);
+  void getValueType(String dataSource, AsyncCallback<List<JepOption>> callback);
 }

@@ -6,9 +6,9 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarViewImpl;
  
 public class ModuleRolePrivilegeToolBarViewImpl extends ToolBarViewImpl {
   
-	public ModuleRolePrivilegeToolBarViewImpl() {
-		super();
-		
-		removeItem(EDIT_BUTTON_ID);
-	}
+  public ModuleRolePrivilegeToolBarViewImpl() {
+    super();
+    
+    removeItem(EDIT_BUTTON_ID);
+  }
 }

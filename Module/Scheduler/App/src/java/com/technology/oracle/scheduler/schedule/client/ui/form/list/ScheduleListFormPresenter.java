@@ -13,28 +13,28 @@ import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.schedule.shared.service.ScheduleServiceAsync;
 
 public class ScheduleListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends ScheduleServiceAsync, F extends StandardClientFactory<E, S>> 
-	extends ListFormPresenter<V, E, S, F> {  	 
+  extends ListFormPresenter<V, E, S, F> {     
  
-	public ScheduleListFormPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
-	
-	/*
-	protected void onDeleteConfirmation(List<JepRecord> records) {
-		for (final JepRecord record : records) {
-			record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		}
-		super.onDeleteConfirmation(records);
-	}
-	*/
-	
-	@Override
-	public void onSearch(SearchEvent event) {
-		
-		searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-		JepRecord record = searchTemplate.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		super.onSearch(event);
-	};
+  public ScheduleListFormPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
+  
+  /*
+  protected void onDeleteConfirmation(List<JepRecord> records) {
+    for (final JepRecord record : records) {
+      record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    }
+    super.onDeleteConfirmation(records);
+  }
+  */
+  
+  @Override
+  public void onSearch(SearchEvent event) {
+    
+    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
+    JepRecord record = searchTemplate.getTemplateRecord();
+    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
+    super.onSearch(event);
+  };
 }
 

@@ -8,14 +8,14 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarViewImpl;
  
 public class DetailedLogToolBarViewImpl extends ToolBarViewImpl {
   
-	public DetailedLogToolBarViewImpl() {
-		super();
-				
-		removeAll();
-		
-		addButton(
-				UP_BUTTON_ID,
-				JepImages.up(),
-				JepTexts.button_up_alt());
-	}
+  public DetailedLogToolBarViewImpl() {
+    super();
+        
+    removeAll();
+    
+    addButton(
+        UP_BUTTON_ID,
+        JepImages.up(),
+        JepTexts.button_up_alt());
+  }
 }

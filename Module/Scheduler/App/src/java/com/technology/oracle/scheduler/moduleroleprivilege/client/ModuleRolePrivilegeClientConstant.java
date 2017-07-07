@@ -6,5 +6,5 @@ import com.technology.oracle.scheduler.moduleroleprivilege.shared.text.ModuleRol
  
 public class ModuleRolePrivilegeClientConstant extends ModuleRolePrivilegeConstant {
  
-	public static ModuleRolePrivilegeText moduleRolePrivilegeText = (ModuleRolePrivilegeText) GWT.create(ModuleRolePrivilegeText.class);
+  public static ModuleRolePrivilegeText moduleRolePrivilegeText = (ModuleRolePrivilegeText) GWT.create(ModuleRolePrivilegeText.class);
 }
