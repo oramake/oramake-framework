@@ -215,15 +215,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=1.8.0
+OMS_VERSION=2.0.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 24409882 $'
+fileRevisionValue='$Revision:: 24969048 $'
 
 # var: fileChangeDate
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
+fileChangeDateValue='$Date:: 2017-06-22 17:48:12 +0300 #$'
 
 
 
@@ -236,7 +236,7 @@ source oms-common.sh || exit 11
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
-sqlScriptDir="${installDataDir}/SqlScript"
+sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: tmpSqlFileNamePrefix
 # Префикс для имен временных файлов, используемых в скриптах SQL*Plus (
@@ -1143,18 +1143,26 @@ end;
 checkSqlplusOutput()
 {
   local checkResult=0
-                                        # Отключаем игнорирование пробелов
-                                        # с помощью IFS
+
+  # Используется для экранирования кириллической буквы "я", которая в
+  # следующим case вызывает ошибку компиляции
+  # "syntax error near unexpected token"
+  # в GNU bash, version 4.3.46(2)-release (i686-pc-msys)
+  # ( в GNU bash, version 4.1.10(4)-release (i686-pc-cygwin) ошибки нет)
+  local YaCyr=$'\xff'
+
+  # Отключаем игнорирование пробелов с помощью IFS
   while IFS=$'\n' read -r line; do
     logDebug3 "SQL-OUTPUT: $line"
-                                        # Фильтруем пустые строки
+
+    # Фильтруем пустые строки
     if [[ ${#line} -ne 0 ]]; then
       case "$line" in
         ERROR\ at\ line\ [1-9]*: \
         | ошибка\ в\ строке\ [1-9]*: \
         | SP2-[0-9][0-9][0-9][0-9]:\ * \
         | Warning:\ *\ created\ with\ compilation\ errors. \
-        | Предупреждение:\ *\ создано\ с\ ошибками\ компиляции. \
+        | Предупреждение:\ *\ создано\ с\ ошибками\ компил${YaCyr}ции. \
         )
           checkResult=$E_PROCESS_ERROR
           logDebug "SQL*Plus error detected"
@@ -1214,7 +1222,16 @@ execSql()
     outSqlCommon "$@" | outSqlLog ;
   else
     outSqlCommon "$@" ;
-  fi | sqlplus -S /NOLOG |
+  fi |
+    if [[ "$OSTYPE" == "msys" ]]; then
+      # В MSYS2 ( GNU bash, version 4.3.46(2)-release (i686-pc-msys))
+      # при обычном запуске ( без cmd) sqlplus не видел команд из пайпа и
+      # завершался с ошибкой
+      logDebug "run sqlplus from cmd for look around pipe problem in MSYS"
+      cmd /c "sqlplus -S /NOLOG"
+    else
+      sqlplus -S /NOLOG
+    fi |
     sed --unbuffered -e 's/\r//g' | checkSqlplusOutput
   # sed используется для обхода бага с # зависанием команды read при наличии
   # двух подряд символов возврата каретки

@@ -1,3 +1,6 @@
+-- script: Test/java-trace-on.sql
+-- ¬ключает трассировку в java.util.logging.
+
 begin
   pkg_LoggingTest.updateJavaUtilLoggingLevel(
     loggingConfigText => ''

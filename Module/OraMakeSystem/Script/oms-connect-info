@@ -23,11 +23,11 @@
 # Замечания:
 # - при отсутствии имени пользователя для подключения используется пользователь
 #   по умолчанию для БД ( определяется в функции
-#   <custom.sh::cspGetDefaultUserName>);
+#   <connect.sh::cspGetDefaultUserName>);
 # - при отсутствии переданного в параметре --userid пароля пользователя БД для
-#   его получения будет вызвана функция <custom.sh::cspGetUserPassword>;
+#   его получения будет вызвана функция <connect.sh::cspGetUserPassword>;
 # - при отсутствии переданного в параметре --operatorid пароля оператора для
-#   его получения будет вызвана функция <custom.sh::cspGetOperatorPassword>;
+#   его получения будет вызвана функция <connect.sh::cspGetOperatorPassword>;
 #
 
 
@@ -40,15 +40,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=1.8.0
+OMS_VERSION=2.0.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 24409882 $'
+fileRevisionValue='$Revision:: 24969048 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
+fileChangeDateValue='$Date:: 2017-06-22 17:48:12 +0300 #$'
 
 
 
@@ -56,7 +56,7 @@ fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
 source oms-common.sh || exit 11
 
 # Подключение пользовательских настроечных функций
-source ${configDir}/custom.sh || exit 12
+source ${configDir}/connect.sh || exit 12
 
 
 

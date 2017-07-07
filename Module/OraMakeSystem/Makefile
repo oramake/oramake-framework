@@ -6,8 +6,8 @@ scriptPrefix				= oms
 # Каталог для данных сборки проекта
 buildDir						= Build
 
-# Каталог с дистрибутивами используемых библиотек
-configDir 					= Config
+# Каталог с постоянными данными модуля
+dataDir  					  = Data
 
 # Каталог со скриптами
 scriptDir 					= Script
@@ -56,11 +56,18 @@ clean:							\
 # Префикс для установки.
 DESTDIR				=	/usr/local
 
-# Каталог для общих настроек.
-shareDir						= $(DESTDIR)/share/oms
+# build var: FORCE
+# Флаг затирания настроек приложения
+FORCE         =
+
+# Каталог для общих данных
+shareDir		 	= $(DESTDIR)/share/oms
+
+# Каталог для настроек
+configDir     = $(DESTDIR)/etc/oms
 
 # target: install
-# Выполняет установку проекта.
+# Выполняет установку приложения.
 
 install:
 	@( cd $(scriptDir)										\
@@ -69,23 +76,34 @@ install:
 	) 																		\
 	&& rm -rf "$(shareDir)"								\
 	&& mkdir -p "$(shareDir)"							\
-	&& tar --create --file=- 							\
-				--exclude=.gitattributes 				\
-				--exclude=.gitignore 						\
-				--exclude=.svn 									\
-				--exclude=*~ 										\
-				--exclude=*.swp 								\
-				Config SqlScript UsedLib 				\
-		| tar --extract --directory="$(shareDir)"
+	&& mkdir -p "$(configDir)"	  				\
+	&& cp \
+		--preserve=mode,ownership,timestamps \
+		--no-dereference --preserve=links \
+		--recursive \
+		--target-directory="$(shareDir)" \
+		Data SqlScript UsedLib \
+	&& find \
+		"$(shareDir)" \
+		\( -name ".gitignore"  \
+			-o -name ".gitattributes" \
+			-o -name "*~" \
+			-o -name "*.swp" \
+		\) \
+		-delete \
+	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
+	&& mkdir -p "$(shareDir)/Config"		 	\
+	&& cp --force Config/Legacy/* "$(shareDir)/Config"
 
 
 
 # target: uninstall
-# Отменяет установку проекта.
+# Отменяет установку приложения.
 
 uninstall:
 	-@rm $(DESTDIR)/bin/$(scriptPrefix)-*[^~];	\
-	rm -rf "$(shareDir)"
+	rm -rf "$(shareDir)" \
+	$(if $(FORCE),"rm -rf $(configDir)")
 
 
 
@@ -130,9 +148,9 @@ gendoc:
 		&& $(gendocRun)		 										\
 			-i . 																\
 			-xi "$(buildDir)" 									\
-			-xi "$(configDir)/UpdateModule" 									\
-			-xi "$(configDir)/NewModule/DB/OmsModule/NaturalDocs"	\
-			-xi "$(configDir)/NewModule/DB/OmsModule/Load"	\
+			-xi "$(dataDir)/UpdateModule" 									\
+			-xi "$(dataDir)/NewModule/DB/OmsModule/NaturalDocs"	\
+			-xi "$(dataDir)/NewModule/DB/OmsModule/Load"	\
 			-xi "$(usedLibDir)" 								\
 			-o HTML "$(GENDOC_DIR)" 						\
 			-p "$(gendocConfigDir)" 						\
@@ -152,7 +170,7 @@ gendoc-clean:
 	@(cd "$(GENDOC_DIR)"										\
 		&& [[ ! -d "styles/$(versionControlDir)" ]]	\
 		&& rm -rf 													\
-			files index javascript styles			\
+			files index javascript styles search	\
 			index.html menu.html							\
 	);																		\
 	rm -rf $(gendocCacheDir)/*						\
@@ -195,13 +213,11 @@ set-oms-version:
 			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
 	    -e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
 	    $(scriptDir)/*[^~] \
-	    $(configDir)/local.mk \
-	    $(configDir)/NewModule/DB/OmsModule/init.mk \
-	    $(configDir)/NewModule/DB/OmsModule/common.mk \
+	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
+	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
 	  && unix2dos \
-	    $(configDir)/local.mk \
-	    $(configDir)/NewModule/DB/OmsModule/init.mk \
-	    $(configDir)/NewModule/DB/OmsModule/common.mk \
+	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
+	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
 	    2>/dev/null \
 	  && sed --in-place \
 	    -e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \

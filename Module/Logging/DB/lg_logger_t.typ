@@ -1,6 +1,6 @@
-@oms-drop-type lg_logger_t
-
-create or replace type lg_logger_t
+create or replace type
+  lg_logger_t
+force
 as object
 (
 /* db object type: lg_logger_t
@@ -16,9 +16,17 @@ as object
 /* ivar: loggerUid
   Уникальный идентификатор логера.
 */
-  loggerUid varchar2(250),
+loggerUid varchar2(250),
 
-/* func: lg_logger_t
+
+
+/* group: Функции */
+
+
+
+/* group: Закрытые объявления */
+
+/* pfunc: lg_logger_t
   Создает логер.
 
   Параметры:
@@ -30,7 +38,7 @@ as object
   Замечания:
   - функция не должна вызываться явно, более адекватно использовать функции
     getLogger;
-  - вызывает функцию <pkg_LoggingInternal.GetLoggerUid>;
+  - вызывает функцию <pkg_LoggingInternal.getLoggerUid>;
 
   ( <body::lg_logger_t>)
 */
@@ -43,9 +51,69 @@ return self as result,
 
 /* group: Открытые объявления */
 
+/* pfunc: getOffLevelCode
+  Возвращает код уровня логирования "Логирование отключено".
 
+  ( <body::getOffLevelCode>)
+*/
+static function getOffLevelCode
+return varchar2,
 
-/* group: Функции */
+/* pfunc: getFatalLevelCode
+  Возвращает код уровня логирования "Фатальная ошибка".
+
+  ( <body::getFatalLevelCode>)
+*/
+static function getFatalLevelCode
+return varchar2,
+
+/* pfunc: getErrorLevelCode
+  Возвращает код уровня логирования "Ошибка".
+
+  ( <body::getErrorLevelCode>)
+*/
+static function getErrorLevelCode
+return varchar2,
+
+/* pfunc: getWarnLevelCode
+  Возвращает код уровня логирования "Предупреждение".
+
+  ( <body::getWarnLevelCode>)
+*/
+static function getWarnLevelCode
+return varchar2,
+
+/* pfunc: getInfoLevelCode
+  Возвращает код уровня логирования "Информация".
+
+  ( <body::getInfoLevelCode>)
+*/
+static function getInfoLevelCode
+return varchar2,
+
+/* pfunc: getDebugLevelCode
+  Возвращает код уровня логирования "Отладка".
+
+  ( <body::getDebugLevelCode>)
+*/
+static function getDebugLevelCode
+return varchar2,
+
+/* pfunc: getTraceLevelCode
+  Возвращает код уровня логирования "Трассировка".
+
+  ( <body::getTraceLevelCode>)
+*/
+static function getTraceLevelCode
+return varchar2,
+
+/* pfunc: getAllLevelCode
+  Возвращает код уровня логирования "Максимальный уровень логирования".
+
+  ( <body::getAllLevelCode>)
+*/
+static function getAllLevelCode
+return varchar2,
 
 
 
@@ -123,10 +191,10 @@ static function getLogger(
 )
 return lg_logger_t,
 
-/* pfunc: getLogger( MOD_PKG)
+/* pfunc: getLogger( DEPRECATED)
   Устаревшая функция, вместо нее нужно использовать <getLogger( MOD_OBJ)>.
 
-  ( <body::getLogger( MOD_PKG)>)
+  ( <body::getLogger( DEPRECATED)>)
 */
 static function getLogger(
   moduleName varchar2
@@ -263,14 +331,11 @@ return boolean,
 /* group: Логирование сообщений */
 
 /* pproc: log
-  Логирует сообщение.
+  Логирует сообщение с указанным уровнем.
 
   Параметры:
   levelCode                   - код уровня сообщения
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <pkg_LoggingInternal.LogMessage>;
 
   ( <body::log>)
 */
@@ -281,13 +346,10 @@ member procedure log(
 ),
 
 /* pproc: fatal
-  Логирует сообщение о фатальной ошибке с уровнем <pkg_Logging.Fatal_LevelCode>.
+  Логирует сообщение о фатальной ошибке ( уровня <getFatalLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::fatal>)
 */
@@ -297,13 +359,10 @@ member procedure fatal(
 ),
 
 /* pproc: error
-  Логирует сообщение об ошибке с уровнем <pkg_Logging.Error_LevelCode>.
+  Логирует сообщение об ошибке ( уровня <getErrorLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::error>)
 */
@@ -313,13 +372,10 @@ member procedure error(
 ),
 
 /* pproc: warn
-  Логирует предупреждающее сообщение с уровнем <pkg_Logging.Warning_LevelCode>.
+  Логирует предупреждающее сообщение ( уровня <getWarnLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::warn>)
 */
@@ -329,13 +385,10 @@ member procedure warn(
 ),
 
 /* pproc: info
-  Логирует информационое сообщение с уровнем <pkg_Logging.Info_LevelCode>.
+  Логирует информационое сообщение ( уровня <getInfoLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::info>)
 */
@@ -345,13 +398,10 @@ member procedure info(
 ),
 
 /* pproc: debug
-  Логирует отладочное сообщение с уровнем <pkg_Logging.Debug_LevelCode>.
+  Логирует отладочное сообщение ( уровня <getDebugLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::debug>)
 */
@@ -361,13 +411,10 @@ member procedure debug(
 ),
 
 /* pproc: trace
-  Логирует трассировочное сообщение с уровнем <pkg_Logging.Trace_LevelCode>.
+  Логирует трассировочное сообщение ( уровня <getTraceLevelCode>).
 
   Параметры:
   messageText                 - текст сообщения
-
-  Замечания:
-  - вызывает процедуру <log>;
 
   ( <body::trace>)
 */
@@ -378,7 +425,7 @@ member procedure trace(
 
 
 
-/* group: Стек ошибок ( исключений)*/
+/* group: Стек ошибок ( исключений) */
 
 /* pfunc: errorStack
   Сохраняет сообщение в стек ошибок
@@ -396,7 +443,7 @@ member procedure trace(
     возвращает messageText
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.ProcessStackElement>;
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
   - см. также <Описание::Логирование стека ошибок>;
 
   ( <body::errorStack>)
@@ -464,7 +511,7 @@ return varchar2,
   Очищает (сбрасывает) предыдущую информацию о стеке ошибок.
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.ClearLastStack>;
+  - вызывает процедуру <pkg_LoggingErrorStack.clearLastStack>;
   - см. также <Описание::Логирование стека ошибок>;
 
   ( <body::clearErrorStack>)

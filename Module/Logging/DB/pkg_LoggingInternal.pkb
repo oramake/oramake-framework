@@ -22,11 +22,11 @@ subtype TLoggerUid is varchar2(250);
 */
 type TLogger is record
 (
-                                        --Код назначенного уровня логирования
+  -- Код назначенного уровня логирования
   levelCode lg_level.level_code%type
-                                        --Признак аддитивности логера
+  -- Признак аддитивности логера
   , additive boolean
-                                        --Uid родительского логера
+  -- Uid родительского логера
   , parentUid TLoggerUid
 );
 
@@ -149,10 +149,9 @@ function getLoggerEffectiveLevel(
 return varchar2
 is
 
-                                        --Uid логгера с установленным уровнем
+  -- Uid логгера с установленным уровнем
   lu TLoggerUid := loggerUid;
 
---GetLoggerEffectiveLevel
 begin
   while colLogger( lu).levelCode is null and lu <> Root_LoggerUid loop
     lu := colLogger( lu).parentUid;
@@ -176,7 +175,6 @@ function isMessageEnabled(
 )
 return boolean
 is
---IsMessageEnabled
 begin
   return
     colLevelOrder( levelCode) >=
@@ -192,8 +190,10 @@ is
 
 
 
-  procedure LoadLevelOrder is
-  --Загружает порядковые значения уровней логирования.
+  /*
+    Загружает порядковые значения уровней логирования.
+  */
+  procedure loadLevelOrder is
 
     cursor curLevel is
       select
@@ -205,10 +205,10 @@ is
 
     type TColLevel is table of curLevel%rowtype;
     colLevel TColLevel;
-                                        --Индекс в коллекции
+
+    -- Индекс в коллекции
     i pls_integer;
 
-  --LoadLevelOrder
   begin
     open curLevel;
     fetch curLevel bulk collect into colLevel;
@@ -218,74 +218,84 @@ is
       colLevelOrder( colLevel( i).level_code) := colLevel( i).level_order;
       i := colLevel.next( i);
     end loop;
-  end LoadLevelOrder;
+  end loadLevelOrder;
 
 
 
-  procedure CreateLogger
+  /*
+    Создает корневой и внутренний логеры.
+    После выполнения процедуры можно вызывать функции пакета, использующие
+    внутренее логирование.
+  */
+  procedure createLogger
   is
-  --Создает корневой и внутренний логеры.
-  --После выполнения процедуры можно вызывать функции пакета, использующие
-  --внутренее логирование.
 
-                                        --Имя внутреннего логера пакета
+    -- Имя внутреннего логера пакета
     Package_LoggerName constant varchar2(100)
       := pkg_Logging.Module_Name || '.' || 'pkg_LoggingInternal'
     ;
-                                        --Данные логера
+
+    -- Данные логера
     r TLogger;
-  --CreateLogger
+
   begin
-                                        --Добавляем корневой логер
+
+    -- Добавляем корневой логер
     r.levelCode := pkg_Logging.Off_LevelCode;
     r.additive := null;
     r.parentUid := null;
     colLogger( Root_LoggerUid) := r;
-                                        --Добавляем внутренний логер
+
+    -- Добавляем внутренний логер
     r.levelCode := null;
     r.additive := true;
     r.parentUid := Root_LoggerUid;
     colLogger( getLoggerUidByName( Package_LoggerName)) := r;
-                                        --Инициализируем внутренний логер
-                                        --( неявно вызывается getLoggerUid)
-    lg := lg_logger_t.GetLogger( Package_LoggerName);
-  end CreateLogger;
+
+    -- Инициализируем внутренний логер ( неявно вызывается getLoggerUid)
+    lg := lg_logger_t.getLogger( Package_LoggerName);
+  end createLogger;
 
 
 
-  procedure ConfigLogger is
-  --Выполняет настройку логеров.
+  /*
+    Выполняет настройку логеров.
+  */
+  procedure configLogger is
 
-                                        --Настраиваемый логер
+    -- Настраиваемый логер
     logger lg_logger_t;
 
-  --ConfigLogger
   begin
-                                        --Устанавливаем специальный уровень
-                                        --логирования для модуля по умолчанию
-    logger := lg_logger_t.GetLogger( pkg_Logging.Module_Name);
+
+    -- Устанавливаем специальный уровень логирования для модуля по умолчанию
+    logger := lg_logger_t.getLogger( pkg_Logging.Module_Name);
     logger.setLevel( pkg_Logging.Info_LevelCode);
-                                        --Настраиваем корневой логер
-    logger := lg_logger_t.GetRootLogger();
+
+    -- Настраиваем корневой логер
+    logger := lg_logger_t.getRootLogger();
     logger.setLevel(
-      case when pkg_Common.IsProduction = 1 then
+      case when pkg_Common.isProduction = 1 then
         pkg_Logging.Info_LevelCode
       else
         pkg_Logging.Debug_LevelCode
       end
     );
-  end ConfigLogger;
+  end configLogger;
 
 
 
---Initialize
+-- initialize
 begin
-                                        --Загружаем порядок уровней
-  LoadLevelOrder;
-                                        --Создаем логеры
-  CreateLogger;
-                                        --Настройка логеров
-  ConfigLogger;
+
+  -- Загружаем порядок уровней
+  loadLevelOrder;
+
+  -- Создаем логеры
+  createLogger;
+
+  -- Настройка логеров
+  configLogger;
 end initialize;
 
 
@@ -307,7 +317,6 @@ is
   -- Id текущего оператора
   operatorId integer := null;
 
---getCurrentOperatorId
 begin
   if coalesce( isAccessOperatorFound, true) then
     execute immediate
@@ -388,7 +397,7 @@ begin
   lastParentLogId := parentLogId;
 end setLastParentLogId;
 
-/* ifunc: logDBOut
+/* ifunc: logDbOut
   Выводит сообщение через dbms_output.
   Строки сообщения, длина которых больше 255 символов, при выводе автоматически
   разбиваются на строки допустимого размера ( в связи ограничением dbms_output).
@@ -400,31 +409,33 @@ end setLastParentLogId;
   - разбивка при выводе слишком длинных строк сообщения по возможности
     производится по символу новой строки ( 0x0A) либо перед пробелом;
 */
-procedure logDBOut(
+procedure logDbOut(
   messageText varchar2
 )
 is
-                                        --Максимальная длина вывода
+
+  -- Максимальная длина вывода
   Max_OutputLength constant pls_integer:= 255;
-                                        --Длина строки
+
+  -- Длина строки
   len pls_integer := coalesce( length( messageText), 0);
-                                        --Стартовая позиция для текущего вывода
+
+  -- Стартовая позиция для текущего вывода
   i pls_integer := 1;
-                                        --Стартовая позиция для следующего
-                                        --вывода
+
+  -- Стартовая позиция для следующего вывода
   i2 pls_integer;
-                                        --Конечная позиция для текущего вывода
-                                        --( не включая)
+
+  -- Конечная позиция для текущего вывода ( не включая)
   k pls_integer := null;
 
---LogDBOut
 begin
   loop
     i2 := len + 1;
     if i2 - i > Max_OutputLength then
       i2 := i + Max_OutputLength;
-                                        --Пытаемся разбить строку по символу
-                                        --новой строки
+
+      -- Пытаемся разбить строку по символу новой строки
       k := instr( messageText, chr(10), i2 - len - 1);
       if k >= i then
         i2 := k + 1;
@@ -449,9 +460,9 @@ begin
     exit when i2 > len;
     i := i2;
   end loop;
-end logDBOut;
+end logDbOut;
 
-/* ifunc: logDebugDBOut
+/* ifunc: logDebugDbOut
   Выводит отладочное сообщение через dbms_output c указанием времени с
   точностью до милисекунд, а также вычисляет время в милисекундах с момента
   вывода предыдущего сообщения.
@@ -459,20 +470,20 @@ end logDBOut;
   Параметры:
   messageText                 - текст сообщения
 */
-procedure logDebugDBOut(
+procedure logDebugDbOut(
   messageText varchar2
 )
 is
-  --Текущее время ( до милисекунд)
+
+  -- Текущее время ( до милисекунд)
   curTime timestamp:= systimestamp;
 
   -- Интервал между последними сообщениями
   timeInterval interval day to second :=
     curTime - previousDebugTimeStamp;
 
---logDebugDBOut
 begin
-  logDBOut(
+  logDbOut(
     substr( to_char( curTime), 10, 12) || ': '
     || lpad(
          coalesce(
@@ -500,9 +511,10 @@ begin
        )
     || ': ' || messageText
   );
+
   -- Запоминаем время вывода сообщения
   previousDebugTimeStamp := curTime;
-end logDebugDBOut;
+end logDebugDbOut;
 
 /* ifunc: logTable
   Добавляет сообщение в таблицу лога.
@@ -522,7 +534,8 @@ is
   truncMessageText varchar2(4000);
 
 begin
-  -- обрезание текста до 4000 символов в отдельную переменную во избежании ошибки
+  -- обрезание текста до 4000 символов в отдельную переменную во избежании
+  -- ошибки
   -- ORA-01461: can bind a LONG value only for insert into a LONG column
   truncMessageText := substr( messageText, 1, 4000);
   insert into
@@ -542,7 +555,7 @@ begin
           Error_MessageTypeCode
         when pkg_Logging.Error_LevelCode then
           Error_MessageTypeCode
-        when pkg_Logging.Warning_LevelCode then
+        when pkg_Logging.Warn_LevelCode then
           Warning_MessageTypeCode
         when pkg_Logging.Info_LevelCode then
           Info_MessageTypeCode
@@ -588,7 +601,7 @@ procedure logMessage(
 )
 is
 
-  -- Ошибка logDebugDBOut
+  -- Ошибка logDebugDbOut
   dbOutError varchar2( 4000);
 
 begin
@@ -596,10 +609,10 @@ begin
 
     -- Вывод через dbms_output
     if forcedDestinationCode = pkg_Logging.DbmsOutput_DestinationCode
-       or nullif( pkg_Common.IsProduction, 0) is null
+       or nullif( pkg_Common.isProduction, 0) is null
     then
       begin
-        logDebugDBOut(
+        logDebugDbOut(
           rpad( levelCode, 5) || ': ' || messageText
         );
       exception when others then
@@ -612,7 +625,7 @@ begin
       is null
     then
 
-      -- Если неуспешный вызов logDebugDBOut
+      -- Если неуспешный вызов logDebugDbOut
       if dbOutError is not null then
         logTable( levelCode
           , 'Ошибка вывода в буфер dbms_output: '
@@ -648,25 +661,31 @@ function getLoggerUid(
 return varchar2
 is
 
-                                        --Uid логера
+  -- Uid логера
   loggerUid TLoggerUid;
 
 
 
-  procedure CreateLogger is
-  --Создает прикладной логер.
-                                        --Данные логера
+  /*
+    Создает прикладной логер.
+  */
+  procedure createLogger
+  is
+
+    -- Данные логера
     r TLogger;
-                                        --Uid потомка
+
+    -- Uid потомка
     childUid TLoggerUid;
 
-  --CreateLogger
   begin
-                                        --Инициализация данных
+
+    -- Инициализация данных
     r.levelCode := null;
     r.additive := true;
     colLogger( loggerUid) := r;
-                                        --Поиск собственного родителя
+
+    -- Поиск собственного родителя
     r.parentUid := loggerUid;
     loop
       r.parentUid := colLogger.prior( r.parentUid);
@@ -674,8 +693,8 @@ is
     end loop;
     colLogger( loggerUid).parentUid := r.parentUid;
     lg.trace( 'getLoggerUid: parentUid="' || r.parentUid || '"');
-                                        --Корректировка родителя у существующих
-                                        --прямых потомков
+
+    -- Корректировка родителя у существующих прямых потомков
     childUid := loggerUid;
     loop
       childUid := colLogger.next( childUid);
@@ -685,23 +704,27 @@ is
         lg.trace( 'getLoggerUid: set parent: childUid="' || childUid || '"');
       end if;
     end loop;
-  end CreateLogger;
+  end createLogger;
 
 
 
---GetLoggerUid
+-- getLoggerUid
 begin
-                                        --Внутреннее логирование, если доступно
+
+  -- Внутреннее логирование, если доступно
   if lg is not null then
     lg.debug( 'getLoggerUid: loggerName="' || loggerName || '"');
   end if;
-                                        --Определяем Uid
+
+  -- Определяем Uid
   loggerUid := getLoggerUidByName( loggerName);
-                                        --Создаем логер, если его нет
+
+  -- Создаем логер, если его нет
   if not colLogger.exists( loggerUid) then
-    CreateLogger;
+    createLogger;
   end if;
-                                        --Внутреннее логирование, если доступно
+
+  -- Внутреннее логирование, если доступно
   if lg is not null then
     lg.trace( 'getLoggerUid: return: "' || loggerUid || '"');
   end if;
@@ -710,9 +733,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при получении идентификатора логера по имени ('
-      || ' loggerName="' || loggerName || '"'
-      || ').'
+        'Ошибка при получении идентификатора логера по имени ('
+        || ' loggerName="' || loggerName || '"'
+        || ').'
       )
     , true
   );
@@ -726,10 +749,10 @@ function getAdditivity(
 )
 return boolean
 is
-                                        --Флаг аддитивности
+
+  -- Флаг аддитивности
   additive boolean;
 
---GetAdditivity
 begin
   additive := colLogger( loggerUid).additive;
   lg.debug( 'getAdditivity: loggerUid="' || loggerUid || '"' || ', result='
@@ -740,9 +763,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при получении флага аддитивности ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ').'
+        'Ошибка при получении флага аддитивности ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ').'
       )
     , true
   );
@@ -775,9 +798,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при установке флага аддитивности ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ').'
+        'Ошибка при установке флага аддитивности ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ').'
       )
     , true
   );
@@ -794,10 +817,10 @@ function getLevel(
 )
 return varchar2
 is
-                                        --Код уровня логирования
+
+  -- Код уровня логирования
   levelCode lg_level.level_code%type;
 
---GetLevel
 begin
   levelCode := colLogger( loggerUid).levelCode;
   lg.debug( 'getLevel: loggerUid="' || loggerUid || '"'
@@ -808,9 +831,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при получении уровня логирования ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ').'
+        'Ошибка при получении уровня логирования ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ').'
       )
     , true
   );
@@ -848,10 +871,10 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при установке уровня логирования ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ', levelCode="' || levelCode || '"'
-      || ').'
+        'Ошибка при установке уровня логирования ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ', levelCode="' || levelCode || '"'
+        || ').'
       )
     , true
   );
@@ -875,10 +898,9 @@ function getEffectiveLevel(
 return varchar2
 is
 
-                                        --Код уровня логирования
+  -- Код уровня логирования
   levelCode lg_level.level_code%type;
 
---GetEffectiveLevel
 begin
   levelCode := getLoggerEffectiveLevel( loggerUid);
   lg.debug( 'getEffectiveLevel: loggerUid="' || loggerUid || '"'
@@ -889,9 +911,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при получении эффективного уровня логирования ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ').'
+        'Ошибка при получении эффективного уровня логирования ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ').'
       )
     , true
   );
@@ -919,16 +941,18 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , lg.errorStack(
-      'Ошибка при проверке логирования сообщений ('
-      || ' loggerUid="' || loggerUid || '"'
-      || ', levelCode="' || levelCode || '"'
-      || ').'
+        'Ошибка при проверке логирования сообщений ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ', levelCode="' || levelCode || '"'
+        || ').'
       )
     , true
   );
 end isEnabledFor;
 
---pkg_LoggingInternal
+
+
+-- pkg_LoggingInternal
 begin
   initialize();
 end pkg_LoggingInternal;

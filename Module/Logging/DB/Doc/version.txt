@@ -6,11 +6,21 @@ group: 1.4.1 ( 2017-02-07)
 
 [!] Исключена ошибка при попытке логирования сообщения длиной свыше 4000
     символов ( выбрасывалось исключение
-    "ORA-01461: can bind a LONG value only for insert into a LONG column").
+    "ORA-01461: can bind a LONG value only for insert into a LONG column",
+    ошибка внесена в версии 1.4.0).
+
+[+] В тип <lg_logger_t> добавлены статические функции get%LevelCode,
+    возвращающие коды уровней логирования, для исключения лишних зависимостей в
+    прикладных модулях ( чтобы при использовании типа lg_logger_t не
+    требовалось использовать пакет pkg_Logging).
 
 [*] Добавление параметра isStackPreserved в <lg_logger_t.getErrorStack()>
-    аналогично <pkg_Logging::GetErrorStack> для исключения лишних зависимостей
+    аналогично <pkg_Logging::getErrorStack> для исключения лишних зависимостей
     в прикладных модулях.
+
+[*] Для кода уровня предупреждения стала использоваться константа
+    <pkg_Logging.Warn_LevelCode> ( устарешая константа
+    pkg_Logging.Warning_LevelCode временно сохранена для совместимости).
 
 
 
@@ -49,7 +59,7 @@ group: 1.2.1 ( 2012-12-14)
 
 
 
-group: 1.2.0( 2010-10-27)
+group: 1.2.0 ( 2010-10-27)
 
 [*] Выдача прав всем пользователем
 <Install/Grant/Last/all-to-public.sql> осуществляется при
@@ -57,9 +67,9 @@ group: 1.2.0( 2010-10-27)
 
 [*] Добавлена возможность обработки стека ошибок общей длины
 до 32767 символов при работе в удалённой БД по линку
-( функция <lg_logger_t.RemoteErrorStack>).
+( функция <lg_logger_t.remoteErrorStack>).
 
-[*] В функции <pkg_Logging.GetErrorStack>,
-<pkg_LoggingErrorStack.GetErrorStack> добавлен параметр
+[*] В функции <pkg_Logging.getErrorStack>,
+<pkg_LoggingErrorStack.getErrorStack> добавлен параметр
 isStackPreserved.
 

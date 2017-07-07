@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=1.8.0
+OMS_VERSION=2.0.0
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 24409882 $'
+commonRevisionValue='$Revision:: 24969048 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
+commonChangeDateValue='$Date:: 2017-06-22 17:48:12 +0300 #$'
 
 
 # var: commonRevision
@@ -145,25 +145,29 @@ scriptArgumentList=( "$@" )
 # Исполняемый файл Subversion.
 svnCmd="svn"
 
-# var: installDataDir
-# Путь к каталогу с данными OMS.
-installDataDir="${OMS_INSTALL_DATA_DIR:-/usr/local/share/oms}"
+# var: installShareDir
+# Путь к каталогу с данными OMS ( за исключением скриптов и настроек)
+installShareDir="${OMS_INSTALL_SHARE_DIR:-/usr/local/share/oms}"
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
-sqlScriptDir="${installDataDir}/SqlScript"
+sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: configDir
 # Каталог с настройками.
-configDir="${installDataDir}/Config"
+configDir="${OMS_CONFIG_DIR:-/usr/local/etc/oms}"
 
 # var: templateDir
 # Каталог с шаблоном нового модуля.
-templateDir="${configDir}/NewModule"
+templateDir="${installShareDir}/Data/NewModule"
 
 # var: templatePackageName
 # Базовое имя ( без расширения) файлов с шаблоном пакета Oracle.
 templatePackageName="pkg_NewModule"
+
+# var: patchDataDir
+# Каталог с патчами для обновления файлов модуля.
+patchDataDir="$dataDir/UpdateModule"
 
 # var: patchConfigDir
 # Настроечный каталог с патчами для обновления файлов модуля.

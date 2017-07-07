@@ -384,6 +384,12 @@ begin
     end case;
     batchCount := batchCount + 1;
   end loop;
+  if batchCount = 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'No batches found'
+    );
+  end if;
   commit;
   if operationCode in (
     Activate_OperCode, Deactivate_OperCode
@@ -696,9 +702,9 @@ is
     , moduleSvnRoot varchar2 := null
     , moduleInitialSvnPath varchar2 := null
     , jobShortName varchar2
-    , jobName varchar2 := 'Тестовый job'
-    , jobWhat varchar2 := 'null;'
-    , description varchar2 := 'Тестовый job'
+    , jobName varchar2 := null
+    , jobWhat varchar2 := null
+    , description varchar2 := null
     , publicFlag number := null
     , batchShortName varchar2 := null
     , skipCheckJob number := null
@@ -721,9 +727,9 @@ is
       , moduleSvnRoot           => moduleSvnRoot
       , moduleInitialSvnPath    => moduleInitialSvnPath
       , jobShortName            => jobShortName
-      , jobName                 => jobName
-      , jobWhat                 => jobWhat
-      , description             => description
+      , jobName                 => coalesce( jobName, 'Тестовый job')
+      , jobWhat                 => coalesce( jobWhat, 'null;')
+      , description             => coalesce( description, 'Тестовый job')
       , publicFlag              => publicFlag
       , batchShortName          => batchShortName
       , skipCheckJob            => skipCheckJob

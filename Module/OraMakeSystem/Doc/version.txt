@@ -4,6 +4,20 @@ title: Версии
 
 group: ?.? ?
 
+[*] Удалён файл Config/local.mk. Файлы Config/custom.sh и
+    Config/localCustom.mk переименованы в Config/Default/connect.sh,
+    Config/Default/database.mk, соответственно.
+
+[+] Данные OraMakeSystem ( шаблон программного модуля, информация по генерации
+    меню) пересены из Config в новый каталог Data.
+    Настройки OraMakeSystem после установки располагаются в /usr/local/etc/oms
+    согласно общепринятому расположению настроек Unix-приложений
+    ( <http://www.pathname.com/fhs/pub/fhs-2.3.html>).
+    При первоначальной установке настройки по-умолчанию копируются из
+    директории Config/Default. Для обратной совместимости с OMS-файлами модулей
+    ( <Инициализация OMS>) предыдущих версий OMS при установке создаются/заменяются файлы
+    local.mk и localCustom.mk в /usr/local/share/oms/Config.
+
 [!] При проверке наличия блокировок в скрипте <oms-check-lock.sql> перестали
     учитываться блокировки собственной сессии.
 

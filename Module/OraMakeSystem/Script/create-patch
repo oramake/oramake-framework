@@ -2,9 +2,9 @@
 
 # script: create-patch
 # Создает файлы для обновления модуля.
-# Файлы для обновления создаются в каталоге Config/UpdateModule с помощью
+# Файлы для обновления создаются в каталоге Data/UpdateModule с помощью
 # svn diff на основе внесенных изменений в базовые файлы, находящиеся в
-# Config/NewModule ( при этом игнорируются файлы, которые просто копируются
+# Data/NewModule ( при этом игнорируются файлы, которые просто копируются
 # при обновлении модуля скриптом <oms-update-module>).
 #
 #
@@ -13,7 +13,7 @@
 #
 # Параметры:
 #   targetPath                - путь к файлу ( каталогу) относительтельно
-#                               Config/NewModule, для которого требуется создать
+#                               Data/NewModule, для которого требуется создать
 #                               обновления ( по умолчанию для всех обновляемых
 #                               изменений)
 #
@@ -28,11 +28,11 @@
 #
 
 # Версия программы
-OMS_VERSION=1.8.0
+OMS_VERSION=2.0.0
                                         # Информация о версии файла из SVN
 omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 24409882 $'
-fileChangeDateValue='$Date:: 2016-05-30 10:22:40 +0300 #$'
+fileRevisionValue='$Revision:: 24969048 $'
+fileChangeDateValue='$Date:: 2017-06-22 17:48:12 +0300 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
@@ -58,10 +58,10 @@ isOverwrite=0
 tmpFile="/tmp/create-patch.$$"
 
 # Шаблон модуля
-templateDir="Config/NewModule"
+templateDir="Data/NewModule"
 
 # Данные для обновления файлов модуля
-updateDir="Config/UpdateModule"
+updateDir="Data/UpdateModule"
 
 # Каталог с файлами OMS
 omsDir="DB/OmsModule"
@@ -86,7 +86,7 @@ Usage:
   create-patch [options] [targetPath]
 
 Parameters:
-  targetPath                  path from Config/NewModule for used changes
+  targetPath                  path from Data/NewModule for used changes
 
 Options:
       --from-revision REV     start revision for used changes

@@ -5,25 +5,27 @@ create or replace package body pkg_LoggingErrorStack is
 
   - соединяемые "куски" стека, информация о соединении
     и сброс стека при его получении и отладочная информация
-    ( см. <LogErrorStackElement>, <ResolveStack>, <GetErrorStack>)
-    с уровнем <pkg_Logging.Trace_LevelCode> 
+    ( см. <logErrorStackElement>, <resolveStack>, <getErrorStack>)
+    с уровнем <pkg_Logging.Trace_LevelCode>
 
   - сбрасываемый предыдущий стек
     при невозможности соединения, например, при гашении
-    предыдущего исключения без получения c помощью <GetErrorStack>,
+    предыдущего исключения без получения c помощью <getErrorStack>,
     или при принудельном сбрасывании стека
-    ( см. <ClearLastStack>, <ResolveStack>)
-    с уровнем <pkg_Logging.Debug_LevelCode> 
+    ( см. <clearLastStack>, <resolveStack>)
+    с уровнем <pkg_Logging.Debug_LevelCode>
 
   - логирование содержимого текущего
     стека, вызванное в блоке обработки
-    исключения ( <LogErrorStack>)
-    с уровнем <pkg_Logging.Error_LevelCode> 
+    исключения ( <logErrorStack>)
+    с уровнем <pkg_Logging.Error_LevelCode>
 
   - ошибка при невозможности получения данных стека
-    из удалённой БД ( см. <GetRemoteStack>)
-    с уровнем <pkg_Logging.Warning_LevelCode> 
+    из удалённой БД ( см. <getRemoteStack>)
+    с уровнем <pkg_Logging.Warn_LevelCode>
 */
+
+
 
 /* group: Типы */
 
@@ -32,11 +34,11 @@ create or replace package body pkg_LoggingErrorStack is
 */
 subtype TMaxVarchar2 is varchar2( 32767);
 
-/* itype: TStack 
+/* itype: TStack
   Данные стека ошибок.
 
   raisedText                 - сообщение для генерации исключения,
-                               возвращаемое функцией <ProcessStackElement>
+                               возвращаемое функцией <processStackElement>
   oracleMessage              - значение <errorStack> сообщения в стеке
   messageText                - переданный текст сообщения об ошибке
   resolvedStack              - полный расшированный текст сообщения
@@ -44,21 +46,23 @@ subtype TMaxVarchar2 is varchar2( 32767);
   callStack                  - текст информации о стеке вызовов
   isRemote                   - получен ли стек из удалённой базы ( 1-да)
 */
-  type TStack is record(
-    raisedText               TMaxVarchar2
-    , oracleMessage          TMaxVarchar2
-    , messageText            TMaxVarchar2
-    , resolvedStack          TMaxVarchar2
-    , callStack              TMaxVarchar2
-    , isRemote               integer
-  ); 
+type TStack is record(
+  raisedText               TMaxVarchar2
+  , oracleMessage          TMaxVarchar2
+  , messageText            TMaxVarchar2
+  , resolvedStack          TMaxVarchar2
+  , callStack              TMaxVarchar2
+  , isRemote               integer
+);
+
+
 
 /* group: Константы */
 
 /* iconst: Max_Varchar2_Length
   Максимальная длина varchar2
 */
-  Max_Varchar2_Length constant integer := 32767;
+Max_Varchar2_Length constant integer := 32767;
 
 /* iconst: Stack_Message_Limit
   Лимит суммы длины сообщения стека ошибок,
@@ -66,26 +70,32 @@ subtype TMaxVarchar2 is varchar2( 32767);
   Нужно учесть также сообщения с кодом 6512
   о месте возбуждения исключения.
 */
-  Stack_Message_Limit constant integer := 512 - 60;
+Stack_Message_Limit constant integer := 512 - 60;
 
 /* iconst: Raised_Message_Limit
   Лимит длины генерируемого сообщения исключения
   при зашифровке
 */
-  Raised_Message_Limit constant integer := Stack_Message_Limit;
+Raised_Message_Limit constant integer := Stack_Message_Limit;
 
 /* iconst: Truncated_Stack_Length
   Длина текста для стека, при котором допускается
   частичное совпадение с предыдущим стеком
 */
-  Truncated_Stack_Length constant integer := 1000;
-  
+Truncated_Stack_Length constant integer := 1000;
+
 /* iconst: Truncated_Remote_Stack_Length
   Длина текста для стека, при котором допускается
   частичное совпадение с предыдущим стеком
   при получении стека по линку
 */
-  Truncated_Remote_Stack_Length constant integer := 512;  
+Truncated_Remote_Stack_Length constant integer := 512;
+
+
+
+/* group: Переменные */
+
+
 
 /* group: Информация о предыдущем состоянии стека */
 
@@ -93,13 +103,13 @@ subtype TMaxVarchar2 is varchar2( 32767);
   Последние данные стека ошибок
   ( включая данные последнего элемента стека)
 */
-  lastStack TStack;
+lastStack TStack;
 
 /* ivar: lastClearedStack
   Данные по последнему сброшенному стеку
-  ( до последнего вызова функции <InitializeStack>)
-*/  
-  lastClearedStack TStack;
+  ( до последнего вызова функции <initializeStack>)
+*/
+lastClearedStack TStack;
 
 /* group: Информация о текущем состоянии стека */
 
@@ -107,13 +117,15 @@ subtype TMaxVarchar2 is varchar2( 32767);
   Текущее сообщение из стека ошибок
   ( результат dbms_utility.format_error_stack)
 */
-  oracleErrorStack TMaxVarchar2;
+oracleErrorStack TMaxVarchar2;
 
 /* ivar: resolvedStack
   Полный расшированный текст текущего сообщения
   об ошибке
 */
-  resolvedStack TMaxVarchar2;
+resolvedStack TMaxVarchar2;
+
+
 
 /* group: Прочие переменные */
 
@@ -133,18 +145,20 @@ errorStackId integer := 0;
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
-  logger lg_logger_t := lg_logger_t.GetLogger(
-    moduleName => pkg_Logging.Module_Name
-    , objectName => 'pkg_LoggingErrorStack'
-  );
+logger lg_logger_t := lg_logger_t.getLogger(
+  moduleName => pkg_Logging.Module_Name
+  , objectName => 'pkg_LoggingErrorStack'
+);
 
-/* group: Процедуры и функции */
 
-/* func: GetNextStackUid
+
+/* group: Функции */
+
+/* ifunc: getNextStackUid
   Получение текста для шифровки следующего сообщения
   об ошибке
 */
-function GetNextStackUid
+function getNextStackUid
 return varchar2
 is
 begin
@@ -159,16 +173,16 @@ begin
     || to_char( errorStackSessionId)
     || '/' || to_char( errorStackId)
     || ')';
-end GetNextStackUid;
+end getNextStackUid;
 
-/* proc: InitializeStack
+/* iproc: initializeStack
   Инициализация информации о стеке
   и сохранение <lastClearedStack>.
 */
-procedure InitializeStack
+procedure initializeStack
 is
 begin
-  logger.Trace( 'InitializeStack: start');
+  logger.trace( 'initializeStack: start');
   lastClearedStack := lastStack;
   lastStack.callStack := dbms_utility.format_call_stack;
   lastStack.raisedText := null;
@@ -176,10 +190,10 @@ begin
   lastStack.messageText := null;
   lastStack.resolvedStack := null;
   lastStack.isRemote := null;
-  logger.Trace( 'InitializeStack: end');
-end InitializeStack;
+  logger.trace( 'initializeStack: end');
+end initializeStack;
 
-/* proc: ClearLastStack(messageText)
+/* iproc: clearLastStack(messageText)
   Логирует и сбрасывает и
   информацию о предыдущем стеке ошибок
 
@@ -189,19 +203,18 @@ end InitializeStack;
                                 сообщение по-умолчанию.
 
   Примечание:
-    - может быть вызвана как в блоке обработки исключений,
-      так и вне его.
+  - может быть вызвана как в блоке обработки исключений, так и вне его.
 */
-procedure ClearLastStack(
+procedure clearLastStack(
   messageText varchar2
 )
 is
 begin
-  logger.Trace( 
+  logger.trace(
     'Stack saved ( lastClearedStack.raisedText="' || lastClearedStack.raisedText || '")'
   );
-                                       -- Если предыдущий стек
-                                       -- непуст
+
+  -- Если предыдущий стек непуст
   if lastStack.raisedText is not null then
     logger.Log(
       levelCode => pkg_Logging.Debug_LevelCode
@@ -222,28 +235,27 @@ begin
           || chr(10) || 'LAST_CALL_STACK: ' || lastStack.callStack
     );
   end if;
-  InitializeStack;
-end ClearLastStack;
+  initializeStack;
+end clearLastStack;
 
-/* proc: ClearLastStack
+/* proc: clearLastStack
   Сбрасывает информацию о предыдущем стеке ошибок
 
   Примечание:
-    - может быть вызвана как в блоке обработки исключений,
-      так и вне его.
-    - вызывает <ClearLastStack(messageText)>
-      с сообщением "Сброс стека"
+  - может быть вызвана как в блоке обработки исключений,
+    так и вне его.
+  - вызывает <clearLastStack(messageText)>
+    с сообщением "Сброс стека"
 */
-procedure ClearLastStack
+procedure clearLastStack
 is
 begin
-  ClearLastStack(
+  clearLastStack(
     messageText => 'Сброс стека'
   );
-end ClearLastStack;
+end clearLastStack;
 
-
-/* proc: LogCurrentStack
+/* iproc: logCurrentStack
   Логирует информацию о текущем стеке
 
   Параметры:
@@ -251,15 +263,15 @@ end ClearLastStack;
   levelCode                   - уровень логирования
 
   Примечание:
-    - должна вызываться после вызова <ResolveStack>
+  - должна вызываться после вызова <resolveStack>
 */
-procedure LogCurrentStack(
+procedure logCurrentStack(
   messageText varchar2
   , levelCode varchar2
 )
 is
 begin
-  logger.Trace( 'LogCurrentStack');
+  logger.trace( 'logCurrentStack');
   logger.Log(
     levelCode => levelCode
     , messageText =>
@@ -271,43 +283,50 @@ begin
         || 'ERROR_STACK: ' || resolvedStack
         || chr(10) || 'CALL_STACK: ' || lastStack.callStack
   );
-end LogCurrentStack;
+end logCurrentStack;
 
-/* proc: ResolveStack
+/* iproc: resolveStack
   Присваивает значение <oracleErrorStack>.
   Пытается связать информацию о предыдущем состоянии стека
   и информацию текущего стека, если она есть. Если это не удаётся,
-  вызывает <ClearLastStack>.
+  вызывает <clearLastStack>.
   Присваивает значение <resolvedStack>.
 
   Примечание:
-    - для соединения стека
-      должна вызываться в блоке обработки исключений.
-      При вызове вне блока обработки исключений,
-      вызовет <ClearLastStack>
+  - для соединения стека
+    должна вызываться в блоке обработки исключений.
+    При вызове вне блока обработки исключений,
+    вызовет <clearLastStack>
 */
-procedure ResolveStack
+procedure resolveStack
 is
-                                       -- Значение sqlerrm
+
+  -- Значение sqlerrm
   sqlErrorMessage TMaxVarchar2;
 
-  procedure ResolveRegularStack
+
+
+  /*
+    Соединяет необрезанный стек с предыдущим
+  */
+  procedure resolveRegularStack
   is
-  -- Соединяет необрезанный стек с предыдущим
-                                       -- Начало текста предыдущего стека
-                                       -- в текущем тексте
+
+    -- Начало текста предыдущего стека в текущем тексте
     previousStackStart integer;
-                                       -- Конец текста предыдущего стека
+
+    -- Конец текста предыдущего стека
     previousStackEnd integer;
+
   begin
     previousStackStart := instr( oracleErrorStack, lastStack.oracleMessage);
     if previousStackStart > 0 then
-                                       -- Пытаемся найти конец предыдущего
-                                       -- стека
+
+      -- Пытаемся найти конец предыдущего стека
       previousStackEnd := previousStackStart + length( lastStack.oracleMessage)-1;
       resolvedStack :=
         substr(
-          replace( 
+          replace(
             substr( oracleErrorStack, 1, previousStackStart-1)
             , lastStack.raisedText
             , lastStack.messageText
@@ -318,12 +337,11 @@ is
           , Max_Varchar2_Length
         );
     else
-                                       -- Если предыдущий стек не найден
-                                       -- в текущем, но найден текст
-                                       -- исключения
+
+      -- Если предыдущий стек не найден в текущем, но найден текст исключения
       resolvedStack :=
         substr(
-          replace( 
+          replace(
             oracleErrorStack
             , lastStack.raisedText
             , lastStack.messageText
@@ -333,46 +351,55 @@ is
           , Max_Varchar2_Length
         );
     end if;
-  end ResolveRegularStack;
+  end resolveRegularStack;
 
-  procedure ResolveLargeStack
+
+
+  /*
+    Соединяет обрезанный стек с предыдущим
+  */
+  procedure resolveLargeStack
   is
-  -- Соединяет обрезанный стек с предыдущим
-                                       -- Начало текста предыдущего стека
-                                       -- в текущем тексте
+
+    -- Начало текста предыдущего стека в текущем тексте
     previousStackStart integer;
-                                       -- "Хвост" к предыдущему стеку
-                                       -- слева
+
+    -- "Хвост" к предыдущему стеку слева
     leftTag TMaxVarchar2;
-                                       -- Формируемый новый
-                                       -- "хвост" к предыдущему стеку
-                                       -- слева
+
+    -- Формируемый новый "хвост" к предыдущему стеку слева
     resolvedLeftTag TMaxVarchar2;
-                                       -- Минимальная длина начала
-                                       -- строки для совпадения
-                                       -- предыдущего стека с обрезанным текущим
+
+    -- Минимальная длина начала строки для совпадения предыдущего стека с
+    -- обрезанным текущим
     Min_Stack_Coincidence_Length constant integer := 300;
-                                       -- Маска строки для номера ошибки
-                                       -- Oracle
+
+    -- Маска строки для номера ошибки Oracle
     Ora_Error_Mask varchar2( 50 ) := 'ORA-_____:';
 
-    procedure CheckRaisedText
+
+
+    /*
+      Поиск и замена строки предыдущего сгенерированного сообщения
+      ( lastStack.raisedText) на сообщение предыдущего стека
+      (lastStack.messageText) в левом "хвосте" стека ( leftTag)
+    */
+    procedure checkRaisedText
     is
-    -- Поиск и замена строки
-    -- предыдущего сгенерированного сообщения ( lastStack.raisedText)
-    -- на сообщение предыдущего стека (lastStack.messageText)
-    -- в левом "хвосте" стека ( leftTag)
-                                       -- Начало и конец возможно обрезанной
-                                       -- строки предыдущего
-                                       -- сгенерированного сообщения
+
+      -- Начало и конец возможно обрезанной строки предыдущего
+      -- сгенерированного сообщения
       raisedTextStart integer;
       raisedTextEnd integer;
-                                       -- Пробная позиция конца строки
+
+      -- Пробная позиция конца строки
       triedEnd integer;
-                                       -- Переменная для защиты от зацикливания
+
+      -- Переменная для защиты от зацикливания
       safeCycle integer := 0;
+
     begin
-      logger.Trace(
+      logger.trace(
         'ReplaceRaisedText: leftTagMask2= '
         || '"' || Ora_Error_Mask || ' ' || '%' || chr(10) || '"'
       );
@@ -385,24 +412,23 @@ is
       then
         raisedTextStart :=
           length( Ora_Error_Mask || ' ') + 1;
-        logger.Trace( 'ReplaceRaisedText: raisedTextStart='
+        logger.trace( 'ReplaceRaisedText: raisedTextStart='
           || to_char( raisedTextStart)
         );
 
         raisedTextEnd := raisedTextStart -1;
         loop
-                                       -- Пробуем передвинуться
-                                       -- к концу текущей строки
+
+          -- Пробуем передвинуться к концу текущей строки
           triedEnd :=
             instr(
               leftTag
               , chr(10)
               , raisedTextEnd + 2
             ) - 1;
-                                       -- Выходим, если
-                                       -- строка между
-                                       -- raisedTextStart и triedEnd
-                                       -- уже не содержится в lastStack.raisedText
+
+          -- Выходим, если строка между raisedTextStart и triedEnd уже не
+          -- содержится в lastStack.raisedText
           exit when
             coalesce( triedEnd, 0) <= 0
           or
@@ -415,24 +441,23 @@ is
             ) || '%';
           safeCycle := safeCycle + 1;
           exit when safeCycle > 20;
-                                       -- Получилось сместиться
-                                       -- до следующей строки
+
+          -- Получилось сместиться до следующей строки
           raisedTextEnd := triedEnd;
-          logger.Trace( 'ReplaceRaisedText: raisedTextEnd= '
+          logger.trace( 'ReplaceRaisedText: raisedTextEnd= '
             || to_char( raisedTextEnd)
           );
         end loop;
         if safeCycle > 20 then
-          logger.Debug( 'ResolveLargeStack: ReplaceRaisedText: safeCycle worked' );
+          logger.Debug( 'resolveLargeStack: ReplaceRaisedText: safeCycle worked' );
         end if;
       end if;
-      logger.Trace( 'ReplaceRaisedText: remains='
+      logger.trace( 'ReplaceRaisedText: remains='
         || '"' || substr( leftTag, raisedTextEnd +1 ) || '"'
       );
-                                       -- Если локализована
-                                       -- обрезанная строка
-                                       -- исключения ( возможно пустая),
-                                       -- то заменяем её
+
+      -- Если локализована обрезанная строка исключения ( возможно пустая), то
+      -- заменяем её
       if
         raisedTextStart is not null
         and raisedTextEnd is not null
@@ -445,8 +470,7 @@ is
             , raisedTextEnd - raisedTextStart + 1
           ) || '%'
         and
-                                       -- Если остальная часть
-                                       -- вырождена или удовлетворяет некоторой маске
+        -- Если остальная часть вырождена или удовлетворяет некоторой маске
         (
           substr( leftTag, raisedTextEnd +1 )
           like chr(10) || Ora_Error_Mask || '%' || 'line' || '%' || chr(10)
@@ -465,25 +489,28 @@ is
             leftTag
             , raisedTextEnd+1
           );
-        logger.Trace( 'ReplaceRaisedText: resolvedLeftTag='
+        logger.trace( 'ReplaceRaisedText: resolvedLeftTag='
           || resolvedLeftTag
         );
       end if;
-    end CheckRaisedText;
+    end checkRaisedText;
 
+
+  -- resolveLargeStack
   begin
-                                       -- Ищем начало обрезанного
-                                       -- предыдущего стека
+
+    -- Ищем начало обрезанного предыдущего стека
     previousStackStart :=
       instr(
         oracleErrorStack
         , substr( lastStack.oracleMessage, 1, Min_Stack_Coincidence_Length)
       );
-    logger.Trace( 'ResolveStack: previousStackStart='
+    logger.trace( 'resolveStack: previousStackStart='
       || to_char( previousStackStart)
     );
-                                       -- Если стек был обрезан справа
-                                       -- либо полностью сохранён внутри нового стека
+
+    -- Если стек был обрезан справа либо полностью сохранён внутри нового
+    -- стека
     if previousStackStart > 0
        and lastStack.oracleMessage
          like rtrim(
@@ -491,13 +518,14 @@ is
            , chr(10) || chr(13)
          ) || '%'
     then
-                                       -- Получаем левый "хвост"
-                                       -- к предыдущему стеку
+
+      -- Получаем левый "хвост" к предыдущему стеку
       leftTag := substr( oracleErrorStack, 1, previousStackStart-1);
-      logger.Trace( 'ResolveStack: leftTag='
+      logger.trace( 'resolveStack: leftTag='
         || '"' || to_char( leftTag) || '"'
       );
-                                       -- Если стек не вырос
+
+      -- Если стек не вырос
       if leftTag is null then
         resolvedLeftTag :=
           case when
@@ -508,13 +536,12 @@ is
           end
           || lastStack.messageText || chr(10);
       else
-                                       -- Проверяем соотвествие
-                                       -- сгенерированному исключению
-        CheckRaisedText;
+
+        -- Проверяем соотвествие сгенерированному исключению
+        checkRaisedText;
       end if;
-                                       -- Если сформировали
-                                       -- "хвост" для роста стека
-                                       -- слева
+
+      -- Если сформировали "хвост" для роста стека слева
       if resolvedLeftTag is not null then
         resolvedStack := substr(
           resolvedLeftTag || lastStack.resolvedStack
@@ -523,48 +550,54 @@ is
         );
       end if;
     end if;
-  end ResolveLargeStack;
-  
-  procedure ResolveRemoteLargeStack
+  end resolveLargeStack;
+
+
+
+  procedure resolveRemoteLargeStack
   is
-                                       -- Начало текста сгенерированного 
-                                       -- сообщения
+
+    -- Начало текста сгенерированного сообщения
     raisedTextStart integer;
-                                       -- Конец текста сгенерированного 
-                                       -- сообщения
+
+    -- Конец текста сгенерированного сообщения
     raisedTextEnd integer;
-                                       -- Начало текста предыдущего стека
-                                       -- в текущем тексте
+
+    -- Начало текста предыдущего стека в текущем тексте
     previousStackStart integer;
-                                       -- Минимальная длина начала
-                                       -- строки для совпадения
-                                       -- предыдущего стека с обрезанным текущим
+
+    -- Минимальная длина начала строки для совпадения предыдущего стека с
+    -- обрезанным текущим
     Min_Remote_Coincidence_Length constant integer := 100;
+
   begin
-                                       -- Ищем сгенерированное сообщение
-    raisedTextStart := 
+
+    -- Ищем сгенерированное сообщение
+    raisedTextStart :=
       instr( oracleErrorStack, lastStack.raisedText);
-    logger.Trace( 'ResolveRemoteLargeStack: raisedTextStart='
+    logger.trace( 'resolveRemoteLargeStack: raisedTextStart='
       || to_char( raisedTextStart)
-    );       
-    raisedTextEnd := 
-      raisedTextStart + length( lastStack.raisedText) -1;  
-                                       -- Если нашли сгенерированное сообщение
-    if raisedTextStart > 0 
-    then 
-                                       -- Ищем начало обрезанного
-                                       -- предыдущего стека
+    );
+    raisedTextEnd :=
+      raisedTextStart + length( lastStack.raisedText) -1;
+
+    -- Если нашли сгенерированное сообщение
+    if raisedTextStart > 0
+    then
+
+      -- Ищем начало обрезанного предыдущего стека
       previousStackStart :=
         instr(
           substr( oracleErrorStack, raisedTextEnd + 1)
           , substr( lastStack.oracleMessage, 1, Min_Remote_Coincidence_Length)
         )
         + raisedTextEnd;
-      logger.Trace( 'ResolveRemoteLargeStack: previousStackStart='
+      logger.trace( 'resolveRemoteLargeStack: previousStackStart='
         || to_char( previousStackStart)
-      );       
-                                       -- Если стек был обрезан справа
-                                       -- либо полностью сохранён внутри нового стека
+      );
+
+      -- Если стек был обрезан справа либо полностью сохранён внутри нового
+      -- стека
       if previousStackStart > raisedTextStart
          and lastStack.oracleMessage
            like rtrim(
@@ -574,7 +607,7 @@ is
       then
         resolvedStack :=
           substr(
-            replace( 
+            replace(
               substr( oracleErrorStack, 1, previousStackStart-1)
               , lastStack.raisedText
               , lastStack.messageText
@@ -582,103 +615,108 @@ is
             || lastStack.resolvedStack
             , 1
             , Max_Varchar2_Length
-          );        
-      end if;     
+          );
+      end if;
     end if;
-  end ResolveRemoteLargeStack;
+  end resolveRemoteLargeStack;
 
+
+
+-- resolveStack
 begin
   sqlErrorMessage := sqlerrm;
   oracleErrorStack := dbms_utility.format_error_stack;
-  logger.Trace( 'ResolveStack: start');
-  logger.Trace( 'ResolveStack: oracleErrorStack="' || oracleErrorStack || '"');
-  logger.Trace( 'ResolveStack: sqlErrorMessage="' || sqlErrorMessage || '"');
-                                       -- Если ошибки нет
+  logger.trace( 'resolveStack: start');
+  logger.trace( 'resolveStack: oracleErrorStack="' || oracleErrorStack || '"');
+  logger.trace( 'resolveStack: sqlErrorMessage="' || sqlErrorMessage || '"');
+
+  -- Если ошибки нет
   if sqlErrorMessage like 'ORA-000%' then
     sqlErrorMessage := null;
   end if;
   resolvedStack := null;
-                                       -- Если есть предыдущая информация
+
+  -- Если есть предыдущая информация
   if lastStack.raisedText is not null then
-    logger.Trace( 'ResolveStack: previous stack exists');
-    logger.Trace( 'ResolveStack: lastStack.raisedText=' || lastStack.raisedText);
-    logger.Trace( 'ResolveStack: lastStack.oracleMessage=' || lastStack.oracleMessage);
+    logger.trace( 'resolveStack: previous stack exists');
+    logger.trace( 'resolveStack: lastStack.raisedText=' || lastStack.raisedText);
+    logger.trace( 'resolveStack: lastStack.oracleMessage=' || lastStack.oracleMessage);
     if oracleErrorStack like
       '%'
       || lastStack.raisedText
-                                       -- Учитываем сообщения о месте
-                                       -- ошибки
+      -- Учитываем сообщения о месте ошибки
       || '%'
       || lastStack.oracleMessage
       || '%'
     then
-      ResolveRegularStack;
+      resolveRegularStack;
     elsif
-                                       -- Стек достаточно большой длины
+      -- Стек достаточно большой длины
       length( oracleErrorStack) >= Truncated_Stack_Length
     then
-      ResolveLargeStack;
+      resolveLargeStack;
     elsif
-                                       -- Стек получен из удалённой базы
-                                       -- и достаточно большой длины
-      lastStack.isRemote = 1 
+      -- Стек получен из удалённой базы и достаточно большой длины
+      lastStack.isRemote = 1
       and length( oracleErrorStack) >= Truncated_Remote_Stack_Length
     then
-      ResolveRemoteLargeStack;  
-                                       -- Пробуем разобрать сообщение
-                                       -- по тому же алгоритму как и для
-                                       -- большого локального стека
-      if resolvedStack is null then 
-        ResolveLargeStack;
+      resolveRemoteLargeStack;
+
+      -- Пробуем разобрать сообщение по тому же алгоритму как и для большого
+      -- локального стека
+      if resolvedStack is null then
+        resolveLargeStack;
       end if;
     else
-      logger.Trace( 'ResolveStack: Not regular or large stack');  
+      logger.trace( 'resolveStack: Not regular or large stack');
     end if;
-                                       -- Если не смогли соединить
-                                       -- стек
+
+    -- Если не смогли соединить стек
     if resolvedStack is null then
-      ClearLastStack(
+      clearLastStack(
         messageText => 'Сброс предыдущего стека при новой ошибке'
       );
       resolvedStack := oracleErrorStack;
     end if;
-                                       -- Если предыдущего стека не было
+  -- Если предыдущего стека не было
   else
-    InitializeStack;
+    initializeStack;
     resolvedStack := oracleErrorStack;
   end if;
-  logger.Trace( 'ResolveStack: finish');
-end ResolveStack;
+  logger.trace( 'resolveStack: finish');
+end resolveStack;
 
-/* func: SaveLastStack
+/* iproc: saveLastStack
   Сохраняет содержимое стека
   Присваивает значения элементам записи <lastStack>.
-  В случае если длина <lastStack.raisedText> || <lastStack.resolvedStack> превышает
-  <Stack_Message_Limit>, то сообщение шифруется.
+  В случае если длина <lastStack.raisedText> || <lastStack.resolvedStack>
+  превышает <Stack_Message_Limit>, то сообщение шифруется.
 
   Параметры:
-  messageText                - сообщение стека
+  messageText                 - сообщение стека
 */
-procedure SaveLastStack(
+procedure saveLastStack(
   messageText varchar2
 )
 is
+
   nextStackId TMaxVarchar2;
+
 begin
-  logger.Trace( 'SaveLastStack');
-                                       -- Запоминаем состояние стека
+  logger.trace( 'saveLastStack');
+
+  -- Запоминаем состояние стека
   lastStack.raisedText := messageText;
   lastStack.oracleMessage := oracleErrorStack;
   lastStack.messageText := messageText;
   lastStack.resolvedStack := resolvedStack;
   lastStack.isremote := 0;
-                                       -- Если сообщение нужно
-                                       -- зашифровать
+
+  -- Если сообщение нужно зашифровать
   if length( lastStack.raisedText || lastStack.oracleMessage) > Stack_Message_Limit then
-    nextStackId := GetNextStackUid;
-                                      -- Добавляем к nextStackId
-                                      -- также возможно обрезанный
-                                      -- текст сообщения стека
+    nextStackId := getNextStackUid;
+
+    -- Добавляем к nextStackId также возможно обрезанный текст сообщения стека
     lastStack.raisedText :=
       case when
         length(  nextStackId || '<' || messageText || '>')
@@ -694,10 +732,10 @@ begin
         nextStackId || '<' || messageText || '>'
       end;
   end if;
-  logger.Trace( 'SaveLastStack: lastStack.raisedText=' || lastStack.raisedText);
-end SaveLastStack;
+  logger.trace( 'saveLastStack: lastStack.raisedText=' || lastStack.raisedText);
+end saveLastStack;
 
-/* proc: LogErrorStackElement
+/* iproc: logErrorStackElement
   Логирует информацию об элементе стека с уровнем
   <pkg_Logging.Trace_LevelCode> от имени логера
   пакета <logger>.
@@ -705,7 +743,7 @@ end SaveLastStack;
   Параметры:
   messageText                - сообщение для логирования
 */
-procedure LogErrorStackElement(
+procedure logErrorStackElement(
   messageText varchar2
 )
 is
@@ -713,44 +751,43 @@ begin
   logger.Log(
     levelCode => pkg_Logging.Trace_LevelCode
     , messageText =>
-        'MESSAGE: ' || LogErrorStackElement.messageText
+        'MESSAGE: ' || logErrorStackElement.messageText
         || chr(10) || 'ORACLE_ERROR_STACK: ' || oracleErrorStack
         ||
         case when messageText <> lastStack.raisedText then
           chr(10) || 'RAISED: ' || lastStack.raisedText
         end
   );
-end LogErrorStackElement;
+end logErrorStackElement;
 
-/* func: ProcessStackElement
+/* func: processStackElement
   Логирует и запоминает параметры элемента стека.
   Возвращает строку для генерации исключения.
 
   Параметры:
-  messageText                - текст сообщения
+  messageText                 - текст сообщения
 
   Возврат:
-    - текст для генерации исключения, при небольшой длине
-      стека не отличается от messageText
+  - текст для генерации исключения, при небольшой длине стека не отличается от
+    messageText
 
   Примечание:
-    - может быть вызвана как в блоке обработки исключений,
-      так и вне его.  При вызове вне блока исключения,
-      вероятнее стек не сможет быть соединён с предыдущим,
-      если он не сброшен.
+  - может быть вызвана как в блоке обработки исключений, так и вне его.  При
+    вызове вне блока исключения, вероятнее стек не сможет быть соединён с
+    предыдущим, если он не сброшен.
 */
-function ProcessStackElement(
+function processStackElement(
   messageText varchar2
 )
 return varchar2
 is
 begin
-  ResolveStack;
-  SaveLastStack( messageText => messageText);
-  LogErrorStackElement(
+  resolveStack;
+  saveLastStack( messageText => messageText);
+  logErrorStackElement(
     messageText => messageText
   );
-  logger.Trace( 'ProcessStackElement: finish');
+  logger.trace( 'processStackElement: finish');
   return lastStack.raisedText;
 exception when others then
   logger.Error(
@@ -760,33 +797,32 @@ exception when others then
     || ')'
   );
   return messageText;
-end ProcessStackElement;
+end processStackElement;
 
-/* proc: LogErrorStack
-  Очищает стек ошибок. Логирует информацию
-  о стеке с уровнем <pkg_Logging.Error_LevelCode>,
-  если удалось связать стек с предыдущей информацией.
+/* proc: logErrorStack
+  Очищает стек ошибок. Логирует информацию о стеке с уровнем
+  <pkg_Logging.Error_LevelCode>, если удалось связать стек с предыдущей
+  информацией.
 
   Параметры:
-  messageText                - текст дополнительного сообщения
+  messageText                 - текст дополнительного сообщения
 */
-procedure LogErrorStack(
+procedure logErrorStack(
   messageText varchar2
 )
 is
 begin
-  ResolveStack;
-                                       -- Если есть предыдущий стек
-                                       -- и он не очищен 
-                                       -- ( соединён с предыдущим)
-  if lastStack.raisedText is not null then 
-    LogCurrentStack(
+  resolveStack;
+
+  -- Если есть предыдущий стек и он не очищен ( соединён с предыдущим)
+  if lastStack.raisedText is not null then
+    logCurrentStack(
       messageText => messageText
       , levelCode => pkg_Logging.Error_LevelCode
     );
-  end if;  
-  InitializeStack;
-  logger.Trace( 'LogErrorStack: finish');  
+  end if;
+  initializeStack;
+  logger.trace( 'logErrorStack: finish');
 exception when others then
   logger.Error(
     'Ошибка логирования стека: ('
@@ -794,26 +830,25 @@ exception when others then
     || ', sqlerrm="' || sqlerrm || '"'
     || ')'
   );
-end LogErrorStack;
+end logErrorStack;
 
-/* proc: GetRemoteStack
-  Получает последний стек ошибок из удалённой базы
-  с помощью <GetLastStack> и сохраняет данные в <lastStack>.
-  В случае ошибки при получении стека, логирует
-  её с уровнем <pkg_Logging.Error_LevelCode>.
+/* iproc: getRemoteStack
+  Получает последний стек ошибок из удалённой базы с помощью <getLastStack> и
+  сохраняет данные в <lastStack>.  В случае ошибки при получении стека,
+  логирует её с уровнем <pkg_Logging.Error_LevelCode>.
 
   Параметры:
-  dbLink                     - имя линка к БД
+  dbLink                      - имя линка к БД
 */
-procedure GetRemoteStack( 
+procedure getRemoteStack(
   dbLink varchar2
 )
 is
 begin
-  logger.Trace( 'GetRemoteStack: start(' || dblink || ')');
+  logger.trace( 'getRemoteStack: start(' || dblink || ')');
   execute immediate
 'begin
-  pkg_LoggingErrorStack.GetLastStack@' || dbLink || '( 
+  pkg_LoggingErrorStack.getLastStack@' || dbLink || '(
     raisedText => :raisedText
     , oracleMessage => :oracleMessage
     , messageText => :messageText
@@ -821,76 +856,80 @@ begin
     , callStack => :callStack
   );
 end;'
-  using 
+  using
     out lastStack.raisedText
     , out lastStack.oracleMessage
     , out lastStack.messageText
     , out lastStack.resolvedStack
     , out lastStack.callStack
-  ; 
+  ;
   lastStack.isremote := 1;
-  logger.Trace( 'GetRemoteStack: finish');
+  logger.trace( 'getRemoteStack: finish');
 exception when others then
-  logger.Warn( 
-    'Не удалось получить стек ошибок из удалённой базы ('  
+  logger.Warn(
+    'Не удалось получить стек ошибок из удалённой базы ('
     || 'dbLink="' || dbLink || '"'
     || ', sqlerrm="' || sqlerrm || '"'
     || ', dbms_utility.format_error_stack="' || dbms_utility.format_error_stack || '"'
     || ')'
-  );  
-end GetRemoteStack;
+  );
+end getRemoteStack;
 
-/* func: ProcessRemoteStackElement
-  Логирует и запоминает параметры элемента стека,
-  учитывая стек на удалённой базе. В случае
-  наличия информации в <body::lastStack>, сначала пытается
+/* func: processRemoteStackElement
+  Логирует и запоминает параметры элемента стека, учитывая стек на удалённой
+  базе. В случае наличия информации в <body::lastStack>, сначала пытается
   обработать локальный стек
 
   Параметры:
-  messageText                - текст сообщения
-  dbLink                     - имя линка к БД  
+  messageText                 - текст сообщения
+  dbLink                      - имя линка к БД
 
   Возврат:
-    - текст для генерации исключения, при небольшой длине
-      стека не отличается от messageText
+  - текст для генерации исключения, при небольшой длине стека не отличается от
+    messageText
 
   Примечание:
-    - используется функция <GetRemoteStack>;
-    - рекомендуется вызывать в блоке обработки исключений;
+  - используется функция <getRemoteStack>;
+  - рекомендуется вызывать в блоке обработки исключений;
 */
-function ProcessRemoteStackElement(
+function processRemoteStackElement(
   messageText varchar2
   , dbLink varchar2
 )
 return varchar2
 is
+
   isLocalStack boolean := false;
+
 begin
-                                       -- Если есть предыдущий локальный стек
+
+  -- Если есть предыдущий локальный стек
   if lastStack.raisedText is not null then
-                                       -- Пытаемся разрешить локальный стек
-    ResolveStack;
-                                       -- Если есть предыдущий локальный стек
-                                       -- и он соединён с предыдущим
-    if lastStack.raisedText is not null then 
-                                       -- Обрабатываем локальный стек
-      SaveLastStack( messageText => messageText);
-      LogErrorStackElement(
+
+    -- Пытаемся разрешить локальный стек
+    resolveStack;
+
+    -- Если есть предыдущий локальный стек и он соединён с предыдущим
+    if lastStack.raisedText is not null then
+
+      -- Обрабатываем локальный стек
+      saveLastStack( messageText => messageText);
+      logErrorStackElement(
         messageText => messageText
       );
-      isLocalStack := true;  
-    end if;  
+      isLocalStack := true;
+    end if;
   end if;
-  if isLocalStack then 
-    logger.Trace( 'ProcessRemoteStackElement: LocalStack');  
-    return 
+  if isLocalStack then
+    logger.trace( 'processRemoteStackElement: LocalStack');
+    return
       lastStack.raisedText;
   else
-    logger.Trace( 'ProcessRemoteStackElement: GetRemoteStack');  
-    GetRemoteStack( dbLink => dbLink);
+    logger.trace( 'processRemoteStackElement: getRemoteStack');
+    getRemoteStack( dbLink => dbLink);
     return
-      ProcessStackElement( messageText => messageText);
-  end if;    
+      processStackElement( messageText => messageText);
+  end if;
 exception when others then
   logger.Error(
     'Ошибка сохранения стека: ('
@@ -901,38 +940,36 @@ exception when others then
     || ')'
   );
   return messageText;
-end ProcessRemoteStackElement;
+end processRemoteStackElement;
 
-/* func: GetErrorStack
+/* func: getErrorStack
   Получает информацию о стеке ошибок.
-  
-    isStackPreserved         - оставлять ли данные по стеку.
-                               По-умолчанию ( null) не оставлять 
-                               ( т.е. очищать), 
-                               таким образом по-умолчанию 
-                               после вызова стек не может быть 
-                               соединён далее.
+
+  isStackPreserved            - оставлять ли данные по стеку.
+                                По-умолчанию ( null) не оставлять ( т.е.
+                                очищать), таким образом по-умолчанию после
+                                вызова стек не может быть соединён далее.
 
   Возврат:
-    - текст с информацией о стеке
+  - текст с информацией о стеке
 
   Примечание:
-    - рекомендуется вызывать в блоке обработки исключения;
+  - рекомендуется вызывать в блоке обработки исключения;
 */
-function GetErrorStack( 
+function getErrorStack(
   isStackPreserved integer := null
 )
 return varchar2
 is
 begin
-  ResolveStack;
-  if coalesce( isStackPreserved, 0) = 0 then 
-    LogCurrentStack(
+  resolveStack;
+  if coalesce( isStackPreserved, 0) = 0 then
+    logCurrentStack(
        messageText => 'Стек получен и сброшен'
       , levelCode => pkg_Logging.Trace_LevelCode
     );
-    InitializeStack;
-  end if;  
+    initializeStack;
+  end if;
   return
     resolvedStack;
 exception when others then
@@ -943,24 +980,24 @@ exception when others then
     || ')'
   );
   return sqlerrm;
-end GetErrorStack;
+end getErrorStack;
 
-/* proc: GetLastStack
+/* proc: getLastStack
   Получает данные по последнему стеку.
   Если информация в <body::lastStack> не сброшена,
   возвращает данные <body::lastStack>, иначе возвращает
   данные <body::lastClearedStack>.
-  
+
   Параметры:
   raisedText                 - сообщение для генерации исключения,
-                               возвращаемое функцией <ProcessStackElement>
+                               возвращаемое функцией <processStackElement>
   oracleMessage              - значение <errorStack> сообщения в стеке
   messageText                - переданный текст сообщения об ошибке
   resolvedStack              - полный расшированный текст сообщения
                                об ошибке
   callStack                  - текст информации о стеке вызовов
 */
-procedure GetLastStack(
+procedure getLastStack(
   raisedText               out varchar2
   , oracleMessage          out varchar2
   , messageText            out varchar2
@@ -970,21 +1007,21 @@ procedure GetLastStack(
 is
   resultStack TStack;
 begin
-  if pkg_LoggingErrorStack.lastStack.raisedText is not null then 
+  if pkg_LoggingErrorStack.lastStack.raisedText is not null then
     resultStack := pkg_LoggingErrorStack.lastStack;
-  else 
+  else
     resultStack := pkg_LoggingErrorStack.lastClearedStack;
-  end if;  
-  GetLastStack.raisedText     := resultStack.raisedText;
-  GetLastStack.oracleMessage  := resultStack.oracleMessage;
-  GetLastStack.messageText    := resultStack.messageText;
-  GetLastStack.resolvedStack  := resultStack.resolvedStack;
-  GetLastStack.callStack      := resultStack.callStack;
+  end if;
+  getLastStack.raisedText     := resultStack.raisedText;
+  getLastStack.oracleMessage  := resultStack.oracleMessage;
+  getLastStack.messageText    := resultStack.messageText;
+  getLastStack.resolvedStack  := resultStack.resolvedStack;
+  getLastStack.callStack      := resultStack.callStack;
 exception when others then
   logger.Error(
     'Ошибка получения данных последнего стека'
   );
-end GetLastStack;
+end getLastStack;
 
 end pkg_LoggingErrorStack;
 /

@@ -7,7 +7,7 @@
 declare
 
   outputFilePath varchar2(1000) :=
-    '\\test-disk\files\tmp\ScriptUtility\InterfaceTable'
+    '&outputFilePath'
   ;
 
 begin

@@ -16,47 +16,52 @@ Module_Name constant varchar2(30) := 'Logging';
 
 
 
-/* group: Уровни сообщений лога */
+/* group: Уровни логирования */
 
 /* const: Off_LevelCode
-  Код уровня "Логирование отключено".
+  Код уровня логирования "Логирование отключено".
 */
 Off_LevelCode varchar2(10) := 'OFF';
 
 /* const: Fatal_LevelCode
-  Код уровня "Фатальная ошибка".
+  Код уровня логирования "Фатальная ошибка".
 */
 Fatal_LevelCode varchar2(10) := 'FATAL';
 
 /* const: Error_LevelCode
-  Код уровня "Ошибка".
+  Код уровня логирования "Ошибка".
 */
 Error_LevelCode varchar2(10) := 'ERROR';
 
-/* const: Warning_LevelCode
-  Код уровня "Предупреждение".
+/* const: Warn_LevelCode
+  Код уровня логирования "Предупреждение".
 */
-Warning_LevelCode varchar2(10) := 'WARN';
+Warn_LevelCode varchar2(10) := 'WARN';
 
 /* const: Info_LevelCode
-  Код уровня "Информация".
+  Код уровня логирования "Информация".
 */
 Info_LevelCode varchar2(10) := 'INFO';
 
 /* const: Debug_LevelCode
-  Код уровня "Отладка".
+  Код уровня логирования "Отладка".
 */
 Debug_LevelCode varchar2(10) := 'DEBUG';
 
 /* const: Trace_LevelCode
-  Код уровня "Трассировка".
+  Код уровня логирования "Трассировка".
 */
 Trace_LevelCode varchar2(10) := 'TRACE';
 
 /* const: All_LevelCode
-  Код уровня "Максимальный уровень логирования".
+  Код уровня логирования "Максимальный уровень логирования".
 */
 All_LevelCode varchar2(10) := 'ALL';
+
+/* const: Warning_LevelCode( DEPRECATED)
+  Устаревшая константа, следует использовать <Warn_LevelCode>.
+*/
+Warning_LevelCode varchar2(10) := Warn_LevelCode;
 
 
 
@@ -76,40 +81,84 @@ Table_DestinationCode varchar2(10) := 'TAB';
 
 /* group: Функции */
 
-/* pproc: SetDestination
-  Устанавливает единственное назначения для вывода
-  (<body::SetDestination>)
+/* pproc: setDestination
+  Устанавливает единственное назначения для вывода.
+
+  Параметры:
+  destinationCode             - код назначения
+
+  Замечания:
+  - вызывает <pkg_LoggingInternal.setDestination>;
+
+  ( <body::setDestination>)
 */
-procedure SetDestination(
+procedure setDestination(
   destinationCode varchar2
 );
 
-/* pproc: LogMessage
-  Логирует информационное сообщение
-  ( <body::LogMessage>)
-*/
-procedure LogMessage( Message varchar2 );
+/* pproc: logDebug
+  Логирует отладочное сообщение уровня <Debug_LevelCode>.
 
-/* pfunc: LogDebug
-  Логирует отладочное сообщение
-  ( вызова ( <body::LogDebug>)
-*/
-procedure LogDebug( Message varchar2 );
+  Параметры:
+  message                     - сообщение
 
-/* pfunc: GetErrorStack
-  Получает информацию о стеке ошибок
-  ( <body::GetErrorStack>).
+  Замечания:
+  - вызывает <pkg_LoggingInternal.logMessage>;
+
+  ( <body::logDebug>)
 */
-function GetErrorStack(
+procedure logDebug(
+  message varchar2
+);
+
+/* pproc: logMessage
+  Логирует информационное сообщение уровня <Info_LevelCode>.
+
+  Параметры:
+  message                         - сообщение
+
+  Замечания:
+  - вызывает <pkg_LoggingInternal.logMessage>;
+
+  ( <body::logMessage>)
+*/
+procedure logMessage(
+  message varchar2
+);
+
+/* pfunc: getErrorStack
+  Получает информацию о стеке ошибок.
+
+  Параметры:
+  isStackPreserved            - оставлять ли данные по стеку.
+                                По-умолчанию ( null) не оставлять
+                                ( т.е. очищать),
+                                таким образом по-умолчанию
+                                после вызова стек не может быть
+                                соединён далее.
+
+  Возврат:
+  - текст с информацией о стеке
+
+  Замечания:
+  - вызывает <pkg_LoggingErrorStack.getErrorStack>;
+
+  ( <body::getErrorStack>)
+*/
+function getErrorStack(
   isStackPreserved integer := null
 )
 return varchar2;
 
-/* pproc: ClearErrorStack
-   Очищает( сбрасывает) стек ошибок
-  ( <body::ClearErrorStack>).
+/* pproc: clearErrorStack
+  Очищает( сбрасывает) стек ошибок.
+
+  Замечания:
+  - вызывает <pkg_LoggingErrorStack.clearLastStack>;
+
+  ( <body::clearErrorStack>)
 */
-procedure ClearErrorStack;
+procedure clearErrorStack;
 
 end pkg_Logging;
 /

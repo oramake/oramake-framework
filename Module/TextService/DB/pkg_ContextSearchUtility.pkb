@@ -56,10 +56,12 @@ begin
         regexp_replace(
           -- Все символы кроме букв, цифр, запятых заменяем на пробелы
           regexp_replace( searchPhrase, '[^[:alnum:]^,^ ]', ' ')
-          -- Удаляем повторяющиеся пробелы и запятые
-          , '([ ])+', '\1'
+          -- Из комбинации запятых и пробелов, содержащих хотя бы одну запятую
+          -- оставляем только одну запятую
+          , '([, ])+,([, ])*', ','
         )
-          , '([,])+', '\1'
+          -- Повторяющиеся пробелы преобразуем в один
+          , '([ ])+', ' '
         )
         , ', '
       )
@@ -67,6 +69,16 @@ begin
       )
     ;
   end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка во время нормализации строки ('
+      || ' searchPhrase="' || searchPhrase || '"'
+      || ')'
+      )
+    , true
+  );
 end normalizeSearchPhrase;
 
 end pkg_ContextSearchUtility;

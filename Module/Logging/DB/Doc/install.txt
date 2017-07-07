@@ -132,6 +132,33 @@ $ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@???
 
 
 
+group: Выполнение тестов
+
+Предварительные требования:
+- установка модуля TestUtility;
+
+Команда установки объектов для выполнения тестов:
+
+(code)
+
+$ make install-test LOAD_USERID=???/???@???
+
+(end)
+
+Команда для выполнения всех тестов:
+
+(code)
+
+$ make test LOAD_USERID=???/???@???
+
+(end)
+
+Замечания:
+- в случае наличия в БД модуля AccessOperator в команды нужно добавить параметр
+  LOAD_OPERATORID ( "  LOAD_OPERATORID=???/???");
+
+
+
 group: Удаление модуля из БД
 
 Порядок удаления модуля из БД:

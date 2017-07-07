@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 24409882 $
-# $Date:: 2016-05-30 10:22:40 +0300 #$
+# $Revision:: 24969048 $
+# $Date:: 2017-06-22 17:48:12 +0300 #$
 #
 
 
@@ -130,9 +130,13 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
@@ -274,12 +278,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 24409882 $$
+omsRevisionKeyword    := \$$Revision:: 24969048 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2016-05-30 10:22:40 +0300 #$$
+omsChangeDateKeyword  := \$$Date:: 2017-06-22 17:48:12 +0300 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -344,7 +348,7 @@ gendoc-menu.oms:
 #
 
 # Каталог со стандартными SQL-скриптами
-omsSqlScriptDir  = $(OMS_INSTALL_DATA_DIR)/SqlScript
+omsSqlScriptDir  = $(OMS_INSTALL_SHARE_DIR)/SqlScript
 
 # Каталог с файлами, создаваемыми при загрузке в БД.
 loadDir           = $(omsModuleDir)/Load
@@ -1133,8 +1137,11 @@ load-start-log.oms:
 			&& if [[ "$(OMS_DEBUG_LEVEL)" != "0" ]]; then \
 			   echo "OMS_DEBUG_LEVEL     : $(OMS_DEBUG_LEVEL)"; \
 			   fi \
-			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
-			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			&& if [[ "$(OMS_INSTALL_SHARE_DIR)" != "/usr/local/share/oms" ]]; then \
+			   echo "OMS_INSTALL_SHARE_DIR: $(OMS_INSTALL_SHARE_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \

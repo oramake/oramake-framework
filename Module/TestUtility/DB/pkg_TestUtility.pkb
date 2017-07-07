@@ -365,7 +365,7 @@ is
   return pls_integer
   is
     -- текст запроса
-    sqlText varchar2(4000) := '
+    sqlText varchar2(10000) := '
       select count(1)
         from $(tableName)
        where $(filterCondition)'
@@ -542,9 +542,9 @@ is
     cols TColCursorColumns;
 
     -- список полей курсора через разделитель
-    cursorFieldList varchar2(4000);
+    cursorFieldList varchar2(10000);
     -- условие фильтрации
-    vFilterCondition varchar2(4000) := coalesce( filterCondition, '1=1' );
+    vFilterCondition varchar2(10000) := coalesce( filterCondition, '1=1' );
     -- кол-во строк в курсоре после фильтрации
     nFilteredRow pls_integer;
 
@@ -644,7 +644,7 @@ is
     function getCursorFieldList
     return varchar2
     is
-      cursorFieldList varchar2(4000);
+      cursorFieldList varchar2(10000);
 
     -- getCursorFieldList
     begin
@@ -680,7 +680,7 @@ is
       for i in 1..cols.count loop
         -- формат имени колонки в условии фильтрации
         columnNameFormat :=
-          '([^[:alnum:]'']*)(' || cols(i).col_name || ')([^[:alnum:]'']*)'
+          '(\W|^)(' || cols(i).col_name || ')(\W|$)'
         ;
         if regexp_instr( filterCondition, columnNameFormat, 1, 1, 0, 'i' ) > 0 then
           filterCondition := regexp_replace(

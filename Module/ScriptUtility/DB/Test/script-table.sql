@@ -1,7 +1,7 @@
 declare
   tableName varchar2(30) := 'gt_template';
   userName varchar2(30) := user;
-  outPath varchar2(1000) := '\\test-disk\Code-Generation';
+  outPath varchar2(1000) := '&testPath';
 
   i integer;
   tab_comment varchar2 (4000);
