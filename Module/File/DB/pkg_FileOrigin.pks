@@ -381,7 +381,7 @@ procedure loadBlobFromFile(
 procedure loadClobFromFile(
   dstLob          in out nocopy clob
 , fromPath        varchar2
-, charEncoding    varchar2
+, charEncoding    varchar2 := null
 );
 
 /* pproc: loadTxt
