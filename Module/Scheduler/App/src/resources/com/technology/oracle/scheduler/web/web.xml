@@ -18,7 +18,7 @@
   </servlet-mapping>
   <servlet>
     <servlet-name>BatchServlet</servlet-name>
-    <servlet-class>com.technology.oracle.scheduler.batch.server.BatchServiceImpl</servlet-class>
+    <servlet-class>com.technology.oracle.scheduler.batch.server.BatchServiceEntryPoint</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>BatchServlet</servlet-name>
