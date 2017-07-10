@@ -22,6 +22,4 @@ public class ValueFieldNames extends JepRecordFieldNames {
   public static final String LIST_SEPARATOR = "list_separator";
   public static final String STRING_LIST_SEPARATOR = "string_list_separator";
   public static final String VALUE_INDEX = "value_index";
-  
-  public static final String DATA_SOURCE = "data_source";
 }

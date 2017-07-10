@@ -2,21 +2,23 @@ package com.technology.oracle.scheduler.batch.server;
  
 import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames.BATCH_ID;
 
-import com.technology.jep.jepria.server.DaoProvider;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.technology.jep.jepria.shared.exceptions.ApplicationException;
 import com.technology.jep.jepria.shared.record.JepRecord;
-import com.technology.jep.jepria.shared.record.JepRecordDefinition;
 import com.technology.oracle.scheduler.batch.server.dao.Batch;
+import com.technology.oracle.scheduler.batch.server.dao.BatchDao;
+import com.technology.oracle.scheduler.batch.shared.record.BatchRecordDefinition;
 import com.technology.oracle.scheduler.batch.shared.service.BatchService;
 import com.technology.oracle.scheduler.main.server.SchedulerServiceImpl;
  
-public class BatchServiceImpl extends SchedulerServiceImpl<Batch, BatchService> implements BatchService {
-
-  public BatchServiceImpl(JepRecordDefinition recordDefinition, DaoProvider<Batch> serverFactory) {
-    super(recordDefinition, serverFactory);
-  }
-  
+@RemoteServiceRelativePath("BatchService")
+public class BatchServiceImpl extends SchedulerServiceImpl<Batch> implements BatchService  {
+ 
   private static final long serialVersionUID = 1L;
+ 
+  public BatchServiceImpl() {
+    super(BatchRecordDefinition.instance, new BatchDao());
+  }
   
   @Override
   public JepRecord activateBatch (Integer batchId) throws ApplicationException {
@@ -25,7 +27,7 @@ public class BatchServiceImpl extends SchedulerServiceImpl<Batch, BatchService> 
 
     try {
 
-      dao.activateBatch(batchId, getOperatorId());
+      getProxyDao().activateBatch(batchId, getOperatorId());
       
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
@@ -46,7 +48,7 @@ public class BatchServiceImpl extends SchedulerServiceImpl<Batch, BatchService> 
     
     try {
       
-      dao.deactivateBatch(batchId, getOperatorId());
+      getProxyDao().deactivateBatch(batchId, getOperatorId());
       
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
@@ -66,7 +68,7 @@ public class BatchServiceImpl extends SchedulerServiceImpl<Batch, BatchService> 
     
     try {
       
-      dao.executeBatch(batchId, getOperatorId());
+      getProxyDao().executeBatch(batchId, getOperatorId());
       
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
@@ -86,7 +88,7 @@ public class BatchServiceImpl extends SchedulerServiceImpl<Batch, BatchService> 
     
     try {
       
-      dao.abortBatch(batchId, getOperatorId());
+      getProxyDao().abortBatch(batchId, getOperatorId());
       
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);

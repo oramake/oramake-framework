@@ -8,12 +8,12 @@ import static com.technology.oracle.scheduler.main.client.SchedulerClientConstan
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.OPTION_MODULE_ID;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.ROOTLOG_MODULE_ID;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.SCHEDULE_MODULE_ID;
-import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.schedulerText;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.VALUE_MODULE_ID;
+import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.schedulerText;
 
-import com.technology.jep.jepria.client.ModuleItem;
 import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.core.client.GWT;
+import com.technology.jep.jepria.client.ModuleItem;
 import com.technology.jep.jepria.client.async.LoadAsyncCallback;
 import com.technology.jep.jepria.client.async.LoadPlainClientFactory;
 import com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus;
@@ -24,17 +24,16 @@ import com.technology.jep.jepria.client.ui.plain.PlainClientFactory;
 import com.technology.jep.jepria.shared.service.JepMainServiceAsync;
 import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.scheduler.batch.client.BatchClientFactoryImpl;
-import com.technology.oracle.scheduler.main.client.ui.module.SchedulerMainModulePresenter;
-/*
 import com.technology.oracle.scheduler.batchrole.client.BatchRoleClientFactoryImpl;
 import com.technology.oracle.scheduler.detailedlog.client.DetailedLogClientFactoryImpl;
 import com.technology.oracle.scheduler.interval.client.IntervalClientFactoryImpl;
+import com.technology.oracle.scheduler.main.client.ui.module.SchedulerMainModulePresenter;
 import com.technology.oracle.scheduler.moduleroleprivilege.client.ModuleRolePrivilegeClientFactoryImpl;
 import com.technology.oracle.scheduler.option.client.OptionClientFactoryImpl;
 import com.technology.oracle.scheduler.rootlog.client.RootLogClientFactoryImpl;
 import com.technology.oracle.scheduler.schedule.client.ScheduleClientFactoryImpl;
-import com.technology.oracle.scheduler.value.client.ValueClientFactoryImpl;*/
- 
+import com.technology.oracle.scheduler.value.client.ValueClientFactoryImpl;
+
 @SuppressWarnings("unchecked")
 public class SchedulerClientFactoryImpl<E extends MainEventBus, S extends JepMainServiceAsync>
   extends MainClientFactoryImpl<E, S>
@@ -78,7 +77,7 @@ public class SchedulerClientFactoryImpl<E extends MainEventBus, S extends JepMai
         }
       });
     }
-    /*else if(SCHEDULE_MODULE_ID.equals(moduleId)) {
+    else if(SCHEDULE_MODULE_ID.equals(moduleId)) {
       GWT.runAsync(new LoadPlainClientFactory(callback) {
         public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
           return ScheduleClientFactoryImpl.getInstance();
@@ -133,6 +132,6 @@ public class SchedulerClientFactoryImpl<E extends MainEventBus, S extends JepMai
           return ModuleRolePrivilegeClientFactoryImpl.getInstance();
         }
       });
-    }*/
+    }
   }
 }

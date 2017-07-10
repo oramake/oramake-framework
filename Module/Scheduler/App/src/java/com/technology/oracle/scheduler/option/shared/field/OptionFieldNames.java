@@ -4,7 +4,6 @@ import com.technology.jep.jepria.shared.field.JepRecordFieldNames;
  
 public class OptionFieldNames extends JepRecordFieldNames {
   public static final String BATCH_ID = "batch_id";
-  public static final String DATA_SOURCE = "data_source";
   public static final String OPTION_ID = "option_id";
   public static final String OPTION_SHORT_NAME = "option_short_name";
   public static final String OPTION_NAME = "option_name";

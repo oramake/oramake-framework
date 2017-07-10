@@ -8,12 +8,14 @@ import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.M
 import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.MODULE_ROLE_PRIVILEGE_ID;
 import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.PRIVILEGE_CODE;
 import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.ROLE_ID;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.place.shared.Place;
 import com.technology.jep.jepria.client.async.FirstTimeUseAsyncCallback;
+import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.async.TypingTimeoutAsyncCallback;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
@@ -25,6 +27,7 @@ import com.technology.jep.jepria.client.widget.event.JepEventType;
 import com.technology.jep.jepria.client.widget.event.JepListener;
 import com.technology.jep.jepria.client.widget.field.multistate.JepComboBoxField;
 import com.technology.jep.jepria.shared.field.option.JepOption;
+import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.oracle.scheduler.moduleroleprivilege.shared.service.ModuleRolePrivilegeServiceAsync;
  
@@ -41,42 +44,31 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
       @Override
       public void handleEvent(final JepEvent event) {
-        service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-          public void onSuccessLoad(List<JepOption> result){
-            fields.setFieldOptions(DATA_SOURCE, result);
+        service.getDataSource(new FirstTimeUseAsyncCallback<JepRecord>(event) {
+          public void onSuccessLoad(JepRecord result){
+            fields.setFieldOptions(DATA_SOURCE, result.get(DATA_SOURCE_LIST));
           }
         });
       }
     });
-    
     
     fields.addFieldListener(DATA_SOURCE, JepEventType.CHANGE_SELECTION_EVENT, new JepListener() {
-
       @Override
       public void handleEvent(JepEvent event) {
-
-        setDataSourceDependFields();
-        changeModules();
-      }      
-    });
-    
-    /*
-    fields.addFieldListener(MODULE_ID, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-      @Override
-      public void handleEvent(final JepEvent event) {
-        service.getModule(JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE)), new JepFirstTimeUseAsyncCallback<List<JepOption>>(event) {
-          public void onSuccessLoad(List<JepOption> result){
-            fields.setFieldOptions(MODULE_ID, result);
+        service.setCurrentDataSource(JepOption.<String>getValue(event.getParameter()), new JepAsyncCallback<Void>() {
+          @Override
+          public void onSuccess(Void result) {
+            setDataSourceDependFields();
+            changeModules();
           }
         });
       }
     });
-    */
     
     fields.addFieldListener(PRIVILEGE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
       @Override
       public void handleEvent(final JepEvent event) {
-        service.getPrivilege(JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE)), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+        service.getPrivilege(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
           public void onSuccessLoad(List<JepOption> result){
             fields.setFieldOptions(PRIVILEGE_CODE, result);
           }
@@ -89,34 +81,32 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
       public void handleEvent(final JepEvent event) {
         setRole();
       }
-      
     });
   }
   
-  private void changeModules(){
+  private void changeModules() {
 
     fields.clearField(MODULE_ID);
     
     String dataSource = JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE));
     final JepComboBoxField moduleComboBoxField = (JepComboBoxField)fields.get(MODULE_ID);
-    
-    
-    if(!JepRiaUtil.isEmpty(dataSource)){
+
+    if(!JepRiaUtil.isEmpty(dataSource)) {
       
       moduleComboBoxField.setLoadingImage(true);
       fields.setFieldEnabled(MODULE_ID, false);
       
-      service.getModule(dataSource, new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(moduleComboBoxField)) {
-        public void onSuccessLoad(List<JepOption> result){
-          
+      service.getModule(new JepAsyncCallback<List<JepOption>>() {
+        
+        @Override
+        public void onSuccess(List<JepOption> result){
           moduleComboBoxField.setLoadingImage(false);
           fields.setFieldOptions(MODULE_ID, result);
           fields.setFieldEnabled(MODULE_ID, true);
-  
         }
         
+        @Override
         public void onFailure(Throwable caught) {
-          
           moduleComboBoxField.setLoadingImage(false);
           fields.setFieldOptions(MODULE_ID, new ArrayList<JepOption>());
           super.onFailure(caught);
@@ -126,36 +116,19 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     }
   }
 
-  private void setRole(){
+  private void setRole() {
     
     JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
     roleField.setLoadingImage(true);
     String rawValue = roleField.getRawValue();
-    service.getRole(JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE)), rawValue + "%", 
-        new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)
-      ) {
-        @SuppressWarnings("unchecked")
-        public void onSuccessLoad(List<JepOption> result){
-  
+    service.getRole(rawValue + "%", new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)) {
+        
+        @Override
+        public void onSuccessLoad(List<JepOption> result) {
           JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
           roleField.setOptions(result);
-          /*
-          List<JepOption> roleIdsList = new ArrayList<JepOption>();
-          
-          if(result.size() >= OPTION_NUMBER){
-            
-            for(Integer count = 0;!count.equals(OPTION_NUMBER); count++){
-              roleIdsList.add(result.get(count));
-            }
-            
-          }else{
-            roleIdsList = result;
-          }
-          
-          roleField.setLastOptionText(result.size() >= OPTION_NUMBER ? fraudText.fraud_detail_responsibility_operator_id_lastOptionText() : null);
-          roleField.setOptions(roleIdsList);
-          */
         }
+        
         @Override
         public void onFailure(Throwable caught) {
           super.onFailure(caught);
@@ -164,12 +137,12 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     
   }
   
-  private void setDataSourceDependFields(){
+  private void setDataSourceDependFields() {
     
     Boolean enabled = false;
-    if(
-      !JepRiaUtil.isEmpty(JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE)))
-      ){
+    if(!JepRiaUtil.isEmpty(
+        JepOption.<String>getValue(
+            fields.getFieldValue(DATA_SOURCE)))) {
       enabled = true;
     }
     

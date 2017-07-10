@@ -22,23 +22,19 @@ import com.technology.oracle.scheduler.detailedlog.shared.service.DetailedLogSer
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 
 public class DetailedLogListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends DetailedLogServiceAsync, F extends StandardClientFactory<E, S>> 
-  extends ListFormPresenter<V, E, S, F> { 
+    extends ListFormPresenter<V, E, S, F> { 
  
   public DetailedLogListFormPresenter(Place place, F clientFactory) {
     super(place, clientFactory);
   }
 
   @Override
-  public void rowDoubleClick(JepEvent event) {
-
-  }
+  public void onRowDoubleClick(JepEvent event) {}
  
   @Override
   public void onSearch(SearchEvent event) {
-    
+    //TODO: для чего этот код?
     searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-    JepRecord record = searchTemplate.getTemplateRecord();
-    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
     pagingConfig = null;
     super.onSearch(event);
   };
@@ -73,13 +69,14 @@ public class DetailedLogListFormPresenter<V extends ListFormView, E extends Plai
       searchTemplate.setListUID(listUID); // Выставим идентификатор получаемого списка данных.
       searchTemplate.setPageSize(list.getPageSize()); // Выставим размер получаемой страницы набора данных.
       JepAsyncCallback<PagingResult<JepRecord>> callback = new JepAsyncCallback<PagingResult<JepRecord>>() {
+        
+        @Override
         public void onSuccess(final PagingResult<JepRecord> pagingResult) {
-
           list.set(pagingResult); // Установим в список полученные от сервиса данные.
           list.unmask(); // Скроем индикатор "Загрузка данных...".
-          processRefreshTimeout();
         }
 
+        @Override
         public void onFailure(Throwable caught) {
           list.unmask(); // Скроем индикатор "Загрузка данных...".
           super.onFailure(caught);
@@ -87,10 +84,10 @@ public class DetailedLogListFormPresenter<V extends ListFormView, E extends Plai
 
       };
       
-      if(pagingConfig != null){
+      if(pagingConfig != null) {
         
         clientFactory.getService().paging(pagingConfig, callback);
-      }else{
+      } else {
         
         clientFactory.getService().find(searchTemplate, callback);
       }

@@ -21,7 +21,6 @@ public class BatchFormContainerPresenter<E extends BatchEventBus, S extends Batc
   }
   
   public void onSetCurrentRecord(SetCurrentRecordEvent event) {
-
     JepRecord currentRecord = event.getCurrentRecord();
     BatchScope.instance.setBatchId((Integer) currentRecord.get(BATCH_ID));
     super.onSetCurrentRecord(event);

@@ -1,7 +1,6 @@
 package com.technology.oracle.scheduler.value.shared.service;
  
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
-import com.technology.jep.jepria.shared.service.data.JepDataService;
 import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
  
 @RemoteServiceRelativePath("ValueService")

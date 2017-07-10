@@ -1,15 +1,10 @@
 package com.technology.oracle.scheduler.option.client.ui.form.list;
  
-import static com.technology.oracle.scheduler.interval.shared.field.IntervalFieldNames.DATA_SOURCE;
-
 import com.google.gwt.place.shared.Place;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
-import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.form.list.ListFormPresenter;
 import com.technology.jep.jepria.client.ui.form.list.ListFormView;
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
-import com.technology.jep.jepria.shared.record.JepRecord;
-import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
 
 public class OptionListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E, S>> 
@@ -18,13 +13,4 @@ public class OptionListFormPresenter<V extends ListFormView, E extends PlainEven
   public OptionListFormPresenter(Place place, F clientFactory) {
     super(place, clientFactory);
   }
- 
-  @Override
-  public void onSearch(SearchEvent event) {
-    
-    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-    JepRecord record = searchTemplate.getTemplateRecord();
-    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-    super.onSearch(event);
-  };
 }

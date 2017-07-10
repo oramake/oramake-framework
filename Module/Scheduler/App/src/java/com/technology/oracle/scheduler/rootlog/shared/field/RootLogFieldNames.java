@@ -9,5 +9,4 @@ public class RootLogFieldNames extends JepRecordFieldNames {
   public static final String MESSAGE_TYPE_NAME = "message_type_name";
   public static final String MESSAGE_TEXT = "message_text";
   public static final String OPERATOR_NAME = "operator_name";
-  public static final String DATA_SOURCE = "data_source";
 }

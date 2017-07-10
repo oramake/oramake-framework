@@ -3,7 +3,6 @@ package com.technology.oracle.scheduler.rootlog.client.ui.form.list;
 import static com.technology.jep.jepria.client.JepRiaClientConstant.JepTexts;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.DETAILEDLOG_MODULE_ID;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.ROOTLOG_MODULE_ID;
-import static com.technology.oracle.scheduler.rootlog.shared.field.RootLogFieldNames.DATA_SOURCE;
 
 import com.google.gwt.place.shared.Place;
 import com.technology.jep.jepria.client.async.JepAsyncCallback;
@@ -15,7 +14,6 @@ import com.technology.jep.jepria.client.ui.eventbus.event.UpdateScopeEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.PagingEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.RefreshEvent;
-import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.SortEvent;
 import com.technology.jep.jepria.client.ui.form.list.ListFormPresenter;
 import com.technology.jep.jepria.client.ui.form.list.ListFormView;
@@ -36,7 +34,7 @@ public class RootLogListFormPresenter<V extends ListFormView, E extends PlainEve
   }
   
   @Override
-  public void rowDoubleClick(JepEvent event) {
+  public void onRowDoubleClick(JepEvent event) {
     
     String[] scopes = {DETAILEDLOG_MODULE_ID}; 
     WorkstateEnum newWorkstate = WorkstateEnum.VIEW_LIST;
@@ -67,16 +65,6 @@ public class RootLogListFormPresenter<V extends ListFormView, E extends PlainEve
 
     clientFactory.getMainClientFactory().getEventBus().enterModule(DETAILEDLOG_MODULE_ID);
 
-  };
-
-  
-  @Override
-  public void onSearch(SearchEvent event) {
-    
-    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-    JepRecord record = searchTemplate.getTemplateRecord();
-    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-    super.onSearch(event);
   };
   
   private PagingConfig pagingConfig = null;
@@ -109,13 +97,14 @@ public class RootLogListFormPresenter<V extends ListFormView, E extends PlainEve
       searchTemplate.setListUID(listUID); // Выставим идентификатор получаемого списка данных.
       searchTemplate.setPageSize(list.getPageSize()); // Выставим размер получаемой страницы набора данных.
       JepAsyncCallback<PagingResult<JepRecord>> callback = new JepAsyncCallback<PagingResult<JepRecord>>() {
+        
+        @Override
         public void onSuccess(final PagingResult<JepRecord> pagingResult) {
-
           list.set(pagingResult); // Установим в список полученные от сервиса данные.
           list.unmask(); // Скроем индикатор "Загрузка данных...".
-          processRefreshTimeout();
         }
 
+        @Override
         public void onFailure(Throwable caught) {
           list.unmask(); // Скроем индикатор "Загрузка данных...".
           super.onFailure(caught);
@@ -123,14 +112,10 @@ public class RootLogListFormPresenter<V extends ListFormView, E extends PlainEve
 
       };
       
-      if(
-        pagingConfig != null 
-        && DETAILEDLOG_MODULE_ID.equals(SchedulerScope.instance.getPrevModuleId())
-      ){
-        
+      if(pagingConfig != null &&
+          DETAILEDLOG_MODULE_ID.equals(SchedulerScope.INSTANCE.getPrevModuleId())) {
         clientFactory.getService().paging(pagingConfig, callback);
-      }else{
-        
+      } else {
         clientFactory.getService().find(searchTemplate, callback);
         pagingConfig = null;
       }

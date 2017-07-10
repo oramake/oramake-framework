@@ -9,7 +9,6 @@ import static com.technology.oracle.scheduler.option.shared.OptionConstant.DATE_
 import static com.technology.oracle.scheduler.option.shared.OptionConstant.NUMBER_VALUE_TYPE_CODE;
 import static com.technology.oracle.scheduler.option.shared.OptionConstant.STRING_VALUE_TYPE_CODE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.BATCH_ID;
-import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.DATA_SOURCE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.DATE_VALUE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.ENCRYPTION_FLAG;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.IS_EDIT_VALUE;
@@ -44,7 +43,6 @@ import com.technology.jep.jepria.shared.load.PagingConfig;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.oracle.scheduler.batch.client.history.scope.BatchScope;
-import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.option.client.history.scope.OptionScope;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
  
@@ -58,21 +56,12 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
   public void bind() {
     super.bind();
     // Здесь размещается код связывания presenter-а и view 
-    fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
-      @Override
-      public void handleEvent(final JepEvent event) {
-        service.getDataSource(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-          public void onSuccessLoad(List<JepOption> result){
-            fields.setFieldOptions(DATA_SOURCE, result);
-          }
-        });
-      }
-    });
+
     fields.addFieldListener(VALUE_TYPE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
       @Override
       public void handleEvent(final JepEvent event) {
-        service.getValueType(SchedulerScope.instance.getDataSource().getName(), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
-          public void onSuccessLoad(List<JepOption> result){
+        service.getValueType(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+          public void onSuccessLoad(List<JepOption> result) {
             fields.setFieldOptions(VALUE_TYPE_CODE, result);
           }
         });
@@ -88,30 +77,14 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     });
   }
   
-  public void onDoGetRecord(DoGetRecordEvent event) {
-    
-    //для корректной работы табов (ScopeModules)
-    final PagingConfig pagingConfig = event.getPagingConfig();
-    JepRecord record = pagingConfig.getTemplateRecord();
-    record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-    record.set(BATCH_ID, BatchScope.instance.getBatchId());
-    
-    fields.setFieldEditable(DATA_SOURCE, false);
-    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-    fields.setFieldValue(BATCH_ID, BatchScope.instance.getBatchId());
-
-    super.onDoGetRecord(event);
-  }
-  
   @Override
   protected boolean beforeSave(JepRecord currentRecord) {
-    
     currentRecord.set(IS_EDIT_VALUE, OptionScope.instance.getIsEditValue());
     return super.beforeSave(currentRecord);
   }
   
 
-  private void setValueTypeFields(){
+  private void setValueTypeFields() {
     
     Boolean isEditValue = OptionScope.instance.getIsEditValue();
     Boolean showStringValue = false, showDateValue = false, showNumberValue = false;
@@ -119,7 +92,7 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     
     String valueTypeCode = JepOption.<String>getValue(fields.getFieldValue((VALUE_TYPE_CODE)));
 
-    if(JepRiaUtil.isEmpty(valueTypeCode)){
+    if(JepRiaUtil.isEmpty(valueTypeCode)) {
       showStringValue = true;
       enabled = false;
     }
@@ -130,13 +103,13 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     fields.setFieldEnabled(TIME_VALUE, enabled);
     fields.setFieldEnabled(NUMBER_VALUE, enabled);
     
-    if(valueTypeCode == null){
+    if(valueTypeCode == null) {
 
-    }else if(valueTypeCode.equals(DATE_VALUE_TYPE_CODE)){
+    } else if(valueTypeCode.equals(DATE_VALUE_TYPE_CODE)) {
       showDateValue = true;
-    }else if(valueTypeCode.equals(NUMBER_VALUE_TYPE_CODE)){
+    } else if(valueTypeCode.equals(NUMBER_VALUE_TYPE_CODE)) {
       showNumberValue = true;
-    }else if(valueTypeCode.equals(STRING_VALUE_TYPE_CODE)){
+    } else if(valueTypeCode.equals(STRING_VALUE_TYPE_CODE)) {
       showStringValue = true;
     }
     
@@ -145,7 +118,7 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     fields.setFieldVisible(TIME_VALUE, (CREATE.equals(_workstate) || (EDIT.equals(_workstate) && isEditValue)) && showDateValue);
     fields.setFieldVisible(NUMBER_VALUE, (CREATE.equals(_workstate) || (EDIT.equals(_workstate) && isEditValue)) && showNumberValue);
 
-    if((Boolean)fields.getFieldValue(VALUE_LIST_FLAG)){
+    if((Boolean)fields.getFieldValue(VALUE_LIST_FLAG)) {
       
       fields.setFieldValue(STRING_VALUE, null);
       fields.setFieldValue(DATE_VALUE, null);
@@ -172,13 +145,10 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     fields.setFieldVisible(ENCRYPTION_FLAG, VIEW_DETAILS.equals(workstate) || CREATE.equals(workstate) || (EDIT.equals(workstate) && !isEditValue));
     fields.setFieldVisible(TEST_PROD_SENSITIVE_FLAG, VIEW_DETAILS.equals(workstate) || CREATE.equals(workstate) || (EDIT.equals(workstate) && !isEditValue));
  
-    fields.setFieldValue(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-    
     fields.setFieldAllowBlank(OPTION_SHORT_NAME, !CREATE.equals(workstate));
     fields.setFieldAllowBlank(OPTION_NAME, !(VIEW_DETAILS.equals(workstate) || CREATE.equals(workstate) || (EDIT.equals(workstate) && !isEditValue)));
     fields.setFieldAllowBlank(VALUE_TYPE_CODE, !(VIEW_DETAILS.equals(workstate) || CREATE.equals(workstate) || (EDIT.equals(workstate) && !isEditValue)));
  
-    fields.setFieldEditable(DATA_SOURCE, false);
     fields.setFieldEditable(OPTION_ID, false);
     fields.setFieldEditable(VALUE_TYPE_CODE, CREATE.equals(workstate) || SEARCH.equals(workstate) || (EDIT.equals(workstate) && !isEditValue));
  

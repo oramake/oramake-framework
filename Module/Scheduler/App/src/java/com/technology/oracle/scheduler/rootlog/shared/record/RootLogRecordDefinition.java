@@ -1,7 +1,6 @@
 package com.technology.oracle.scheduler.rootlog.shared.record;
  
 import static com.technology.oracle.scheduler.rootlog.shared.field.RootLogFieldNames.*;
-import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames.DATA_SOURCE;
 import static com.technology.jep.jepria.shared.field.JepTypeEnum.*;
 
 import com.technology.jep.jepria.shared.field.JepTypeEnum;
@@ -11,8 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
  
 public class RootLogRecordDefinition extends JepRecordDefinition {
- 
-  private static final long serialVersionUID = 1L;
  
   public static RootLogRecordDefinition instance = new RootLogRecordDefinition();
  
@@ -29,8 +26,6 @@ public class RootLogRecordDefinition extends JepRecordDefinition {
     typeMap.put(MESSAGE_TYPE_NAME, STRING);
     typeMap.put(MESSAGE_TEXT, STRING);
     typeMap.put(OPERATOR_NAME, STRING);
-
-    typeMap.put(DATA_SOURCE, STRING);
     return typeMap;
   }
 }

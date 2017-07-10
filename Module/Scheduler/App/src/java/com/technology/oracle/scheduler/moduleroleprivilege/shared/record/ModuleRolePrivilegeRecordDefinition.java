@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
  
 public class ModuleRolePrivilegeRecordDefinition extends JepRecordDefinition {
- 
-  private static final long serialVersionUID = 1L;
- 
+
   public static ModuleRolePrivilegeRecordDefinition instance = new ModuleRolePrivilegeRecordDefinition();
  
   private ModuleRolePrivilegeRecordDefinition() {

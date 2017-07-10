@@ -3,7 +3,6 @@ package com.technology.oracle.scheduler.value.client.ui.form.detail;
 import static com.technology.jep.jepria.client.JepRiaClientConstant.JepTexts;
 import static com.technology.oracle.scheduler.batch.client.BatchClientConstant.batchText;
 import static com.technology.oracle.scheduler.option.client.OptionClientConstant.optionText;
-import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.DATA_SOURCE;
 import static com.technology.oracle.scheduler.value.client.ValueClientConstant.valueText;
 import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames.BATCH_ID;
 import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames.DATE_VALUE;
@@ -16,7 +15,6 @@ import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames
 import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames.VALUE_INDEX;
 import static com.technology.oracle.scheduler.value.shared.field.ValueFieldNames.VALUE_TYPE_CODE;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +44,6 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
  
  
     JepNumberField batchIdNumberField = new JepNumberField(batchText.batch_detail_batch_id());
-    JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(optionText.option_detail_data_source());
     JepComboBoxField prodValueFlagJepComboBoxField = new JepComboBoxField(valueText.value_detail_prod_value_flag());
     List<JepOption> options = new ArrayList<JepOption>();
     options.add(new JepOption(JepTexts.yes(), 1));
@@ -59,7 +56,7 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
     JepDateField dateValueDateField = new JepDateField(valueText.value_detail_date_value());
     JepTimeField timeValueTimeField = new JepTimeField(optionText.option_detail_time_value());
     
-    JepNumberField numberValueNumberField = new JepNumberField(valueText.value_detail_number_value()){
+    JepNumberField numberValueNumberField = new JepNumberField(valueText.value_detail_number_value()) {
       
       @Override
       protected void addEditableCard() {
@@ -81,7 +78,6 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
     
     JepComboBoxField valueTypeCodeComboBoxField = new JepComboBoxField(valueText.value_list_value_type_name());
     
-    panel.add(dataSourceComboBoxField);
     panel.add(batchIdNumberField);
     panel.add(prodValueFlagJepComboBoxField);
     panel.add(instanceNameTextField);
@@ -96,7 +92,6 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
     
     setWidget(scrollPanel);
  
-    fields.put(DATA_SOURCE, dataSourceComboBoxField);
     fields.put(BATCH_ID, batchIdNumberField);
     fields.put(PROD_VALUE_FLAG_COMBOBOX, prodValueFlagJepComboBoxField);
     fields.put(VALUE_TYPE_CODE, valueTypeCodeComboBoxField);

@@ -3,7 +3,6 @@ package com.technology.oracle.scheduler.option.client.ui.form.detail;
 import static com.technology.oracle.scheduler.batch.client.BatchClientConstant.batchText;
 import static com.technology.oracle.scheduler.option.client.OptionClientConstant.optionText;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.BATCH_ID;
-import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.DATA_SOURCE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.DATE_VALUE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.ENCRYPTION_FLAG;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.NUMBER_VALUE;
@@ -20,8 +19,6 @@ import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNam
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.VALUE_TYPE_CODE;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.text.client.DoubleRenderer;
 import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -48,7 +45,6 @@ public class OptionDetailFormViewImpl extends DetailFormViewImpl {
     scrollPanel.add(panel);
  
     JepNumberField batchIdNumberField = new JepNumberField(batchText.batch_detail_batch_id());
-    JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(optionText.option_detail_data_source());
     JepNumberField optionIdNumberField = new JepNumberField(optionText.option_detail_option_id());
     JepTextField optionShortNameTextField = new JepTextField(optionText.option_detail_option_short_name());
     JepComboBoxField valueTypeCodeComboBoxField = new JepComboBoxField(optionText.option_detail_value_type_code());
@@ -66,7 +62,7 @@ public class OptionDetailFormViewImpl extends DetailFormViewImpl {
     JepDateField dateValueDateField = new JepDateField(optionText.option_detail_date_value());
     JepTimeField timeValueTimeField = new JepTimeField(optionText.option_detail_time_value());
     
-    JepNumberField numberValueNumberField = new JepNumberField(optionText.option_detail_number_value()){
+    JepNumberField numberValueNumberField = new JepNumberField(optionText.option_detail_number_value()) {
       
       @Override
       protected void addEditableCard() {
@@ -87,7 +83,6 @@ public class OptionDetailFormViewImpl extends DetailFormViewImpl {
     JepTextField valueIndexTextField = new JepTextField(optionText.option_detail_value_index());
     valueIndexTextField.setTitle(optionText.option_detail_value_index_desc());
     
-    panel.add(dataSourceComboBoxField);
     panel.add(batchIdNumberField);
     panel.add(optionIdNumberField);
     panel.add(optionShortNameTextField);
@@ -106,7 +101,6 @@ public class OptionDetailFormViewImpl extends DetailFormViewImpl {
     
     setWidget(scrollPanel);
  
-    fields.put(DATA_SOURCE, dataSourceComboBoxField);
     fields.put(BATCH_ID, batchIdNumberField);
     fields.put(OPTION_ID, optionIdNumberField);
     fields.put(OPTION_SHORT_NAME, optionShortNameTextField);

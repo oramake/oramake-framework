@@ -1,8 +1,6 @@
 package com.technology.oracle.scheduler.interval.client.ui.form.detail;
  
-import static com.technology.oracle.scheduler.batch.client.BatchClientConstant.batchText;
 import static com.technology.oracle.scheduler.interval.client.IntervalClientConstant.intervalText;
-import static com.technology.oracle.scheduler.interval.shared.field.IntervalFieldNames.DATA_SOURCE;
 import static com.technology.oracle.scheduler.interval.shared.field.IntervalFieldNames.INTERVAL_ID;
 import static com.technology.oracle.scheduler.interval.shared.field.IntervalFieldNames.INTERVAL_TYPE_CODE;
 import static com.technology.oracle.scheduler.interval.shared.field.IntervalFieldNames.MAX_VALUE;
@@ -29,14 +27,12 @@ public class IntervalDetailFormViewImpl extends DetailFormViewImpl {
     panel.getElement().getStyle().setMarginTop(5, Unit.PX);
     scrollPanel.add(panel);
  
-    JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(batchText.batch_detail_data_source());
     JepNumberField intervalIdNumberField = new JepNumberField(intervalText.interval_detail_interval_id());
     JepComboBoxField intervalTypeCodeComboBoxField = new JepComboBoxField(intervalText.interval_detail_interval_type_code());
     JepNumberField minValueNumberField = new JepNumberField(intervalText.interval_detail_min_value());
     JepNumberField maxValueNumberField = new JepNumberField(intervalText.interval_detail_max_value());
     JepNumberField stepNumberField = new JepNumberField(intervalText.interval_detail_step());
     
-    panel.add(dataSourceComboBoxField);
     panel.add(intervalIdNumberField);
     panel.add(intervalTypeCodeComboBoxField);
     panel.add(minValueNumberField);
@@ -45,7 +41,6 @@ public class IntervalDetailFormViewImpl extends DetailFormViewImpl {
     
     setWidget(scrollPanel);
  
-    fields.put(DATA_SOURCE, dataSourceComboBoxField);
     fields.put(INTERVAL_ID, intervalIdNumberField);
     fields.put(INTERVAL_TYPE_CODE, intervalTypeCodeComboBoxField);
     fields.put(MIN_VALUE, minValueNumberField);

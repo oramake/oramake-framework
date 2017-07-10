@@ -10,8 +10,6 @@ import java.util.Map;
  
 public class ValueRecordDefinition extends JepRecordDefinition {
  
-  private static final long serialVersionUID = 1L;
- 
   public static ValueRecordDefinition instance = new ValueRecordDefinition();
  
   private ValueRecordDefinition() {
@@ -37,7 +35,6 @@ public class ValueRecordDefinition extends JepRecordDefinition {
     typeMap.put(LIST_SEPARATOR, STRING);
     typeMap.put(STRING_LIST_SEPARATOR, STRING);
     typeMap.put(VALUE_INDEX, STRING);
-    typeMap.put(DATA_SOURCE, STRING);
     return typeMap;
   }
 }

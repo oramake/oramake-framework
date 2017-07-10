@@ -1,32 +1,22 @@
 package com.technology.oracle.scheduler.value.server;
  
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.technology.oracle.scheduler.main.server.SchedulerServiceImpl;
-import com.technology.oracle.scheduler.value.shared.service.ValueService;
-import com.technology.jep.jepria.server.service.JepDataServiceServlet;
-import com.technology.jep.jepria.shared.load.PagingConfig;
-import com.technology.jep.jepria.shared.load.PagingResult;
-import com.technology.jep.jepria.shared.record.JepRecord;
-import com.technology.oracle.scheduler.value.shared.record.ValueRecordDefinition;
-
-import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
-import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames.DATA_SOURCE;
-import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.BATCH_ID;
-import static com.technology.oracle.scheduler.value.server.ValueServerConstant.BEAN_JNDI_NAME;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+import com.technology.oracle.scheduler.main.server.SchedulerServiceImpl;
+import com.technology.oracle.scheduler.value.server.dao.Value;
+import com.technology.oracle.scheduler.value.server.dao.ValueDao;
+import com.technology.oracle.scheduler.value.shared.record.ValueRecordDefinition;
+import com.technology.oracle.scheduler.value.shared.service.ValueService;
  
 @RemoteServiceRelativePath("ValueService")
-public class ValueServiceImpl extends SchedulerServiceImpl implements ValueService  {
+public class ValueServiceImpl extends SchedulerServiceImpl<Value> implements ValueService  {
  
   private static final long serialVersionUID = 1L;
  
   public ValueServiceImpl() {
-    super(ValueRecordDefinition.instance, BEAN_JNDI_NAME);
+    super(ValueRecordDefinition.instance, new ValueDao());
   }
   
+  /*
   @Override
   protected JepRecord findByPrimaryKey(Map<String, Object> primaryKey, JepRecord record) {
     logger.trace("BEGIN findByPrimaryKey(" + primaryKey + ")");
@@ -49,5 +39,5 @@ public class ValueServiceImpl extends SchedulerServiceImpl implements ValueServi
     logger.trace("END findByPrimaryKey(" + primaryKey + ")");
     
     return result;
-  }
+  }*/
 }

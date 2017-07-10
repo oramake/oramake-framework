@@ -17,7 +17,6 @@ import com.google.gwt.place.shared.Place;
 import com.google.gwt.user.client.ui.AcceptsOneWidget;
 import com.technology.jep.jepria.client.async.FirstTimeUseAsyncCallback;
 import com.technology.jep.jepria.client.async.JepAsyncCallback;
-import com.technology.jep.jepria.client.async.TypingTimeoutAsyncCallback;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
@@ -105,16 +104,15 @@ public class BatchDetailFormPresenter<E extends BatchEventBus, S extends BatchSe
       moduleComboBoxField.setLoadingImage(true);
       fields.setFieldEnabled(MODULE_ID, false);
       
-      service.getModule(new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(moduleComboBoxField)) {
-        public void onSuccessLoad(List<JepOption> result) {
-          
+      service.getModule(new JepAsyncCallback<List<JepOption>>() {
+        
+        public void onSuccess(List<JepOption> result) {
           moduleComboBoxField.setLoadingImage(false);
           fields.setFieldEnabled(MODULE_ID, true);
           fields.setFieldOptions(MODULE_ID, result);
         }
         
         public void onFailure(Throwable caught) {
-          
           moduleComboBoxField.setLoadingImage(false);
           fields.setFieldOptions(MODULE_ID, new ArrayList<JepOption>());
           super.onFailure(caught);
