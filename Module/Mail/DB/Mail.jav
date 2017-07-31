@@ -10,9 +10,11 @@ import java.util.Properties;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.sql.*;
 import javax.activation.*;
 import javax.mail.*;
 import javax.mail.internet.*;
+import oracle.jdbc.*;
 import oracle.jdbc.driver.*;
 import oracle.sql.*;
 import com.technology.oramake.mail.orautil.ReaderInputStream;
@@ -60,14 +62,18 @@ public class Mail
    **/
   static private Properties systemProperties = null;
 
+  /* ivar: internalServerConnection
+   * Подключение к текущей БД. Initialized in the static initialization block.
+   */
+  private static Connection internalServerConnection = null;
 
   // Nested class that implements a DataSource.
   static class CLOBDataSource implements DataSource
   {
-    private CLOB   data;
+    private Clob   data;
     private String type;
 
-    CLOBDataSource( CLOB data, String type)
+    CLOBDataSource( Clob data, String type)
     {
       this.type = type;
       this.data = data;
@@ -109,10 +115,10 @@ public class Mail
   // Nested class that implements a DataSource.
   static class BLOBDataSource implements DataSource
   {
-    private BLOB   data;
+    private Blob   data;
     private String type;
 
-    BLOBDataSource(BLOB data, String type)
+    BLOBDataSource(Blob data, String type)
     {
         this.type = type;
         this.data = data;
@@ -305,7 +311,7 @@ makeMessage(
   , String recipient
   , String copyRecipient
   , String subject
-  , oracle.sql.CLOB messageText
+  , Clob messageText
   , boolean isMultipart
   , boolean isHTML
 )
@@ -364,7 +370,7 @@ addAttachment(
   Multipart mp
   , String fileName
   , String contentType
-  , oracle.sql.BLOB data
+  , Blob data
   , boolean isImageContent
 )
 throws java.lang.Exception
@@ -397,7 +403,7 @@ send(
   , String recipient
   , String copyRecipient
   , String subject
-  , oracle.sql.CLOB messageText
+  , Clob messageText
   , String attachmentFileName
   , String attachmentType
   , oracle.sql.BLOB attachmentData
@@ -1508,7 +1514,7 @@ try
       "Dublicate message text detected."
     );
   }
-                                        //Пишем в CLOB
+  //Пишем в CLOB
   java.io.Writer writer = messageText.getCharacterOutputStream();
   writer.write( (String) p.getContent());
   writer.flush();
@@ -1729,36 +1735,40 @@ throws java.lang.Exception
 {
 try
 {
-  Integer isLock = null;
-  #sql {
-    declare
-      messageId ml_message.message_id%type := :messageId;
-    begin
-      select
-        ms.message_id
-      into messageId
-      from
-        ml_message ms
-      where
-        ms.message_id = messageId
-        and ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode
-      for update nowait;
-      :OUT isLock := 1;
-    exception
-      when NO_DATA_FOUND then
-        null;
-      when others then
-        if SQLCODE <> pkg_Error.ResourceBusyNowait then
-          raise_application_error(
-            pkg_Error.ErrorStackInfo
-            , 'Error during lock message ('
-              || ' message_id=' || to_char( messageId)
-              || ').'
-            , true
-          );
-        end if;
-    end;
-  };
+  CallableStatement statement = internalServerConnection.prepareCall(
+  " declare\n"
++ "   messageId ml_message.message_id%type := ?;\n"
++ " begin\n"
++ "   select\n"
++ "     ms.message_id\n"
++ "   into messageId\n"
++ "   from\n"
++ "     ml_message ms\n"
++ "   where\n"
++ "     ms.message_id = messageId\n"
++ "     and ms.message_state_code = pkg_Mail.WaitSend_MessageStateCode\n"
++ "   for update nowait;\n"
++ "   ? := 1;\n"
++ " exception\n"
++ "   when NO_DATA_FOUND then\n"
++ "     null;\n"
++ "   when others then\n"
++ "     if SQLCODE <> pkg_Error.ResourceBusyNowait then\n"
++ "       raise_application_error(\n"
++ "         pkg_Error.ErrorStackInfo\n"
++ "         , 'Error during lock message ('\n"
++ "           || ' message_id=' || to_char( messageId)\n"
++ "           || ').'\n"
++ "         , true\n"
++ "       );\n"
++ "     end if;\n"
++ " end;\n"
+  );
+  statement.setBigDecimal( 1, messageId);
+  statement.registerOutParameter( 2, Types.INTEGER);
+  statement.executeUpdate();
+  BigDecimal isLock = statement.getBigDecimal( 2);
+  statement.close();
   return ( isLock != null && isLock.intValue() != 0);
 }
   catch( Exception e) {
@@ -1794,49 +1804,62 @@ makeMessage(
 )
 throws java.lang.Exception
 {
-  // Получаем данные сообщения
-  String sender = null;
-  String recipient = null;
-  String copyRecipient = null;
-  String subject = null;
-  CLOB messageText = null;
-  BigDecimal isHTML = null;
-  #sql {
-    select
-      ms.sender
-      , ms.recipient
-      , ms.copy_recipient
-      , ms.subject
-      , ms.message_text
-      , ms.is_html
-    into
-      :sender
-      , :recipient
-      , :copyRecipient
-      , :subject
-      , :messageText
-      , :isHTML
-    from
-      ml_message ms
-    where
-      ms.message_id = :messageId
-  };
-  AttachIter attachIter;
-  #sql attachIter = {
-    select
-      atc.attachment_id as attachmentId
-      , atc.file_name as fileName
-      , atc.content_type as contentType
-      , atc.attachment_data as attachmentData
-      , atc.is_image_content_id as isImageContentId
-    from
-      ml_attachment atc
-    where
-      atc.message_id = :messageId
-    order by
-      atc.attachment_id
-  };
-  boolean isNextAttachment = attachIter.next();
+  CallableStatement statement = internalServerConnection.prepareCall(
+  " begin\n"
++ " select\n"
++ "   ms.sender\n"
++ "   , ms.recipient\n"
++ "   , ms.copy_recipient\n"
++ "   , ms.subject\n"
++ "   , ms.message_text\n"
++ "  , ms.is_html\n"
++ " into\n"
++ "   ?\n"
++ "   , ?\n"
++ "   , ?\n"
++ "   , ?\n"
++ "   , ?\n"
++ "   , ?\n"
++ " from\n"
++ "   ml_message ms\n"
++ " where\n"
++ "   ms.message_id = ?;\n"
++ " end;\n"
+  );
+  statement.registerOutParameter( 1, Types.VARCHAR);
+  statement.registerOutParameter( 2, Types.VARCHAR);
+  statement.registerOutParameter( 3, Types.VARCHAR);
+  statement.registerOutParameter( 4, Types.VARCHAR);
+  statement.registerOutParameter( 5, Types.CLOB);
+  statement.registerOutParameter( 6, Types.INTEGER);
+  statement.setBigDecimal( 7, messageId);
+  statement.executeUpdate();
+  // Получаем данные сообщени
+  String sender = statement.getString( 1);
+  String recipient = statement.getString( 2);
+  String copyRecipient = statement.getString( 3);
+  String subject = statement.getString( 4);
+  Clob messageText = statement.getClob( 5);
+  BigDecimal isHTML = statement.getBigDecimal( 6);
+  statement.close();
+  // Iterate through attachments
+  PreparedStatement attachmentStatement = internalServerConnection.prepareStatement(
+  " select\n"
++ "   atc.attachment_id as attachmentId\n"
++ "   , atc.file_name as fileName\n"
++ "   , atc.content_type as contentType\n"
++ "   , atc.attachment_data as attachmentData\n"
++ "   , atc.is_image_content_id as isImageContentId\n"
++ " from\n"
++ "   ml_attachment atc\n"
++ " where\n"
++ "    atc.message_id = ?\n"
++ " order by\n"
++ "  atc.attachment_id"
+  );
+  attachmentStatement.setBigDecimal( 1, messageId);
+  ResultSet resultSet = attachmentStatement.executeQuery();
+  boolean isNextAttachment = resultSet.next();
   boolean isMultipart = isNextAttachment;
   //Создаем сообщение
 
@@ -1858,18 +1881,18 @@ throws java.lang.Exception
   while ( isNextAttachment) {
     addAttachment(
       mp
-      , attachIter.fileName()
-      , attachIter.contentType()
-      , attachIter.attachmentData()
+      , resultSet.getString( "fileName")
+      , resultSet.getString( "contentType")
+      , resultSet.getBlob( "attachmentData")
       // Значение null приравнивается к false
-      , ( attachIter.isImageContentId() == null
+      , ( resultSet.getBigDecimal( "isImageContentId") == null
           ? false
-          : attachIter.isImageContentId().intValue() == 1
+          : resultSet.getBigDecimal( "isImageContentId").intValue() == 1
         )
     );
-    isNextAttachment = attachIter.next();
+    isNextAttachment = resultSet.next();
   }
-  attachIter.close();
+  attachmentStatement.close();
   return msg;
   // Не логируем исключение так как функция вызывается массово
 }
@@ -1956,6 +1979,18 @@ try
   }
 }
 
+static {
+  try {
+    OracleDriver ora = new OracleDriver();
+    internalServerConnection = ora.defaultConnection();
+  }
+  catch( SQLException e) {
+    throw new RuntimeException(
+      "Error while opening internal server connection"
+      + "\n" + e
+    );
+  }
+}
 
 }
 /
