@@ -10,5 +10,5 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
  
 @RemoteServiceRelativePath("ScheduleService")
 public interface ScheduleService extends SchedulerService {
-	
+  
 }

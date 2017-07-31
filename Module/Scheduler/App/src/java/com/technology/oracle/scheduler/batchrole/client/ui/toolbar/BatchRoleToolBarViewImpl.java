@@ -8,12 +8,12 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarViewImpl;
  
 public class BatchRoleToolBarViewImpl extends ToolBarViewImpl {
   
-	public BatchRoleToolBarViewImpl() {
-		super();
-		
-		removeItem(EDIT_BUTTON_ID);
-		
-		removeItem(SEARCH_BUTTON_ID);
-		removeItem(FIND_BUTTON_ID);
-	}
+  public BatchRoleToolBarViewImpl() {
+    super();
+    
+    removeItem(EDIT_BUTTON_ID);
+    
+    removeItem(SEARCH_BUTTON_ID);
+    removeItem(FIND_BUTTON_ID);
+  }
 }

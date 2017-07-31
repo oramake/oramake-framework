@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.rootlog.shared.service.RootLogServiceAsyn
 import com.technology.oracle.scheduler.rootlog.shared.record.RootLogRecordDefinition;
  
 public class RootLogClientFactoryImpl<E extends PlainEventBus, S extends RootLogServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget rootLogDetailFormView = new RootLogDetailFormViewImpl();
-	private static final IsWidget rootLogToolBarView = new RootLogToolBarViewImpl();
-	private static final IsWidget rootLogListFormView = new RootLogListFormViewImpl();
+  private static final IsWidget rootLogDetailFormView = new RootLogDetailFormViewImpl();
+  private static final IsWidget rootLogToolBarView = new RootLogToolBarViewImpl();
+  private static final IsWidget rootLogListFormView = new RootLogListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public RootLogClientFactoryImpl() {
-		super(RootLogRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public RootLogClientFactoryImpl() {
+    super(RootLogRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(RootLogClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(RootLogClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(ROOTLOG_MODULE_ID, place, this);
+  return new StandardModulePresenter(ROOTLOG_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new RootLogDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new RootLogDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new RootLogListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new RootLogListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return rootLogToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return rootLogToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return rootLogDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return rootLogDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return rootLogListFormView;
-	}
+  public IsWidget getListFormView() {
+    return rootLogListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(RootLogService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(RootLogService.class);
+    }
+    return dataService;
+  }
 }

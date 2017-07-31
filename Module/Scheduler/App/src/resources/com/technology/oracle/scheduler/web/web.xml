@@ -24,11 +24,7 @@
     <servlet-name>BatchServlet</servlet-name>
     <url-pattern>/Scheduler/BatchService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/BatchBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.batch.server.ejb.BatchLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>ScheduleServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.schedule.server.ScheduleServiceImpl</servlet-class>
@@ -37,11 +33,7 @@
     <servlet-name>ScheduleServlet</servlet-name>
     <url-pattern>/Scheduler/ScheduleService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/ScheduleBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.schedule.server.ejb.ScheduleLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>IntervalServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.interval.server.IntervalServiceImpl</servlet-class>
@@ -50,11 +42,7 @@
     <servlet-name>IntervalServlet</servlet-name>
     <url-pattern>/Scheduler/IntervalService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/IntervalBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.interval.server.ejb.IntervalLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>RootLogServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.rootlog.server.RootLogServiceImpl</servlet-class>
@@ -63,11 +51,7 @@
     <servlet-name>RootLogServlet</servlet-name>
     <url-pattern>/Scheduler/RootLogService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/RootLogBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.rootlog.server.ejb.RootLogLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>DetailedLogServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.detailedlog.server.DetailedLogServiceImpl</servlet-class>
@@ -76,11 +60,7 @@
     <servlet-name>DetailedLogServlet</servlet-name>
     <url-pattern>/Scheduler/DetailedLogService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/DetailedLogBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.detailedlog.server.ejb.DetailedLogLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>BatchRoleServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.batchrole.server.BatchRoleServiceImpl</servlet-class>
@@ -89,11 +69,7 @@
     <servlet-name>BatchRoleServlet</servlet-name>
     <url-pattern>/Scheduler/BatchRoleService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/BatchRoleBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.batchrole.server.ejb.BatchRoleLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>OptionServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.option.server.OptionServiceImpl</servlet-class>
@@ -102,11 +78,7 @@
     <servlet-name>OptionServlet</servlet-name>
     <url-pattern>/Scheduler/OptionService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/OptionBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.option.server.ejb.OptionLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>ValueServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.value.server.ValueServiceImpl</servlet-class>
@@ -115,11 +87,7 @@
     <servlet-name>ValueServlet</servlet-name>
     <url-pattern>/Scheduler/ValueService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/ValueBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.value.server.ejb.ValueLocal</local>
-  </ejb-local-ref>
+
   <servlet>
     <servlet-name>ModuleRolePrivilegeServlet</servlet-name>
     <servlet-class>com.technology.oracle.scheduler.moduleroleprivilege.server.ModuleRolePrivilegeServiceImpl</servlet-class>
@@ -128,24 +96,7 @@
     <servlet-name>ModuleRolePrivilegeServlet</servlet-name>
     <url-pattern>/Scheduler/ModuleRolePrivilegeService</url-pattern>
   </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/ModuleRolePrivilegeBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.oracle.scheduler.moduleroleprivilege.server.ejb.ModuleRolePrivilegeLocal</local>
-  </ejb-local-ref>
-  <servlet>
-    <servlet-name>VersionServlet</servlet-name>
-    <servlet-class>com.technology.jep.jepria.server.version.VersionServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>VersionServlet</servlet-name>
-    <url-pattern>/versionServlet</url-pattern>
-  </servlet-mapping>
-  <ejb-local-ref>
-    <ejb-ref-name>ejb/VersionBean</ejb-ref-name>
-    <ejb-ref-type>Session</ejb-ref-type>
-    <local>com.technology.jep.jepria.server.version.ejb.JepVersionLocal</local>
-  </ejb-local-ref>
+
   <welcome-file-list>
     <welcome-file>Scheduler.jsp</welcome-file>
   </welcome-file-list>
@@ -171,7 +122,6 @@
     <web-resource-collection>
       <web-resource-name>The application entry point</web-resource-name>
       <url-pattern>/*</url-pattern>
-      <http-method>*</http-method>
     </web-resource-collection>
     <auth-constraint>
       <role-name>SchShowBatch</role-name>
@@ -182,12 +132,12 @@
       <role-name>SchShowModuleRolePrivilege</role-name>
     </auth-constraint>
   </security-constraint>
-  <security-constraint>
-    <web-resource-collection>
-      <web-resource-name>Version Servlet entry point</web-resource-name>
-      <url-pattern>/versionServlet</url-pattern>
-      <http-method>GET</http-method>
-      <http-method>POST</http-method>
-    </web-resource-collection>
-  </security-constraint>
+
+  <login-config>
+    <auth-method>FORM</auth-method>
+    <form-login-config>
+      <form-login-page>/WEB-INF/security/Login.jsp</form-login-page>
+      <form-error-page>/WEB-INF/security/LoginError.jsp</form-error-page>
+    </form-login-config>
+  </login-config>
 </web-app>

@@ -20,27 +20,26 @@ import com.technology.jep.jepria.shared.service.JepMainServiceAsync;
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
  
 public class SchedulerMainModulePresenter<E extends MainEventBus, S extends JepMainServiceAsync>
-			extends MainModulePresenter<MainView, E, S, MainClientFactory<E, S>> {
+      extends MainModulePresenter<MainView, E, S, MainClientFactory<E, S>> {
  
-	public SchedulerMainModulePresenter(MainClientFactory<E, S> clientFactory) {
-		super(clientFactory);
-		addModuleProtection(BATCH_MODULE_ID, "SchShowBatch", CHECK_ROLES_BY_OR);
-		addModuleProtection(SCHEDULE_MODULE_ID, "SchShowSchedule", CHECK_ROLES_BY_OR);
-		addModuleProtection(INTERVAL_MODULE_ID, "SchShowSchedule", CHECK_ROLES_BY_OR);
-		addModuleProtection(ROOTLOG_MODULE_ID, "SchShowLog", CHECK_ROLES_BY_OR);
-		addModuleProtection(DETAILEDLOG_MODULE_ID, "SchShowLog", CHECK_ROLES_BY_OR);
-		addModuleProtection(BATCHROLE_MODULE_ID, "SchShowBatchRole", CHECK_ROLES_BY_OR);
-		addModuleProtection(OPTION_MODULE_ID, "SchShowBatchOption", CHECK_ROLES_BY_OR);
-		addModuleProtection(VALUE_MODULE_ID, "SchShowBatchOption", CHECK_ROLES_BY_OR);
-		addModuleProtection(MODULEROLEPRIVILEGE_MODULE_ID, "SchShowModuleRolePrivilege", CHECK_ROLES_BY_OR);
-	}
+  public SchedulerMainModulePresenter(MainClientFactory<E, S> clientFactory) {
+    super(clientFactory);
+    addModuleProtection(BATCH_MODULE_ID, "SchShowBatch", CHECK_ROLES_BY_OR);
+    addModuleProtection(SCHEDULE_MODULE_ID, "SchShowSchedule", CHECK_ROLES_BY_OR);
+    addModuleProtection(INTERVAL_MODULE_ID, "SchShowSchedule", CHECK_ROLES_BY_OR);
+    addModuleProtection(ROOTLOG_MODULE_ID, "SchShowLog", CHECK_ROLES_BY_OR);
+    addModuleProtection(DETAILEDLOG_MODULE_ID, "SchShowLog", CHECK_ROLES_BY_OR);
+    addModuleProtection(BATCHROLE_MODULE_ID, "SchShowBatchRole", CHECK_ROLES_BY_OR);
+    addModuleProtection(OPTION_MODULE_ID, "SchShowBatchOption", CHECK_ROLES_BY_OR);
+    addModuleProtection(VALUE_MODULE_ID, "SchShowBatchOption", CHECK_ROLES_BY_OR);
+    addModuleProtection(MODULEROLEPRIVILEGE_MODULE_ID, "SchShowModuleRolePrivilege", CHECK_ROLES_BY_OR);
+  }
  
-	@Override
-	public void onEnterModule(EnterModuleEvent event) {
-
-		//необходимо определить из какого модуля был переход для определения перехода из детального лога в обычный
-		SchedulerScope.instance.setPrevModuleId(SchedulerScope.instance.getCurrentModuleId());
-		SchedulerScope.instance.setCurrentModuleId(event.getModuleId());
-		super.onEnterModule(event);
-	}
+  @Override
+  public void onEnterModule(EnterModuleEvent event) {
+    //необходимо определить из какого модуля был переход для определения перехода из детального лога в обычный
+    SchedulerScope.INSTANCE.setPrevModuleId(SchedulerScope.INSTANCE.getCurrentModuleId());
+    SchedulerScope.INSTANCE.setCurrentModuleId(event.getModuleId());
+    super.onEnterModule(event);
+  }
 }

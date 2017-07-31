@@ -34,59 +34,59 @@ import com.technology.oracle.scheduler.main.client.widget.list.cell.BooleanCell;
  
 public class ValueListFormViewImpl extends ListFormViewImpl<GridManager> {
  
-	public ValueListFormViewImpl() {
-		super(new GridManager());
-		 
-		HeaderPanel gridPanel = new HeaderPanel();
-		setWidget(gridPanel);
+  public ValueListFormViewImpl() {
+    super(new GridManager());
+     
+    HeaderPanel gridPanel = new HeaderPanel();
+    setWidget(gridPanel);
  
-		gridPanel.setHeight("100%");
-		gridPanel.setWidth("100%");
+    gridPanel.setHeight("100%");
+    gridPanel.setWidth("100%");
  
-		JepGrid<JepRecord> grid = new JepGrid<JepRecord>(getGridId(), getColumnConfigurations(), true);
-		PagingStandardBar pagingBar = new PagingStandardBar(25);
+    JepGrid<JepRecord> grid = new JepGrid<JepRecord>(getGridId(), null, getColumnConfigurations(), true);
+    PagingStandardBar pagingBar = new PagingStandardBar(25);
  
-		gridPanel.setContentWidget(grid);
-		gridPanel.setFooterWidget(pagingBar);
+    gridPanel.setContentWidget(grid);
+    gridPanel.setFooterWidget(pagingBar);
  
-		list.setWidget(grid);
-		list.setPagingToolBar(pagingBar);
-	}
+    list.setWidget(grid);
+    list.setPagingToolBar(pagingBar);
+  }
 
-	private static DateTimeFormat defaultDateFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT);
-	private static DateTimeFormat dateWithTimeFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT+" "+DEFAULT_TIME_FORMAT);
-	private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");
+  private static DateTimeFormat defaultDateFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT);
+  private static DateTimeFormat dateWithTimeFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT+" "+DEFAULT_TIME_FORMAT);
+  private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");
  
-	private static List<JepColumn> getColumnConfigurations() {
-		final List<JepColumn> columnConfigurations = new ArrayList<JepColumn>();
-		columnConfigurations.add(new JepColumn(VALUE_ID, valueText.value_list_value_id(), 150, new NumberCell(defaultNumberFormatter)));
-		columnConfigurations.add(new JepColumn(OPTION_ID, valueText.value_list_option_id(), 150, new NumberCell(defaultNumberFormatter)));
-		columnConfigurations.add(BooleanColumnConfig(USED_VALUE_FLAG, valueText.value_list_used_value_flag(), 150));
-		columnConfigurations.add(BooleanColumnConfig(PROD_VALUE_FLAG, valueText.value_list_prod_value_flag(), 150));
-		columnConfigurations.add(new JepColumn(INSTANCE_NAME, valueText.value_list_instance_name(), 150));
-		columnConfigurations.add(new JepColumn(VALUE_TYPE_CODE_LIST, valueText.value_list_value_type_code(), 150));
-		columnConfigurations.add(new JepColumn(VALUE_TYPE_NAME, valueText.value_list_value_type_name(), 150));
-		columnConfigurations.add(new JepColumn(STRING_VALUE, valueText.value_list_string_value(), 150));
-		columnConfigurations.add(DateColumnConfig(DATE_VALUE, valueText.value_list_date_value(), 150));
-//		columnConfigurations.add(new JepColumn(NUMBER_VALUE, valueText.value_list_number_value(), 150));
-		columnConfigurations.add(new JepColumn(NUMBER_VALUE_LIST, valueText.value_list_number_value(), 150));
-		columnConfigurations.add(BooleanColumnConfig(ENCRYPTION_FLAG, valueText.value_list_encryption_flag(), 150));
-		columnConfigurations.add(new JepColumn(LIST_SEPARATOR, valueText.value_list_list_separator(), 150));
-		return columnConfigurations;
-	}
-	
-	private static JepColumn DateColumnConfig(String id, String name, int width) {
-		return new JepColumn(id, name, width, new DateCell(dateWithTimeFormatter));
-	}
-	 
-	private String getGridId() {
-		return this.getClass().toString().replace("class ", "");
-	}
+  private static List<JepColumn> getColumnConfigurations() {
+    final List<JepColumn> columnConfigurations = new ArrayList<JepColumn>();
+    columnConfigurations.add(new JepColumn(VALUE_ID, valueText.value_list_value_id(), 150, new NumberCell(defaultNumberFormatter)));
+    columnConfigurations.add(new JepColumn(OPTION_ID, valueText.value_list_option_id(), 150, new NumberCell(defaultNumberFormatter)));
+    columnConfigurations.add(BooleanColumnConfig(USED_VALUE_FLAG, valueText.value_list_used_value_flag(), 150));
+    columnConfigurations.add(BooleanColumnConfig(PROD_VALUE_FLAG, valueText.value_list_prod_value_flag(), 150));
+    columnConfigurations.add(new JepColumn(INSTANCE_NAME, valueText.value_list_instance_name(), 150));
+    columnConfigurations.add(new JepColumn(VALUE_TYPE_CODE_LIST, valueText.value_list_value_type_code(), 150));
+    columnConfigurations.add(new JepColumn(VALUE_TYPE_NAME, valueText.value_list_value_type_name(), 150));
+    columnConfigurations.add(new JepColumn(STRING_VALUE, valueText.value_list_string_value(), 150));
+    columnConfigurations.add(DateColumnConfig(DATE_VALUE, valueText.value_list_date_value(), 150));
+//    columnConfigurations.add(new JepColumn(NUMBER_VALUE, valueText.value_list_number_value(), 150));
+    columnConfigurations.add(new JepColumn(NUMBER_VALUE_LIST, valueText.value_list_number_value(), 150));
+    columnConfigurations.add(BooleanColumnConfig(ENCRYPTION_FLAG, valueText.value_list_encryption_flag(), 150));
+    columnConfigurations.add(new JepColumn(LIST_SEPARATOR, valueText.value_list_list_separator(), 150));
+    return columnConfigurations;
+  }
+  
+  private static JepColumn DateColumnConfig(String id, String name, int width) {
+    return new JepColumn(id, name, width, new DateCell(dateWithTimeFormatter));
+  }
+   
+  private String getGridId() {
+    return this.getClass().toString().replace("class ", "");
+  }
 
-	
-	private static JepColumn BooleanColumnConfig(String id, String name, int width) {
-		return new JepColumn(id, name, width, new BooleanCell());
-	}
+  
+  private static JepColumn BooleanColumnConfig(String id, String name, int width) {
+    return new JepColumn(id, name, width, new BooleanCell());
+  }
  
 }
 

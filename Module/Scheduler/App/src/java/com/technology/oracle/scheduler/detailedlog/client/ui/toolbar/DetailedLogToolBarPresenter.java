@@ -8,9 +8,9 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarView;
 import com.technology.oracle.scheduler.detailedlog.shared.service.DetailedLogServiceAsync;
  
 public class DetailedLogToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends DetailedLogServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F> {
+  extends ToolBarPresenter<V, E, S, F> {
  
- 	public DetailedLogToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+   public DetailedLogToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
 }

@@ -18,49 +18,49 @@ import com.technology.oracle.scheduler.batch.client.ui.eventbus.BatchEventBus;
 import com.technology.oracle.scheduler.batch.shared.service.BatchServiceAsync;
  
 public class BatchToolBarPresenter<V extends ToolBarView, E extends BatchEventBus, S extends BatchServiceAsync, F extends StandardClientFactory<E, S>> 
-	extends ToolBarPresenter<V, E, S, F> {
+  extends ToolBarPresenter<V, E, S, F> {
  
- 	public BatchToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+   public BatchToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
 
-	protected void bind() {
-		super.bind();
-		
-		bindButton(
-			ACTIVATE_BATCH, 
-			new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
-			new ClickHandler() {
-				public void onClick(ClickEvent event) {
-					eventBus.activateBatch();
-				}
-			});
-		
-		bindButton(
-			DEACTIVATE_BATCH, 
-			new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
-			new ClickHandler() {
-				public void onClick(ClickEvent event) {
-					eventBus.deactivateBatch();
-				}
-			});
-		
-		bindButton(
-			EXECUTE_BATCH, 
-			new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
-			new ClickHandler() {
-				public void onClick(ClickEvent event) {
-					eventBus.executeBatch();
-				}
-			});
-	 
-		bindButton(
-			ABORT_BATCH, 
-			new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
-			new ClickHandler() {
-				public void onClick(ClickEvent event) {
-					eventBus.abortBatch();
-				}
-			});
-	}
+  protected void bind() {
+    super.bind();
+    
+    bindButton(
+      ACTIVATE_BATCH, 
+      new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
+      new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          eventBus.activateBatch();
+        }
+      });
+    
+    bindButton(
+      DEACTIVATE_BATCH, 
+      new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
+      new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          eventBus.deactivateBatch();
+        }
+      });
+    
+    bindButton(
+      EXECUTE_BATCH, 
+      new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
+      new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          eventBus.executeBatch();
+        }
+      });
+   
+    bindButton(
+      ABORT_BATCH, 
+      new WorkstateEnum[]{SELECTED, VIEW_DETAILS},
+      new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          eventBus.abortBatch();
+        }
+      });
+  }
 }

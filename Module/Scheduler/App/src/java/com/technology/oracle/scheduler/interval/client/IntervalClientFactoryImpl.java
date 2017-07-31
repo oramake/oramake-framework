@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.interval.shared.service.IntervalServiceAs
 import com.technology.oracle.scheduler.interval.shared.record.IntervalRecordDefinition;
  
 public class IntervalClientFactoryImpl<E extends PlainEventBus, S extends IntervalServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget intervalDetailFormView = new IntervalDetailFormViewImpl();
-	private static final IsWidget intervalToolBarView = new IntervalToolBarViewImpl();
-	private static final IsWidget intervalListFormView = new IntervalListFormViewImpl();
+  private static final IsWidget intervalDetailFormView = new IntervalDetailFormViewImpl();
+  private static final IsWidget intervalToolBarView = new IntervalToolBarViewImpl();
+  private static final IsWidget intervalListFormView = new IntervalListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public IntervalClientFactoryImpl() {
-		super(IntervalRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public IntervalClientFactoryImpl() {
+    super(IntervalRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(IntervalClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(IntervalClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(INTERVAL_MODULE_ID, place, this);
+  return new StandardModulePresenter(INTERVAL_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new IntervalDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new IntervalDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new IntervalListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new IntervalListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return intervalToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return intervalToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return intervalDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return intervalDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return intervalListFormView;
-	}
+  public IsWidget getListFormView() {
+    return intervalListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(IntervalService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(IntervalService.class);
+    }
+    return dataService;
+  }
 }

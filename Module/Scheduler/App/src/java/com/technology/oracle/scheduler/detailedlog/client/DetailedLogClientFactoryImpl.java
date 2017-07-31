@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.detailedlog.shared.service.DetailedLogSer
 import com.technology.oracle.scheduler.detailedlog.shared.record.DetailedLogRecordDefinition;
  
 public class DetailedLogClientFactoryImpl<E extends PlainEventBus, S extends DetailedLogServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget detailedLogDetailFormView = new DetailedLogDetailFormViewImpl();
-	private static final IsWidget detailedLogToolBarView = new DetailedLogToolBarViewImpl();
-	private static final IsWidget detailedLogListFormView = new DetailedLogListFormViewImpl();
+  private static final IsWidget detailedLogDetailFormView = new DetailedLogDetailFormViewImpl();
+  private static final IsWidget detailedLogToolBarView = new DetailedLogToolBarViewImpl();
+  private static final IsWidget detailedLogListFormView = new DetailedLogListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public DetailedLogClientFactoryImpl() {
-		super(DetailedLogRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public DetailedLogClientFactoryImpl() {
+    super(DetailedLogRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(DetailedLogClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(DetailedLogClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(DETAILEDLOG_MODULE_ID, place, this);
+  return new StandardModulePresenter(DETAILEDLOG_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new DetailedLogDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new DetailedLogDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new DetailedLogListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new DetailedLogListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return detailedLogToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return detailedLogToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return detailedLogDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return detailedLogDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return detailedLogListFormView;
-	}
+  public IsWidget getListFormView() {
+    return detailedLogListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(DetailedLogService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(DetailedLogService.class);
+    }
+    return dataService;
+  }
 }

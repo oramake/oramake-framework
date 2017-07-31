@@ -7,22 +7,22 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 public class NoEscapeHtmlRenderer implements SafeHtmlRenderer<String> {
 
-	private static NoEscapeHtmlRenderer instance;
+  private static NoEscapeHtmlRenderer instance;
 
-	public static NoEscapeHtmlRenderer getInstance() {
-		if (instance == null) {
-			instance = new NoEscapeHtmlRenderer();
-		}
-		return instance;
-	}
+  public static NoEscapeHtmlRenderer getInstance() {
+    if (instance == null) {
+      instance = new NoEscapeHtmlRenderer();
+    }
+    return instance;
+  }
 
-	private NoEscapeHtmlRenderer() {}
+  private NoEscapeHtmlRenderer() {}
 
-	public SafeHtml render(String object) {
-		return (object == null) ? SafeHtmlUtils.EMPTY_SAFE_HTML : SafeHtmlUtils.fromSafeConstant(object);
-	}
+  public SafeHtml render(String object) {
+    return (object == null) ? SafeHtmlUtils.EMPTY_SAFE_HTML : SafeHtmlUtils.fromSafeConstant(object);
+  }
 
-	public void render(String object, SafeHtmlBuilder appendable) {
-		appendable.append(SafeHtmlUtils.fromSafeConstant(object));
-	}
+  public void render(String object, SafeHtmlBuilder appendable) {
+    appendable.append(SafeHtmlUtils.fromSafeConstant(object));
+  }
 }

@@ -7,7 +7,7 @@ import com.technology.oracle.scheduler.rootlog.shared.text.RootLogText;
  
 public class RootLogClientConstant extends RootLogConstant {
  
-	public static String[] scopeModuleIds = {ROOTLOG_MODULE_ID, DETAILEDLOG_MODULE_ID}; 
+  public static String[] scopeModuleIds = {ROOTLOG_MODULE_ID, DETAILEDLOG_MODULE_ID}; 
  
-	public static RootLogText rootLogText = (RootLogText) GWT.create(RootLogText.class);
+  public static RootLogText rootLogText = (RootLogText) GWT.create(RootLogText.class);
 }

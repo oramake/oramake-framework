@@ -1,13 +1,12 @@
 package com.technology.oracle.scheduler.main.shared.service;
  
-import com.technology.jep.jepria.shared.field.option.JepOption;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import java.util.List;
-import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.technology.jep.jepria.shared.field.option.JepOption;
  
-public interface SchedulerServiceAsync extends JepDataServiceAsync {
-	void getDataSource(AsyncCallback<List<JepOption>> callback);
-	void getModule(String dataSource, AsyncCallback<List<JepOption>> callback);
-	void getPrivilege(String dataSource, AsyncCallback<List<JepOption>> callback);
-	void getRole(String dataSource, String roleName, AsyncCallback<List<JepOption>> callback);
+public interface SchedulerServiceAsync extends DataSourceServiceAsync {
+  void getModule(AsyncCallback<List<JepOption>> callback);
+  void getPrivilege(AsyncCallback<List<JepOption>> callback);
+  void getRole(String roleName, AsyncCallback<List<JepOption>> callback);
 }

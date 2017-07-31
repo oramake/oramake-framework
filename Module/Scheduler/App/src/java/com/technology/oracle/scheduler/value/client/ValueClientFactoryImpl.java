@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.value.shared.service.ValueServiceAsync;
 import com.technology.oracle.scheduler.value.shared.record.ValueRecordDefinition;
  
 public class ValueClientFactoryImpl<E extends PlainEventBus, S extends ValueServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget valueDetailFormView = new ValueDetailFormViewImpl();
-	private static final IsWidget valueToolBarView = new ValueToolBarViewImpl();
-	private static final IsWidget valueListFormView = new ValueListFormViewImpl();
+  private static final IsWidget valueDetailFormView = new ValueDetailFormViewImpl();
+  private static final IsWidget valueToolBarView = new ValueToolBarViewImpl();
+  private static final IsWidget valueListFormView = new ValueListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public ValueClientFactoryImpl() {
-		super(ValueRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public ValueClientFactoryImpl() {
+    super(ValueRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(ValueClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(ValueClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(VALUE_MODULE_ID, place, this);
+  return new StandardModulePresenter(VALUE_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new ValueDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new ValueDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new ValueListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new ValueListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return valueToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return valueToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return valueDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return valueDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return valueListFormView;
-	}
+  public IsWidget getListFormView() {
+    return valueListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(ValueService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(ValueService.class);
+    }
+    return dataService;
+  }
 }

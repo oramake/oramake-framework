@@ -30,58 +30,58 @@ import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
 import com.technology.oracle.scheduler.option.shared.record.OptionRecordDefinition;
  
 public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget optionDetailFormView = new OptionDetailFormViewImpl();
-	private static final IsWidget optionToolBarView = new OptionToolBarViewImpl();
-	private static final IsWidget optionListFormView = new OptionListFormViewImpl();
+  private static final IsWidget optionDetailFormView = new OptionDetailFormViewImpl();
+  private static final IsWidget optionToolBarView = new OptionToolBarViewImpl();
+  private static final IsWidget optionListFormView = new OptionListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public OptionClientFactoryImpl() {
-		super(OptionRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public OptionClientFactoryImpl() {
+    super(OptionRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(OptionClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(OptionClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
-	public JepPresenter createPlainModulePresenter(Place place) {
-		return new OptionFormContainerPresenter(place, this);
-	}
+  public JepPresenter createPlainModulePresenter(Place place) {
+    return new OptionFormContainerPresenter(place, this);
+  }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new OptionDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new OptionDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new OptionListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new OptionListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new OptionToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new OptionToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return optionToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return optionToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return optionDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return optionDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return optionListFormView;
-	}
+  public IsWidget getListFormView() {
+    return optionListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(OptionService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(OptionService.class);
+    }
+    return dataService;
+  }
 }

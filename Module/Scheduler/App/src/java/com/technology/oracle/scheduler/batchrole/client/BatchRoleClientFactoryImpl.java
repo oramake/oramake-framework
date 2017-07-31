@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.batchrole.shared.service.BatchRoleService
 import com.technology.oracle.scheduler.batchrole.shared.record.BatchRoleRecordDefinition;
  
 public class BatchRoleClientFactoryImpl<E extends PlainEventBus, S extends BatchRoleServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget batchRoleDetailFormView = new BatchRoleDetailFormViewImpl();
-	private static final IsWidget batchRoleToolBarView = new BatchRoleToolBarViewImpl();
-	private static final IsWidget batchRoleListFormView = new BatchRoleListFormViewImpl();
+  private static final IsWidget batchRoleDetailFormView = new BatchRoleDetailFormViewImpl();
+  private static final IsWidget batchRoleToolBarView = new BatchRoleToolBarViewImpl();
+  private static final IsWidget batchRoleListFormView = new BatchRoleListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public BatchRoleClientFactoryImpl() {
-		super(BatchRoleRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public BatchRoleClientFactoryImpl() {
+    super(BatchRoleRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(BatchRoleClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(BatchRoleClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(BATCHROLE_MODULE_ID, place, this);
+  return new StandardModulePresenter(BATCHROLE_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new BatchRoleDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new BatchRoleDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new BatchRoleListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new BatchRoleListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return batchRoleToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return batchRoleToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return batchRoleDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return batchRoleDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return batchRoleListFormView;
-	}
+  public IsWidget getListFormView() {
+    return batchRoleListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(BatchRoleService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(BatchRoleService.class);
+    }
+    return dataService;
+  }
 }

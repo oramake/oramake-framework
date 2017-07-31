@@ -12,19 +12,19 @@ import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
 import com.technology.oracle.scheduler.detailedlog.shared.service.DetailedLogServiceAsync;
  
 public class DetailedLogDetailFormPresenter<E extends PlainEventBus, S extends DetailedLogServiceAsync> 
-		extends DetailFormPresenter<DetailedLogDetailFormView, E, S, StandardClientFactory<E, S>> { 
+    extends DetailFormPresenter<DetailedLogDetailFormView, E, S, StandardClientFactory<E, S>> { 
  
-	public DetailedLogDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
-		super(place, clientFactory);
-	}
+  public DetailedLogDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
+    super(place, clientFactory);
+  }
  
-	/* public void bind() {
-		super.bind();
-		// Здесь размещается код связывания presenter-а и view 
-	}
-	*/ 
+  /* public void bind() {
+    super.bind();
+    // Здесь размещается код связывания presenter-а и view 
+  }
+  */ 
  
-	protected void adjustToWorkstate(WorkstateEnum workstate) {
-	}
+  protected void adjustToWorkstate(WorkstateEnum workstate) {
+  }
  
 }

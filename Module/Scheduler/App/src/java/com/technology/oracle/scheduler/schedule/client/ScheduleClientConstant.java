@@ -7,7 +7,7 @@ import com.technology.oracle.scheduler.schedule.shared.text.ScheduleText;
  
 public class ScheduleClientConstant extends ScheduleConstant {
  
-	public static String[] scopeModuleIds = {SCHEDULE_MODULE_ID, INTERVAL_MODULE_ID}; 
+  public static String[] scopeModuleIds = {SCHEDULE_MODULE_ID, INTERVAL_MODULE_ID}; 
  
-	public static ScheduleText scheduleText = (ScheduleText) GWT.create(ScheduleText.class);
+  public static ScheduleText scheduleText = (ScheduleText) GWT.create(ScheduleText.class);
 }

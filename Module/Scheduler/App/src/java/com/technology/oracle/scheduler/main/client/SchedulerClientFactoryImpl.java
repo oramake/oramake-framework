@@ -8,11 +8,12 @@ import static com.technology.oracle.scheduler.main.client.SchedulerClientConstan
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.OPTION_MODULE_ID;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.ROOTLOG_MODULE_ID;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.SCHEDULE_MODULE_ID;
-import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.SchedulerText;
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.VALUE_MODULE_ID;
+import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.schedulerText;
 
 import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.core.client.GWT;
+import com.technology.jep.jepria.client.ModuleItem;
 import com.technology.jep.jepria.client.async.LoadAsyncCallback;
 import com.technology.jep.jepria.client.async.LoadPlainClientFactory;
 import com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus;
@@ -32,113 +33,105 @@ import com.technology.oracle.scheduler.option.client.OptionClientFactoryImpl;
 import com.technology.oracle.scheduler.rootlog.client.RootLogClientFactoryImpl;
 import com.technology.oracle.scheduler.schedule.client.ScheduleClientFactoryImpl;
 import com.technology.oracle.scheduler.value.client.ValueClientFactoryImpl;
- 
+
+@SuppressWarnings("unchecked")
 public class SchedulerClientFactoryImpl<E extends MainEventBus, S extends JepMainServiceAsync>
-	extends MainClientFactoryImpl<E, S>
-		implements MainClientFactory<E, S> {
-	public static MainClientFactory<MainEventBus, JepMainServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(SchedulerClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  extends MainClientFactoryImpl<E, S>
+    implements MainClientFactory<E, S> {
+  
+  public static MainClientFactory<MainEventBus, JepMainServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(SchedulerClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
-	private SchedulerClientFactoryImpl() {
-		super(new String[]{
-			BATCH_MODULE_ID
-			, SCHEDULE_MODULE_ID
-			, INTERVAL_MODULE_ID
-			, ROOTLOG_MODULE_ID
-			, DETAILEDLOG_MODULE_ID
-			, BATCHROLE_MODULE_ID
-			, OPTION_MODULE_ID
-			, VALUE_MODULE_ID
-			, MODULEROLEPRIVILEGE_MODULE_ID
-		},new String[]{
-			SchedulerText.submodule_batch_title()
-			, SchedulerText.submodule_schedule_title()
-			, SchedulerText.submodule_interval_title()
-			, SchedulerText.submodule_rootlog_title()
-			, SchedulerText.submodule_detailedlog_title()
-			, SchedulerText.submodule_batchrole_title()
-			, SchedulerText.submodule_option_title()
-			, SchedulerText.submodule_value_title()
-			, SchedulerText.submodule_moduleroleprivilege_title()
-		});
+  private SchedulerClientFactoryImpl() {
+    super(
+        new ModuleItem(BATCH_MODULE_ID, schedulerText.submodule_batch_title())
+        , new ModuleItem(SCHEDULE_MODULE_ID, schedulerText.submodule_schedule_title())
+        , new ModuleItem(INTERVAL_MODULE_ID, schedulerText.submodule_interval_title())
+        , new ModuleItem(ROOTLOG_MODULE_ID, schedulerText.submodule_rootlog_title())
+        , new ModuleItem(DETAILEDLOG_MODULE_ID, schedulerText.submodule_detailedlog_title())
+        , new ModuleItem(BATCHROLE_MODULE_ID, schedulerText.submodule_batchrole_title())
+        , new ModuleItem(OPTION_MODULE_ID, schedulerText.submodule_option_title())
+        , new ModuleItem(VALUE_MODULE_ID, schedulerText.submodule_value_title())
+        , new ModuleItem(MODULEROLEPRIVILEGE_MODULE_ID, schedulerText.submodule_moduleroleprivilege_title())
+    );
  
-		initActivityMappers(this);
-	}
-	
-	 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Activity createMainModulePresenter() {
-		return new SchedulerMainModulePresenter(this);
-	}
+    initActivityMappers(this);
+  }
+  
+   
+  @SuppressWarnings({"rawtypes" })
+  @Override
+  public Activity createMainModulePresenter() {
+    return new SchedulerMainModulePresenter(this);
+  }
  
-	public void getPlainClientFactory(String moduleId, final LoadAsyncCallback<PlainClientFactory<PlainEventBus, JepDataServiceAsync>> callback) {
-		if(BATCH_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return BatchClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(SCHEDULE_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return ScheduleClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(INTERVAL_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return IntervalClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(ROOTLOG_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return RootLogClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(DETAILEDLOG_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return DetailedLogClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(BATCHROLE_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return BatchRoleClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(OPTION_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return OptionClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(VALUE_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return ValueClientFactoryImpl.getInstance();
-				}
-			});
-		}
-		else if(MODULEROLEPRIVILEGE_MODULE_ID.equals(moduleId)) {
-			GWT.runAsync(new LoadPlainClientFactory(callback) {
-				public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
-					return ModuleRolePrivilegeClientFactoryImpl.getInstance();
-				}
-			});
-		}
-	}
+  public void getPlainClientFactory(String moduleId, final LoadAsyncCallback<PlainClientFactory<PlainEventBus, JepDataServiceAsync>> callback) {
+    if(BATCH_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return BatchClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(SCHEDULE_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return ScheduleClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(INTERVAL_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return IntervalClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(ROOTLOG_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return RootLogClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(DETAILEDLOG_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return DetailedLogClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(BATCHROLE_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return BatchRoleClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(OPTION_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return OptionClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(VALUE_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return ValueClientFactoryImpl.getInstance();
+        }
+      });
+    }
+    else if(MODULEROLEPRIVILEGE_MODULE_ID.equals(moduleId)) {
+      GWT.runAsync(new LoadPlainClientFactory(callback) {
+        public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getPlainClientFactory() {
+          return ModuleRolePrivilegeClientFactoryImpl.getInstance();
+        }
+      });
+    }
+  }
 }

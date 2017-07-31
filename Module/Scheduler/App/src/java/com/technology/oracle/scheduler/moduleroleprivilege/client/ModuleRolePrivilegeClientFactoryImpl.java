@@ -27,58 +27,58 @@ import com.technology.oracle.scheduler.moduleroleprivilege.shared.service.Module
 import com.technology.oracle.scheduler.moduleroleprivilege.shared.record.ModuleRolePrivilegeRecordDefinition;
  
 public class ModuleRolePrivilegeClientFactoryImpl<E extends PlainEventBus, S extends ModuleRolePrivilegeServiceAsync>
-	extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget moduleRolePrivilegeDetailFormView = new ModuleRolePrivilegeDetailFormViewImpl();
-	private static final IsWidget moduleRolePrivilegeToolBarView = new ModuleRolePrivilegeToolBarViewImpl();
-	private static final IsWidget moduleRolePrivilegeListFormView = new ModuleRolePrivilegeListFormViewImpl();
+  private static final IsWidget moduleRolePrivilegeDetailFormView = new ModuleRolePrivilegeDetailFormViewImpl();
+  private static final IsWidget moduleRolePrivilegeToolBarView = new ModuleRolePrivilegeToolBarViewImpl();
+  private static final IsWidget moduleRolePrivilegeListFormView = new ModuleRolePrivilegeListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
  
-	public ModuleRolePrivilegeClientFactoryImpl() {
-		super(ModuleRolePrivilegeRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public ModuleRolePrivilegeClientFactoryImpl() {
+    super(ModuleRolePrivilegeRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(ModuleRolePrivilegeClientFactoryImpl.class);
-		}
-		return instance;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(ModuleRolePrivilegeClientFactoryImpl.class);
+    }
+    return instance;
+  }
  
 public JepPresenter createPlainModulePresenter(Place place) {
-	return new StandardModulePresenter(MODULEROLEPRIVILEGE_MODULE_ID, place, this);
+  return new StandardModulePresenter(MODULEROLEPRIVILEGE_MODULE_ID, place, this);
 }
  
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new ModuleRolePrivilegeDetailFormPresenter(place, this);
-	}
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new ModuleRolePrivilegeDetailFormPresenter(place, this);
+  }
  
-	public JepPresenter createListFormPresenter(Place place) {
-		return new ModuleRolePrivilegeListFormPresenter(place, this);
-	}
+  public JepPresenter createListFormPresenter(Place place) {
+    return new ModuleRolePrivilegeListFormPresenter(place, this);
+  }
  
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new ToolBarPresenter(place, this);
-	}
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new ToolBarPresenter(place, this);
+  }
  
-	public IsWidget getToolBarView() {
-		return moduleRolePrivilegeToolBarView;
-	}
+  public IsWidget getToolBarView() {
+    return moduleRolePrivilegeToolBarView;
+  }
  
-	public IsWidget getDetailFormView() {
-		return moduleRolePrivilegeDetailFormView;
-	}
+  public IsWidget getDetailFormView() {
+    return moduleRolePrivilegeDetailFormView;
+  }
  
-	public IsWidget getListFormView() {
-		return moduleRolePrivilegeListFormView;
-	}
+  public IsWidget getListFormView() {
+    return moduleRolePrivilegeListFormView;
+  }
  
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(ModuleRolePrivilegeService.class);
-		}
-		return dataService;
-	}
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(ModuleRolePrivilegeService.class);
+    }
+    return dataService;
+  }
 }

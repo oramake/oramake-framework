@@ -22,78 +22,75 @@ import com.technology.oracle.scheduler.detailedlog.shared.service.DetailedLogSer
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 
 public class DetailedLogListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends DetailedLogServiceAsync, F extends StandardClientFactory<E, S>> 
-	extends ListFormPresenter<V, E, S, F> { 
+    extends ListFormPresenter<V, E, S, F> { 
  
-	public DetailedLogListFormPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+  public DetailedLogListFormPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
 
-	@Override
-	public void rowDoubleClick(JepEvent event) {
-
-	}
+  @Override
+  public void onRowDoubleClick(JepEvent event) {}
  
-	@Override
-	public void onSearch(SearchEvent event) {
-		
-		searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
-		JepRecord record = searchTemplate.getTemplateRecord();
-		record.set(DATA_SOURCE, SchedulerScope.instance.getDataSource());
-		pagingConfig = null;
-		super.onSearch(event);
-	};
-	
-	private PagingConfig pagingConfig = null;
+  @Override
+  public void onSearch(SearchEvent event) {
+    //TODO: для чего этот код?
+    searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
+    pagingConfig = null;
+    super.onSearch(event);
+  };
+  
+  private PagingConfig pagingConfig = null;
 
-	@Override
-	public void onSort(SortEvent event) {
-		pagingConfig = null;
-		super.onSort(event);
-	}
-	
-	@Override
-	public void onPaging(PagingEvent event) {
-		pagingConfig = event.getPagingConfig();
-		super.onPaging(event);
-	}
-	
-	/**
-	 * Обработчик события обновления списка.
-	 *
-	 * @param event событие обновления списка
-	 */
-	@Override
-	public void onRefresh(RefreshEvent event) {
-		// Важно при обновлении списка менять рабочее состояние на VIEW_LIST.
-		placeController.goTo(new JepViewListPlace()); 
-		// Если существует сохраненный шаблон, по которому нужно обновлять список, то ...
-		if(searchTemplate != null) {
-			list.clear(); // Очистим список от предыдущего содержимого (чтобы не вводить в заблуждение пользователя).
-			list.mask(JepTexts.loadingPanel_dataLoading()); // Выставим индикатор "Загрузка данных...".
-			searchTemplate.setListUID(listUID); // Выставим идентификатор получаемого списка данных.
-			searchTemplate.setPageSize(list.getPageSize()); // Выставим размер получаемой страницы набора данных.
-			JepAsyncCallback<PagingResult<JepRecord>> callback = new JepAsyncCallback<PagingResult<JepRecord>>() {
-				public void onSuccess(final PagingResult<JepRecord> pagingResult) {
+  @Override
+  public void onSort(SortEvent event) {
+    pagingConfig = null;
+    super.onSort(event);
+  }
+  
+  @Override
+  public void onPaging(PagingEvent event) {
+    pagingConfig = event.getPagingConfig();
+    super.onPaging(event);
+  }
+  
+  /**
+   * Обработчик события обновления списка.
+   *
+   * @param event событие обновления списка
+   */
+  @Override
+  public void onRefresh(RefreshEvent event) {
+    // Важно при обновлении списка менять рабочее состояние на VIEW_LIST.
+    placeController.goTo(new JepViewListPlace()); 
+    // Если существует сохраненный шаблон, по которому нужно обновлять список, то ...
+    if(searchTemplate != null) {
+      list.clear(); // Очистим список от предыдущего содержимого (чтобы не вводить в заблуждение пользователя).
+      list.mask(JepTexts.loadingPanel_dataLoading()); // Выставим индикатор "Загрузка данных...".
+      searchTemplate.setListUID(listUID); // Выставим идентификатор получаемого списка данных.
+      searchTemplate.setPageSize(list.getPageSize()); // Выставим размер получаемой страницы набора данных.
+      JepAsyncCallback<PagingResult<JepRecord>> callback = new JepAsyncCallback<PagingResult<JepRecord>>() {
+        
+        @Override
+        public void onSuccess(final PagingResult<JepRecord> pagingResult) {
+          list.set(pagingResult); // Установим в список полученные от сервиса данные.
+          list.unmask(); // Скроем индикатор "Загрузка данных...".
+        }
 
-					list.set(pagingResult); // Установим в список полученные от сервиса данные.
-					list.unmask(); // Скроем индикатор "Загрузка данных...".
-					processRefreshTimeout();
-				}
+        @Override
+        public void onFailure(Throwable caught) {
+          list.unmask(); // Скроем индикатор "Загрузка данных...".
+          super.onFailure(caught);
+        }
 
-				public void onFailure(Throwable caught) {
-					list.unmask(); // Скроем индикатор "Загрузка данных...".
-					super.onFailure(caught);
-				}
-
-			};
-			
-			if(pagingConfig != null){
-				
-				clientFactory.getService().paging(pagingConfig, callback);
-			}else{
-				
-				clientFactory.getService().find(searchTemplate, callback);
-			}
-		}
-	}
+      };
+      
+      if(pagingConfig != null) {
+        
+        clientFactory.getService().paging(pagingConfig, callback);
+      } else {
+        
+        clientFactory.getService().find(searchTemplate, callback);
+      }
+    }
+  }
 }

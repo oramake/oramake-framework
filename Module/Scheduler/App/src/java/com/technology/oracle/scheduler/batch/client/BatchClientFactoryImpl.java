@@ -21,72 +21,72 @@ import com.technology.oracle.scheduler.batch.shared.service.BatchService;
 import com.technology.oracle.scheduler.batch.shared.service.BatchServiceAsync;
  
 public class BatchClientFactoryImpl<E extends BatchEventBus, S extends BatchServiceAsync>
-		extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+    extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
  
-	private static final IsWidget batchDetailFormView = new BatchDetailFormViewImpl();
-	private static final IsWidget batchToolBarView = new BatchToolBarViewImpl();
-	private static final IsWidget batchListFormView = new BatchListFormViewImpl();
+  private static final IsWidget batchDetailFormView = new BatchDetailFormViewImpl();
+  private static final IsWidget batchToolBarView = new BatchToolBarViewImpl();
+  private static final IsWidget batchListFormView = new BatchListFormViewImpl();
  
-	public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
-	
-	public BatchClientFactoryImpl() {
-		super(BatchRecordDefinition.instance);
-		initActivityMappers(this);
-	}
+  public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
+  
+  public BatchClientFactoryImpl() {
+    super(BatchRecordDefinition.instance);
+    initActivityMappers(this);
+  }
  
-	static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
-		if(instance == null) {
-			instance = GWT.create(BatchClientFactoryImpl.class);
-		}
-		return instance;
-	}
-	
-	public S getService() {
-		if(dataService == null) {
-			dataService = (S) GWT.create(BatchService.class);
-		}
-		return dataService;
-	}
-	
-	@Override
-	public E getEventBus() {
-		if(eventBus == null) {
-			eventBus = new BatchEventBus(this);
-		}
-		return (E) eventBus;
-	}	
-	
-	public IsWidget getToolBarView() {
-		return batchToolBarView;
-	}
+  static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
+    if(instance == null) {
+      instance = GWT.create(BatchClientFactoryImpl.class);
+    }
+    return instance;
+  }
+  
+  public S getService() {
+    if(dataService == null) {
+      dataService = (S) GWT.create(BatchService.class);
+    }
+    return dataService;
+  }
+  
+  @Override
+  public E getEventBus() {
+    if(eventBus == null) {
+      eventBus = new BatchEventBus(this);
+    }
+    return (E) eventBus;
+  }  
+  
+  public IsWidget getToolBarView() {
+    return batchToolBarView;
+  }
 
-	@Override
-	public IsWidget getDetailFormView() {
-		return batchDetailFormView;
-	}
+  @Override
+  public IsWidget getDetailFormView() {
+    return batchDetailFormView;
+  }
 
-	@Override
-	public IsWidget getListFormView() {
-		return batchListFormView;
-	}
-	
-	@Override
-	public JepPresenter createToolBarPresenter(Place place) {
-		return new BatchToolBarPresenter(place, this);
-	}
+  @Override
+  public IsWidget getListFormView() {
+    return batchListFormView;
+  }
+  
+  @Override
+  public JepPresenter createToolBarPresenter(Place place) {
+    return new BatchToolBarPresenter(place, this);
+  }
 
-	@Override
-	public JepPresenter createDetailFormPresenter(Place place) {
-		return new BatchDetailFormPresenter(place, this);
-	}
+  @Override
+  public JepPresenter createDetailFormPresenter(Place place) {
+    return new BatchDetailFormPresenter(place, this);
+  }
 
-	@Override
-	public JepPresenter createListFormPresenter(Place place) {
-		return new BatchListFormPresenter(place, this);
-	}
+  @Override
+  public JepPresenter createListFormPresenter(Place place) {
+    return new BatchListFormPresenter(place, this);
+  }
 
-	@Override
-	public JepPresenter createPlainModulePresenter(Place place) {
-		return new BatchFormContainerPresenter(place, this);
-	}
+  @Override
+  public JepPresenter createPlainModulePresenter(Place place) {
+    return new BatchFormContainerPresenter(place, this);
+  }
 }

@@ -14,16 +14,15 @@ import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.BATCH_MODULE_ID;
  
 public class BatchFormContainerPresenter<E extends BatchEventBus, S extends BatchServiceAsync, F extends StandardClientFactory<E,S>> 
-	extends StandardModulePresenter<StandardModuleView, E, S, F> {
-	
-	public BatchFormContainerPresenter(Place place, F clientFactory) {
-		super(BATCH_MODULE_ID, place, clientFactory);
-	}
-	
-	public void onSetCurrentRecord(SetCurrentRecordEvent event) {
-
-		JepRecord currentRecord = event.getCurrentRecord();
-		BatchScope.instance.setBatchId((Integer) currentRecord.get(BATCH_ID));
-		super.onSetCurrentRecord(event);
-	} 
+  extends StandardModulePresenter<StandardModuleView, E, S, F> {
+  
+  public BatchFormContainerPresenter(Place place, F clientFactory) {
+    super(BATCH_MODULE_ID, place, clientFactory);
+  }
+  
+  public void onSetCurrentRecord(SetCurrentRecordEvent event) {
+    JepRecord currentRecord = event.getCurrentRecord();
+    BatchScope.instance.setBatchId((Integer) currentRecord.get(BATCH_ID));
+    super.onSetCurrentRecord(event);
+  } 
 }

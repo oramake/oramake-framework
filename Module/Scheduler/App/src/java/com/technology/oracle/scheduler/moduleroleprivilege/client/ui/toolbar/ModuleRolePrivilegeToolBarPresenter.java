@@ -8,9 +8,9 @@ import com.technology.jep.jepria.client.ui.toolbar.ToolBarView;
 import com.technology.oracle.scheduler.moduleroleprivilege.shared.service.ModuleRolePrivilegeServiceAsync;
  
 public class ModuleRolePrivilegeToolBarPresenter<V extends ToolBarView, E extends PlainEventBus, S extends ModuleRolePrivilegeServiceAsync, F extends StandardClientFactory<E, S>>
-	extends ToolBarPresenter<V, E, S, F> {
+  extends ToolBarPresenter<V, E, S, F> {
  
- 	public ModuleRolePrivilegeToolBarPresenter(Place place, F clientFactory) {
-		super(place, clientFactory);
-	}
+   public ModuleRolePrivilegeToolBarPresenter(Place place, F clientFactory) {
+    super(place, clientFactory);
+  }
 }
