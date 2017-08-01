@@ -167,14 +167,17 @@ logDebug(
 )
 throws SQLException
 {
-  #sql {
-    begin
-      pkg_MailInternal.LogJava(
-        levelCode => pkg_Logging.Debug_LevelCode
-        , messageText => :messageText
-      );
-    end;
-  };
+  PreparedStatement statement = internalServerConnection.prepareStatement(
+  " begin\n"
++ "   pkg_MailInternal.logJava(\n"
++ "     levelCode   => pkg_Logging.Debug_LevelCode\n"
++ "   , messageText => ?\n"
++ "   );\n"
++ " end;\n"
+  );
+  statement.setString( 1, messageText);
+  statement.executeUpdate();
+  statement.close();
 }
 
 /** func: logDebug
@@ -189,14 +192,17 @@ logTrace(
 )
 throws SQLException
 {
-  #sql {
-    begin
-      pkg_MailInternal.LogJava(
-        levelCode => pkg_Logging.Trace_LevelCode
-        , messageText => :messageText
-      );
-    end;
-  };
+  PreparedStatement statement = internalServerConnection.prepareStatement(
+  " begin\n"
++ "   pkg_MailInternal.logJava(\n"
++ "     levelCode   => pkg_Logging.Trace_LevelCode\n"
++ "   , messageText => ?\n"
++ "   );\n"
++ " end;\n"
+  );
+  statement.setString( 1, messageText);
+  statement.executeUpdate();
+  statement.close();
 }
 
 /** func: errorStack
@@ -244,8 +250,7 @@ throws SQLException
   {
     if ( systemProperties == null) {
       systemProperties = System.getProperties();
-                                        //Устанавливаем правильное название
-                                        //для Windows-кодировки
+      // Устанавливаем правильное название для Windows-кодировки
       if ( systemProperties.getProperty( "file.encoding")
             .compareToIgnoreCase( "cp1251") == 0
           )
@@ -779,11 +784,14 @@ throws
     );
     messageUid = getMessageUId( msg);
     logDebug( "processFetchError: messageUid=" + messageUid);
-    #sql {
-      begin
-        :OUT( deleteMessageUid) := pkg_MailUtility.GetDeleteErrorMessageUid;
-      end;
-    };
+    CallableStatement statement = internalServerConnection.prepareCall(
+    " begin\n"
+  + "   ? := pkg_MailUtility.getDeleteErrorMessageUid();\n"
+  + " end;\n"
+    );
+    statement.registerOutParameter( 1, Types.VARCHAR);
+    statement.executeUpdate();
+    statement.close();
     logDebug( "processFetchError: deleteMessageUid=" + deleteMessageUid);
     if ( deleteMessageUid != null && messageUid.equals( deleteMessageUid)){
       deleted = true;
@@ -1232,8 +1240,8 @@ try
       from
         ml_message m
       where
-                                       -- Обратный порядок аргументов
-                                       -- для dbms_lob.substr
+      -- Обратный порядок аргументов
+      -- для dbms_lob.substr
         substr( sender, 1, 1000 ) = dbms_lob.substr( senderClob, 1000, 1)
         and substr( recipient, 1, 1000 ) = dbms_lob.substr( recipientClob, 1000, 1)
         and (
@@ -1306,7 +1314,7 @@ try
         returning message_id into messageId;
         :OUT( messageId) := messageId;
       else
-        pkg_MailInternal.LogJava(
+        pkg_MailInternal.logJava(
           levelCode => pkg_Logging.Debug_LevelCode
           , messageText => 'createMessage: Found duplicates( by select)'
         );
@@ -1607,9 +1615,6 @@ try
 
 
 
-  //Итератор по списку сообщений
-  #sql static private iterator MsgIter( java.math.BigDecimal messageId);
-
 /** func: sendMessage
  * Отправляет ожидающие отправки сообщения.
  **/
@@ -1625,46 +1630,51 @@ try
   int nSend = 0;
   Session ss = null;
   Transport tr = null;
-  MsgIter msgIter;
-  #sql msgIter = {
-    select
-      ms.message_id as messageId
-    from
-      ml_message ms
-    where
-      ms.message_state_code = 'WS'
-      and
-                                       -- Если SMTP-сервер для записи
-                                       -- совпадает с параметром
-      ( :smtpServer is not null
-        and ms.smtp_server = :smtpServer
-                                       -- Если поле в таблице не заполнено
-                                       -- и параметр равен
-                                       -- значению имени SMTP-сервера
-                                       -- по умолчанию
-        or :smtpServer = pkg_Common.GetSmtpServer
-        and ms.smtp_server is null
-      )
-      and ms.send_date <= systimestamp
-                                       -- Ограничение по количеству
-                                       -- отправляемых сообщений
-      and ( rownum <= :maxMessageCount
-            or :maxMessageCount is null
-          )
-    order by
-      ms.send_date
-      , ms.message_id
-  };
-  while ( msgIter.next()) {
-    if ( lockSendingMessage( msgIter.messageId())) {
-                                        //Открываем SMTP-соединение
-      BigDecimal messageId = msgIter.messageId();
+  PreparedStatement messageSelect = internalServerConnection.prepareStatement(
+  " select\n"
++ "   ms.message_id as messageId\n"
++ " from\n"
++ "   ml_message ms\n"
++ " where\n"
++ "   ms.message_state_code = 'WS'\n"
++ "   and\n"
++ "   -- Если SMTP-сервер для записи\n"
++ "   -- совпадает с параметром\n"
++ "   ( ? is not null\n"
++ "     and ms.smtp_server = ?\n"
++ "   -- Если поле в таблице не заполнено\n"
++ "   -- и параметр равен\n"
++ "   -- значению имени SMTP-сервера\n"
++ "   -- по умолчанию\n"
++ "     or ? = pkg_Common.getSmtpServer()\n"
++ "     and ms.smtp_server is null\n"
++ "   )\n"
++ "   and ms.send_date <= systimestamp\n"
++ "   -- Ограничение по количеству отправляемых сообщений\n"
++ "   and ( rownum <= ?\n"
++ "         or ? is null\n"
++ "       )\n"
++ " order by\n"
++ "   ms.send_date\n"
++ "   , ms.message_id\n"
+  );
+  messageSelect.setString( 1, smtpServer);
+  messageSelect.setString( 2, smtpServer);
+  messageSelect.setString( 3, smtpServer);
+  messageSelect.setBigDecimal( 4, maxMessageCount);
+  messageSelect.setBigDecimal( 5, maxMessageCount);
+  ResultSet resultSet = messageSelect.executeQuery();
+  while ( resultSet.next()) {
+    BigDecimal messageId = resultSet.getBigDecimal( "messageId");
+    if ( lockSendingMessage( messageId)) {
+      // Открываем SMTP-соединение
       if ( tr == null) {
         ss = getSmtpSession( smtpServer);
         tr = ss.getTransport( "smtp");
         tr.connect();
       }
-      #sql { begin savepoint pkg_MailJava_sendMessage; end; };
+      Savepoint messageStartSavePoint =
+        internalServerConnection.setSavepoint( "pkg_MailJava_sendMessage");
       String recipient = null;
       try {
         Message msg = makeMessage( ss, messageId);
@@ -1680,12 +1690,12 @@ try
           , null
           , recipient
         );
-        #sql { commit };                //Фиксируем изменения
+        internalServerConnection.commit();
         ++nSend;
       }
       catch ( Exception e) {
         try {
-          #sql { begin rollback to pkg_MailJava_sendMessage; end; };
+          internalServerConnection.rollback( messageStartSavePoint);
           setSendResult(
             messageId
             , null
@@ -1693,7 +1703,8 @@ try
             , e.toString()
             , recipient
           );
-          #sql { commit};               //Фиксируем ошибочный результат
+          // Фиксируем ошибочный результат
+          internalServerConnection.commit();
         }
         catch( Exception e2) {
           throw new java.lang.RuntimeException(
@@ -1706,10 +1717,14 @@ try
       }
     }
   }
-  msgIter.close();
-  if ( tr != null)                      //Закрываем SMTP-соединение
+  resultSet.close();
+  messageSelect.close();
+  //Закрываем SMTP-соединение
+  if ( tr != null) {
     tr.close();
-  #sql { commit };                      //Завершаем транзакцию
+  }
+  //Завершаем транзакцию
+  internalServerConnection.commit();
   return new java.math.BigDecimal( nSend);
 }
   catch( Exception e) {
@@ -1780,16 +1795,6 @@ try
     );
   }
 }
-
-
-  //Итератор по списку сообщений
-  #sql static private iterator AttachIter(
-    java.math.BigDecimal attachmentId
-    , String fileName
-    , String contentType
-    , BLOB attachmentData
-    , java.math.BigDecimal isImageContentId
-  );
 
 
 
@@ -1913,61 +1918,67 @@ throws java.lang.Exception
 try
 {
   long sendTime = ( sendDate != null ? sendDate.getTime() : -1);
-  #sql {
-    declare
-      errorMessage ml_message.error_message%type := :errorMessage;
-
-      messageStateCode ml_message.message_state_code%type;
-      sendDate ml_message.send_date%type;
-      errorCode ml_message.error_code%type;
-
-    begin
-      if errorMessage is null then
-        messageStateCode := pkg_Mail.Send_MessageStateCode;
-        sendDate := TIMESTAMP '1970-01-01 00:00:00 +00:00'
-          + NumToDSInterval( nullif( :sendTime, -1) / 1000, 'SECOND')
-        ;
-                                       -- Отменяем отправку при некорректном
-                                       -- адресе
-      elsif errorMessage like :MAILBOX_INCORRECT_ERROR_MASK escape '\'
-        or errorMessage like :MAILBOX_ROUTED_MAIL_ERROR_MASK escape '\'
-      then
-        messageStateCode := pkg_Mail.SendCanceled_MessageStateCode;
-        sendDate := systimestamp;
-        errorCode := pkg_Error.ProcessError;
-        pkg_MailInternal.LogJava(
-          levelCode => pkg_Logging.Debug_LevelCode
-          , messageText =>
-             'Send canceled: (messageId=' || to_char( :messageId)
-             || ', recipient="' || :recipient || '"'
-             || ')'
-        );
-      else
-        messageStateCode := pkg_Mail.WaitSend_MessageStateCode;
-        sendDate := systimestamp
-          + NumToDSInterval( :RETRY_SEND_TIMEOUT_SECOND, 'SECOND');
-        errorCode := pkg_Error.ProcessError;
-      end if;
-      update
-        ml_message ms
-      set
-        ms.message_state_code = messageStateCode
-        , ms.send_date = sendDate
-        , ms.message_uid = :messageUId
-        , ms.error_code = errorCode
-        , ms.error_message = errorMessage
-        , ms.process_date = sysdate
-      where
-        ms.message_id = :messageId
-      ;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , 'Error during set send result.'
-        , true
-      );
-    end;
-  };
+  PreparedStatement statement = internalServerConnection.prepareStatement(
+  " declare\n"
++ "   errorMessage ml_message.error_message%type := ?;"
++ "   messageStateCode ml_message.message_state_code%type;\n"
++ "   sendDate ml_message.send_date%type;\n"
++ "   errorCode ml_message.error_code%type;\n"
++ "\n"
++ " begin\n"
++ "   if errorMessage is null then\n"
++ "     messageStateCode := pkg_Mail.Send_MessageStateCode;\n"
++ "     sendDate := TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
++ "       + NumToDSInterval( nullif( ?, -1) / 1000, 'SECOND')\n"
++ "     ;\n"
++ "   -- Отменяем отправку при некорректном -- адресе\n"
++ "   elsif errorMessage like '" + MAILBOX_INCORRECT_ERROR_MASK + "'escape '\'\n"
++ "     or errorMessage like '" + MAILBOX_ROUTED_MAIL_ERROR_MASK + "'escape '\'\n"
++ "   then\n"
++ "     messageStateCode := pkg_Mail.SendCanceled_MessageStateCode;\n"
++ "     sendDate := systimestamp;\n"
++ "     errorCode := pkg_Error.ProcessError;\n"
++ "     pkg_MailInternal.logJava(\n"
++ "       levelCode => pkg_Logging.Debug_LevelCode\n"
++ "       , messageText =>\n"
++ "          'Send canceled: (messageId=' || to_char( ?)\n"
++ "          || ', recipient=\"' || ? || '\"'\n"
++ "          || ')'\n"
++ "     );\n"
++ "   else\n"
++ "     messageStateCode := pkg_Mail.WaitSend_MessageStateCode;\n"
++ "     sendDate := systimestamp\n"
++ "       + NumToDSInterval( '" + RETRY_SEND_TIMEOUT_SECOND + "', 'SECOND');\n"
++ "     errorCode := pkg_Error.ProcessError;\n"
++ "   end if;\n"
++ "   update\n"
++ "     ml_message ms\n"
++ "   set\n"
++ "     ms.message_state_code = messageStateCode\n"
++ "     , ms.send_date = sendDate\n"
++ "     , ms.message_uid = ?\n"
++ "     , ms.error_code = errorCode\n"
++ "     , ms.error_message = errorMessage\n"
++ "     , ms.process_date = sysdate\n"
++ "   where\n"
++ "     ms.message_id = ?\n"
++ "   ;\n"
++ " exception when others then\n"
++ "   raise_application_error(\n"
++ "     pkg_Error.ErrorStackInfo\n"
++ "     , 'Error during set send result.'\n"
++ "     , true\n"
++ "   );\n"
++ " end;\n"
+  );
+  statement.setString( 1, errorMessage);
+  statement.setBigDecimal( 2, new BigDecimal( sendTime));
+  statement.setBigDecimal( 3, messageId);
+  statement.setString( 4, recipient);
+  statement.setString( 5, messageUId);
+  statement.setBigDecimal( 6, messageId);
+  statement.executeUpdate();
+  statement.close();
 }
   catch( Exception e) {
     throw new RuntimeException(
