@@ -1505,25 +1505,32 @@ throws java.lang.Exception
 {
 try
 {
-                                        //Получаем CLOB
-  CLOB messageText = null;
-  #sql {
-    select
-      msg.message_text
-    into :messageText
-    from
-      ml_message msg
-    where
-      msg.message_id = :messageId
-  };
-                                        //Исключаем перезапись текста сообщения
+  //Получаем CLOB
+  CallableStatement getTextStatement = internalServerConnection.prepareCall(
+  "begin\n"
++ " select\n"
++ "   msg.message_text\n"
++ " into\n"
++ "   ?\n"
++ " from\n"
++ "   ml_message msg\n"
++ " where\n"
++ "   msg.message_id = ?\n"
++ "end;  \n"
+  );
+  getTextStatement.registerOutParameter( 1, Types.CLOB);
+  getTextStatement.setBigDecimal( 2, messageId);
+  getTextStatement.executeUpdate();
+  Clob messageText = getTextStatement.getClob( 1);
+  getTextStatement.close();
+  // Исключаем перезапись текста сообщения
   if ( messageText.length() != 0) {
     throw new java.lang.RuntimeException(
       "Dublicate message text detected."
     );
   }
   //Пишем в CLOB
-  java.io.Writer writer = messageText.getCharacterOutputStream();
+  java.io.Writer writer = messageText.setCharacterStream( 0);
   writer.write( (String) p.getContent());
   writer.flush();
   writer.close();
