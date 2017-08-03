@@ -834,60 +834,69 @@ throws java.lang.Exception
     Date dt = msg.getSentDate();
     long sendDate = ( dt != null ? dt.getTime() : -1);
     BigDecimal messageId = null;
-    #sql {
-      declare
-        senderClob clob := :sender;
-        recipientClob clob := :recipient;
-        messageId integer;
-
-        cursor dataCur is
-          select /*+ index( m) */
-            m.message_id
-            , m.mailbox_for_delete_flag
-          from
-            ml_message m
-          where
-            substr( m.sender, 1, 1000 )
-              = dbms_lob.substr( senderClob, 1000, 1)
-            and substr( m.recipient, 1, 1000 )
-              = dbms_lob.substr( recipientClob, 1000, 1)
-            and (
-              :sendDate = -1
-                and m.send_date is null
-              or :sendDate != -1
-                and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'
-                  + NumToDSInterval( :sendDate / 1000, 'SECOND')
-            )
-            and m.message_uid = :messageUId
-            and m.incoming_flag = 1
-            and m.parent_message_id is null
-            -- Необходимо удалить из ящика
-            and m.mailbox_for_delete_flag = 1
-          for update of mailbox_delete_date nowait
-        ;
-
-      begin
-        for rec in dataCur loop
-          if messageId is null then
-            messageId := rec.message_id;
-          else
-            raise_application_error(
-              pkg_Error.ProcessError
-              , 'Found few record for message ('
-                || ' message_id=' || messageId
-                || ', second message_id=' || rec.message_id
-                || ').'
-            );
-          end if;
-          update
-            ml_message m
-          set
-            m.mailbox_delete_date = sysdate
-          where current of dataCur;
-        end loop;
-        :OUT( messageId) := messageId;
-      end;
-    };
+    CallableStatement statement = internalServerConnection.prepareCall(
+  "   declare\n"
++ "     senderClob clob := ?;\n"
++ "     recipientClob clob := ?;\n"
++ "     messageId integer;\n"
++ "\n"
++ "     cursor dataCur is\n"
++ "       select /*+ index( m) */\n"
++ "         m.message_id\n"
++ "         , m.mailbox_for_delete_flag\n"
++ "       from\n"
++ "         ml_message m\n"
++ "       where\n"
++ "         substr( m.sender, 1, 1000 )\n"
++ "           = dbms_lob.substr( senderClob, 1000, 1)\n"
++ "         and substr( m.recipient, 1, 1000 )\n"
++ "           = dbms_lob.substr( recipientClob, 1000, 1)\n"
++ "         and (\n"
++ "           ? = -1\n"
++ "             and m.send_date is null\n"
++ "          or ? != -1\n"
++ "             and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
++ "               + NumToDSInterval( ? / 1000, 'SECOND')\n"
++ "         )\n"
++ "         and m.message_uid = ?\n"
++ "         and m.incoming_flag = 1\n"
++ "         and m.parent_message_id is null\n"
++ "         -- Необходимо удалить из ящика\n"
++ "         and m.mailbox_for_delete_flag = 1\n"
++ "       for update of mailbox_delete_date nowait\n"
++ "     ;\n"
++ "\n"
++ "   begin\n"
++ "     for rec in dataCur loop\n"
++ "       if messageId is null then\n"
++ "         messageId := rec.message_id;\n"
++ "       else\n"
++ "         raise_application_error(\n"
++ "           pkg_Error.ProcessError\n"
++ "           , 'Found few record for message ('\n"
++ "             || ' message_id=' || messageId\n"
++ "             || ', second message_id=' || rec.message_id\n"
++ "             || ').'\n"
++ "         );\n"
++ "       end if;\n"
++ "       update\n"
++ "         ml_message m\n"
++ "       set\n"
++ "         m.mailbox_delete_date = sysdate\n"
++ "       where current of dataCur;\n"
++ "     end loop;\n"
++ "     ? := messageId;\n"
++ "   end;\n"
+    );
+    statement.setString( 1, sender);
+    statement.setString( 2, recipient);
+    statement.setLong( 3, sendDate);
+    statement.setLong( 4, sendDate);
+    statement.setLong( 5, sendDate);
+    statement.setString( 6, messageUId);
+    statement.executeUpdate();
+    messageId = statement.getBigDecimal(7);
+    statement.close();
     return ( messageId != null);
   }
   catch( Exception e) {
@@ -959,7 +968,8 @@ try
     ;
                                         //Сохраняем сообщения
 	for ( int i = 0; i < msgs.length; i++) {
-      #sql { begin savepoint pkg_MailJava_SaveMessage; end; };
+      Savepoint messageStartSavePoint =
+        internalServerConnection.setSavepoint( "pkg_MailJava_SaveMessage");
       try {
         boolean isDelete = false;
         if ( saveMessage(
@@ -979,7 +989,7 @@ try
     	    msgs[i].setFlag( Flags.Flag.DELETED, true);
       }
       catch( Exception e) {
-        #sql { begin rollback to pkg_MailJava_SaveMessage; end; };
+        internalServerConnection.rollback( messageStartSavePoint);
         ++nError;
         processFetchError(
           msgs[i]
@@ -989,8 +999,8 @@ try
         );
       } // try
 	} // for
-                                        //Фиксируем изменения
-    #sql { commit };
+    // Фиксируем изменения
+    internalServerConnection.commit();
   }
                                         //Закрываем соединение и чистим
                                         //удаленные сообщения
@@ -1214,121 +1224,146 @@ throws SQLException
 {
 try
 {
-                                        //Сохраняем информацию в таблице
+  // Сохраняем информацию в таблице
   BigDecimal messageId = null;
-  #sql {
-    declare
-      senderAddressClob clob := :senderAddress;
-      recipientAddressClob clob := :recipientAddress;
-      senderClob clob := :sender;
-      recipientClob clob := :recipient;
-      copyRecipientClob clob := :copyRecipient;
-      senderTextClob clob := :senderText;
-      recipientTextClob clob := :recipientText;
-      copyRecipientTextClob clob := :copyRecipientText;
-      messageId integer;
-      duplicateCount integer;
-      messageStateCode ml_message.message_state_code%type
-        := :messageStateCode;
-    begin
-                                       -- Для исключения TX-блокировки
-                                       -- при вставке уникального ключа
-      select /*+index(m)*/
-        count(1)
-      into
-        duplicateCount
-      from
-        ml_message m
-      where
-      -- Обратный порядок аргументов
-      -- для dbms_lob.substr
-        substr( sender, 1, 1000 ) = dbms_lob.substr( senderClob, 1000, 1)
-        and substr( recipient, 1, 1000 ) = dbms_lob.substr( recipientClob, 1000, 1)
-        and (
-          :sendDate = -1
-            and m.send_date is null
-          or :sendDate != -1
-            and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'
-              + NumToDSInterval( :sendDate / 1000, 'SECOND')
-        )
-        and m.message_uid = :messageUId
-        and m.incoming_flag = 1
-        and m.parent_message_id is null
-      ;
-      if duplicateCount = 0 then
-        insert into ml_message
-        (
-          incoming_flag
-          , message_state_code
-          , sender_address
-          , recipient_address
-          , sender
-          , recipient
-          , copy_recipient
-          , sender_text
-          , recipient_text
-          , copy_recipient_text
-          , send_date
-          , subject
-          , content_type
-          , message_size
-          , message_uid
-          , message_text
-          , error_message
-          , parent_message_id
-          , fetch_request_id
-          , mailbox_delete_date
-          , mailbox_for_delete_flag
-        )
-        values
-        (
-          -- В случае необходимости следует пересмотреть хранение
-          -- обрезаемых полей
-          1
-          , messageStateCode
-          , senderAddressClob
-          , recipientAddressClob
-          , substr( senderClob, 1, 2000)
-          , substr( recipientClob, 1, 2000)
-          , substr( copyRecipientClob, 1, 2000)
-          , substr( senderTextClob, 1, 2000)
-          , substr( recipientTextClob, 1, 2000)
-          , substr( copyRecipientTextClob, 1, 2000)
-          , TIMESTAMP '1970-01-01 00:00:00 +00:00'
-            + NumToDSInterval( nullif( :sendDate, -1) / 1000, 'SECOND')
-          , substr( :subject, 1, 100)
-          , substr(
-              replace( :contentType, chr( 13) || chr( 10) || chr( 9), ' ')
-              , 1
-              , 512
-            )
-          , nullif( :messageSize, -1)
-          , :messageUId
-          , empty_clob()
-          , substr( :errorMessage, 1, 4000)
-          , :parentMessageId
-          , :fetchRequestId
-          , case when :deleteMessageFlag = 1 then sysdate end
-          , nullif( :deleteMessageFlag, 1)
-        )
-        returning message_id into messageId;
-        :OUT( messageId) := messageId;
-      else
-        pkg_MailInternal.logJava(
-          levelCode => pkg_Logging.Debug_LevelCode
-          , messageText => 'createMessage: Found duplicates( by select)'
-        );
-      end if;
-    exception when DUP_VAL_ON_INDEX then
-      null;
-    end;
-  };
+  CallableStatement statement = internalServerConnection.prepareCall(
+  " declare\n"
++ "   senderAddressClob clob := ?;\n"
++ "   recipientAddressClob clob := ?;\n"
++ "   senderClob clob := ?;\n"
++ "   recipientClob clob := ?;\n"
++ "   copyRecipientClob clob := ?;\n"
++ "   senderTextClob clob := ?;\n"
++ "   recipientTextClob clob := ?;\n"
++ "   copyRecipientTextClob clob := ?;\n"
++ "   messageId integer;\n"
++ "   duplicateCount integer;\n"
++ "   messageStateCode ml_message.message_state_code%type\n"
++ "     := ?;\n"
++ " begin\n"
++ "   -- Для исключения TX-блокировки при вставке уникального ключа\n"
++ "   select /*+index(m)*/\n"
++ "     count(1)\n"
++ "   into\n"
++ "     duplicateCount\n"
++ "   from\n"
++ "     ml_message m\n"
++ "   where\n"
++ "   -- Обратный порядок аргументов\n"
++ "   -- для dbms_lob.substr\n"
++ "     substr( sender, 1, 1000 ) = dbms_lob.substr( senderClob, 1000, 1)\n"
++ "     and substr( recipient, 1, 1000 ) = dbms_lob.substr( recipientClob, 1000, 1)\n"
++ "     and (\n"
++ "       ? = -1\n"
++ "         and m.send_date is null\n"
++ "       or ? != -1\n"
++ "         and m.send_date = TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
++ "           + NumToDSInterval( ? / 1000, 'SECOND')\n"
++ "     )\n"
++ "     and m.message_uid = ?\n"
++ "     and m.incoming_flag = 1\n"
++ "     and m.parent_message_id is null\n"
++ "   ;\n"
++ "   if duplicateCount = 0 then\n"
++ "     insert into ml_message\n"
++ "     (\n"
++ "       incoming_flag\n"
++ "       , message_state_code\n"
++ "       , sender_address\n"
++ "       , recipient_address\n"
++ "       , sender\n"
++ "       , recipient\n"
++ "       , copy_recipient\n"
++ "       , sender_text\n"
++ "       , recipient_text\n"
++ "       , copy_recipient_text\n"
++ "       , send_date\n"
++ "       , subject\n"
++ "       , content_type\n"
++ "       , message_size\n"
++ "       , message_uid\n"
++ "       , message_text\n"
++ "       , error_message\n"
++ "       , parent_message_id\n"
++ "       , fetch_request_id\n"
++ "       , mailbox_delete_date\n"
++ "       , mailbox_for_delete_flag\n"
++ "     )\n"
++ "     values\n"
++ "     (\n"
++ "       -- В случае необходимости следует пересмотреть хранение\n"
++ "       -- обрезаемых полей\n"
++ "       1\n"
++ "       , messageStateCode\n"
++ "       , senderAddressClob\n"
++ "       , recipientAddressClob\n"
++ "       , substr( senderClob, 1, 2000)\n"
++ "       , substr( recipientClob, 1, 2000)\n"
++ "       , substr( copyRecipientClob, 1, 2000)\n"
++ "       , substr( senderTextClob, 1, 2000)\n"
++ "       , substr( recipientTextClob, 1, 2000)\n"
++ "       , substr( copyRecipientTextClob, 1, 2000)\n"
++ "       , TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
++ "         + NumToDSInterval( nullif( ?, -1) / 1000, 'SECOND')\n"
++ "       , substr( ?, 1, 100)\n"
++ "       , substr(\n"
++ "           replace( ?, chr( 13) || chr( 10) || chr( 9), ' ')\n"
++ "           , 1\n"
++ "           , 512\n"
++ "         )\n"
++ "       , nullif( ?, -1)\n"
++ "       , ?\n"
++ "       , empty_clob()\n"
++ "       , substr( ?, 1, 4000)\n"
++ "       , ?\n"
++ "       , ?\n"
++ "       , case when ? = 1 then sysdate end\n"
++ "       , nullif( ?, 1)\n"
++ "     )\n"
++ "     returning message_id into messageId;\n"
++ "     ? := messageId;\n"
++ "   else\n"
++ "     pkg_MailInternal.logJava(\n"
++ "       levelCode => pkg_Logging.Debug_LevelCode\n"
++ "       , messageText => 'createMessage: Found duplicates( by select)'\n"
++ "     );\n"
++ "   end if;\n"
++ " exception when DUP_VAL_ON_INDEX then\n"
++ "   null;\n"
++ " end;\n"
+  );
+  statement.setString( 1, senderAddress);
+  statement.setString( 2, recipientAddress);
+  statement.setString( 3, sender);
+  statement.setString( 4, recipient);
+  statement.setString( 5, copyRecipient);
+  statement.setString( 6, senderText);
+  statement.setString( 7, recipientText);
+  statement.setString( 8, copyRecipient);
+  statement.setString( 9, messageStateCode);
+  statement.setLong( 10, sendDate);
+  statement.setLong( 11, sendDate);
+  statement.setLong( 12, sendDate);
+  statement.setString( 13, messageUId);
+  statement.setLong( 14, sendDate);
+  statement.setString( 15, subject);
+  statement.setString( 16, contentType);
+  statement.setLong( 17, messageSize);
+  statement.setString( 18, messageUId);
+  statement.setString( 19, errorMessage);
+  statement.setBigDecimal( 20, parentMessageId);
+  statement.setBigDecimal( 21, fetchRequestId);
+  statement.setBigDecimal( 22, deleteMessageFlag);
+  statement.setBigDecimal( 23, deleteMessageFlag);
+  statement.registerOutParameter( 24, Types.INTEGER);
+  statement.executeUpdate();
+  messageId = statement.getBigDecimal( 24);
+  statement.close();
   return messageId;
 }
 catch( Exception e) {
   throw new RuntimeException(
-                                       // Не логируем как ошибку
-                                       // так как исключение может гаситься
+    // Не логируем как ошибку так как исключение может гаситься
     exceptionDebug(
       "Error while inserting record into ml_message"
       + "\n" + e.toString()
@@ -1563,43 +1598,52 @@ try
   String fileName = MimeUtility.decodeText( p.getFileName());
   String contentType = p.getContentType();
   BigDecimal attachmentId = null;
-  #sql {
-    declare
-      attachmentId ml_attachment.attachment_id%type;
-    begin
-      insert into
-        ml_attachment
-      (
-        message_id
-        , file_name
-        , content_type
-        , attachment_data
-      )
-      values
-      (
-        :messageId
-        , :fileName
-        , replace( :contentType, chr( 13) || chr( 10) || chr( 9), ' ')
-        , empty_blob()
-      )
-      returning attachment_id into attachmentId;
-      :OUT attachmentId := attachmentId;
-    end;
-  };
-                                        //Получаем BLOB
-  BLOB attachmentData = null;
-  #sql {
-    select
-      atc.attachment_data
-    into :attachmentData
-    from
-      ml_attachment atc
-    where
-      atc.attachment_id = :attachmentId
-  };
-                                        //Пишем в BLOB
+  CallableStatement insertStatement = internalServerConnection.prepareCall(
+  " declare\n"
++ "   attachmentId ml_attachment.attachment_id%type;\n"
++ " begin\n"
++ "   insert into\n"
++ "     ml_attachment\n"
++ "   (\n"
++ "     message_id\n"
++ "     , file_name\n"
++ "     , content_type\n"
++ "     , attachment_data\n"
++ "   )\n"
++ "   values\n"
++ "   (\n"
++ "     :messageId\n"
++ "     , :fileName\n"
++ "     , replace( :contentType, chr( 13) || chr( 10) || chr( 9), ' ')\n"
++ "     , empty_blob()\n"
++ "   )\n"
++ "   returning attachment_id into attachmentId;\n"
++ "   :OUT attachmentId := attachmentId;\n"
++ " end;\n"
+  );
+  insertStatement.setBigDecimal( 1, messageId);
+  insertStatement.setString( 2, fileName);
+  insertStatement.setString( 3, contentType);
+  insertStatement.executeUpdate();
+  attachmentId = insertStatement.getBigDecimal(4);
+  insertStatement.close();
+  // Получаем BLOB
+  CallableStatement attachmentStatement = internalServerConnection.prepareCall(
+  " begin\n"
++ "   select\n"
++ "     atc.attachment_data\n"
++ "   into ?\n"
++ "   from\n"
++ "     ml_attachment atc\n"
++ "   where\n"
++ "     atc.attachment_id = :attachmentId\n"
++ "   ;\n"
++ " end;\n"
+  );
+  Blob attachmentData = attachmentStatement.getBlob( 1);
+  // Пишем в BLOB
   java.io.OutputStream os = new BufferedOutputStream(
-    attachmentData.getBinaryOutputStream()
+    attachmentData.setBinaryStream( 0)
   );
   InputStream is = p.getInputStream();
   int c;
@@ -1607,11 +1651,11 @@ try
     os.write(c);
   os.close();
   is.close();
+  attachmentStatement.close();
 }
   catch( Exception e) {
     throw new RuntimeException(
-                                       // Не логируем как ошибку
-                                       // так как исключение может гаситься
+      // Не логируем как ошибку так как исключение может гаситься
       exceptionDebug(
         "Error while saving attachment"
         + "\n" + e
