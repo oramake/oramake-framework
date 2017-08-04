@@ -62,7 +62,6 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 group: 2.1.0
-(<Версии::2.1.0 ( 2017-08-03)>)
 
 Порядок установки:
 
