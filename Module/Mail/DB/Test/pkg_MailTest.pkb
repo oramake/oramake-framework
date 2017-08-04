@@ -777,11 +777,12 @@ is
   */
   procedure checkCase(
     caseDescription varchar2
-    , isGotMessageDeleted integer := 1
+    , isGotMessageDeleted integer
     , deleteMailboxMessageId integer := null
     , existsMailboxMessageId integer := null
     , errorMessageMask varchar2 := null
     , nextCaseUsedCount pls_integer := null
+    , skipCheckCountFlag pls_integer := null
   )
   is
 
@@ -934,12 +935,14 @@ is
 
       if not coalesce( pkg_TestUtility.isTestFailed(), false) then
 
-        pkg_TestUtility.compareChar(
-          actualString        => nFetch
-          , expectedString    => 1
-          , failMessageText   =>
-              cinfo || 'Некорректный результат выполнения fetchMessage'
-        );
+        if coalesce( skipCheckCountFlag, 0) = 0 then
+          pkg_TestUtility.compareChar(
+            actualString        => nFetch
+            , expectedString    => 1
+            , failMessageText   =>
+                cinfo || 'Некорректный результат выполнения fetchMessage'
+          );
+        end if;
 
         select
           t.*
@@ -1050,6 +1053,8 @@ is
   begin
     checkCase(
       'Без вложения'
+    , isGotMessageDeleted       => 0
+    , skipCheckCountFlag        => 1
     );
 
     checkCase(

@@ -61,6 +61,21 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 
+group: 2.1.0
+(<Версии::2.1.0 ( 2017-08-03)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=2.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 2.0.2
 
 Команда для установки обновления:

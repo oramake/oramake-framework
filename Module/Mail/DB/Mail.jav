@@ -894,6 +894,7 @@ throws java.lang.Exception
     statement.setLong( 4, sendDate);
     statement.setLong( 5, sendDate);
     statement.setString( 6, messageUId);
+    statement.registerOutParameter( 7, Types.INTEGER);
     statement.executeUpdate();
     messageId = statement.getBigDecimal(7);
     statement.close();
@@ -1551,6 +1552,7 @@ try
 + "   ml_message msg\n"
 + " where\n"
 + "   msg.message_id = ?\n"
++ " ;\n"
 + "end;  \n"
   );
   getTextStatement.registerOutParameter( 1, Types.CLOB);
@@ -1594,7 +1596,8 @@ throws java.lang.Exception
 {
 try
 {
-                                        //Добавляем запись
+  logDebug( "saveAttachment: begin");
+  // Добавляем запись
   String fileName = MimeUtility.decodeText( p.getFileName());
   String contentType = p.getContentType();
   BigDecimal attachmentId = null;
@@ -1611,22 +1614,23 @@ try
 + "     , attachment_data\n"
 + "   )\n"
 + "   values\n"
-+ "   (\n"
-+ "     :messageId\n"
-+ "     , :fileName\n"
-+ "     , replace( :contentType, chr( 13) || chr( 10) || chr( 9), ' ')\n"
++ "   ( ?\n"
++ "     , ?\n"
++ "     , replace( ?, chr( 13) || chr( 10) || chr( 9), ' ')\n"
 + "     , empty_blob()\n"
 + "   )\n"
 + "   returning attachment_id into attachmentId;\n"
-+ "   :OUT attachmentId := attachmentId;\n"
++ "   ? := attachmentId;\n"
 + " end;\n"
   );
   insertStatement.setBigDecimal( 1, messageId);
   insertStatement.setString( 2, fileName);
   insertStatement.setString( 3, contentType);
+  insertStatement.registerOutParameter( 4, Types.INTEGER);
   insertStatement.executeUpdate();
   attachmentId = insertStatement.getBigDecimal(4);
   insertStatement.close();
+  logDebug( "saveAttachment: inserted attachement record");
   // Получаем BLOB
   CallableStatement attachmentStatement = internalServerConnection.prepareCall(
   " begin\n"
@@ -1636,10 +1640,13 @@ try
 + "   from\n"
 + "     ml_attachment atc\n"
 + "   where\n"
-+ "     atc.attachment_id = :attachmentId\n"
++ "     atc.attachment_id = ?\n"
 + "   ;\n"
 + " end;\n"
   );
+  attachmentStatement.registerOutParameter( 1, Types.BLOB);
+  attachmentStatement.setBigDecimal( 2, attachmentId);
+  attachmentStatement.executeUpdate();
   Blob attachmentData = attachmentStatement.getBlob( 1);
   // Пишем в BLOB
   java.io.OutputStream os = new BufferedOutputStream(
