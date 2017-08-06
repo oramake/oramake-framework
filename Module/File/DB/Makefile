@@ -739,6 +739,7 @@ installTestTarget = \
     $(wildcard \
       $(addprefix Test/, \
         *.typ *.pks *.tyb *.pkb \
+        Data/*.sql \
       ) \
     ) \
   ) \

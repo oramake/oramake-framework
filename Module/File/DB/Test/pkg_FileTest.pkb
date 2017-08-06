@@ -14,9 +14,10 @@ logger lg_logger_t := lg_logger_t.getLogger(
 );
 
 /* iconst: testDirectory
-  Директория для тестирования загрузки файла.
+  Директория для тестирования ( кешированное значение опции
+  <TestDirectoryPath_OptionSName>).
 */
-testDirectory varchar2(1024) := '\\files\Test\File';
+testDirectory varchar2(1024) := null;
 
 /* iconst: Max_CharSize
   Максимальное количество символов для строкового типа.
@@ -45,6 +46,33 @@ testStepTimeCol TestStepTimeColT := TestStepTimeColT();
 
 
 /* group: Утилиты */
+
+/* ifunc: getTestDirectory
+  Получение данных тестовой директории.
+*/
+function getTestDirectory
+return varchar2
+is
+-- getTestDirectory
+begin
+  if testDirectory is null then
+    testDirectory :=
+      opt_plsql_object_option_t(
+        moduleName    => pkg_File.Module_Name
+      , objectName    => 'pkg_FileTest'
+      ).getString( TestDirectoryPath_OptionSName)
+    ;
+  end if;
+  if testDirectory is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Необходимо задать тестовую директорию ( опция TestDirectoryPath)'
+    );
+  end if;
+  return
+    testDirectory
+  ;
+end getTestDirectory;
 
 /* iproc: saveTestStep
   Сохранение этапа тестирования.
@@ -420,7 +448,7 @@ procedure testBinaryFile(
 )
 is
   filePath varchar2(1024) :=
-    pkg_File.getFilePath( testDirectory, 'binary_file_6.dat')
+    pkg_File.getFilePath( getTestDirectory, 'binary_file_6.dat')
   ;
 
   fileData blob;
@@ -495,7 +523,7 @@ procedure testTextFile(
 )
 is
   filePath varchar2(1024) :=
-    pkg_File.getFilePath( testDirectory, 'text_file.2.dat')
+    pkg_File.getFilePath( getTestDirectory, 'text_file.2.dat')
   ;
 
   fileText clob;
@@ -572,7 +600,7 @@ procedure testLoadTxt(
 is
 
   filePath varchar2(1024) :=
-    pkg_File.getFilePath( testDirectory, 'load_txt.txt')
+    pkg_File.getFilePath( getTestDirectory, 'load_txt.txt')
   ;
   textData clob;
 
@@ -638,7 +666,7 @@ procedure testLoadTxtByLine(
 is
 
   filePath varchar2(1024) :=
-    pkg_File.getFilePath( testDirectory, 'load_txt_by_line.txt')
+    pkg_File.getFilePath( getTestDirectory, 'load_txt_by_line.txt')
   ;
   Line_Size constant integer := 1000;
 
@@ -732,7 +760,7 @@ is
   -- Полный путь к тестовому файлу
   File_Path constant varchar2(32767) :=
     pkg_FileOrigin.getFilePath(
-      testDirectory
+      getTestDirectory
       , coalesce( fileName, 'testUnloadData.txt')
     )
   ;
@@ -1041,7 +1069,7 @@ procedure testUnloadTxt(
 is
 
   File_Path constant varchar2(32767) :=
-    pkg_FileOrigin.getFilePath( testDirectory, 'testUnloadTxt_2.txt')
+    pkg_FileOrigin.getFilePath( getTestDirectory, 'testUnloadTxt_2.txt')
   ;
 
   /*
@@ -1144,7 +1172,7 @@ procedure testEncodingLoad(
 is
 
   filePath varchar2(1024) :=
-    pkg_File.getFilePath( testDirectory, 'encoding_load.txt')
+    pkg_File.getFilePath( getTestDirectory, 'encoding_load.txt')
   ;
   textData clob;
 
@@ -1197,7 +1225,7 @@ procedure testWriteMode(
 )
 is
   File_Path constant varchar2(32767) :=
-    pkg_FileOrigin.getFilePath( testDirectory, 'testWriteMode.txt')
+    pkg_FileOrigin.getFilePath( getTestDirectory, 'testWriteMode.txt')
   ;
   fileText clob := '1';
   actualExceptionFlag1 number(1,0);
@@ -1293,7 +1321,7 @@ begin
   testUnloadData(
     skip0x98CheckFlag => 1
   );
-  testMakeDirectory( parentDirectory => testDirectory);
+  testMakeDirectory( parentDirectory => getTestDirectory);
 
   -- тесты с оценкой производительности
   testBinaryFile( fileSize => fileSize);
@@ -1452,16 +1480,16 @@ is
   begin
     checkCase(
       'dir'
-      , testDirectory
+      , getTestDirectory
       , true
     );
     checkCase(
       'bad dir'
-      , testDirectory || '$notexist$'
+      , getTestDirectory || '$notexist$'
       , false
     );
 
-    str := pkg_FileOrigin.getFilePath( testDirectory, 'fs-file.tmp');
+    str := pkg_FileOrigin.getFilePath( getTestDirectory, 'fs-file.tmp');
     createTestFile( str, 5);
     checkCase(
       'file'
@@ -1471,7 +1499,7 @@ is
 
     checkCase(
       'bad file'
-      , pkg_FileOrigin.getFilePath( testDirectory, '$notexist$')
+      , pkg_FileOrigin.getFilePath( getTestDirectory, '$notexist$')
       , false
     );
   exception when others then
@@ -1600,8 +1628,8 @@ is
   begin
 
     ---- файлы внутри каталога
-    srcPath := pkg_FileOrigin.getFilePath( testDirectory, 'fs-file.tmp');
-    dstPath := pkg_FileOrigin.getFilePath( testDirectory, 'fs-file2.tmp');
+    srcPath := pkg_FileOrigin.getFilePath( getTestDirectory, 'fs-file.tmp');
+    dstPath := pkg_FileOrigin.getFilePath( getTestDirectory, 'fs-file2.tmp');
 
     -- переименование
     createTestFile( srcPath, 15);
@@ -1632,11 +1660,11 @@ is
     );
 
     ---- те же тесты в случае указания подкаталога
-    subdirPath := pkg_FileOrigin.getFilePath( testDirectory, 'Fs-Test-Dir');
+    subdirPath := pkg_FileOrigin.getFilePath( getTestDirectory, 'Fs-Test-Dir');
     if not pkg_FileOrigin.checkExists( subdirPath) then
       pkg_FileOrigin.makeDirectory( subdirPath);
     end if;
-    srcPath := pkg_FileOrigin.getFilePath( testDirectory, 'fs-file.tmp');
+    srcPath := pkg_FileOrigin.getFilePath( getTestDirectory, 'fs-file.tmp');
     dstPath := pkg_FileOrigin.getFilePath( subdirPath, 'fs-file2.tmp');
 
     -- переименование
@@ -1966,7 +1994,7 @@ is
 
     testFileName varchar2(50) := 'httpFileCopy.tmp';
     testFilePath varchar2(1000) :=
-      pkg_File.getFilePath( testDirectory, testFileName)
+      pkg_File.getFilePath( getTestDirectory, testFileName)
     ;
     testFileSize integer;
 
@@ -1981,7 +2009,7 @@ is
       , overwrite => 1
     );
     pkg_FileOrigin.fileList(
-      fromPath    => testDirectory
+      fromPath    => getTestDirectory
       , fileMask  => testFileName
     );
     select

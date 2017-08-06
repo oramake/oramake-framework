@@ -7,6 +7,19 @@ create or replace package pkg_FileTest is
 
 
 
+/* group: Константы */
+
+
+
+/* group: Параметры тестирования */
+
+/* const: TestDirectoryPath_OptionSName
+  Наименование настроечного параметра "Тесты: директория".
+*/
+TestDirectoryPath_OptionSName constant varchar2(50) := 'TestDirectoryPath';
+
+
+
 /* group: Функции */
 
 
