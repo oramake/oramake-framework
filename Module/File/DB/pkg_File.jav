@@ -8,6 +8,9 @@ import java.util.*;
 import java.util.NoSuchElementException;
 import java.util.logging.LogManager;
 import java.util.zip.GZIPOutputStream;
+import oracle.jdbc.*;
+import oracle.jdbc.driver.*;
+import oracle.sql.*;
 
 import com.technology.oramake.file.netfile.*;
 
@@ -28,8 +31,11 @@ public class pkg_File
   // UTF8 BOM Marker
   static public final byte[] UTF8_BOM = { (byte)0xEF, (byte)0xBB, (byte)0xBF};
 
-  //Итератор для выборки поля типа CLOB
-  #sql static private iterator ClobIter( oracle.sql.CLOB);
+  /* ivar: internalServerConnection
+   * Current own DB connection. Initialized in static initialization
+   * block.
+   */
+  private static Connection internalServerConnection = null;
 
 
 
@@ -60,20 +66,23 @@ updateJavaUtilLoggingLevel()
   // уровень для отключения трассировки
   java.util.logging.Level javaInfoLevel = java.util.logging.Level.INFO;
 
+  CallableStatement statement = internalServerConnection.prepareCall(
+  " begin\n"
++ "   ? := \n"
++ "   case when\n"
++ "     lg_logger_t.getLogger( '" + SQL_LOGGER_NAME + "').isTraceEnabled()\n"
++ "   then\n"
++ "     1\n"
++ "   else\n"
++ "     0\n"
++ "   end;\n"
++ " end;\n"
+  );
+  statement.registerOutParameter( 1, Types.INTEGER);
+  statement.executeUpdate();
   // флаг включения трассировки в SQL-логере
-  BigDecimal isTraceEnabled = null;
-  #sql {
-    begin
-      :OUT( isTraceEnabled) :=
-         case when
-             lg_logger_t.getLogger( :SQL_LOGGER_NAME).isTraceEnabled()
-           then 1
-           else 0
-         end
-      ;
-    end;
-  };
-
+  BigDecimal isTraceEnabled = statement.getBigDecimal( 1);
+  statement.close();
   java.util.logging.Level newLogLevel =
     isTraceEnabled.intValue() == 1 ? javaTraceLevel : javaInfoLevel
   ;
@@ -143,13 +152,16 @@ logTrace( java.lang.String messageText)
   throws
     SQLException
 {
-  #sql {
-    declare
-      lg lg_logger_t := lg_logger_t.getLogger( :SQL_LOGGER_NAME);
-    begin
-      lg.trace( :messageText);
-    end;
-  };
+  PreparedStatement statement = internalServerConnection.prepareStatement(
+  " declare\n"
++ "   lg lg_logger_t := lg_logger_t.getLogger( '" + SQL_LOGGER_NAME + "');\n"
++ " begin\n"
++ "   lg.trace( :messageText);\n"
++ " end;\n"
+  );
+  statement.setString( 1, messageText);
+  statement.executeUpdate();
+  statement.close();
 }
 
 /** func: saveList
@@ -176,12 +188,43 @@ public static int saveList(
 {
   logTrace( "dir: save list...");
   int nFound = 0;
-  String fileName;                     // Имя файла
-  long fileSize, lastModified;         // Аттрибуты файла
-  boolean isFile;                      // Файл или директория
-                                       // Удовлетворяет ли файл маске(0,1)
+  // Имя файла
+  String fileName;
+  // Аттрибуты файла
+  long fileSize, lastModified;
+  // Файл или директория
+  boolean isFile;
+  // Удовлетворяет ли файл маске(0,1)
   BigDecimal maskCondition = null;
   logTrace( "dir: list.length...(" + list.length + ")");
+  CallableStatement maskConditionStatement = internalServerConnection.prepareCall(
+ "begin \n"
++ "  ? := \n"
++ "    case when\n"
++ "      lower( ?) like lower( ?) escape '\' \n"
++ "    then \n"
++ "      1 \n"
++ "    else \n"
++ "      0 \n"
++ "    end; \n"
++ "end ;\n"
+  );
+  maskConditionStatement.registerOutParameter( 1, Types.INTEGER);
+  PreparedStatement insertStatement = internalServerConnection.prepareCall(
+  " insert into tmp_file_name\n"
++ " (\n"
++ "   file_name\n"
++ "   , file_size\n"
++ "   , last_modification\n"
++ " )\n"
++ " values\n"
++ " ( \n"
++ "   ? \n"
++ "   , ? \n"
++ "   , TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
++ "     + NumToDSInterval( ? / 1000, 'SECOND')\n"
++ " )\n"
+  );
   for(int
      i = 0
      ; i < list.length
@@ -194,33 +237,23 @@ public static int saveList(
       fileName = list[i].name();       //Получаем имя файла
       logTrace( "dir: fileName=" + fileName);
       logTrace( "dir: get isOfMask");
-      #sql {
-        begin
-          :OUT( maskCondition) :=
-             case when
-               lower( :fileName) like lower( :mask) escape '\'
-             then
-               1
-              else
-               0
-             end;
-        end;
-      };
+      maskConditionStatement.setString( 2, fileName);
+      maskConditionStatement.setString( 3, mask);
+      maskConditionStatement.executeUpdate();
+      maskCondition = maskConditionStatement.getBigDecimal(1);
       logTrace( "dir: maskCondition=" + maskCondition);
     } else {
       fileName = null;
     }
-                                      // Если условие
-                                      // по маске соблюдено
+    // Если условие по маске соблюдено
     if(
       maskCondition == null
       || maskCondition.intValue() == 1
     ){
       logTrace( "dir: get isFile...");
       isFile = list[i].isFile();
+      // Если условие по типу файла соблюдено
       if
-                                      // Если условие
-                                      // по типу файла соблюдено
       ( etype == 0
         || etype == 1 && isFile
         || etype == 2 && !isFile
@@ -234,27 +267,17 @@ public static int saveList(
         logTrace( "dir: get lastModified...");
         lastModified = list[i].lastModified().getTime();
         logTrace( "dir: list[i] sql...(" + i + ")");
-                                       //Сохраняем информацию в таблице
-        #sql {
-          insert into tmp_file_name
-          (
-            file_name
-            , file_size
-            , last_modification
-          )
-          values
-          (
-            :fileName
-            , :fileSize
-            , TIMESTAMP '1970-01-01 00:00:00 +00:00'
-              + NumToDSInterval( :lastModified / 1000, 'SECOND')
-          )
-        };
+        insertStatement.setString( 1, fileName);
+        insertStatement.setLong( 2, fileSize);
+        insertStatement.setLong( 3, lastModified);
+        insertStatement.executeUpdate();
         ++nFound;
         logTrace( "dir: nFound = " + nFound);
       } /* if etype*/
     } /* if maskCondition*/
   } /* for */
+  maskConditionStatement.close();
+  insertStatement.close();
   return ( nFound);
 } /* saveList */
 
@@ -794,16 +817,15 @@ unloadTxt(
   NetFile netfile = new NetFile( unloadPath);
   checkUnloadFile( netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
   logTrace( "unloadTxt: iter: begin");
-  // Создаем итератор для SELECT
-  ClobIter iter;
-  #sql iter = {
-    select
-      output_document
-    from
-      doc_output_document
-    order by
-      output_document_id
-  };
+  PreparedStatement outputQuery = internalServerConnection.prepareStatement(
+  " select\n"
++ "   output_document\n"
++ " from\n"
++ "   doc_output_document\n"
++ " order by\n"
++ "   output_document_id\n"
+  );
+  ResultSet outputResult = outputQuery.executeQuery();
   logTrace( "unloadTxt: iter: end");
   OutputStream outputStream =
     netfile.getOutputStream( writeModeCode.equals( WRITE_MODE_CODE_APPEND))
@@ -816,29 +838,23 @@ unloadTxt(
     if ( BigDecimal.ONE.equals( bomFlag)) {
       outputStream.write( UTF8_BOM);
     }
-    oracle.sql.CLOB clob = null;
-    boolean endFetch = false;
-    while ( !endFetch) {
-      // Выполняем FETCH
-      #sql { FETCH :iter INTO :clob };
-      endFetch = iter.endFetch();
-      if ( !endFetch) {
-        logTrace( "unloadTxt: getCharacterStream");
-        Reader reader = clob.getCharacterStream();
-        try {
-          logTrace( "unloadTxt: charToBinary");
-          StreamConverter.charToBinary( outputStream, reader, charEncoding);
-        }
-        finally {
-          reader.close();
-        }
+    while ( outputResult.next()) {
+      Clob clob = outputResult.getClob( "output_document");
+      logTrace( "unloadTxt: getCharacterStream");
+      Reader reader = clob.getCharacterStream();
+      try {
+        logTrace( "unloadTxt: charToBinary");
+        StreamConverter.charToBinary( outputStream, reader, charEncoding);
+      }
+      finally {
+        reader.close();
       }
     }
   }
   finally {
     outputStream.close();
   }
-  iter.close();
+  outputQuery.close();
   logTrace("unloadTxt: end");
 } // unloadTxt
 
@@ -928,6 +944,19 @@ public static
   exitCode = process.waitFor();
   logTrace( "execCommand: end");
   return ( new BigDecimal( (double) exitCode));
+}
+
+static {
+  try {
+    OracleDriver ora = new OracleDriver();
+    internalServerConnection = ora.defaultConnection();
+  }
+  catch( SQLException e) {
+    throw new RuntimeException(
+      "Error while opening internal server connection"
+      + "\n" + e
+    );
+  }
 }
 
 } // pkg_File

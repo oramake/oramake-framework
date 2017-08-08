@@ -26,6 +26,12 @@ public class StreamConverter {
  **/
 final private static int BUFFER_SIZE = 1024 * 64;
 
+/* ivar: internalServerConnection
+ * Current own DB connection. Initialized in static initialization block.
+ */
+private static Connection internalServerConnection = null;
+
+
 /** func: logTrace
  * ƒобавл€ет отладочную запись в лог выполнени€.
  *
@@ -36,13 +42,16 @@ public static void logTrace( java.lang.String messageText)
   throws
     SQLException
 {
-  #sql {
-    declare
-      lg lg_logger_t := lg_logger_t.GetLogger( 'File.StreamConverter.java');
-    begin
-      lg.trace( :messageText);
-    end;
-  };
+  PreparedStatement statement = internalServerConnection.prepareStatement(
+  " declare\n"
++ "   lg lg_logger_t := lg_logger_t.getLogger( 'File.StreamConverter.java');\n"
++ " begin\n"
++ "   lg.trace( :messageText);\n"
++ " end;\n"
+  );
+  statement.setString( 1, messageText);
+  statement.executeUpdate();
+  statement.close();
 }
 
 /** func: binaryToBinary
@@ -130,6 +139,19 @@ throws
       bufferedWriter.write( buffer, 0, count);
     }
     bufferedWriter.flush();
+  }
+}
+
+static {
+  try {
+    OracleDriver ora = new OracleDriver();
+    internalServerConnection = ora.defaultConnection();
+  }
+  catch( SQLException e) {
+    throw new RuntimeException(
+      "Error while opening internal server connection"
+      + "\n" + e
+    );
   }
 }
 

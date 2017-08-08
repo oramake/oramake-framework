@@ -10,6 +10,10 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Locale;
 
+import oracle.jdbc.*;
+import oracle.jdbc.driver.*;
+import oracle.sql.*;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -37,6 +41,11 @@ import org.apache.http.impl.client.HttpClients;
  * Работа по HTTP реализована с помощью библиотеки <HttpClient>.
  */
 class HttpFile extends NetFileImpl {
+
+  /* ivar: internalServerConnection
+   * Current own DB connection. Initialized in static initialization block.
+   */
+  private static Connection internalServerConnection = null;
 
   /** var: baseUrl_
    * Исходный URL файла
@@ -83,20 +92,35 @@ class HttpFile extends NetFileImpl {
     String proxyUsername;
     String proxyPassword;
     String proxyDomain;
-    #sql {
-      begin
-        pkg_FileBase.getProxyConfig(
-          serverAddress     => :OUT( proxyServer)
-          , serverPort      => :OUT( proxyPort)
-          , username        => :OUT( proxyUsername)
-          , password        => :OUT( proxyPassword)
-          , domain          => :OUT( proxyDomain)
-          , targetProtocol  => :targetProtocol
-          , targetHost      => :targetHost
-          , targetPort      => :targetPort
-        );
-      end;
-    };
+    CallableStatement statement = internalServerConnection.prepareCall(
+  "   begin\n"
++ "     pkg_FileBase.getProxyConfig(\n"
++ "       serverAddress     => ?\n"
++ "       , serverPort      => ?\n"
++ "       , username        => ?\n"
++ "       , password        => ?\n"
++ "       , domain          => ?\n"
++ "       , targetProtocol  => ?\n"
++ "       , targetHost      => ?\n"
++ "       , targetPort      => ?\n"
++ "     );\n"
++ "   end;\n"
+    );
+    statement.registerOutParameter( 1, Types.VARCHAR);
+    statement.registerOutParameter( 2, Types.INTEGER);
+    statement.registerOutParameter( 3, Types.VARCHAR);
+    statement.registerOutParameter( 4, Types.VARCHAR);
+    statement.registerOutParameter( 5, Types.VARCHAR);
+    statement.setString( 6, targetProtocol);
+    statement.setString( 7, targetHost);
+    statement.setBigDecimal( 8, targetPort);
+    statement.executeUpdate();
+    proxyServer = statement.getString( 1);
+    proxyPort = statement.getBigDecimal( 2);
+    proxyUsername = statement.getString( 3);
+    proxyPassword = statement.getString( 4);
+    proxyDomain = statement.getString( 5);
+    statement.close();
     if ( proxyServer == null) {
       httpContext_ = null;
     }
@@ -311,5 +335,19 @@ class HttpFile extends NetFileImpl {
       "Making directory is not implemented for HTTP"
     );
   }
+
+
+static {
+  try {
+    OracleDriver ora = new OracleDriver();
+    internalServerConnection = ora.defaultConnection();
+  }
+  catch( SQLException e) {
+    throw new RuntimeException(
+      "Error while opening internal server connection"
+      + "\n" + e
+    );
+  }
+}
 
 } // HttpFile
