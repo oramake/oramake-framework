@@ -2,7 +2,7 @@
 
 # build var: JAVAMAIL_DIR
 # Корневой каталог дистрибутива используемой версии библиотеки JavaMail.
-JAVAMAIL_DIR      = Java/UsedLib/JavaMail/javamail-1.3.1
+JAVAMAIL_DIR      = Java/UsedLib/JavaMail/javamail-1.5.6
 
 # build var: JAF_DIR
 # Корневой каталог дистрибутива используемой версии библиотеки JAF.
