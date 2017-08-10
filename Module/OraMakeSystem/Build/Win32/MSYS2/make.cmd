@@ -7,6 +7,9 @@ set PATH=C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\Syst
 rem Add path to MSYS2 binaries
 set PATH=%~dp0usr\bin;%PATH%
 
+rem Add path to OraMakeSystem scripts
+set PATH=%~dp0usr\local\bin;%PATH%
+
 rem Use current directory as working directory in MSYS2 bash
 set CHERE_INVOKING=enabled_from_arguments
 
