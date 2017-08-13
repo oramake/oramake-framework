@@ -201,7 +201,7 @@ public static int saveList(
  "begin \n"
 + "  ? := \n"
 + "    case when\n"
-+ "      lower( ?) like lower( ?) escape '\' \n"
++ "      lower( ?) like lower( ?) escape '\\' \n"
 + "    then \n"
 + "      1 \n"
 + "    else \n"
@@ -240,7 +240,7 @@ public static int saveList(
       maskConditionStatement.setString( 2, fileName);
       maskConditionStatement.setString( 3, mask);
       maskConditionStatement.executeUpdate();
-      maskCondition = maskConditionStatement.getBigDecimal(1);
+      maskCondition = maskConditionStatement.getBigDecimal( 1);
       logTrace( "dir: maskCondition=" + maskCondition);
     } else {
       fileName = null;
