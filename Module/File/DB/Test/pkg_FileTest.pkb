@@ -1735,30 +1735,36 @@ procedure testHttpOperation(
 )
 is
 
+  -- Список опций
+  opt opt_option_list_t := opt_plsql_object_option_t(
+    moduleName    => pkg_File.Module_Name
+  , objectName    => 'pkg_FileTest'
+  );
+
   -- URL и размер бинарного файла, доступного по HTTP
   binaryFile constant varchar2(200) :=
-    'http://yastatic.net/morda-logo/i/arrow2/logo_simple.svg'
+    opt.getString( TestHttpBinaryUrl_OptionSName)
   ;
 
-  binaryFileSize constant integer :=
-    2240
-  ;
+  binaryFileSize constant integer := opt.getNumber(
+    TestHttpBinarySize_OptionSName
+  );
 
   -- URL, кодировка и маска для проверки данных текстового файла
-  textFile varchar2(200) :=
-    'http://ya.ru'
-  ;
+  textFile varchar2(200) := opt.getString( TestHttpTextUrl_OptionSName);
   textFileEncoding varchar2(100) := pkg_FileOrigin.Encoding_Utf8;
-  textFileDataPattern varchar2(100) := '%Найти%';
+  textFileDataPattern varchar2(100) :=
+    opt.getString( TestHttpTextPatter_OptionSName);
 
   -- Отсутствующий файл на доступном хосте
   notexistFile varchar2(200) :=
-    'http://intranet/jjj-not-exists.html'
+    opt.getString( TestHttpAbsentFile_OptionSName)
   ;
 
   -- Файл на несуществующем хосте ( в интранете)
   notexistHostFile varchar2(200) :=
-    'http://badhost.intranet/region.png'
+    opt.getString( testHttpAbsentHost_OptionSName)
+
   ;
 
   -- Файл в интернете ( не в интранете)
@@ -1876,9 +1882,7 @@ is
   begin
     checkCase( binaryFile, 0);
     checkCase( textFile, 0);
-    if httpInternetFileTest = 1 then
-      checkCase( internetFile, 1);
-    end if;
+    checkCase( internetFile, 1);
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -2143,7 +2147,9 @@ is
 -- testHttpOperation
 begin
   pkg_TestUtility.beginTest( 'testHttpOperation');
-  getProxyConfigTest();
+  if httpInternetFileTest = 1 then
+    getProxyConfigTest();
+  end if;
   checkExistsTest();
   fileCopyTest();
   loadBlobFromFileTest();

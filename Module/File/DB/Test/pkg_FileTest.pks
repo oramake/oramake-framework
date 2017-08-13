@@ -18,6 +18,38 @@ create or replace package pkg_FileTest is
 */
 TestDirectoryPath_OptionSName constant varchar2(50) := 'TestDirectoryPath';
 
+/* const: TestHttpBinaryUrl_OptionSName
+  Наименование настроечного параметра "Тесты: URL для загрузки бинарного файла, доступного по HTTP".
+*/
+TestHttpBinaryUrl_OptionSName constant varchar2(30) := 'TestHttpBinaryUrl';
+
+/* const: TestHttpBinarySize_OptionSName
+  Наименование настроечного параметра "Тесты: размер бинарного файла, доступного по HTTP".
+*/
+TestHttpBinarySize_OptionSName constant varchar2(30) := 'TestHttpBinarySize';
+
+ /* const: TestHttpTextUrl_OptionSName
+  Наименование настроечного параметра "Тесты: URL для загрузки текстового файла, доступного по HTTP".
+*/
+TestHttpTextUrl_OptionSName constant varchar2(30) := 'TestHttpTextUrl';
+
+ /* const: TestHttpTextPatter_OptionSName
+  Наименование настроечного параметра "Тесты: шаблон в текстовом файле, доступном по HTTP".
+*/
+TestHttpTextPatter_OptionSName constant varchar2(30) := 'TestHttpTextPattern';
+
+/* const: TestHttpAbsentFile_OptionSName
+  Наименование настроечного параметра "Тесты: отсутствующий файл на доступном
+  хосте".
+*/
+TestHttpAbsentFile_OptionSName constant varchar2(30) := 'TestHttpAbsentFile';
+
+/* const: TestHttpAbsentHost_OptionSName
+  Наименование настроечного параметра "Тесты: файл на несуществующем хосте ( в
+  интранете)".
+*/
+TestHttpAbsentHost_OptionSName constant varchar2(30) := 'TestHttpAbsentHost';
+
 
 
 /* group: Функции */
