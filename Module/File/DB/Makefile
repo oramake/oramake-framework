@@ -6,12 +6,12 @@ EDTFTPJ_DIR       = Java/UsedLib/edtFTPj/edtftpj-2.4.0
 
 # build var: BOUNCYCASTLE_DIR
 #  орневой каталог дистрибутива используемой версии библиотеки BouncyCastle.
-BOUNCYCASTLE_DIR  = Java/UsedLib/BouncyCastle/jce-jdk12-139
+BOUNCYCASTLE_DIR  = Java/UsedLib/BouncyCastle
 
 # build var: HTTPCLIENT_DIR
 #  орневой каталог дистрибутива используемой версии библиотеки HttpComponents
 # Client.
-HTTPCLIENT_DIR    = Java/UsedLib/HttpClient/httpcomponents-client-4.3.6
+HTTPCLIENT_DIR    = Java/UsedLib/HttpClient/httpcomponents-client-4.5.3
 
 #  аталог сборки OMS-модул€
 omsModuleDir = OmsModule
@@ -326,12 +326,13 @@ LOAD_OPERATORID := $(ORACLE_OPERATOR)
 # ”казываетс€ пути к *.jar файлам загружаемых внешних Java-библиотек.
 loadJavaUsedLibJar  =                    \
   $(addsuffix .ignore,$(wildcard $(EDTFTPJ_DIR)/lib/edtftpj.jar)) \
-  $(wildcard $(BOUNCYCASTLE_DIR)/../*.jar) \
-  $(HTTPCLIENT_DIR)/lib/commons-codec-1.6.jar \
-  $(addsuffix .ignore,$(HTTPCLIENT_DIR)/lib/commons-logging-1.1.3.jar) \
-  $(HTTPCLIENT_DIR)/lib/httpcore-4.3.3.jar \
-  $(HTTPCLIENT_DIR)/lib/httpclient-4.3.6.jar \
-  $(HTTPCLIENT_DIR)/lib/fluent-hc-4.3.6.jar
+  $(wildcard $(BOUNCYCASTLE_DIR)/*.jar) \
+  $(wildcard $(HTTPCLIENT_DIR)/lib/commons-codec-*.jar) \
+  $(addsuffix .ignore,$(wildcard $(HTTPCLIENT_DIR)/lib/commons-logging-*.jar)) \
+  $(wildcard $(HTTPCLIENT_DIR)/lib/httpcore-*.jar) \
+  $(wildcard $(HTTPCLIENT_DIR)/lib/httpclient-[0123456789]*.jar) \
+  $(addsuffix .ignore,$(wildcard $(HTTPCLIENT_DIR)/lib/httpclient-cache-*.jar)) \
+  $(wildcard $(HTTPCLIENT_DIR)/lib/fluent-hc-*.jar)
 
 
 
