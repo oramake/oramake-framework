@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: File
-SubTitle: Версия 3.2.0
+SubTitle: Версия 3.3.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -134,11 +134,6 @@ Group: Java  {
 
    Group: Библиотеки  {
 
-      Group: BouncyCastle  {
-
-         File: BouncyCastle  (Java/UsedLib/BouncyCastle/readme.txt)
-         }  # Group: BouncyCastle
-
       Group: edtFTPj  {
 
          File: edtFTPj  (Java/UsedLib/edtFTPj/readme.txt)
@@ -213,6 +208,11 @@ Group: Скрипты  {
       }  # Group: Java
 
    Group: Test  {
+
+      Group: Data  {
+
+         File: opt_option  (no auto-title, Test/Data/opt_option.sql)
+         }  # Group: Data
 
       File: run  (no auto-title, Test/run.sql)
       File: set-test-directory  (no auto-title, Test/set-test-directory.sql)
