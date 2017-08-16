@@ -5,6 +5,7 @@
 - unix2dos
 - gawk
 - sed
+- perl ( используется в NaturalDocs)
 
 
 
@@ -24,6 +25,12 @@
 - ncurses 6.0.20160220-1 ( нужен gawk, однако его нет в MinGit при наличии gawk)
 - gawk 4.1.4-1
 - sed 4.2.2-2
+- libcrypt 1.3-1
+- libgdbm-1.11-3
+- gdbm-1.11-3
+- libdb 5.3.28-2
+- db-5.3.28-2
+- perl-5.22.1-1
 
 
 В качестве источника пакетов используется проект MSYS2 ( http://www.msys2.org).
@@ -179,3 +186,48 @@ sed
 |   `-gcc-libs
 `-bash provides sh
   `-msys2-runtime
+
+
+
+perl: необходимые пакеты
+
+$ pacman -Qo /usr/bin/perl.exe
+/usr/bin/perl.exe is owned by perl 5.22.1-1
+
+$ pactree -a perl
+perl
+|-db
+| `-libdb
+|   |-gcc-libs
+|   | `-msys2-runtime
+|   `-msys2-runtime
+|-gdbm
+| `-libgdbm
+|   `-gcc-libs
+|-libcrypt
+| `-gcc-libs
+|-coreutils
+| |-gmp
+| |-libiconv
+| | `-gcc-libs
+| `-libintl
+|   |-gcc-libs
+|   `-libiconv
+|-msys2-runtime
+`-bash provides sh
+  `-msys2-runtime
+
+$ pactree -u perl
+perl
+db
+libdb
+gcc-libs
+msys2-runtime
+gdbm
+libgdbm
+libcrypt
+coreutils
+gmp
+libiconv
+libintl
+bash
