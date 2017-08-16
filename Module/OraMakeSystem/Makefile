@@ -21,6 +21,7 @@ usedLibDir 					= UsedLib
 	all 							\
 	clean							\
 	install						\
+	install-msys2 \
 	uninstall					\
 	gendoc						\
 	gendoc-clean			\
@@ -50,21 +51,63 @@ clean:							\
 
 # group: Установка
 
+# Получаем тип ОС
+OSTYPE := $(shell echo $$OSTYPE)
 
+# build var: MSYS2_ROOT
+# Путь к корневому каталогу установки в Windows, в который будут установлены
+# пакеты MSYS2
+MSYS2_ROOT = /cygdrive/d/OraMakeSystem
 
 # build var: DESTDIR
 # Префикс для установки.
-DESTDIR				=	/usr/local
+DESTDIR := /usr/local
 
 # build var: FORCE
 # Флаг затирания настроек приложения
+# ( 1 затирать ( удалять), по умолчанию сохранять).
+#
+# Замечания:
+# - в случае установки в MSYS2 ( для Windows) при указании FORCE=1 также будут
+#   удален корневой каталог установки <MSYS2_ROOT> со всеми файлами;
+#
 FORCE         =
 
 # Каталог для общих данных
-shareDir		 	= $(DESTDIR)/share/oms
+shareDir = $(DESTDIR)/share/oms
 
 # Каталог для настроек
 configDir     = $(DESTDIR)/etc/oms
+
+# Флаг установки в MSYS2 ( Windows)
+# ( 1 да, "" нет)
+MSYS2_FLAG =
+
+ifeq ($(OSTYPE),msys)
+
+MSYS2_FLAG = 1
+
+DESTDIR := $(MSYS2_ROOT)$(DESTDIR)
+
+install: install-msys2
+
+# Установка MSYS2
+install-msys2:
+	@if [[ ! -d "$(MSYS2_ROOT)" ]]; then \
+		mkdir "$(MSYS2_ROOT)"; \
+	fi \
+	&& cp \
+		--preserve=mode,ownership,timestamps \
+		--no-dereference --preserve=links \
+		--recursive \
+		--target-directory="$(MSYS2_ROOT)" \
+		Build/Win32/MSYS2/* \
+	&& if [[ ! -d "$(DESTDIR)/bin" ]]; then \
+		mkdir -p "$(DESTDIR)/bin"; \
+	fi \
+	&& echo "installed MSYS2 into: $(MSYS2_ROOT)"
+
+endif
 
 # target: install
 # Выполняет установку приложения.
@@ -96,14 +139,15 @@ install:
 	&& cp --force Config/Legacy/* "$(shareDir)/Config"
 
 
-
 # target: uninstall
 # Отменяет установку приложения.
 
 uninstall:
-	-@rm $(DESTDIR)/bin/$(scriptPrefix)-*[^~];	\
-	rm -rf "$(shareDir)" \
-	$(if $(FORCE),"rm -rf $(configDir)")
+	-@rm -f $(DESTDIR)/bin/$(scriptPrefix)-*[^~];	\
+	rm -rf "$(shareDir)"; \
+	if [[  -n "$(FORCE)" ]]; then \
+		rm -rf "$(if $(MSYS2_FLAG),$(MSYS2_ROOT),$(configDir))"; \
+	fi;
 
 
 

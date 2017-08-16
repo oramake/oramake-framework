@@ -1,0 +1,181 @@
+Ѕинарники, необходимые дл€ использовани€ OraMakeSystem:
+- make
+- mkdir
+- find
+- unix2dos
+- gawk
+- sed
+
+
+
+ѕакеты, необходимые дл€ использовани€ OraMakeSystem
+- msys2-runtime 2.6.1-4
+- bash 4.3.046-1
+- gcc-libs 6.3.0-1
+- libintl 0.19.7-3
+- libiconv 1.14-2
+- make 4.2-1
+- gmp 6.1.2-1
+- coreutils 8.25-1
+- findutils 4.6.0-1
+- dos2unix 7.3.4-1
+- mpfr 3.1.5.1-3
+- libreadline 6.3.008-7
+- ncurses 6.0.20160220-1 ( нужен gawk, однако его нет в MinGit при наличии gawk)
+- gawk 4.1.4-1
+- sed 4.2.2-2
+
+
+¬ качестве источника пакетов используетс€ проект MSYS2 ( http://www.msys2.org).
+ƒобавление пакета MSYS2 выполн€етс€ скриптом add-package.sh.
+
+
+ƒл€ определени€ необходимых пакетов:
+- распаковал MSYS2 из
+  http://repo.msys2.org/distrib/i686/msys2-base-i686-20161025.tar.xz
+- запустил msys2_shell.cmd
+- использовал pacman дл€ определени€ пакета, к которому относитс€ бинарник
+  ( pacman -Qo <full file path>);
+  ¬ случае отсутстви€ необходимого пакета, можно загрузить его дистрибутив
+  ( из http://repo.msys2.org/distrib/i686) и установить вручную
+  ( pacman -U <full file path>), при этом тажке будут установлены требуемые
+  дл€ него пакеты. ¬ерсии установленных пакетов можно посмотреть с помощью
+  pacman -Qs.
+- использовал pactree дл€ отображени€ зависимостей пакета;
+    $ pacman -U /d/users/mao/download/msys2/make-4.2.1-1-i686.pkg.tar.xz
+
+ќперации с пакетами описаны в:
+- https://github.com/msys2/msys2/wiki/Using-packages
+
+ѕо возможности выбирал версии пакетов, используемые в MinGit-2.11.1-32-bit.zip
+( из /etc/package-versions.txt).
+
+
+make: необходимые пакеты
+
+$ pactree -a make
+make
+|-msys2-runtime
+|-libintl
+| |-gcc-libs
+| | `-msys2-runtime
+| `-libiconv
+|   `-gcc-libs
+`-bash provides sh
+  `-msys2-runtime
+
+$ pactree -u make
+make
+msys2-runtime
+libintl
+gcc-libs
+libiconv
+bash
+
+
+
+mkdir: необходимые пакеты
+
+$ pacman -Qo /usr/bin/mkdir.exe
+/usr/bin/mkdir.exe is owned by coreutils 8.25-1
+
+$ pactree -a coreutils
+coreutils
+|-gmp
+|-libiconv
+| `-gcc-libs
+|   `-msys2-runtime
+`-libintl
+  |-gcc-libs
+    `-libiconv
+
+$ pactree -u coreutils
+coreutils
+gmp
+libiconv
+gcc-libs
+msys2-runtime
+libintl
+
+
+
+find: необходимые пакеты
+
+$ pacman -Qo /usr/bin/find.exe
+/usr/bin/find.exe is owned by findutils 4.6.0-1
+
+$ pactree -a findutils
+findutils
+|-libiconv
+| `-gcc-libs
+|   `-msys2-runtime
+`-libintl
+  |-gcc-libs
+    `-libiconv
+
+
+
+unix2dos: необходимые пакеты
+
+$ pacman -Qo /usr/bin/unix2dos.exe
+/usr/bin/unix2dos.exe is owned by dos2unix 7.3.4-1
+
+$ pactree -a dos2unix
+dos2unix
+`-libintl
+  |-gcc-libs
+  | `-msys2-runtime
+  `-libiconv
+    `-gcc-libs
+
+
+
+gawk: необходимые пакеты
+
+$ pacman -Qo /usr/bin/gawk.exe
+/usr/bin/gawk.exe is owned by gawk 4.1.4-1
+
+$ pactree -a gawk
+gawk
+|-bash provides sh
+| `-msys2-runtime
+|-mpfr
+| `-gmp
+|-libintl
+| |-gcc-libs
+| | `-msys2-runtime
+| `-libiconv
+|   `-gcc-libs
+`-libreadline
+  `-ncurses
+    |-msys2-runtime
+    `-gcc-libs
+
+$ pactree -u gawk
+gawk
+bash
+msys2-runtime
+mpfr
+gmp
+libintl
+gcc-libs
+libiconv
+libreadline
+ncurses
+
+
+
+sed: необходимые пакеты
+
+$ pacman -Qo /usr/bin/sed.exe
+/usr/bin/sed.exe is owned by sed 4.2.2-2
+
+$ pactree -a sed
+sed
+|-libintl
+| |-gcc-libs
+| | `-msys2-runtime
+| `-libiconv
+|   `-gcc-libs
+`-bash provides sh
+  `-msys2-runtime
