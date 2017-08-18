@@ -4,6 +4,9 @@ title: Версии
 
 group: ?.? ?
 
+[*] Снято требование по предварительной установке Cygwin ( все необходимые
+    утилиты включены в установку OraMakeSystem).
+
 [*] Удалён файл Config/local.mk. Файлы Config/custom.sh и
     Config/localCustom.mk переименованы в Config/Default/connect.sh,
     Config/Default/database.mk, соответственно.

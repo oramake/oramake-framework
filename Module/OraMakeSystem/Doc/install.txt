@@ -4,61 +4,32 @@ Title: Установка
 
 group: Требования
 
-- установленный Cygwin ( версия 1.7.9-1)
-
-  Проверка
-(start code)
-
-$ bash --version
-GNU bash, version 4.1.10(4)-release (i686-pc-cygwin)
-Copyright (C) 2009 Free Software Foundation, Inc.
-...
-
-$ make --version
-GNU Make 3.81
-Copyright (C) 2006  Free Software Foundation, Inc.
-...
-
-$ svn --version
-svn, version 1.7.1 (r1186859)
-   compiled Oct 20 2011, 17:36:22
-
-Copyright (C) 2011 The Apache Software Foundation.
-...
-
-(end)
-
 - использование последних пропатченных версий клиента Oracle ( поддерживаются
   версии 11.2.0.2 ( рекомендуемая), а также 11.1.0.7 и 9.2.0.8)
 
   В более ранних версиях встречаются ошибки, позднее устраненные Oracle
   ( например, ошибки при загрузке файлов с помощью SQL*Loader).
 
-  Проверка ( из консоли Cygwin)
+  Проверка ( из командной строки)
 
 (code)
 
-$ sqlplus /nolog
+$ sqlplus -V
 
-SQL*Plus: Release 11.2.0.2.0 Production on Mon Oct 1 12:32:10 2012
-
-Copyright (c) 1982, 2010, Oracle.  All rights reserved.
-
-SQL>
+SQL*Plus: Release 11.2.0.2.0 Production
 
 (end)
 
-  Также необходимо проверить наличие и версию утилиты Import
+  Также необходимо проверить наличие и версию утилиты SQL*Loader, которая
+  используется для загрузки больших объемов данных из файлов.
 
 (code)
 
-$ imp
+$ sqlldr
 
-Import: Release 11.2.0.2.0 - Production on Mon Oct 1 13:56:59 2012
+SQL*Loader: Release 11.2.0.2.0 - Production on Fri Aug 18 16:08:37 2017
 
 Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
-
-Username:
 
 (end)
 
@@ -69,24 +40,17 @@ Username:
 
 group: Установка
 
-- в bash ( Cygwin Terminal) в корневом каталоге проекта выполнить
+- в корневом каталоге проекта выполнить
 
   $ make install
 
-Пример ( установка версии 1.7.3):
+Пример:
 
 (start code)
 
 $ make install
-
-$ oms-create-module --version
-oms-create-module (OMS) 1.7.3
-OMS Version Information:
-  Module root     : Oracle/Module/OraMakeSystem
-  File revision   : 2132
-  File change date: 2014-07-08 18:40:00 +0300
-  oms-common.sh revision    : 2132
-  oms-common.sh change date : 2014-07-08 18:40:00 +0300
+installed into: "D:\OraMakeSystem"
+( use "make install FORCE=1" to rewrite config files in "D:\OraMakeSystem\usr\local\etc\oms")
 
 (end)
 
@@ -98,8 +62,7 @@ OMS Version Information:
 
 
 
-
 Требования к БД при использовании:
 - в БД должен быть установлен модуль ModuleInfo для сохранения информации об
   установке модулей;
-- в БД должен быть установлен модуль Scheduler для возможности загрузки батчей;
+- для возможности загрузки батчей в БД нужно установить модуль Scheduler;

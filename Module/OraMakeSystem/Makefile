@@ -54,30 +54,37 @@ clean:							\
 # Получаем тип ОС
 OSTYPE := $(shell echo $$OSTYPE)
 
-# build var: MSYS2_ROOT
-# Путь к корневому каталогу установки в Windows, в который будут установлены
-# пакеты MSYS2
-MSYS2_ROOT = /cygdrive/d/OraMakeSystem
+# build var: WIN_ROOT
+# Путь к корневому каталогу установки в Windows
+# ( в случае невозможности установки по указанному пути установка будет
+# произведена в "C:\OraMakeSystem")
+WIN_ROOT := /cygdrive/d/OraMakeSystem
 
-# build var: DESTDIR
-# Префикс для установки.
-DESTDIR := /usr/local
+# Альтернативный каталог установки, используемый в случае отсутствия
+# родительского каталога для WIN_ROOT
+#
+altWinRoot = /cygdrive/c/OraMakeSystem
+
+# build var: prefix
+# Общий префикс для инсталляционных каталогов.
+# Примечание: Этот каталог должен существовать еще до начала инсталляции.
+prefix := /usr/local
 
 # build var: FORCE
 # Флаг затирания настроек приложения
 # ( 1 затирать ( удалять), по умолчанию сохранять).
 #
 # Замечания:
-# - в случае установки в MSYS2 ( для Windows) при указании FORCE=1 также будут
-#   удален корневой каталог установки <MSYS2_ROOT> со всеми файлами;
+# - в случае установки для Windows при указании FORCE=1 также будут удален
+#   корневой каталог установки <WIN_ROOT> со всеми файлами;
 #
-FORCE         =
+FORCE =
 
 # Каталог для общих данных
-shareDir = $(DESTDIR)/share/oms
+shareDir = $(prefix)/share/oms
 
 # Каталог для настроек
-configDir     = $(DESTDIR)/etc/oms
+configDir     = $(prefix)/etc/oms
 
 # Флаг установки в MSYS2 ( Windows)
 # ( 1 да, "" нет)
@@ -87,25 +94,34 @@ ifeq ($(OSTYPE),msys)
 
 MSYS2_FLAG = 1
 
-DESTDIR := $(MSYS2_ROOT)$(DESTDIR)
+override WIN_ROOT := $(shell \
+	if [[ -d "$(dir $(WIN_ROOT))" ]]; then \
+		echo "$(WIN_ROOT)"; \
+	else \
+		echo "$(altWinRoot)"; \
+	fi \
+)
 
-install: install-msys2
+override prefix := $(WIN_ROOT)$(prefix)
+
 
 # Установка MSYS2
 install-msys2:
-	@if [[ ! -d "$(MSYS2_ROOT)" ]]; then \
-		mkdir "$(MSYS2_ROOT)"; \
+	@if [[ ! -d "$(WIN_ROOT)" ]]; then \
+		mkdir "$(WIN_ROOT)"; \
 	fi \
 	&& cp \
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
 		--recursive \
-		--target-directory="$(MSYS2_ROOT)" \
+		--target-directory="$(WIN_ROOT)" \
 		Build/Win32/MSYS2/* \
-	&& if [[ ! -d "$(DESTDIR)/bin" ]]; then \
-		mkdir -p "$(DESTDIR)/bin"; \
-	fi \
-	&& echo "installed MSYS2 into: $(MSYS2_ROOT)"
+	&& if [[ ! -d "$(WIN_ROOT)/usr/local" ]]; then \
+		mkdir -p "$(WIN_ROOT)/usr/local"; \
+	fi
+
+
+install: install-msys2
 
 endif
 
@@ -114,7 +130,10 @@ endif
 
 install:
 	@( cd $(scriptDir)										\
-		&& install --mode=755 --target-directory=$(DESTDIR)/bin 		\
+		&& if [[ ! -d "$(prefix)/bin" ]]; then \
+				mkdir "$(prefix)/bin"; \
+			fi \
+		&& install --mode=755 --target-directory=$(prefix)/bin 		\
 		$(scriptPrefix)-*[^~]								\
 	) 																		\
 	&& rm -rf "$(shareDir)"								\
@@ -136,17 +155,45 @@ install:
 		-delete \
 	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
 	&& mkdir -p "$(shareDir)/Config"		 	\
-	&& cp --force Config/Legacy/* "$(shareDir)/Config"
+	&& cp --force Config/Legacy/* "$(shareDir)/Config" \
+	&& if [[ -z "$(MSYS2_FLAG)" ]]; then \
+			echo "installed with prefix: $(prefix)" \
+			&& if [[ -z "$(FORCE)" ]]; then \
+					echo "( use \"make install FORCE=1\" to rewrite config files in $(configDir))"; \
+				fi; \
+		else \
+			echo "installed into: \"$$(cygpath --windows "$(WIN_ROOT)")\"" \
+			&& if [[ -z "$(FORCE)" ]]; then \
+					echo "( use \"make install FORCE=1\" to rewrite config files in \"$$(cygpath --windows "$(configDir)")\")"; \
+				fi; \
+		fi
+
 
 
 # target: uninstall
 # Отменяет установку приложения.
 
 uninstall:
-	-@rm -f $(DESTDIR)/bin/$(scriptPrefix)-*[^~];	\
+	-@rm -f $(prefix)/bin/$(scriptPrefix)-*[^~];	\
 	rm -rf "$(shareDir)"; \
-	if [[  -n "$(FORCE)" ]]; then \
-		rm -rf "$(if $(MSYS2_FLAG),$(MSYS2_ROOT),$(configDir))"; \
+	if [[ -z "$(MSYS2_FLAG)" ]]; then \
+		if [[  -n "$(FORCE)" ]]; then \
+			rm -rf "$(configDir)"; \
+		else \
+			echo "OraMakeSystem files deleted"; \
+			echo "( use \"make uninstall FORCE=1\" to delete config files in $(configDir))"; \
+		fi; \
+	else \
+		winRoot=$$(cygpath --windows "$(WIN_ROOT)"); \
+		if ! [[ -d "$(WIN_ROOT)" ]]; then \
+			echo "Installation directory not found: \"$$winRoot\""; \
+		elif [[  -n "$(FORCE)" ]]; then \
+			rm -rf "$(WIN_ROOT)" \
+			&& echo "Installation directory removed: \"$$winRoot\""; \
+		else \
+			echo "OraMakeSystem files deleted"; \
+			echo "( use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\")"; \
+		fi; \
 	fi;
 
 
