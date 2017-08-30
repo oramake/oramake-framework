@@ -4,8 +4,8 @@ title: Версии
 
 group: ?.? ?
 
-[*] Снято требование по предварительной установке Cygwin ( все необходимые
-    утилиты включены в установку OraMakeSystem).
+[+] Добавлена возможность установки в Windows при отсутствии Cygwin ( все
+    необходимые утилиты включены в OraMakeSystem).
 
 [*] Удалён файл Config/local.mk. Файлы Config/custom.sh и
     Config/localCustom.mk переименованы в Config/Default/connect.sh,

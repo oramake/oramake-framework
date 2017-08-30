@@ -40,25 +40,66 @@ Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
 group: Установка
 
-- в корневом каталоге проекта выполнить
 
-  $ make install
 
-Пример:
+Установка в Windows при отсутствии Cygwin:
+
+- из командной строки в корневом каталоге проекта выполнить
+
+(code)
+
+> .\make install
+
+(end)
+
+Пример
+( установка в Windows):
 
 (start code)
 
-$ make install
+> .\make install
 installed into: "D:\OraMakeSystem"
 ( use "make install FORCE=1" to rewrite config files in "D:\OraMakeSystem\usr\local\etc\oms")
 
 (end)
 
+- добавить путь к каталогу установки ( указанному в "installed into: ...",
+  обычно "D:\OraMakeSystem") в переменную окружения PATH
+  ( Компьютер -> Свойства -> Дополнительные параметры системы ->
+    Переменные среды)
+
+
+
+Установка в Cygwin:
+
+- в терминале Cygwin ( Cygwin Terminal) в корневом каталоге проекта выполнить
+
+(code)
+
+$ make install
+
+(end)
+
+Пример
+( установка в Cygwin):
+
+(start code)
+
+$ make install
+installed with prefix: /usr/local
+( use "make install FORCE=1" to rewrite config files in /usr/local/etc/oms)
+
+(end)
+
+
+
+Замечания:
+
 - после установки может потребоваться отредактировать настроечные файлы
-  в /usr/local/etc/oms <Настройки баз данных> или <connect.sh>, версии
+  ( в .../etc/oms, <Настройки баз данных> или <connect.sh>), версии
   по-умолчанию которых копируются при установке, если данные файлы
   не существовали. Настроечные файлы могут быть заменены при использовании
-  флага FORCE=1.
+  флага FORCE=1 при выполнении make install.
 
 
 
