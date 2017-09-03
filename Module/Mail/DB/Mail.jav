@@ -389,7 +389,7 @@ throws java.lang.Exception
   else {
     logDebug( "addAttachment: fileName=\"" + fileName + "\"");
     mbp.setDisposition( Part.ATTACHMENT);
-    mbp.setFileName( MimeUtility.encodeText( fileName));
+    mbp.setFileName( fileName);
   }
   mbp.setDataHandler( new DataHandler(
     new BLOBDataSource( data, contentType))
