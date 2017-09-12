@@ -22,6 +22,7 @@ usedLibDir 					= UsedLib
 	clean							\
 	install						\
 	install-msys2 \
+	install-oms \
 	uninstall					\
 	gendoc						\
 	gendoc-clean			\
@@ -125,10 +126,8 @@ install: install-msys2
 
 endif
 
-# target: install
-# Выполняет установку приложения.
-
-install:
+# Выполняет установку файлов OraMakeSystem
+install-oms:
 	@( cd $(scriptDir)										\
 		&& if [[ ! -d "$(prefix)/bin" ]]; then \
 				mkdir "$(prefix)/bin"; \
@@ -167,6 +166,13 @@ install:
 					echo "( use \"make install FORCE=1\" to rewrite config files in \"$$(cygpath --windows "$(configDir)")\")"; \
 				fi; \
 		fi
+
+
+
+# target: install
+# Выполняет установку приложения.
+
+install: install-oms
 
 
 
@@ -303,12 +309,15 @@ set-oms-version:
 			-e "s/\$$Revision:: [0-9]\\+ \\+\\$$/\$$Revision:: $$versionRevision \$$/" \
 			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
 	    -e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
+	    -e 's/^set omsVersion=[0-9.]*$$/set omsVersion=$(OMS_VERSION)/' \
 	    $(scriptDir)/*[^~] \
 	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
 	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
+	    $(buildDir)/Win32/MSYS2/make.cmd \
 	  && unix2dos \
 	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
 	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
+	    $(buildDir)/Win32/MSYS2/make.cmd \
 	    2>/dev/null \
 	  && sed --in-place \
 	    -e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \

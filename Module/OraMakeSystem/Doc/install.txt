@@ -38,13 +38,11 @@ Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
 
 
-group: Установка
+group: Установка для Windows
 
+Порядок установки:
 
-
-Установка в Windows при отсутствии Cygwin:
-
-- из командной строки в корневом каталоге проекта выполнить
+- из командной строки в корневом каталоге модуля выполнить
 
 (code)
 
@@ -53,9 +51,8 @@ group: Установка
 (end)
 
 Пример
-( установка в Windows):
 
-(start code)
+(code)
 
 > .\make install
 installed into: "D:\OraMakeSystem"
@@ -68,11 +65,36 @@ installed into: "D:\OraMakeSystem"
   ( Компьютер -> Свойства -> Дополнительные параметры системы ->
     Переменные среды)
 
+Проверка корректности установки:
+
+- из нового окна командной строки выполнить ( результат должен быть аналогичен
+  указанному)
+
+(code)
+
+> make --oms-version
+make.cmd (OMS) 2.0.0
+
+(end)
 
 
-Установка в Cygwin:
 
-- в терминале Cygwin ( Cygwin Terminal) в корневом каталоге проекта выполнить
+
+group: Установка для Cygwin
+
+В Cygwin должны быть установлены пакеты:
+- bash
+- make
+- coreutils
+- findutils
+- dos2unix
+- gawk
+- sed
+- perl ( для генерации автодокументации)
+
+Порядок установки:
+
+- в терминале Cygwin ( Cygwin Terminal) в корневом каталоге модуля выполнить
 
 (code)
 
@@ -81,9 +103,8 @@ $ make install
 (end)
 
 Пример
-( установка в Cygwin):
 
-(start code)
+(code)
 
 $ make install
 installed with prefix: /usr/local
@@ -92,6 +113,8 @@ installed with prefix: /usr/local
 (end)
 
 
+
+group: Замечания по установке
 
 Замечания:
 
