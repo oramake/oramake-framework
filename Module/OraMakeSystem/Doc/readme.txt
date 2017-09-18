@@ -188,7 +188,7 @@ $ make set-version MODULE_VERSION=???
 
 (code)
 
-$ oms-module set-version ???
+$ oms set-version ???
 
 (end)
 

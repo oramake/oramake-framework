@@ -71,6 +71,7 @@ Group: Соглашения по оформлению модуля  {
 Group: Скрипты  {
 
    File: create-patch  (Script/create-patch)
+   File: oms  (Script/oms)
    File: oms-auto-doc  (Script/oms-auto-doc)
    File: oms-common.sh  (Script/oms-common.sh)
    File: oms-connect-info  (Script/oms-connect-info)
@@ -79,7 +80,7 @@ Group: Скрипты  {
    File: oms-gen-spec  (Script/oms-gen-spec)
    File: oms-gen-spec.awk  (Script/oms-gen-spec.awk)
    File: oms-load  (Script/oms-load)
-   File: oms-module  (Script/oms-module)
+   File: oms-module&lparen; DEPRECATED&rparen;  (Script/oms-module)
    File: oms-update-module  (Script/oms-update-module)
    }  # Group: Скрипты
 

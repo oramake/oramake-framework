@@ -23,7 +23,9 @@ usedLibDir 					= UsedLib
 	install						\
 	install-msys2 \
 	install-oms \
+	install-oms-msys2 \
 	uninstall					\
+	uninstall-oms-msys2 \
 	gendoc						\
 	gendoc-clean			\
 	set-oms-version		\
@@ -124,6 +126,36 @@ install-msys2:
 
 install: install-msys2
 
+
+# Установка файлов OMS, предназначенных только для MSYS2
+install-oms-msys2:
+	@if [[ ! -d "$(WIN_ROOT)/cmd" ]]; then \
+		mkdir "$(WIN_ROOT)/cmd"; \
+	fi \
+	&& cp \
+		--preserve=mode,ownership,timestamps \
+		--no-dereference --preserve=links \
+		--target-directory="$(WIN_ROOT)/cmd" \
+		Build/Win32/MSYS2/cmd/* \
+	&& cp \
+		--preserve=mode,ownership,timestamps \
+		--no-dereference --preserve=links \
+		--target-directory="$(WIN_ROOT)" \
+		Build/Win32/MSYS2/*.cmd
+
+
+install-oms: install-oms-msys2
+
+
+# Удаление файлов OMS, предназначенных только для MSYS2
+uninstall-oms-msys2:
+	-@rm -rf \
+		"$(WIN_ROOT)/cmd" \
+		$(WIN_ROOT)/*.cmd
+
+
+uninstall: uninstall-oms-msys2
+
 endif
 
 # Выполняет установку файлов OraMakeSystem
@@ -133,6 +165,7 @@ install-oms:
 				mkdir "$(prefix)/bin"; \
 			fi \
 		&& install --mode=755 --target-directory=$(prefix)/bin 		\
+		$(scriptPrefix)	\
 		$(scriptPrefix)-*[^~]								\
 	) 																		\
 	&& rm -rf "$(shareDir)"								\
@@ -180,7 +213,9 @@ install: install-oms
 # Отменяет установку приложения.
 
 uninstall:
-	-@rm -f $(prefix)/bin/$(scriptPrefix)-*[^~];	\
+	-@rm -f \
+		$(prefix)/bin/$(scriptPrefix) \
+		$(prefix)/bin/$(scriptPrefix)-*[^~]; \
 	rm -rf "$(shareDir)"; \
 	if [[ -z "$(MSYS2_FLAG)" ]]; then \
 		if [[  -n "$(FORCE)" ]]; then \
@@ -313,11 +348,11 @@ set-oms-version:
 	    $(scriptDir)/*[^~] \
 	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
 	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
-	    $(buildDir)/Win32/MSYS2/make.cmd \
+	    $(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
 	  && unix2dos \
 	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
 	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
-	    $(buildDir)/Win32/MSYS2/make.cmd \
+	    $(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
 	    2>/dev/null \
 	  && sed --in-place \
 	    -e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
@@ -325,7 +360,8 @@ set-oms-version:
 	  && $(MAKE) gendoc \
 	  ; \
 	else \
-	  echo "No value for parameter OMS_VERSION."; \
+	  echo "No value for parameter OMS_VERSION"; \
+		echo '( for example usage: "make set-oms-version OMS_VERSION=2.0.0")'; \
 	  exit 5; \
 	fi
 

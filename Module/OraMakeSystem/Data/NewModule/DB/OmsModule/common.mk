@@ -189,7 +189,7 @@ ifeq ($(MODULE_VERSION),)
       ifeq ($(call compareVersion,$(INSTALL_VERSION),$(moduleVersion)),1)
 
         moduleVersionNew := $(shell \
-          oms-module set-version --directory .. \
+          oms set-version --directory .. \
             --used-only --quiet "$(INSTALL_VERSION)" \
           && echo \
             "OMS: module version changed using INSTALL_VERSION: $(INSTALL_VERSION) ( please, run \"make gendoc\")" >&2 \
@@ -257,7 +257,7 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms-module --directory .. show-svn-info --quiet)
+getSvnInfo := $(shell oms --directory .. show-svn-info --quiet)
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 
@@ -269,7 +269,7 @@ export OMS_ACTION_GOALS = $(MAKECMDGOALS)
 # Устанавливает номер текущей версии модуля.
 
 set-version.oms:
-	@oms-module set-version --directory .. "$(MODULE_VERSION)"
+	@oms set-version --directory .. "$(MODULE_VERSION)"
 
 
 

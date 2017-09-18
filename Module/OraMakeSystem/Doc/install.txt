@@ -67,13 +67,17 @@ installed into: "D:\OraMakeSystem"
 
 Проверка корректности установки:
 
-- из нового окна командной строки выполнить ( результат должен быть аналогичен
-  указанному)
+- в новом окне командной строки выполнить ( результат должен быть аналогичен
+  указанному, номер версии может быть больше)
 
 (code)
 
 > make --oms-version
 make.cmd (OMS) 2.0.0
+
+> oms --version
+oms (OMS) 2.0.0
+...
 
 (end)
 
@@ -109,6 +113,29 @@ $ make install
 $ make install
 installed with prefix: /usr/local
 ( use "make install FORCE=1" to rewrite config files in /usr/local/etc/oms)
+
+(end)
+
+- добавить путь к подкаталогу bin префикса установки ( префикс указан в
+  "installed with prefix: ...", обычно путь к подкаталогу bin это
+  "/usr/local/bin") в переменную окружения PATH ( если он не был добавлен
+  в нее ранее);
+
+Проверка корректности установки:
+
+- в новом окна терминала выполнить ( результат должен быть аналогичен
+  указанному, номер версии может быть больше)
+
+(code)
+
+$ make --version
+GNU Make 3.81
+Copyright (C) 2006  Free Software Foundation, Inc.
+...
+
+$ oms --version
+oms (OMS) 2.0.0
+...
 
 (end)
 
