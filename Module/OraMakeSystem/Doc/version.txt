@@ -7,10 +7,6 @@ group: ?.?.?
 [+] Добавлена возможность установки в Windows при отсутствии Cygwin ( все
     необходимые утилиты включены в OraMakeSystem).
 
-[*] Удалён файл Config/local.mk. Файлы Config/custom.sh и
-    Config/localCustom.mk переименованы в Config/Default/connect.sh,
-    Config/Default/database.mk, соответственно.
-
 [+] Данные OraMakeSystem ( шаблон программного модуля, информация по генерации
     меню) пересены из Config в новый каталог Data.
     Настройки OraMakeSystem после установки располагаются в /usr/local/etc/oms
@@ -18,8 +14,17 @@ group: ?.?.?
     ( <http://www.pathname.com/fhs/pub/fhs-2.3.html>).
     При первоначальной установке настройки по-умолчанию копируются из
     директории Config/Default. Для обратной совместимости с OMS-файлами модулей
-    ( <Инициализация OMS>) предыдущих версий OMS при установке создаются/заменяются файлы
-    local.mk и localCustom.mk в /usr/local/share/oms/Config.
+    ( <Инициализация OMS>) предыдущих версий OMS при установке
+    создаются/заменяются файлы local.mk и localCustom.mk в
+    /usr/local/share/oms/Config.
+
+[*] Скрипт oms-module переименован в <oms>, для создания модуля стала
+    использоваться команда "create-module" скрипта <oms>, ранее
+    использовавшийся скрипт oms-create-module удален.
+
+[*] Удалён файл Config/local.mk. Файлы Config/custom.sh и
+    Config/localCustom.mk переименованы в Config/Default/connect.sh,
+    Config/Default/database.mk, соответственно.
 
 [!] При проверке наличия блокировок в скрипте <oms-check-lock.sql> перестали
     учитываться блокировки собственной сессии.

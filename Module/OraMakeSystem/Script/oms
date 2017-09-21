@@ -11,6 +11,7 @@
 # команд.
 #
 # Возможные команды ( subcommand):
+#    create-module              - создает структуру нового модуля
 #    gen-schema-run             - генерация файла по установке последней версии
 #                                 объектов модудя в БД ( run.sql)
 #    gen-schema-revert          - генерация файла по удалению объектов модуля
@@ -70,6 +71,7 @@ source oms-common.sh || exit 11
 # var: subcommandList
 # Список команд, обрабатываемых скриптом
 declare -a subcommandList=( \
+  "create-module" \
   "gen-schema-revert" \
   "gen-schema-run" \
   "set-version" \
@@ -78,7 +80,7 @@ declare -a subcommandList=( \
 
 
 
-# group: Параметры вызова
+# group: Параметры вызова ( общие)
 
 # var: rootDir
 # Корневой каталог модуля.
@@ -88,18 +90,40 @@ rootDir=""
 # Команда, которую нужно выполнить для модуля.
 subcommand=""
 
-# var: moduleVersion
-# Версия модуля ( используется в команде set-version)
-moduleVersion=""
+
+
+# group: Параметры вызова ( для отдельных команд)
+
+# var: isOverwrite
+# Переписывать существующие файлы
+# ( используется в команде <create-module>)
+isOverwrite=0
 
 # var: isQuiet
-# Флаг минимизации выводимой информации.
+# Флаг минимизации выводимой информации
+# ( используется в командах <set-version>, <show-svn-info>).
 isQuiet=""
 
 # var: isUsedOnly
 # Флаг установки указанного номера версии только в случае его использования
-# в файлах модуля ( команда <set-version>).
+# в файлах модуля
+# ( используется в команде <set-version>).
 isUsedOnly=""
+
+# var: moduleName
+# Имя модуля
+# ( используется в команде <create-module>)
+moduleName=""
+
+# var: moduleVersion
+# Версия модуля
+# ( используется в команде <set-version>)
+moduleVersion=""
+
+# var: packageName
+# Имя пакета
+# ( используется в команде <create-module>)
+packageName=""
 
 
 
@@ -283,6 +307,255 @@ parseOption()
     rootDir="."
     logDebug3 "Set rootDir: '$rootDir'"
   fi
+}
+
+
+
+# group: create-module
+# Создает структуру нового модуля.
+#
+# Использование:
+#   oms create-module [common-options] [options] moduleName
+#
+# Параметры:
+#   moduleName                    имя нового модуля
+#
+# Опции:
+#   -p, --package-name NAME     - имя пакета ( по умолчанию: pkg_<moduleName>)
+#   --overwrite                 - переписывать существующие файлы
+#                                 ( по умолчанию: не менять)
+#
+# Замечания:
+#   - в случае, если в качестве корневого каталога ( DIR) указана ".", то
+#     структура копируется в текущий каталог;
+#   - если корневой каталог зафиксирован в системе контроля версий
+#     ( Subversion) и доступна команда svn, то создаваемые ( переписываемые)
+#     файлы автоматически добавляются в Subversion с помощью команды "svn add",
+#     а также для некоторых каталогов устанавливается свойство svn:ignore с
+#     помощью "svn propset";
+#
+#     Для доступности команды svn, путь к подкаталогу bin установленной версии
+#     Subversion должен быть добавлен в переменную окружения PATH, кроме того
+#     для корректного отображения данных различных кодировок путь к подкаталогу
+#     iconv должен быть прописан в переменной окружения APR_ICONV_PATH.
+
+
+
+# func: usage_create-module
+# Выводит информацию об использовании create-module
+# ( см. <exec_create-module>).
+usage_create-module()
+{
+  cat <<END
+Create structure of new OMS module.
+
+Usage:
+  oms create-module [common-options] [options] MODULE_NAME
+
+Arguments:
+  MODULE_NAME                 name of new module
+
+Options:
+  -p, --package-name NAME     add package NAME ( default: pkg_<MODULENAME>)
+      --overwrite             overwrite existing files
+
+Type 'oms --help' to see help for common-options.
+END
+}
+
+
+
+# func: parseOption_create-module
+# Разбор параметров команды <create-module>.
+#
+parseOption_create-module()
+{
+  logDebug2 "start[$#]:" "$@"
+  while [ $# != 0 ]; do
+    processCommonOption "$@"
+    if ! (( processCommonOptionCount )); then
+      case $1 in
+        -p | --package-name)
+          packageName="$2"; shift;
+          logDebug3 "Set packageName: '$packageName'"
+          ;;
+        --overwrite)
+          isOverwrite=1;
+          logDebug3 "Set isOverwrite: $isOverwrite"
+          ;;
+        -* | --*)
+          exitArgError "Illegal subcommand option: '$1'."
+          ;;
+        *)
+          if [[ -z "$moduleName" ]] ; then
+            moduleName="$1"
+            logDebug3 "Set moduleName: '$moduleName'"
+          else
+            exitArgError "Illegal subcommand argument: \"$1\"."
+          fi
+          ;;
+      esac
+    elif (( processCommonOptionCount > 1 )); then
+      local i=$processCommonOptionCount
+      while (( --i )); do shift; done
+    fi
+    shift
+  done
+
+  # Проверяем параметры выполнения
+  if [[ ! -d "$templateDir" ]]; then
+    exitError "Template dir \"$templateDir\" does not exist."
+  fi
+  if [[ -z "$moduleName" ]]; then
+    exitArgError "Not set modulename."
+  fi
+
+  # Устанавливаем значения по умолчанию
+  if [[ -z $rootDir ]]; then
+    rootDir=$moduleName
+    logDebug3 "Set rootDir: '$rootDir'"
+  fi
+  if [[ -z $packageName ]]; then
+    packageName="pkg_$moduleName"
+    logDebug3 "Set packageName: '$packageName'"
+  fi
+}
+
+
+
+# func: exec_create-module
+# Создает структуру модуля.
+#
+exec_create-module()
+{
+
+  # Начальная версия модуля.
+  local moduleVersion="1.0.0"
+
+  # Наличие корневого каталога
+  local isRootExist=0
+  if [[ -d "$rootDir" ]] ; then
+    isRootExist=1
+
+    # Определяем использование Subversion
+    getSvnModuleRoot "$rootDir"
+    if [[ -n "$svnModuleRoot" ]]; then
+      isUseSubversion=1
+      getSvnInitialPath "$svnModuleRootUrl"
+    fi
+  fi
+  (($isRootExist)) || $runCmd mkdir -p "$rootDir"
+  logDebug "Process templateDir: '$templateDir'"
+
+  # Ветки .svn игнорируются для удобства тестирования ( запуск на текущей
+  # версии шаблона без выполнения установки)
+  for file in $( cd "$templateDir" && find * -name ".svn" -prune -o -print ); do
+    logDebug3 "Check template: '$file'"
+
+    # Путь к исходному файлу
+    local srcPath="$templateDir/$file"
+
+    # Файл назначения ( с путем от корня)
+    local dstFile="$file"
+
+    # обрабатывается каталог?
+    ! [[ -d "$srcPath" ]]
+    local isDirectory=$?
+
+    # производить подстановку переменных?
+    local isExpand=0
+
+    # установить svn:ignore на все файлы?
+    local isSetSvnIgnore=0
+
+    # использовать Unix-конец строки
+    local isUnixFormat=0
+
+    # Определяем параметры обработки
+    case "$file" in
+      DB/$templatePackageName.pk? )
+        dstFile="${file/$templatePackageName/$packageName}"
+        isExpand=1
+        ;;
+      DB/OmsModule/Load \
+        | DB/OmsModule/NaturalDocs/Data )
+        isSetSvnIgnore=1
+        ;;
+      DB/OmsModule/NaturalDocs/Menu.txt \
+        )
+        isExpand=1
+        isUnixFormat=1
+        ;;
+      Doc/map.xml \
+        | DB/loaddeps.mk \
+        )
+        isExpand=1
+        ;;
+    esac
+
+    # Путь к файлу назначения
+    local dstPath="$rootDir/$dstFile"
+
+    # Динамические параметры для sed
+    local sedOption=""
+
+    # Обрабатываем файл
+    if [[ ! -e "$dstPath" || $isOverwrite -ne 0 ]]
+        then
+      if ((isDirectory)); then
+        if [[ ! -d "$dstPath" ]] ; then
+          $runCmd mkdir "$dstPath"
+        fi
+      elif ((isExpand)); then
+        if (( isUnixFormat)) ; then
+          sedOption=""
+        else
+          sedOption=" -e s/$/\x0D/"
+        fi
+        if ((isDryRun)); then
+          echo "sed MACROS: \"$srcPath\" -> \"$dstPath\""
+          echo "  \$(moduleName)    : $moduleName"
+          echo "  \$(moduleVersion) : $moduleVersion"
+          echo "  \$(packageName)   : $packageName"
+          echo "  \$(svnModuleRoot) : $svnModuleRoot"
+          echo "  \$(svnInitialPath): $svnInitialPath"
+        else
+          sed \
+            -e "s/\$(moduleName)/$moduleName/g" \
+            -e "s/\$(moduleVersion)/$moduleVersion/g" \
+            -e "s/\$(packageName)/$packageName/g" \
+            -e "s|\$(svnModuleRoot)|$svnModuleRoot|g" \
+            -e "s|\$(svnInitialPath)|$svnInitialPath|g" \
+            $sedOption  \
+            "$srcPath" > "$dstPath"
+        fi
+      else
+        $runCmd cp "$srcPath" "$dstPath"
+      fi || exitError "Cannot process file \"$dstPath\"."
+
+      # Действия с Subversion
+      if (( isUseSubversion)) ; then
+        cd "$rootDir" \
+          && $runCmd $svnCmd add --non-recursive --quiet "$dstFile" \
+          || exitError "Cannot add to Subversion file \"$dstFile\"."
+        if ((isSetSvnIgnore)) ; then
+          if (( isDryRun )); then
+            $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
+          else
+            trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
+            echo "*" > "$tmpFile" \
+              && $svnCmd propset svn:ignore \
+                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+              || exitError "Cannot set snv:ignore on file \"$dstFile\"."
+            rm -f "$tmpFile"
+          fi
+        fi
+        cd "$OLDPWD"
+      fi
+    else
+      logDebug3 "Ignore template: target exists"
+    fi
+  done
 }
 
 

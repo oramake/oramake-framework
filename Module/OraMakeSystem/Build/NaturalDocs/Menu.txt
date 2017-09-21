@@ -75,7 +75,6 @@ Group: Скрипты  {
    File: oms-auto-doc  (Script/oms-auto-doc)
    File: oms-common.sh  (Script/oms-common.sh)
    File: oms-connect-info  (Script/oms-connect-info)
-   File: oms-create-module  (Script/oms-create-module)
    File: oms-file-menu  (no auto-title, Script/oms-file-menu.awk)
    File: oms-gen-spec  (Script/oms-gen-spec)
    File: oms-gen-spec.awk  (Script/oms-gen-spec.awk)

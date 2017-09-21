@@ -160,17 +160,18 @@ endif
 
 # Выполняет установку файлов OraMakeSystem
 install-oms:
-	@( cd $(scriptDir)										\
+	@( cd $(scriptDir) \
 		&& if [[ ! -d "$(prefix)/bin" ]]; then \
 				mkdir "$(prefix)/bin"; \
 			fi \
-		&& install --mode=755 --target-directory=$(prefix)/bin 		\
-		$(scriptPrefix)	\
-		$(scriptPrefix)-*[^~]								\
-	) 																		\
-	&& rm -rf "$(shareDir)"								\
-	&& mkdir -p "$(shareDir)"							\
-	&& mkdir -p "$(configDir)"	  				\
+		&& rm -f "$(prefix)/bin/oms-create-module" \
+		&& install --mode=755 --target-directory=$(prefix)/bin \
+			$(scriptPrefix) \
+			$(scriptPrefix)-*[^~] \
+	) \
+	&& rm -rf "$(shareDir)" \
+	&& mkdir -p "$(shareDir)" \
+	&& mkdir -p "$(configDir)" \
 	&& cp \
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
@@ -186,7 +187,7 @@ install-oms:
 		\) \
 		-delete \
 	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
-	&& mkdir -p "$(shareDir)/Config"		 	\
+	&& mkdir -p "$(shareDir)/Config" \
 	&& cp --force Config/Legacy/* "$(shareDir)/Config" \
 	&& if [[ -z "$(MSYS2_FLAG)" ]]; then \
 			echo "installed with prefix: $(prefix)" \

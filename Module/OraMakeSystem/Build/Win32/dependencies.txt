@@ -22,7 +22,7 @@
 - dos2unix 7.3.4-1
 - mpfr 3.1.5.1-3
 - libreadline 6.3.008-7
-- ncurses 6.0.20160220-1 ( нужен gawk, однако его нет в MinGit при наличии gawk)
+- ncurses 6.0.20160220-1
 - gawk 4.1.4-1
 - sed 4.2.2-2
 - libcrypt 1.3-1

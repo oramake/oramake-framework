@@ -18,10 +18,11 @@ Group: Создание структуры модуля
 
 Для использования OMS в программном модуле, в него должны быть добавлен
 минимальный набор стандартных файлов и каталогов ( см. <Структура каталогов>).
-Эта операция выполняется скриптом <oms-create-module>. Оптимальным вариантом
-является предварительное добавление модуля ( каталога <ModuleName>/Trunk) в
-систему контроля версий Subversion, т.к. в этом случае скрипт сможет выполнить
-необходимую настройку параметров создаваемых файлов и каталогов в Subversion.
+Эта операция выполняется командой "create-module" скрипта <oms>. Оптимальным
+вариантом является предварительное добавление модуля ( каталога
+<ModuleName>/Trunk) в систему контроля версий Subversion, т.к. в этом случае
+скрипт сможет выполнить необходимую настройку параметров создаваемых файлов и
+каталогов в Subversion.
 
 Пример ( создание структуры для модуля DocumentLink):
 
@@ -33,7 +34,7 @@ $ svn co -q svn://.../DocumentLink/Trunk DocumentLink
 
 $ cd DocumentLink
 
-$ oms-create-module -d . DocumentLink
+$ oms create-module -d . DocumentLink
 
 $ svn status
 A      DB\loaddeps.mk
@@ -59,19 +60,13 @@ A      Doc\DB\AutoGen
 A      Doc\map.xml
 A      Makefile
 
-$ oms-create-module --version
-oms-create-module (OMS) 1.4.1
-OMS Version Information:
-  Module root     : Common/Oracle/OracleMakeSystem
-  File revision   : 445
-  File change date: 2009-02-06 10:10:48 +0300
-
 (end)
 
-Последние две команды в примере показывают созданные файлы и каталоги, а также
-версию скрипта oms-create-module, которым они были созданы. После создания
-структуры можно вручную внести дополнительные изменения ( например, в файл
-Doc/map.xml), после чего сохранить изменения в Subversion командой "svn commit".
+( последняя команда в примере показывает созданные файлы и каталоги)
+
+После создания структуры можно вручную внести дополнительные изменения (
+например, в файл Doc/map.xml), после чего сохранить изменения в Subversion
+командой "svn commit".
 
 
 
@@ -142,8 +137,8 @@ make[1]: Leaving directory `/cygdrive/d/users/mao/oracle/scripts/dic/DB'
 DB/Makefile.562.rej), остальные файлы были успешно обновлены. Для решения
 проблемы нужно вручную внести необходимые изменения, выполненные в рамках OMS.
 Возможен также альтернативный способ: получить стандартный файл DB/Makefile
-( удалив существующий и выполнив скрипт <oms-create-module>) и вручную внести
-в него локальные изменения, внесенные ранее в рамках модуля.
+( удалив существующий и выполнив команду "create-module" скрипта <oms>) и
+вручную внести в него локальные изменения, внесенные ранее в рамках модуля.
 
 
 
@@ -1239,34 +1234,7 @@ YYYYMMDD_HHMISS[-<moduleName>]-grant[-$(INSTALL_VERSION)][-$(dbName)].txt
 
 
 
-Group: Запуск oms-скриптов
-
-Запуск oms-скритов ( например, <oms-create-module>) естественным образом
-выполнятеся в bash ( Cygwin Terminal):
-
-(start code)
-
-$ oms-create-module -d tsm TestModule
-
-(end)
-
-Скрипты могут быть запущены также из командной строки
-Windows:
-
-(start code)
-
-> bash -c 'oms-create-module -d "c:\tmp\tsm" TestModule'
-
-(end)
-
-Вариант запуска с указанием всех путей будет выглядеть так ( при стандартном
-расположении Cygwin и OMS):
-
-(start code)
-
-> c:\cygwin\bin\bash -c '/usr/local/bin/oms-create-module -d "c:\tmp\tsm" TestModule'
-
-(end)
+Group: Выполнение SQL-скриптов
 
 SQL-скрипты, входящие в состав OMS ( файлы SqlScript/oms-*.sql) можно вызывать
 из собственных SQL-скриптов, выполняемых через OMS. Например, для определения
@@ -1285,10 +1253,11 @@ SQL-скрипты, входящие в состав OMS ( файлы SqlScript/oms-*.sql) можно вызывать
 (end)
 
 Чтобы этот вызов работал не только при выполнении через OMS, а всегда
-вы выполнении скрипта DB/Install/Schema/Last/run.sql из SQL*Plus, достаточно
+при выполнении скрипта DB/Install/Schema/Last/run.sql из SQL*Plus, достаточно
 добавить путь к каталогу с OMS-скриптами
-( "C:\cygwin\usr\local\share\oms\SqlScript" при стандартной установке Cygwin)
-в переменную окружения SQLPATH.
+( "D:\OraMakeSystem\usr\local\share\oms\SqlScript" в случае стандартной
+установки для Windows либо "C:\cygwin\usr\local\share\oms\SqlScript" при
+стандартной установке для Cygwin) в переменную окружения SQLPATH.
 
 
 
