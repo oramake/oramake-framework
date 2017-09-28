@@ -557,6 +557,7 @@ getInstallDataFile = \
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
+    $(call getInstallDataFile, Custom) \
   ) \
   $(addsuffix .$(lu2), \
   ) \

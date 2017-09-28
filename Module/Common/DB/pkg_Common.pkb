@@ -5,27 +5,6 @@ create or replace package body pkg_Common is
 
 /* group: Константы */
 
-/* iconst: Default_SmtpServer
-  SMTP-сервер для отправки писем по умолчанию.
-*/
-Default_SmtpServer constant varchar2(30) := '';
-
-/* iconst: Default_NotifyEmail
-  Почтовый адрес по умолчанию для отправки писем с нотификацией из промышленных
-  БД.
-*/
-Default_NotifyEmail constant varchar2(100) := '';
-
-/* iconst: Default_NotifyEmail_Test
-  Почтовый адрес по умолчанию для отправки писем с нотификацией из тестовых БД.
-*/
-Default_NotifyEmail_Test constant varchar2(100) := '';
-
-/* iconst: MailSender_Domain
-  Домен отправителя, указываемый при соединении с SMTP-сервером.
-*/
-MailSender_Domain constant varchar2(30) := '';
-
 /* iconst: UpdateLongops_Timeout
   Периодичность обновления информации о выполнении длительной операции.
 */
@@ -157,7 +136,7 @@ return varchar2
 is
 
   -- IP адрес текущего сервера
-  ipAddress varchar2(16);
+  ipAddress varchar2(500);
 
 begin
 
@@ -184,6 +163,35 @@ is
 
   instanceName cmn_database_config.instance_name%type;
 
+  defaultDatabaseConfig cmn_database_config%rowtype;
+
+  /*
+    Достает конфигурацию по умолчанию
+  */
+  procedure getDefaultDatabaseConfig(
+    isProduction integer
+  )
+  is
+  -- getDefaultDatabaseConfig
+  begin
+    select
+      *
+    into
+      defaultDatabaseConfig
+    from
+      cmn_database_config dc
+    where
+      dc.default_flag = 1
+      and is_production = isProduction
+    ;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , 'Ошибка при определении настроек БД по умолчанию.'
+      , true
+    );
+  end getDefaultDatabaseConfig;
+
 begin
   if databaseConfig.instance_name is null then
     instanceName := getInstanceName();
@@ -193,15 +201,18 @@ begin
         as instance_name
       , coalesce( min( dc.is_production), 0)
         as is_production
-      , coalesce( min( dc.smtp_server), Default_SmtpServer)
-        as smtp_server
+      , min( dc.smtp_server) as smtp_server
       , min( dc.notify_email) as notify_email
+      , min( dc.test_notify_flag) as test_notify_flag
+      , min( dc.sender_domain) as sender_domain
       , min( dc.ip_address_production) as ip_address_production
     into
       databaseConfig.instance_name
       , databaseConfig.is_production
       , databaseConfig.smtp_server
       , databaseConfig.notify_email
+      , databaseConfig.test_notify_flag
+      , databaseConfig.sender_domain
       , databaseConfig.ip_address_production
     from
       cmn_database_config dc
@@ -220,17 +231,38 @@ begin
       databaseConfig.is_production := 0;
     end if;
 
-    -- Определяем адрес отправки писем исходя из типа БД
-    if databaseConfig.notify_email is null then
+    -- Значения по умолчанию
+    if databaseConfig.smtp_server is null
+      or databaseConfig.notify_email is null
+      or databaseConfig.test_notify_flag is null
+      or databaseConfig.sender_domain is null
+    then
+      getDefaultDatabaseConfig( databaseConfig.is_production);
+      databaseConfig.smtp_server :=
+        coalesce(
+          databaseConfig.smtp_server
+        , defaultDatabaseConfig.smtp_server
+        )
+      ;
       databaseConfig.notify_email :=
-        case when databaseConfig.is_production = 1 then
-          Default_NotifyEmail
-        else
-          Default_NotifyEmail_Test
-        end
+        coalesce(
+          databaseConfig.notify_email
+        , defaultDatabaseConfig.notify_email
+        )
+      ;
+      databaseConfig.test_notify_flag :=
+        coalesce(
+          databaseConfig.test_notify_flag
+        , defaultDatabaseConfig.test_notify_flag
+        )
+      ;
+      databaseConfig.sender_domain :=
+        coalesce(
+          databaseConfig.sender_domain
+        , defaultDatabaseConfig.sender_domain
+        )
       ;
     end if;
-
   end if;
 exception when others then
   raise_application_error(
@@ -285,7 +317,7 @@ begin
       systemName || '.'
     end
     || databaseConfig.instance_name
-    || '.oracle@' || MailSender_Domain
+    || '.oracle@' || databaseConfig.sender_domain
   ;
 end getMailAddressSource;
 
@@ -355,7 +387,7 @@ is
     );
 
     -- Инициализация по данным домена
-    utl_smtp.helo( lConnection, MailSender_Domain);
+    utl_smtp.helo( lConnection, databaseConfig.sender_domain);
 
     -- Указываем адрес отправителя
     utl_smtp.mail( lConnection, mailSender);
@@ -482,6 +514,16 @@ is
 
 -- sendMail
 begin
+
+  -- Проверка, если тестовая база и стоит флаг не отправлять нотификации, то
+  -- завершение
+  if isProduction() = 0
+    and coalesce( databaseConfig.test_notify_flag, 0) = 0
+    and lower( getMailAddressDestination()) =
+      lower( mailRecipient)
+  then
+    return;
+  end if;
 
   -- Открываем соединение с SMTP-сервером
   openConnection();
