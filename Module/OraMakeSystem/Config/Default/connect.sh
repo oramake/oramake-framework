@@ -46,10 +46,6 @@ cslGetOperatorPasswordHost="info"
 # Пароль, определенный функцией cslGetPassword.
 cslPassword=""
 
-# var: cslGetPasswordCmd
-# Полный путь к программе получения пароля
-cslGetPasswordCmd=""
-
 
 
 # group: Локальные функции
@@ -67,23 +63,31 @@ cslGetPasswordCmd=""
 cslGetPassword()
 {
   cslPassword=""
+  local passwdScript=""
 
-  # Определяем программу получения пароля
-  if [[ -z "$cslGetPasswordCmd" ]]; then
-    cslGetPasswordCmd=`which $cslGetPasswordScript 2>/dev/null`
-    if (( $? )); then
-      cslGetPasswordCmd=`which $cslGetPasswordScriptAlias 2>/dev/null`
-      if (( $? )); then
-        cslGetPasswordCmd=" "
+  if [[ "$OSTYPE" == "msys" ]] && [[ -n "$OMS_SRC_PATH" ]]; then
+    cslPassword=`
+      export PATH=$(cygpath --path --unix "$OMS_SRC_PATH");
+      passwdScript=$(type -p "$cslGetPasswordScript") || \
+        passwdScript=$(type -p "$cslGetPasswordScriptAlias")
+      if [[ -n "$passwdScript" ]]; then
+        bashCmd=$(type -p "bash")
+        if [[ -n "$bashCmd" ]]; then
+          $bashCmd -c "$passwdScript \"$1\""
+        else
+          $passwdScript "$1"
+        fi
       fi
+      `
+  else
+    passwdScript=$(type -p "$cslGetPasswordScript") || \
+      passwdScript=$(type -p "$cslGetPasswordScriptAlias")
+    if [[ -n "$passwdScript" ]]; then
+      cslPassword=`$passwdScript "$1"`
     fi
   fi
-  if [[ -x "$cslGetPasswordCmd" ]]; then
-    # Запрашиваем пароль
-    cslPassword=`$cslGetPasswordCmd "$1"`
-    if (( $? )); then
-      cslPassword=""
-    fi
+  if (( $? )); then
+    cslPassword=""
   fi
 }
 
