@@ -22,3 +22,8 @@ Title: Доработки
 
 [*] Возможно следует для подобных сообщений добавить
     новый статус "Ошибка отправки", вместо "Отправка отменена".
+
+[+] Investigate the issue with mail.mime.encodefilename System property.  What
+    attachments are really created for non-ASCII characters.  See the docs for
+    MimeBodyPart.
+
