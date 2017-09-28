@@ -2,14 +2,11 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2133 $
-# $LastChangedDate:: 2014-07-09 10:34:20 +0400 #$
+# $Revision:: 24969048 $
+# $Date:: 2017-06-22 17:48:12 +0300 #$
 #
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
 
 
 
@@ -133,9 +130,13 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
@@ -277,20 +278,14 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 2133                     $$
+omsRevisionKeyword    := \$$Revision:: 24969048 $$
 
-omsRevision          := $(strip $(shell           \
-  omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:25}"               \
-  ))
+omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateValue  := \$$Date:: 2014-07-09 10:34:20 +0400 #$$
+omsChangeDateKeyword  := \$$Date:: 2017-06-22 17:48:12 +0300 #$$
 
-omsChangeDate      := $(strip $(shell             \
-  omsChangeDateValue='$(omsChangeDateValue)';     \
-  echo "$${omsChangeDateValue:8:11}"              \
-  ))
+omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
 
 
@@ -353,7 +348,7 @@ gendoc-menu.oms:
 #
 
 # Каталог со стандартными SQL-скриптами
-omsSqlScriptDir  = $(OMS_INSTALL_DATA_DIR)/SqlScript
+omsSqlScriptDir  = $(OMS_INSTALL_SHARE_DIR)/SqlScript
 
 # Каталог с файлами, создаваемыми при загрузке в БД.
 loadDir           = $(omsModuleDir)/Load
@@ -1090,7 +1085,7 @@ load-start-log.oms:
 				&& usedOmsRevision=$${omsLoadVersion#*File revision*: } \
 				&& usedOmsRevision=$${usedOmsRevision%% *} \
 				&& usedOmsChangeDate=$${omsLoadVersion#*File change date*: } \
-				&& usedOmsChangeDate=$${usedOmsChangeDate:0:10} \
+				&& usedOmsChangeDate=$${usedOmsChangeDate:0:25} \
 				&& echo "installed OMS version : $$usedOmsVersion ( rev. $$usedOmsRevision, $$usedOmsChangeDate)" \
 				; } \
 			&& echo "" \
@@ -1142,8 +1137,11 @@ load-start-log.oms:
 			&& if [[ "$(OMS_DEBUG_LEVEL)" != "0" ]]; then \
 			   echo "OMS_DEBUG_LEVEL     : $(OMS_DEBUG_LEVEL)"; \
 			   fi \
-			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
-			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			&& if [[ "$(OMS_INSTALL_SHARE_DIR)" != "/usr/local/share/oms" ]]; then \
+			   echo "OMS_INSTALL_SHARE_DIR: $(OMS_INSTALL_SHARE_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \
