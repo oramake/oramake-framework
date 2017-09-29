@@ -53,11 +53,11 @@ OMS_VERSION=2.0.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 24969048 $'
+fileRevisionValue='$Revision:: 25111128 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2017-06-22 17:48:12 +0300 #$'
+fileChangeDateValue='$Date:: 2017-09-29 09:48:38 +0300 #$'
 
 
 

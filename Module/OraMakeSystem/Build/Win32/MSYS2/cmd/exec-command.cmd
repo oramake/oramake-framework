@@ -305,7 +305,7 @@ if not exist "%OMS_ROOT%\usr\bin\bash.exe" (
 
 
 rem Delete temporary variables
-set omsVersion=
+set omsVersion=2.0.0
 set scriptName=
 set useTruncatedPathFlag=
 set changeCodepage=
