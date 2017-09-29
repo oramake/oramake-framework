@@ -33,6 +33,10 @@ Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
 
 (end)
 
+- дл€ использовани€ возможностей интеграции с Subversion клиент Subversion
+  должен быть установлен и путь его исполн€емым файлам ( svn, svnversion)
+  добавлен в переменную окружени€ PATH;
+
 - дл€ работы с сетевыми папками следует воспользоватьс€ обходными решени€ми
   ( см. <ќшибки::»спользуемые обходные решени€>);
 
@@ -81,6 +85,19 @@ oms (OMS) 2.0.0
 
 (end)
 
+- проверка доступности клиента Subversion ( если нужна интеграци€ с
+  Subversion)
+
+(code)
+
+> oms; svn --version
+oms: Subcommand not expected.
+svn, version 1.9.4 (r1740329)
+   compiled Apr 24 2016, 13:57:54 on x86-microsoft-windows
+...
+
+(end)
+
 «амечани€:
 - при необходимости OraMakeSystem, установленный дл€ Windows, можно
   использовать из Cygwin. ƒл€ этого в терминала Cygwin вместо "make" и "oms"
@@ -110,7 +127,8 @@ group: ”становка дл€ Cygwin
 - dos2unix
 - gawk
 - sed
-- perl ( дл€ генерации автодокументации)
+- grep
+- perl ( дл€ генерации автодокументации, используетс€ в NaturalDocs)
 
 ѕор€док установки:
 
@@ -151,6 +169,18 @@ Copyright (C) 2006  Free Software Foundation, Inc.
 
 $ oms --version
 oms (OMS) 2.0.0
+...
+
+(end)
+
+- проверка доступности клиента Subversion ( если нужна интеграци€ с
+  Subversion)
+
+(code)
+
+$ svn --version
+svn, version 1.8.10 (r1615264)
+   compiled Aug 29 2014, 15:28:58 on i686-pc-cygwin
 ...
 
 (end)

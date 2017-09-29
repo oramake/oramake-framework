@@ -19,7 +19,7 @@ SQL*Plus: Release 11.2.0.2.0 Production</pre></blockquote><p>Также необходимо пр
 
 SQL*Loader: Release 11.2.0.2.0 - Production on Fri Aug 18 16:08:37 2017
 
-Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.</pre></blockquote><ul><li>для работы с сетевыми папками следует воспользоваться обходными решениями ( см.&nbsp; <a href="bugs-txt.html#Ошибки.Используемыеобходныерешения" class=LGroup id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Ошибки::Используемые обходные решения</a>);</li></ul></div></div></div>
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.</pre></blockquote><ul><li>для использования возможностей интеграции с Subversion клиент Subversion должен быть установлен и путь его исполняемым файлам ( svn, svnversion) добавлен в переменную окружения PATH;</li><li>для работы с сетевыми папками следует воспользоваться обходными решениями ( см.&nbsp; <a href="bugs-txt.html#Ошибки.Используемыеобходныерешения" class=LGroup id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Ошибки::Используемые обходные решения</a>);</li></ul></div></div></div>
 
 <div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УстановкадляWindows"></a>Установка для Windows</h3><div class=CBody><h4 class=CHeading>Порядок установки</h4><ul><li>из командной строки в корневом каталоге модуля выполнить</li></ul><blockquote><pre>&gt; .\make install</pre></blockquote><p>Пример</p><blockquote><pre>&gt; .\make install
 installed into: &quot;D:\OraMakeSystem&quot;
@@ -28,10 +28,14 @@ make.cmd (OMS) 2.0.0
 
 &gt; oms --version
 oms (OMS) 2.0.0
+...</pre></blockquote><ul><li>проверка доступности клиента Subversion ( если нужна интеграция с Subversion)</li></ul><blockquote><pre>&gt; oms; svn --version
+oms: Subcommand not expected.
+svn, version 1.9.4 (r1740329)
+   compiled Apr 24 2016, 13:57:54 on x86-microsoft-windows
 ...</pre></blockquote><h4 class=CHeading>Замечания</h4><ul><li>при необходимости OraMakeSystem, установленный для Windows, можно использовать из Cygwin.&nbsp; Для этого в терминала Cygwin вместо &ldquo;make&rdquo; и &ldquo;oms&rdquo; следует указывать соответственно &ldquo;make.cmd&rdquo; и &ldquo;oms.cmd&rdquo;, например:</li></ul><blockquote><pre>$ oms.cmd create-module -d c:/tmp/TestModule TestModule
 ...</pre></blockquote><p>( при указании пути c:/tmp/TestModule используется слэш &ldquo;/&rdquo; вместо обратного слэша &ldquo;\&rdquo;, который необходимо экранировать; при использовании обратного слэша путь пришлось бы указать в одинарных кавычках в виде &lsquo;c:\\\tmp\\\TestModule&rsquo;)</p></div></div></div>
 
-<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УстановкадляCygwin"></a>Установка для Cygwin</h3><div class=CBody><h4 class=CHeading>В Cygwin должны быть установлены пакеты</h4><ul><li>bash</li><li>make</li><li>coreutils</li><li>findutils</li><li>dos2unix</li><li>gawk</li><li>sed</li><li>perl ( для генерации автодокументации)</li></ul><h4 class=CHeading>Порядок установки</h4><ul><li>в терминале Cygwin ( Cygwin Terminal) в корневом каталоге модуля выполнить</li></ul><blockquote><pre>$ make install</pre></blockquote><p>Пример</p><blockquote><pre>$ make install
+<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УстановкадляCygwin"></a>Установка для Cygwin</h3><div class=CBody><h4 class=CHeading>В Cygwin должны быть установлены пакеты</h4><ul><li>bash</li><li>make</li><li>coreutils</li><li>findutils</li><li>dos2unix</li><li>gawk</li><li>sed</li><li>grep</li><li>perl ( для генерации автодокументации, используется в NaturalDocs)</li></ul><h4 class=CHeading>Порядок установки</h4><ul><li>в терминале Cygwin ( Cygwin Terminal) в корневом каталоге модуля выполнить</li></ul><blockquote><pre>$ make install</pre></blockquote><p>Пример</p><blockquote><pre>$ make install
 installed with prefix: /usr/local
 ( use &quot;make install FORCE=1&quot; to rewrite config files in /usr/local/etc/oms)</pre></blockquote><ul><li>добавить путь к подкаталогу bin префикса установки ( префикс указан в &ldquo;installed with prefix: ...&rdquo;, обычно путь к подкаталогу bin это &ldquo;/usr/local/bin&rdquo;) в переменную окружения PATH ( если он не был добавлен в нее ранее);</li></ul><h4 class=CHeading>Проверка корректности установки</h4><ul><li>в новом окна терминала выполнить ( результат должен быть аналогичен указанному, номер версии может быть больше)</li></ul><blockquote><pre>$ make --version
 GNU Make 3.81
@@ -40,6 +44,9 @@ Copyright (C) 2006  Free Software Foundation, Inc.
 
 $ oms --version
 oms (OMS) 2.0.0
+...</pre></blockquote><ul><li>проверка доступности клиента Subversion ( если нужна интеграция с Subversion)</li></ul><blockquote><pre>$ svn --version
+svn, version 1.8.10 (r1615264)
+   compiled Aug 29 2014, 15:28:58 on i686-pc-cygwin
 ...</pre></blockquote><h4 class=CHeading>Замечания</h4><ul><li>при необходимости скрипт <a href="../Script/oms-.html#oms" class=LFile id=link2 onMouseOver="ShowTip(event, 'tt2', 'link2')" onMouseOut="HideTip('tt2')">oms</a> может быть выполнен из командной строки Windows ( в примерах ниже предполагается стандартная установка Cygwin в &ldquo;c:\cygwin&rdquo;):</li></ul><blockquote><pre>&gt; set PATH=C:\cygwin\bin;%PATH%
 
 &gt; bash -c 'oms create-module -d &quot;c:\tmp\TestModule&quot; TestModule'</pre></blockquote><p>Вариант запуска с указанием всех путей будет выглядеть так</p><blockquote><pre>&gt; set PATH=C:\cygwin\bin;%PATH%
