@@ -12,6 +12,7 @@ for filePath in "$@"; do
 
   if (( isNewPackage )); then \
       cp "$filePath" MSYS2-packages \
+      && chmod -x "$packagePath" \
       && git add "$packagePath"; \
     fi \
   && cd MSYS2 \
@@ -24,7 +25,7 @@ for filePath in "$@"; do
   && git add . \
   && for f in $(tar -tf "../$packagePath"); do \
       if [[ -f "$f" ]] && [[ -x "$f" ]]; then \
-        git update-index --chmod=+x "$f"; \
+        find "$f" -perm /+x -exec git update-index --chmod=+x "$f" \; ; \
       fi; \
     done \
   && cd .. \
