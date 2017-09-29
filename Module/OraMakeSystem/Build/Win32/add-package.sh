@@ -22,7 +22,11 @@ for filePath in "$@"; do
   && mkdir "usr/share/oms-msys2/$packageName" \
   && mv .??* "usr/share/oms-msys2/$packageName" \
   && git add . \
-  && find . -type f -executable -exec git update-index --chmod=+x {} \; \
+  && for f in $(tar -tf "../$packagePath"); do \
+      if [[ -f "$f" ]] && [[ -x "$f" ]]; then \
+        git update-index --chmod=+x "$f"; \
+      fi; \
+    done \
   && cd .. \
   && if (( isNewPackage )); then \
       git commit; \

@@ -5,6 +5,7 @@
 - unix2dos
 - gawk
 - sed
+- grep
 - perl ( используется в NaturalDocs)
 
 
@@ -25,6 +26,8 @@
 - ncurses 6.0.20160220-1
 - gawk 4.1.4-1
 - sed 4.2.2-2
+- libpcre 8.40-1
+- grep 2.27-1
 - libcrypt 1.3-1
 - libgdbm-1.11-3
 - gdbm-1.11-3
@@ -184,6 +187,26 @@ sed
 | | `-msys2-runtime
 | `-libiconv
 |   `-gcc-libs
+`-bash provides sh
+  `-msys2-runtime
+
+
+
+grep: необходимые пакеты
+
+$ pacman -Qo /usr/bin/grep.exe
+/usr/bin/grep.exe is owned by grep 2.26-1
+
+$ pactree -a grep
+grep
+|-libiconv
+| `-gcc-libs
+|   `-msys2-runtime
+|-libintl
+| |-gcc-libs
+| `-libiconv
+|-libpcre
+| `-gcc-libs
 `-bash provides sh
   `-msys2-runtime
 
