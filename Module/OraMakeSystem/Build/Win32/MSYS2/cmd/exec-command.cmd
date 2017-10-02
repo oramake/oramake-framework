@@ -17,7 +17,7 @@ rem Arguments for runing command
 set OMS_CMD_ARGS=%*
 
 rem This script name
-set scriptName=%~nx0
+set scriptName=%~nx1
 
 rem Use truncated path ( 1 - yes, 0 - no, see --use-truncated-path)
 set useTruncatedPathFlag=1
@@ -219,9 +219,9 @@ if not "%ERRORLEVEL%" == "0" (
 
 
 
-rem Check --version
+rem Check --oms-version
 if "%~1" == "--oms-version" (
-  echo %~nx0 (OMS^) %omsVersion%
+  echo %scriptName% (OMS^) %omsVersion%
   exit /b 0
 )
 

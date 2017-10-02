@@ -233,8 +233,21 @@ uninstall:
 			rm -rf "$(WIN_ROOT)" \
 			&& echo "Installation directory removed: \"$$winRoot\""; \
 		else \
+			cfgDir="$(configDir)"; \
+			for f in \
+						$(WIN_ROOT)/usr/local/etc/* \
+						$(WIN_ROOT)/usr/local/* \
+						$(WIN_ROOT)/usr/* \
+						$(WIN_ROOT)/* \
+					; do \
+				if [[ "$$f" != "$$cfgDir" ]] \
+						&& [[ "$${cfgDir%$$f/*}" == "$$cfgDir" ]] \
+						; then \
+					rm -rf "$$f"; \
+				fi; \
+			done; \
 			echo "OraMakeSystem files deleted"; \
-			echo "( use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\")"; \
+			echo "( use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\" along with config files)"; \
 		fi; \
 	fi;
 
