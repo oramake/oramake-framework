@@ -59,13 +59,13 @@ group: Установка для Windows
 (code)
 
 > .\make install
-installed into: "D:\OraMakeSystem"
-( use "make install FORCE=1" to rewrite config files in "D:\OraMakeSystem\usr\local\etc\oms")
+installed into: "C:\OraMakeSystem"
+( use "make install FORCE=1" to rewrite config files in "C:\OraMakeSystem\usr\local\etc\oms")
 
 (end)
 
 - добавить путь к каталогу установки ( указанному в "installed into: ...",
-  обычно "D:\OraMakeSystem") в переменную окружения PATH
+  обычно "C:\OraMakeSystem") в переменную окружения PATH
   ( Компьютер -> Свойства -> Дополнительные параметры системы ->
     Переменные среды)
 
@@ -98,7 +98,7 @@ make: unrecognized option `--oms-version'
   то нужно перенести путь к каталогу установки OraMakeSystem в начало
   списка путей переменной окружения PATH ( до пути к каталогу, в котором
   находится утилита make, не относящаяся к OraMakeSystem) либо всегда
-  выполнять команду make с указанием полного пути ( "D:\OraMakeSystem\make"
+  выполнять команду make с указанием полного пути ( "C:\OraMakeSystem\make"
   вместо "make") либо всегда выполнять команду make с указанием расширения
   ( "make.cmd" вместо "make"), что вероятно тоже решит проблему:
 
@@ -257,7 +257,7 @@ group: Общие замечания по установке
 
 - после установки может потребоваться отредактировать настроечные файлы
   ( database.mk ( <Настройки баз данных>) или <connect.sh>, расположены в
-  "D:\OraMakeSystem\usr\local\etc\oms" в случае стандартной установки для
+  "C:\OraMakeSystem\usr\local\etc\oms" в случае стандартной установки для
   Windows либо "C:\cygwin\usr\local\etc\oms" при стандартной установке для
   Cygwin). Версии по-умолчанию данных файлов копируются при установке, если они
   не существовали. Настроечные файлы могут быть заменены в случае использования

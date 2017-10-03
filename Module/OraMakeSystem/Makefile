@@ -59,14 +59,7 @@ OSTYPE := $(shell echo $$OSTYPE)
 
 # build var: WIN_ROOT
 # Путь к корневому каталогу установки в Windows
-# ( в случае невозможности установки по указанному пути установка будет
-# произведена в "C:\OraMakeSystem")
-WIN_ROOT := /cygdrive/d/OraMakeSystem
-
-# Альтернативный каталог установки, используемый в случае отсутствия
-# родительского каталога для WIN_ROOT
-#
-altWinRoot = /cygdrive/c/OraMakeSystem
+WIN_ROOT := /cygdrive/c/OraMakeSystem
 
 # build var: prefix
 # Общий префикс для инсталляционных каталогов.
@@ -96,14 +89,6 @@ MSYS2_FLAG =
 ifeq ($(OSTYPE),msys)
 
 MSYS2_FLAG = 1
-
-override WIN_ROOT := $(shell \
-	if [[ -d "$(dir $(WIN_ROOT))" ]]; then \
-		echo "$(WIN_ROOT)"; \
-	else \
-		echo "$(altWinRoot)"; \
-	fi \
-)
 
 override prefix := $(WIN_ROOT)$(prefix)
 
