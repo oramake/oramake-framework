@@ -4,13 +4,13 @@
 # Выполняет команду по управлению прикладным модулем.
 #
 # Использование:
-#   oms <subcommand> [common-options] [options] [args]
+#   oms <command> [<common-options>] [<options>] [<args>]
 #
 # Выполнение "oms --version" выводит информацию о версии скрипта.
 # Выполнение "oms --help" выводит справочную информацию со списком
 # команд.
 #
-# Возможные команды ( subcommand):
+# Возможные команды ( <command>):
 #    create-module              - создает структуру нового модуля
 #    gen-schema-run             - генерация файла по установке последней версии
 #                                 объектов модудя в БД ( run.sql)
@@ -20,7 +20,7 @@
 #    show-svn-info              - вывод информации о файла модуля из Subversion
 #
 #
-# Общие опции ( common-options):
+# Общие опции ( <common-options>):
 #       --debug-level DBG_LEVEL - установить уровень вывода отладочной
 #                                 информации ( 0 не выводить, 1 базовый,
 #                                 2 расширенный, 3 расширенный с выводом
@@ -32,11 +32,10 @@
 #   -n, --dry-run               - не выполнять команды, а только выводить их
 #   -h, --help                  - вывести справку по использованию
 #
-# Допустимые значения опций ( options) и аргументов ( args) зависят от
-# выполняемой команды ( subcommand).
+# Допустимые значения опций ( <options>) и аргументов ( <args>) зависят от
+# выбранной команды ( <command>).
 #
-# Справку по опциям и аргументам команды можно получить с помощью вызова:
-#   oms <subcommand> --help
+# Введите "oms <command> --help" для получения справки по определенной команде.
 #
 
 
@@ -68,9 +67,9 @@ source oms-common.sh || exit 11
 
 # group: Настроечные параметры
 
-# var: subcommandList
+# var: omsCommandList
 # Список команд, обрабатываемых скриптом
-declare -a subcommandList=( \
+declare -a omsCommandList=( \
   "create-module" \
   "gen-schema-revert" \
   "gen-schema-run" \
@@ -86,9 +85,9 @@ declare -a subcommandList=( \
 # Корневой каталог модуля.
 rootDir=""
 
-# var: subcommand
+# var: omsCommand
 # Команда, которую нужно выполнить для модуля.
-subcommand=""
+omsCommand=""
 
 
 
@@ -161,29 +160,31 @@ usage()
 Execute command for module.
 
 Usage:
-  oms <subcommand> [common-options] [options] [args]
+  oms <command> [<common-options>] [<options>] [<args>]
 
 Type 'oms --version' to see script version.
 Type 'oms --help' to see this help.
 
-Common options:
-      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
-  -d, --directory DIR         path to module root directory ( default: current)
-  -n, --dry-run               don't actually run any commands; just print them
-  -h, --help                  show help for subcommand
-
-Available subcommands:
+Available commands:
 END
 
   local cmd
-  for cmd in "${subcommandList[@]}"; do
+  for cmd in "${omsCommandList[@]}"; do
     echo "  $cmd"
   done
 
   cat <<END
 
-For help on specific subcommand type:
-  oms <subcommand> --help
+Common options:
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -n, --dry-run               don't actually run any commands; just print them
+  -h, --help                  show help for command
+
+The valid values for options (<options>) and arguments (<args>) depend
+on the selected command (<command>).
+
+Type 'oms <command> --help' for help on a specific command.
 END
 }
 
@@ -219,10 +220,10 @@ processCommonOption()
         setDryRun
         ;;
       -h | --help)
-        if [[ -z $subcommand ]]; then
+        if [[ -z $omsCommand ]]; then
           usage
         else
-          usage_$subcommand
+          usage_$omsCommand
         fi
         exitScript
         ;;
@@ -248,7 +249,7 @@ parseOption()
 {
   logDebug2 "start..."
   while [ $# != 0 ]; do
-    if [[ -z $subcommand ]]; then
+    if [[ -z $omsCommand ]]; then
       processCommonOption "$@"
       if ! (( processCommonOptionCount )); then
         case $1 in
@@ -261,15 +262,15 @@ parseOption()
             ;;
           *)
             local cmd
-            for cmd in "${subcommandList[@]}"; do
+            for cmd in "${omsCommandList[@]}"; do
               if [[ $cmd == $1 ]]; then
-                subcommand="$1"
-                logDebug3 "Set subcommand: '$subcommand'"
+                omsCommand="$1"
+                logDebug3 "Set omsCommand: '$omsCommand'"
                 break
               fi
             done
-            if [[ -z "$subcommand" ]] ; then
-              exitArgError "Unknown subcommand: '$1'."
+            if [[ -z "$omsCommand" ]] ; then
+              exitArgError "Unknown command: '$1'."
             fi
             ;;
         esac
@@ -280,16 +281,16 @@ parseOption()
     else
       case $1 in
         -* | --*)
-          exitArgError "Illegal subcommand option: '$1'."
+          exitArgError "Illegal command option: '$1'."
           ;;
         *)
-          exitArgError "Illegal subcommand argument: '$1'."
+          exitArgError "Illegal command argument: '$1'."
           ;;
       esac
     fi
     shift
-    if [[ -n $subcommand ]]; then
-      local parseFunction="parseOption_$subcommand"
+    if [[ -n $omsCommand ]]; then
+      local parseFunction="parseOption_$omsCommand"
       if type -t $parseFunction >/dev/null; then
         $parseFunction "$@"
         break
@@ -298,8 +299,8 @@ parseOption()
   done
 
   # Проверяем параметры выполнения
-  if [[ -z "$subcommand" ]]; then
-    exitArgError "Subcommand not expected."
+  if [[ -z "$omsCommand" ]]; then
+    exitArgError "Сommand not specified."
   fi
 
   # Устанавливаем значения по умолчанию
@@ -315,7 +316,7 @@ parseOption()
 # Создает структуру нового модуля.
 #
 # Использование:
-#   oms create-module [common-options] [options] moduleName
+#   oms create-module [<common-options>] [<options>] moduleName
 #
 # Параметры:
 #   moduleName                    имя нового модуля
@@ -350,7 +351,7 @@ usage_create-module()
 Create structure of new OMS module.
 
 Usage:
-  oms create-module [common-options] [options] MODULE_NAME
+  oms create-module [<common-options>] [<options>] MODULE_NAME
 
 Arguments:
   MODULE_NAME                 name of new module
@@ -359,7 +360,7 @@ Options:
   -p, --package-name NAME     add package NAME ( default: pkg_<MODULENAME>)
       --overwrite             overwrite existing files
 
-Type 'oms --help' to see help for common-options.
+Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -384,14 +385,14 @@ parseOption_create-module()
           logDebug3 "Set isOverwrite: $isOverwrite"
           ;;
         -* | --*)
-          exitArgError "Illegal subcommand option: '$1'."
+          exitArgError "Illegal command option: '$1'."
           ;;
         *)
           if [[ -z "$moduleName" ]] ; then
             moduleName="$1"
             logDebug3 "Set moduleName: '$moduleName'"
           else
-            exitArgError "Illegal subcommand argument: \"$1\"."
+            exitArgError "Illegal command argument: \"$1\"."
           fi
           ;;
       esac
@@ -581,12 +582,12 @@ usage_gen-schema-revert()
 Generate file DB/Install/Schema/revert.sql.
 
 Usage:
-  oms gen-schema-revert [common-options]
+  oms gen-schema-revert [<common-options>]
 
 The current directory must be the module directory ( Trunk).
 
 
-Type 'oms --help' to see help for common-options.
+Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -767,12 +768,12 @@ usage_gen-schema-run()
 Generate file DB/Install/Schema/run.sql.
 
 Usage:
-  oms gen-schema-run [common-options]
+  oms gen-schema-run [<common-options>]
 
 The current directory must be the module directory ( Trunk).
 
 
-Type 'oms --help' to see help for common-options.
+Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -889,14 +890,14 @@ usage_show-svn-info()
 Show information about module's files from Subversion.
 
 Usage:
-  oms show-svn-info [common-options] [options]
-
-Type 'oms --help' to see help for common-options.
+  oms show-svn-info [<common-options>] [<options>]
 
 Options:
   --quiet             - minimize output
                         ( string with format: "<svnversion> <svn_path>")
   --used-only         - set version number only if it used in module
+
+Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -917,10 +918,10 @@ parseOption_show-svn-info()
           logDebug3 "Set isQuiet: $isQuiet"
           ;;
         -* | --*)
-          exitArgError "Illegal subcommand option: '$1'."
+          exitArgError "Illegal command option: '$1'."
           ;;
         *)
-          exitArgError "Illegal subcommand argument: '$1'."
+          exitArgError "Illegal command argument: '$1'."
           ;;
       esac
     elif (( processCommonOptionCount > 1 )); then
@@ -996,9 +997,7 @@ usage_set-version()
 Set module version.
 
 Usage:
-  oms set-version [common-options] [options] VERSION
-
-Type 'oms --help' to see help for common-options.
+  oms set-version [<common-options>] [<options>] VERSION
 
 Arguments:
   VERSION             - new version number ( digits delimited by dot, for
@@ -1006,6 +1005,8 @@ Arguments:
 Options:
   --quiet             - minimize output ( print only new version number)
   --used-only         - set version number only if it used in module
+
+Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -1030,11 +1031,11 @@ parseOption_set-version()
           logDebug3 "Set isUsedOnly: $isUsedOnly"
           ;;
         -* | --*)
-          exitArgError "Illegal subcommand option: '$1'."
+          exitArgError "Illegal command option: '$1'."
           ;;
         *)
           if [[ -n $moduleVersion ]]; then
-            exitArgError "Illegal subcommand argument: '$1'."
+            exitArgError "Illegal command argument: '$1'."
           fi
           if [[ -z ${1//[0-9]*/} ]] && [[ -z ${1//*[0-9]/} ]]; then
             local s=${1//[0-9]/}
@@ -1154,7 +1155,7 @@ exec_set-version()
 parseOption "$@"
 
 # Выполняем команду
-exec_$subcommand
+exec_$omsCommand
 
 # Завершаем выполнение
 exitScript "$?"

@@ -115,7 +115,7 @@ make.cmd (OMS) 2.0.0
 (code)
 
 > oms; svn --version
-oms: Subcommand not expected.
+oms: Сommand not specified.
 svn, version 1.9.4 (r1740329)
    compiled Apr 24 2016, 13:57:54 on x86-microsoft-windows
 ...
@@ -133,15 +133,15 @@ svn, version 1.9.4 (r1740329)
 
 (code)
 
-$ oms.cmd create-module -d c:/tmp/TestModule TestModule
+$ oms.cmd create-module -d C:/tmp/TestModule TestModule
 ...
 
 (end)
 
-( при указании пути c:/tmp/TestModule используется слэш "/" вместо обратного
+( при указании пути C:/tmp/TestModule используется слэш "/" вместо обратного
 слэша "\", который необходимо экранировать; при использовании обратного слэша
 путь пришлось бы указать в одинарных кавычках в виде
-'c:\\\tmp\\\TestModule')
+'C:\\\tmp\\\TestModule')
 
 - если в OraMakeSystem, установленном для Windows, для получения пароля нужно
   использовать скрипт get-password, выполняющийся из Cygwin, то необходимо
@@ -224,13 +224,13 @@ svn, version 1.8.10 (r1615264)
 
 - при необходимости скрипт <oms> может быть выполнен из командной строки
 Windows ( в примерах ниже предполагается стандартная установка Cygwin в
-"c:\cygwin"):
+"C:\cygwin"):
 
 (code)
 
 > set PATH=C:\cygwin\bin;%PATH%
 
-> bash -c 'oms create-module -d "c:\tmp\TestModule" TestModule'
+> bash -c 'oms create-module -d "C:\tmp\TestModule" TestModule'
 
 (end)
 
@@ -240,7 +240,7 @@ Windows ( в примерах ниже предполагается стандартная установка Cygwin в
 
 > set PATH=C:\cygwin\bin;%PATH%
 
-> c:\cygwin\bin\bash -c '/usr/local/bin/oms create-module -d "c:\tmp\TestModule" TestModule'
+> C:\cygwin\bin\bash -c '/usr/local/bin/oms create-module -d "C:\tmp\TestModule" TestModule'
 
 (end)
 
