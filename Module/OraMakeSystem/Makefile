@@ -1,34 +1,35 @@
 # makefile: Сборка
 
 # Префикс названия скриптов
-scriptPrefix				= oms
+scriptPrefix = oms
 
 # Каталог для данных сборки проекта
-buildDir						= Build
+buildDir = Build
 
 # Каталог с постоянными данными модуля
-dataDir  					  = Data
+dataDir = Data
 
 # Каталог со скриптами
-scriptDir 					= Script
+scriptDir = Script
 
 # Каталог с дистрибутивами используемых библиотек
-usedLibDir 					= UsedLib
+usedLibDir = UsedLib
 
 
 
-.PHONY: 						\
-	all 							\
-	clean							\
-	install						\
-	install-msys2 \
-	install-oms \
-	install-oms-msys2 \
-	uninstall					\
-	uninstall-oms-msys2 \
-	gendoc						\
-	gendoc-clean			\
-	set-oms-version		\
+.PHONY: \
+  all \
+  clean \
+  install \
+  install-msys2 \
+  install-oms \
+  install-oms-msys2 \
+  uninstall \
+  uninstall-oms-msys2 \
+  gendoc \
+  gendoc-clean \
+  set-oms-version \
+  test \
 
 
 
@@ -39,16 +40,16 @@ usedLibDir 					= UsedLib
 # target: all
 # Целиком собирает проект.
 
-all:								\
-	gendoc						\
+all: \
+  gendoc \
 
 
 
 # target: clean
 # Удаляет файлы, созданные при сборке.
 
-clean:							\
-	gendoc-clean			\
+clean: \
+  gendoc-clean \
 
 
 
@@ -59,7 +60,11 @@ OSTYPE := $(shell echo $$OSTYPE)
 
 # build var: WIN_ROOT
 # Путь к корневому каталогу установки в Windows
-WIN_ROOT := /cygdrive/c/OraMakeSystem
+# ( по умолчанию устанавливается в "C:/OraMakeSystem").
+# При указании другого каталога в пути следует используется слэш "/" вместо
+# принятого в Windows обратного слэша "\", который пришлось бы экранировать.
+#
+WIN_ROOT := C:/OraMakeSystem
 
 # build var: prefix
 # Общий префикс для инсталляционных каталогов.
@@ -90,6 +95,8 @@ ifeq ($(OSTYPE),msys)
 
 MSYS2_FLAG = 1
 
+override WIN_ROOT := $(shell cygpath --unix "$(WIN_ROOT)")
+
 override prefix := $(WIN_ROOT)$(prefix)
 
 
@@ -98,12 +105,21 @@ install-msys2:
 	@if [[ ! -d "$(WIN_ROOT)" ]]; then \
 		mkdir "$(WIN_ROOT)"; \
 	fi \
-	&& cp \
-		--preserve=mode,ownership,timestamps \
-		--no-dereference --preserve=links \
-		--recursive \
-		--target-directory="$(WIN_ROOT)" \
-		Build/Win32/MSYS2/* \
+	&& cd Build/Win32/MSYS2 \
+	&& { \
+			cp \
+				--preserve=mode,ownership,timestamps \
+				--no-dereference --preserve=links \
+				--recursive \
+				--target-directory="$(WIN_ROOT)" \
+				--parents \
+				$$(../make-file-list.sh) \
+			&& gawk -F" = " \
+				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
+				`for f in usr/share/oms-msys2/*; do echo $$f/.PKGINFO; done` \
+				> "$(WIN_ROOT)/etc/package-versions.txt" \
+			&& cd - >/dev/null \
+		;} \
 	&& if [[ ! -d "$(WIN_ROOT)/usr/local" ]]; then \
 		mkdir -p "$(WIN_ROOT)/usr/local"; \
 	fi
@@ -248,10 +264,10 @@ GENDOC_DIR = Doc/AutoGen
 
 # build var: GENDOC_FLAGS
 # Дополнительные параметры генерации документации.
-GENDOC_FLAGS 	=
+GENDOC_FLAGS =
 
 # Строка запуска утилиты генерации
-gendocRun	= $(usedLibDir)/NaturalDocs/NaturalDocs/NaturalDocs
+gendocRun = $(usedLibDir)/NaturalDocs/NaturalDocs/NaturalDocs
 
 # Подкаталог системы контроля версий
 versionControlDir = .svn
@@ -264,7 +280,7 @@ gendocCacheDir = $(gendocConfigDir)/Data
 
 # Обеспечиваем полное обновление документации при безусловной сборке.
 ifneq ($(filter -B -wB --always-make,$(MAKEFLAGS)),)
-	GENDOC_FLAGS += --rebuild
+  GENDOC_FLAGS += --rebuild
 endif
 
 
@@ -272,25 +288,20 @@ endif
 # Генерация документации.
 
 gendoc:
-	@-rm -f $(scriptDir)/*~
-	@[[ -n "$(GENDOC_DIR)" ]] 							\
-	&& (																		\
-		echo "Generate docs in \"$(GENDOC_DIR)\" ..."	\
-		&& $(gendocRun)		 										\
-			-i . 																\
-			-xi "$(buildDir)" 									\
-			-xi "$(dataDir)/UpdateModule" 									\
-			-xi "$(dataDir)/NewModule/DB/OmsModule/NaturalDocs"	\
-			-xi "$(dataDir)/NewModule/DB/OmsModule/Load"	\
-			-xi "$(usedLibDir)" 								\
-			-o HTML "$(GENDOC_DIR)" 						\
-			-p "$(gendocConfigDir)" 						\
-			--charset Windows-1251							\
-			--style small 											\
-			$(GENDOC_FLAGS)											\
-            -hl off\
-            )																			\
-	|| exit 0																\
+	@echo "Generate docs in \"$(GENDOC_DIR)\" ..."; \
+	$(gendocRun) \
+		-i . \
+		-xi "$(buildDir)" \
+		-xi "$(dataDir)/UpdateModule" \
+		-xi "$(dataDir)/NewModule/DB/OmsModule/NaturalDocs" \
+		-xi "$(dataDir)/NewModule/DB/OmsModule/Load" \
+		-xi "$(usedLibDir)" \
+		-o HTML "$(GENDOC_DIR)" \
+		-p "$(gendocConfigDir)" \
+		--charset Windows-1251 \
+		--style small \
+		$(GENDOC_FLAGS) \
+		-hl off \
 
 
 
@@ -298,13 +309,14 @@ gendoc:
 # Удаляет сгенерированные файлы документации ( если они не зафиксированы в SVN).
 
 gendoc-clean:
-	@(cd "$(GENDOC_DIR)"										\
-		&& [[ ! -d "styles/$(versionControlDir)" ]]	\
-		&& rm -rf 													\
-			files index javascript styles search	\
-			index.html menu.html							\
-	);																		\
-	rm -rf $(gendocCacheDir)/*						\
+	@echo "Clean docs and temporary files..."; \
+	rm -f $(gendocCacheDir)/*.nd; \
+	{ \
+		cd "$(GENDOC_DIR)" \
+		&& rm -rf \
+			files index javascript search styles \
+			index.html menu.html \
+	;}
 
 
 
@@ -339,29 +351,29 @@ set-oms-version:
 			sinceSecond="$$(date +%s)"; \
 			versionRevision="$$(( sinceSecond / 60 ))"; \
 		fi; \
-	  sed --in-place \
+		sed --in-place \
 			-e "s/\$$Revision:: [0-9]\\+ \\+\\$$/\$$Revision:: $$versionRevision \$$/" \
 			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
-	    -e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
-	    -e 's/^set omsVersion=[0-9.]*$$/set omsVersion=$(OMS_VERSION)/' \
-	    $(scriptDir)/*[^~] \
-	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
-	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
-	    $(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
-	  && unix2dos \
-	    $(dataDir)/NewModule/DB/OmsModule/init.mk \
-	    $(dataDir)/NewModule/DB/OmsModule/common.mk \
-	    $(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
-	    2>/dev/null \
-	  && sed --in-place \
-	    -e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
-	    $(buildDir)/NaturalDocs/Menu.txt \
-	  && $(MAKE) gendoc \
-	  ; \
+			-e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
+			-e 's/^set omsVersion=[0-9.]*$$/set omsVersion=$(OMS_VERSION)/' \
+			$(scriptDir)/*[^~] \
+			$(dataDir)/NewModule/DB/OmsModule/init.mk \
+			$(dataDir)/NewModule/DB/OmsModule/common.mk \
+			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+		&& unix2dos \
+			$(dataDir)/NewModule/DB/OmsModule/init.mk \
+			$(dataDir)/NewModule/DB/OmsModule/common.mk \
+			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+			2>/dev/null \
+		&& sed --in-place \
+			-e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
+			$(buildDir)/NaturalDocs/Menu.txt \
+		&& $(MAKE) gendoc \
+		; \
 	else \
-	  echo "No value for parameter OMS_VERSION"; \
+		echo "No value for parameter OMS_VERSION"; \
 		echo '( for example usage: "make set-oms-version OMS_VERSION=2.0.0")'; \
-	  exit 5; \
+		exit 5; \
 	fi
 
 
@@ -379,4 +391,43 @@ set-oms-version:
 
 create-patch:
 	@./$(scriptDir)/create-patch --overwrite
+
+
+
+
+# group: Тестирование
+
+
+# target: test
+# Тестрирование установки модуля, выполненной с помощью <install>.
+
+
+# build var: TEST_USERID
+# Пользователь БД Oracle для использования при тестировании
+# ( формат: [userName[/password]]@dbName).
+#
+# Если значение не задано, то тесты, связанные с загрузкой данных в БД,
+# будут пропущены.
+#
+TEST_USERID =
+
+# build var: TEST_OPERATORID
+# Оператор модуля AccessOperator для использования при тестировании
+# ( формат: operatorName[/password] ).
+#
+TEST_OPERATORID =
+
+
+test:
+	@if [[ -z "$(TEST_USERID)" ]]; then \
+		echo \
+			"Warning: Tests with loading files to DB are skipped, because connection parameters are not specified"; \
+		echo -e \
+			'( for example usage: "make test TEST_USERID=om_main/om_main@TestDb")\n'; \
+	fi; \
+	Test/run.sh \
+		--test-userid "$(TEST_USERID)" \
+		--test-operatorid "$(TEST_OPERATORID)" \
+		--win-root "$(if $(MSYS2_FLAG),$(WIN_ROOT))" \
+		"$(prefix)"
 

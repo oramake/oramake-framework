@@ -10,8 +10,9 @@ set OMS_ROOT=%~dp0
 rem remove "/cmd/" from tail
 set OMS_ROOT=%OMS_ROOT:~0,-5%
 
-rem Save original PATH
-set OMS_SRC_PATH=%PATH%
+rem Save original PATH if it was not saved before ( it is important for a
+rem recursive call when testing installation ( "make test"))
+if "%OMS_SRC_PATH%" == "" set OMS_SRC_PATH=%PATH%
 
 rem Arguments for runing command
 set OMS_CMD_ARGS=%*
