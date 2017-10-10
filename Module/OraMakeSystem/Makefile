@@ -417,6 +417,15 @@ TEST_USERID =
 #
 TEST_OPERATORID =
 
+# build var: TEST_CASE_NUMBER
+# Номер проверяемого тестового случая ( по умолчанию без ограничений).
+#
+# Замечания:
+# - некоторые тестовые случаи выполняются всегда вне зависимости от значения
+#   <TEST_CASE_NUMBER> ( если их выполнение необходимо для продолжения
+#   тестирования);
+#
+TEST_CASE_NUMBER =
 
 test:
 	@if [[ -z "$(TEST_USERID)" ]]; then \
@@ -428,6 +437,7 @@ test:
 	Test/run.sh \
 		--test-userid "$(TEST_USERID)" \
 		--test-operatorid "$(TEST_OPERATORID)" \
+		--test-case-number "$(TEST_CASE_NUMBER)" \
 		--win-root "$(if $(MSYS2_FLAG),$(WIN_ROOT))" \
 		"$(prefix)"
 

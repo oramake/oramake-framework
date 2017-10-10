@@ -14,6 +14,9 @@ testUserId=""
 # Operator of AccessOperator module ( operatorName[/passwd])
 testOperatorId=""
 
+# Number of the test case to be tested
+testCaseNumber=
+
 # Directory for temporary files
 tmpFileDir="${TEMP:-/tmp}"
 
@@ -46,6 +49,12 @@ loadUserId=
 # ( result of execution of oms-connection-info for testOperatorId)
 loadOperatorId=
 
+# Serial number of current test case
+checkCaseNumber=0
+
+# Number of subsequent test cases for which the current test case is required
+nextCaseUsedCount=0
+
 
 
 die()
@@ -67,6 +76,9 @@ parseOption()
         ;;
       --test-userid)
         testUserId="$2"; shift;
+        ;;
+      --test-case-number)
+        testCaseNumber=$2; shift;
         ;;
       --win-root)
         winRoot="$2"; shift;
@@ -117,14 +129,24 @@ END
 startTestCase()
 {
   local caseName=$1
-  echo "CASE: $caseName ..."
+  local usedCount=$nextCaseUsedCount
+  checkCaseNumber=$(( checkCaseNumber + 1 ))
+  nextCaseUsedCount=0
+  if [[ -n "$testCaseNumber" ]] \
+      && (( checkCaseNumber > testCaseNumber \
+          || checkCaseNumber + usedCount < testCaseNumber \
+        )); then
+    return 1
+  fi
+  echo "CASE $checkCaseNumber: $caseName ..."
+  return 0
 }
 
 
 
 runCmd()
 {
-  "$@" >/dev/null \
+  "$@" \
     || die "Error executing command:\n$@"
 }
 
@@ -132,23 +154,28 @@ runCmd()
 
 runOms()
 {
-  startTestCase "oms $1"
-  runCmd $oms "$@"
+  startTestCase "oms $1" || return 0
+  runCmd $oms "$@" >/dev/null
 }
 
 
 
 runMake()
 {
-  startTestCase "make $1"
-  runCmd $make "$@"
+  startTestCase "make $1" || return 0
+  runCmd $make "$@" >/dev/null
 }
 
 
 
 checkOmsConnectInfoUser()
 {
-  startTestCase "oms-connect-info: user"
+  if [[ $testUserId == ${testUserId%/*} ]]; then
+    nextCaseUsedCount=999
+  fi
+  startTestCase "oms-connect-info: user" \
+    || { loadUserId=$testUserId; return 0; }
+
   loadUserId=$( \
       $omsPrefix-connect-info \
         --userid "$testUserId" \
@@ -158,9 +185,9 @@ checkOmsConnectInfoUser()
     ) \
     || die "Error on executing oms-connect-info for testUserId"
 
-  if [[ -z "$loadUserId" ]]; then
+  if [[ -z $loadUserId ]]; then
     die "Empty result of executing oms-connect-info for testUserId"
-  elif [[ "$loadUserId" == ${loadUserId%/*} ]]; then
+  elif [[ $loadUserId == ${loadUserId%/*} ]]; then
     die "None password after executing oms-connect-info" \
       "( loadUserId=\"$loadUserId\")"
   fi
@@ -170,7 +197,12 @@ checkOmsConnectInfoUser()
 
 checkOmsConnectInfoOperator()
 {
-  startTestCase "oms-connect-info: operator"
+  if [[ $testOperatorId == ${testOperatorId%/*} ]]; then
+    nextCaseUsedCount=999
+  fi
+  startTestCase "oms-connect-info: operator" \
+    || { loadOperatorId=$testOperatorId; return 0; }
+
   loadOperatorId=$( \
       $omsPrefix-connect-info \
         --operatorid "$testOperatorId" \
@@ -179,13 +211,14 @@ checkOmsConnectInfoOperator()
     ) \
     || die "Error on executing oms-connect-info for testOperatorId"
 
-  if [[ -z "$loadOperatorId" ]]; then
+  if [[ -z $loadOperatorId ]]; then
     die "Empty result of executing oms-connect-info for testOperatorId"
-  elif [[ "$loadOperatorId" == ${loadOperatorId%/*} ]]; then
+  elif [[ $loadOperatorId == ${loadOperatorId%/*} ]]; then
     die "None password after executing oms-connect-info" \
       "( loadOperatorId=\"$loadOperatorId\")"
   fi
 }
+
 
 
 loadFile()
@@ -243,6 +276,7 @@ if [[ -d "$modDir" ]]; then
     || die "Existing test module has not been deleted: $modDir"
 fi
 
+nextCaseUsedCount=999
 runOms create-module -d "$modDir" TestModule
 
 cd "$modDir" || die "Test module directory not created: $modDir"
@@ -264,8 +298,7 @@ if [[ -n "$testOperatorId" ]]; then
   checkOmsConnectInfoOperator
 fi
 if (( loadFlag )); then
-  startTestCase "oms-load"
-  loadFile DB/Test/connection.sql
+  startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
 fi
 
 cd - >/dev/null
