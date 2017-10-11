@@ -21,7 +21,7 @@ testCaseNumber=
 tmpFileDir="${TEMP:-/tmp}"
 
 # Directory for test module
-modDir="${tmpFileDir}/oms-testModule"
+modDir="${tmpFileDir}/oms-testModule-$$"
 
 
 
@@ -59,7 +59,11 @@ nextCaseUsedCount=0
 
 die()
 {
-  echo -e $@ >&2
+  echo -e $1 >&2
+  shift
+  if (( $# )); then
+    cat <<< "$@" >&2
+  fi
   [[ -d "$modDir" ]] \
     && echo "( test module dir: $modDir )" >&2
   exit 15
@@ -147,7 +151,7 @@ startTestCase()
 runCmd()
 {
   "$@" \
-    || die "Error executing command:\n$@"
+    || die "Error executing command:" "$@"
 }
 
 
@@ -237,6 +241,36 @@ loadFile()
 
 
 
+checkOutputCyrillic()
+{
+  startTestCase "oms-load: output Cyrillic alphabet in CP1251" || return 0
+  local cyr34Char=$'\xc2\xc3'
+  createFile DB/Test/out-cyrillic.sql <<END
+set feedback off
+begin
+  dbms_output.put_line(
+    'first 4 characters of Cyrillic alphabet in CP1251: '
+    || chr( to_number( 'c0', 'xx'))
+    || chr( to_number( 'c1', 'xx'))
+    || '$cyr34Char'
+  );
+end;
+/
+quit
+END
+  local outStr=$(loadFile DB/Test/out-cyrillic.sql)
+  if [[ ${outStr:0:54} \
+        != $'first 4 characters of Cyrillic alphabet in CP1251: \xc0\xc1\xc2' \
+      ]]; then
+    die "Output of the command differs from expected:" "$outStr"
+  else
+    echo "$outStr"
+    echo "!!! necessary to check the correctness of the output visually !!!"
+  fi
+}
+
+
+
 # main
 
 parseOption "$@"
@@ -299,6 +333,7 @@ if [[ -n "$testOperatorId" ]]; then
 fi
 if (( loadFlag )); then
   startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
+  checkOutputCyrillic
 fi
 
 cd - >/dev/null
