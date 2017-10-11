@@ -24,7 +24,7 @@ rem Use truncated path ( 1 - yes, 0 - no, see --use-truncated-path)
 set useTruncatedPathFlag=1
 
 rem Windows codepage for changing ( "-" if don't change)
-set changeCodepage=
+set changeCodepage=-
 
 rem Current Windows codepage ( "" if unknown)
 set currentCodepage=
@@ -184,14 +184,14 @@ echo     %topScript% [OMS options] [command parameters]
 echo.
 echo OMS options:
 echo     --change-codepage[=NNN]    Change Windows codepage to NNN;
-echo                                don't change if "-" specified as NNN;
-echo                                switch 866 codepage to 1251 if no arg
+echo                                don't change if "-" specified as NNN
+echo                                or NNN is not specified
 echo                                ( used by default^)
 echo     --oms-version              Print the version number of script and exit
 echo     --set-lang[=LOCALE]        Set environment variable LANG=^<LOCALE^>;
 echo                                don't set if "-" specified as LOCALE;
-echo                                set LANG=C.CP^<NNN^> ( where NNN is current
-echo                                Windows codepage^) if no arg
+echo                                set LANG=C.CP1251 if LOCALE is not specified
+echo                                and codepage 866 or 1251 is used
 echo                                ( used by default^)
 echo     --use-full-path            Use full currnent PATH variable instead of
 echo                                truncating to minimal
@@ -258,7 +258,6 @@ if "%~1" == "--use-truncated-path" (
 
 
 
-
 if "%useTruncatedPathFlag%" == "1" call :truncate_path_func
 
 rem Add paths to OMS scripts and MSYS2 binaries
@@ -271,31 +270,22 @@ rem Use current directory as working directory in MSYS2 bash
 set CHERE_INVOKING=enabled_from_arguments
 
 rem Change Windows codepage
-if not "%changeCodepage%" == "-" (
-
-  rem Configure change codepage 866 to 1251 by default
-  if "%changeCodepage%" == "" (
-    call :set_currentCodepage_func
-    if "%currentCodepage%" == "866" set changeCodepage=1251
-  )
-
-  if not "%changeCodepage%" == "" (
-    chcp %changeCodepage% >nul
-    set currentCodepage=%changeCodepage%
-  )
-)
+if "%changeCodepage%" == "-" goto chcp_end
+if "%changeCodepage%" == "" goto chcp_end
+chcp %changeCodepage% >nul && set currentCodepage=%changeCodepage%
+:chcp_end
 
 rem Set LANG
-if not "%setLang%" == "-" (
-
-  rem Set LANG on current codepage by default
-  if "%setLang%" == "" (
-    if "%currentCodepage%" == "" call :set_currentCodepage_func
-    if not "%currentCodepage%" == "" set setLang=C.CP%currentCodepage%
-  )
-
-  if not "%setLang%" == "" set LANG=%setLang%
-)
+if "%setLang%" == "-" goto set_lang_end
+if not "%setLang%" == "" goto set_lang_set
+rem Set LANG=C.CP1251 for 866 and 1251 codepages by default
+if "%currentCodepage%" == "" call :set_currentCodepage_func
+if "%currentCodepage%" == "866" set setLang=C.CP1251
+if "%currentCodepage%" == "1251" set setLang=C.CP1251
+if "%setLang%" == "" goto set_lang_end
+:set_lang_set
+set LANG=%setLang%
+:set_lang_end
 
 rem Check OMS_ROOT
 if not exist "%OMS_ROOT%\usr\bin\bash.exe" (
