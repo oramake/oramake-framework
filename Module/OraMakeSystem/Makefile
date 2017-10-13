@@ -116,7 +116,12 @@ install-msys2:
 				$$(../make-file-list.sh) \
 			&& gawk -F" = " \
 				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
-				`for f in usr/share/oms-msys2/*; do echo $$f/.PKGINFO; done` \
+				`for f in usr/share/oms-msys2/*; do \
+						case $${f:20} in \
+							db | gdbm | libdb | libgdbm ) ;; \
+							*) echo $$f/.PKGINFO; \
+						esac; \
+					done` \
 				> "$(WIN_ROOT)/etc/package-versions.txt" \
 			&& cd - >/dev/null \
 		;} \

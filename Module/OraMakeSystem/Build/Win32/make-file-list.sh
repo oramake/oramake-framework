@@ -58,5 +58,9 @@ find * -type f -print \
     -e '^usr/(lib|share)/terminfo/(?!.*/(cygwin|dumb|xterm.*)$)' \
   | grep -v \
     -e '^usr/share/oms-msys2/' \
+    -e '^usr/bin/msys-\(gdbm-\|gdbm_compat-\).*\.dll$' \
+    -e '^usr/bin/\(gdbmtool\|gdbm_dump\|gdbm_load\)\.exe$' \
+    -e '^usr/bin/db_\(archive\|checkpoint\|deadlock\|dump\|hotbackup\|load\|log_verify\|printlog\|recover\|replicate\|stat\|tuner\|upgrade\|verify\)\.exe$' \
+
 
 
