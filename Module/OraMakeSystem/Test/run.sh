@@ -36,6 +36,9 @@ loadFlag=
 # Command for run "oms" script
 oms=
 
+# Command for run "exec-command.cmd" ( only for Windows)
+execCommand=
+
 # Command for run "make"
 make=
 
@@ -158,7 +161,7 @@ runCmd()
 
 runOms()
 {
-  startTestCase "oms $1" || return 0
+  startTestCase "oms $1" || return 1
   runCmd $oms "$@" >/dev/null
 }
 
@@ -166,7 +169,7 @@ runOms()
 
 runMake()
 {
-  startTestCase "make $1" || return 0
+  startTestCase "make $1" || return 1
   runCmd $make "$@" >/dev/null
 }
 
@@ -181,7 +184,7 @@ checkOmsConnectInfoUser()
     || { loadUserId=$testUserId; return 0; }
 
   loadUserId=$( \
-      $omsPrefix-connect-info \
+      ${omsPrefix}oms-connect-info \
         --userid "$testUserId" \
         --default-db "" \
         --out-userid \
@@ -208,7 +211,7 @@ checkOmsConnectInfoOperator()
     || { loadOperatorId=$testOperatorId; return 0; }
 
   loadOperatorId=$( \
-      $omsPrefix-connect-info \
+      ${omsPrefix}oms-connect-info \
         --operatorid "$testOperatorId" \
         --out-operatorid \
         --ignore-absent-password \
@@ -233,7 +236,7 @@ loadFile()
     createFile "$loadFile"
   fi
 
-  runCmd $omsPrefix-load \
+  runCmd ${omsPrefix}oms-load \
         --userid "$loadUserId" \
         --operatorid "$loadOperatorId" \
         "$@"
@@ -279,12 +282,13 @@ if [[ -n "$winRoot" ]]; then
   winFlag=1
   oms=$winRoot/oms.cmd
   make=$winRoot/make.cmd
-  omsPrefix="$winRoot/cmd/exec-command.cmd run.sh oms"
+  execCommand="$winRoot/cmd/exec-command.cmd run.sh "
+  omsPrefix="$execCommand "
 else
   winFlag=0
   oms="$installPrefix/bin/oms"
   make="make"
-  omsPrefix="$oms"
+  omsPrefix="$installPrefix/bin/"
 fi
 
 if [[ -n "$testUserId" ]]; then
@@ -304,26 +308,12 @@ fi
 
 [[ -f "$oms" ]] || die "Script not found: $oms"
 
-# Remove exists testModule
-if [[ -d "$modDir" ]]; then
-  rm -rf "$modDir" \
-    || die "Existing test module has not been deleted: $modDir"
+if (( winFlag )); then
+  startTestCase "exec-command.cmd: quotes in arguments" \
+    && runCmd $execCommand echo aaa 'kkk "jjj"' >/dev/null \
+    && runCmd $execCommand echo '"jjj"' >/dev/null \
+    && runCmd $execCommand echo 'j"jj' >/dev/null
 fi
-
-nextCaseUsedCount=999
-runOms create-module -d "$modDir" TestModule
-
-cd "$modDir" || die "Test module directory not created: $modDir"
-
-addTestFile
-
-runMake gendoc
-runOms set-version "1.0.1"
-
-runOms gen-schema-run
-runOms gen-schema-revert
-
-runMake gendoc-menu
 
 if (( loadFlag )); then
   checkOmsConnectInfoUser
@@ -331,12 +321,36 @@ fi
 if [[ -n "$testOperatorId" ]]; then
   checkOmsConnectInfoOperator
 fi
-if (( loadFlag )); then
-  startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
-  checkOutputCyrillic
+
+# Remove exists testModule
+if [[ -d "$modDir" ]]; then
+  rm -rf "$modDir" \
+    || die "Existing test module has not been deleted: $modDir"
 fi
 
-cd - >/dev/null
-rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
+# Checks with using test module
+nextCaseUsedCount=999
+if runOms create-module -d "$modDir" TestModule; then
+
+  cd "$modDir" || die "Test module directory not created: $modDir"
+
+  addTestFile
+
+  runMake gendoc
+  runOms set-version "1.0.1"
+
+  runOms gen-schema-run
+  runOms gen-schema-revert
+
+  runMake gendoc-menu
+
+  if (( loadFlag )); then
+    startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
+    checkOutputCyrillic
+  fi
+
+  cd - >/dev/null
+  rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
+fi
 
 echo result: OK

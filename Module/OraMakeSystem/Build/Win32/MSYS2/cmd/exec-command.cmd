@@ -41,11 +41,12 @@ rem Skip first argument ( non spaces chars including subsequent spaces)
 rem in OMS_CMD_ARGS
 
 set OMS_CMD_ARGS=%OMS_CMD_ARGS:~1%
-if "%OMS_CMD_ARGS%" == "" exit /b
-if not "%OMS_CMD_ARGS:~0,1%" == " " goto shift_cmd_args_func
+rem Compare two characters to exclude errors in case of quotation marks
+if "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "" exit /b
+if not "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "  " goto shift_cmd_args_func
 :shift_cmdArgs_del_space
 set OMS_CMD_ARGS=%OMS_CMD_ARGS:~1%
-if "%OMS_CMD_ARGS:~0,1%" == " " goto shift_cmdArgs_del_space
+if "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "  " goto shift_cmdArgs_del_space
 exit /b
 
 
@@ -173,6 +174,12 @@ exit /b 15
 :check_params
 rem Process optional parameters
 
+rem Stop checking parameters if there are quotes in the parameter value
+rem ( simplified workaround for a problem with unpaired quotes)
+set tmpStr=%~1
+set tmpStr=%tmpStr:"=%
+if not "%~1%~1" == "%tmpStr%%tmpStr%" goto check_params_end
+
 
 
 rem Print Help
@@ -256,6 +263,8 @@ if "%~1" == "--use-truncated-path" (
   shift & call :shift_cmd_args_func & goto check_params
 )
 
+:check_params_end
+
 
 
 if "%useTruncatedPathFlag%" == "1" call :truncate_path_func
@@ -296,13 +305,14 @@ if not exist "%OMS_ROOT%\usr\bin\bash.exe" (
 
 
 rem Delete temporary variables
-set omsVersion=2.0.0
+set omsVersion=
 set scriptName=
 set useTruncatedPathFlag=
 set changeCodepage=
 set currentCodepage=
 set setLang=
 set topScript=
+set tmpStr=
 
 rem Run command
 %OMS_ROOT%\usr\bin\bash -c '%OMS_EXEC_CMD% %OMS_CMD_ARGS%'
