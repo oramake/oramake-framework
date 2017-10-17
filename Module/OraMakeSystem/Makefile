@@ -114,6 +114,9 @@ install-msys2:
 				--target-directory="$(WIN_ROOT)" \
 				--parents \
 				$$(../make-file-list.sh) \
+			&& if [[ ! -d "$(WIN_ROOT)/etc" ]]; then \
+					mkdir "$(WIN_ROOT)/etc"; \
+				fi \
 			&& gawk -F" = " \
 				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
 				`for f in usr/share/oms-msys2/*; do \
