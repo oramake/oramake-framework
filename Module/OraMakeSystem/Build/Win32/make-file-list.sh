@@ -58,6 +58,7 @@ find * -type f -print \
   -e '^usr/(share|lib)/perl5/core_perl/(?!(strict|integer|English|FindBin|warnings|XSLoader|Errno|Config|vars|Exporter|Carp|File/(Basename|Copy|Path)|File/Spec|constant|lib|Text|DynaLoader|Tie|Config_heavy|Config_git|overload|overloading|base|(.*/)?(re|Cwd|NamedCapture))(\.p[ml]$|/.*))' \
   | grep -v \
     -e '^usr/share/oms-msys2/' \
+    -e '^usr/bin/sh\.exe$' \
     -e '^usr/bin/msys-\(gdbm-\|gdbm_compat-\).*\.dll$' \
     -e '^usr/bin/\(gdbmtool\|gdbm_dump\|gdbm_load\)\.exe$' \
     -e '^usr/bin/db_\(archive\|checkpoint\|deadlock\|dump\|hotbackup\|load\|log_verify\|printlog\|recover\|replicate\|stat\|tuner\|upgrade\|verify\)\.exe$' \
