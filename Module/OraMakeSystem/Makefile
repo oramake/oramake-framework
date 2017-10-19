@@ -117,6 +117,9 @@ install-msys2:
 			&& if [[ ! -d "$(WIN_ROOT)/etc" ]]; then \
 					mkdir "$(WIN_ROOT)/etc"; \
 				fi \
+			&& if [[ ! -d "$(WIN_ROOT)/tmp" ]]; then \
+					mkdir "$(WIN_ROOT)/tmp"; \
+				fi \
 			&& gawk -F" = " \
 				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
 				`for f in usr/share/oms-msys2/*; do \

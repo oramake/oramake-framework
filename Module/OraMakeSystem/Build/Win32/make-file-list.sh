@@ -30,13 +30,13 @@ find * -type f -print \
     -e '^usr/bin/\(dd\|df\|dir\|dircolors\|du\|expand\)\.exe$' \
     -e '^usr/bin/\(factor\|fmt\|fold\|awk\|gawk..*\|getconf\)\.exe$' \
     -e '^usr/bin/\(getfacl\.exe\|gkill\|groups\|host.*\)\.exe$' \
-    -e '^usr/bin/\(iconv\|id\|install\|join\|kill\|ldd\)\.exe$' \
+    -e '^usr/bin/\(iconv\|install\|join\|kill\|ldd\)\.exe$' \
     -e '^usr/bin/\(ldh\|link\|ln\|locale\|locate\|yes\)\.exe$' \
     -e '^usr/bin/\(logname\|md5sum\|minidumper\|mkfifo\)\.exe$' \
-    -e '^usr/bin/\(mkgroup\|mknod\|mkpasswd\||nice\)\.exe$' \
+    -e '^usr/bin/\(mkgroup\|mknod\|mkpasswd\|nice\)\.exe$' \
     -e '^usr/bin/\(nl\|nohup\|nproc\|numfmt\|od\|openssl\)\.exe$' \
     -e '^usr/bin/\(passwd\|paste\|patchchk\|pinky\|pldd\)\.exe$' \
-    -e '^usr/bin/\(pr\|printenv\|ps\|ptx\|realpath\)\.exe$' \
+    -e '^usr/bin/\(pr\|printenv\|ptx\|realpath\)\.exe$' \
     -e '^usr/bin/\(regtool\|runcon\|scp\|seq\|setfacl\)\.exe$' \
     -e '^usr/bin/\(setmetamode\|sftp\|sha.*sum\|shred\)\.exe$' \
     -e '^usr/bin/\(shuf\|sleep\|slogin\|split\|sshd\)\.exe$' \
@@ -58,6 +58,7 @@ find * -type f -print \
   -e '^usr/(share|lib)/perl5/core_perl/(?!(strict|integer|English|FindBin|warnings|XSLoader|Errno|Config|vars|Exporter|Carp|File/(Basename|Copy|Path)|File/Spec|constant|lib|Text|DynaLoader|Tie|Config_heavy|Config_git|overload|overloading|base|(.*/)?(re|Cwd|NamedCapture))(\.p[ml]$|/.*))' \
   | grep -v \
     -e '^usr/share/oms-msys2/' \
+      -e '/\.gitignore$' \
     -e '^usr/bin/sh\.exe$' \
     -e '^usr/bin/msys-\(gdbm-\|gdbm_compat-\).*\.dll$' \
     -e '^usr/bin/\(gdbmtool\|gdbm_dump\|gdbm_load\)\.exe$' \
@@ -67,5 +68,9 @@ find * -type f -print \
     -e '^usr/bin/core_perl/' \
     -e '^usr/share/perl5/core_perl/encoding/warnings.pm' \
     -e '^usr/share/perl5/core_perl/Config/' \
+    -e '^autorebase.*\.bat$' \
+      -e '^usr/bin/\(dash\|peflags\)\.exe$' \
+      -e '^usr/bin/\(pacman-rec-filename-grep\|peflagsall\)$' \
+    -e '^usr/bin/\(d2u\|mac2unix\|u2d\|unix2mac\)\.exe$' \
 
 
