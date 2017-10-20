@@ -300,7 +300,8 @@ parseOption()
 
   # Проверяем параметры выполнения
   if [[ -z "$omsCommand" ]]; then
-    exitArgError "Сommand not specified."
+    usage
+    exitArgError
   fi
 
   # Устанавливаем значения по умолчанию

@@ -128,8 +128,8 @@ make.cmd (OMS) 2.0.0
 
 (code)
 
-> oms; svn --version
-oms: Ñommand not specified.
+> oms 0; svn --version
+oms: Unknown command: '0'.
 svn, version 1.9.4 (r1740329)
    compiled Apr 24 2016, 13:57:54 on x86-microsoft-windows
 ...

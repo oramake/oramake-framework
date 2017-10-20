@@ -463,7 +463,9 @@ exitFatalError()
   local exitCode=$1
   shift
   logDebug "Exit on fatal error ( exitCode=$exitCode):" "$@"
-  logMessage $FATAL_LOG_LEVEL "$@"
+  if (( $# )); then
+    logMessage $FATAL_LOG_LEVEL "$@"
+  fi
   exit $exitCode;
 }
 

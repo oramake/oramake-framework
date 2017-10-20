@@ -33,8 +33,8 @@ oms (OMS) 2.0.0
 ...</pre></blockquote><p>Если при вызове make возникает ошибка вида</p><blockquote><pre>&gt; make --oms-version
 make: unrecognized option `--oms-version'
 ...</pre></blockquote><p>то нужно перенести путь к каталогу установки OraMakeSystem в начало списка путей переменной окружения PATH ( до пути к каталогу, в котором находится утилита make, не относящаяся к OraMakeSystem) либо всегда выполнять команду make с указанием полного пути ( &ldquo;C:\OraMakeSystem\make&rdquo; вместо &ldquo;make&rdquo;) либо всегда выполнять команду make с указанием расширения ( &ldquo;make.cmd&rdquo; вместо &ldquo;make&rdquo;), что вероятно тоже решит проблему:</p><blockquote><pre>&gt; make.cmd --oms-version
-make.cmd (OMS) 2.0.0</pre></blockquote><ul><li>проверка доступности клиента Subversion ( если нужна интеграция с Subversion)</li></ul><blockquote><pre>&gt; oms; svn --version
-oms: Сommand not specified.
+make.cmd (OMS) 2.0.0</pre></blockquote><ul><li>проверка доступности клиента Subversion ( если нужна интеграция с Subversion)</li></ul><blockquote><pre>&gt; oms 0; svn --version
+oms: Unknown command: '0'.
 svn, version 1.9.4 (r1740329)
    compiled Apr 24 2016, 13:57:54 on x86-microsoft-windows
 ...</pre></blockquote><h4 class=CHeading>Замечания</h4><ul><li>при необходимости OraMakeSystem, установленный для Windows, можно использовать из Cygwin.&nbsp; Для этого в терминала Cygwin при вызове &ldquo;make&rdquo; и &ldquo;oms&rdquo; нужно всегда указывать полный путь ( например, &ldquo;/cygdrive/c/OraMakeSystem/make.cmd&rdquo;) либо может быть достаточно указывать эти команды с расширением &ldquo;.cmd&rdquo; ( соответственно &ldquo;make.cmd&rdquo; и &ldquo;oms.cmd&rdquo;), например:</li></ul><blockquote><pre>$ oms.cmd create-module -d C:/tmp/TestModule TestModule
