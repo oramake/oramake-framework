@@ -40,12 +40,13 @@ goto process_static_params
 rem Skip first argument ( non spaces chars including subsequent spaces)
 rem in OMS_CMD_ARGS
 
+if not defined OMS_CMD_ARGS exit /b
 set OMS_CMD_ARGS=%OMS_CMD_ARGS:~1%
-rem Compare two characters to exclude errors in case of quotation marks
-if "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "" exit /b
+if not defined OMS_CMD_ARGS exit /b
 if not "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "  " goto shift_cmd_args_func
 :shift_cmdArgs_del_space
 set OMS_CMD_ARGS=%OMS_CMD_ARGS:~1%
+rem Compare two characters to exclude errors in case of quotation marks
 if "%OMS_CMD_ARGS:~0,1%%OMS_CMD_ARGS:~0,1%" == "  " goto shift_cmdArgs_del_space
 exit /b
 

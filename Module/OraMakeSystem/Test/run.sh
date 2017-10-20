@@ -309,10 +309,11 @@ fi
 [[ -f "$oms" ]] || die "Script not found: $oms"
 
 if (( winFlag )); then
-  startTestCase "exec-command.cmd: quotes in arguments" \
+  startTestCase "exec-command.cmd: parse arguments" \
     && runCmd $execCommand echo aaa 'kkk "jjj"' >/dev/null \
     && runCmd $execCommand echo '"jjj"' >/dev/null \
-    && runCmd $execCommand echo 'j"jj' >/dev/null
+    && runCmd $execCommand echo 'j"jj' >/dev/null \
+    && runCmd $execCommand echo >/dev/null
 fi
 
 if (( loadFlag )); then
