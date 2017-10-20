@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application name="OptionAsRia" defaultDatasource="" projectPackage="oracle">
+  <modules>
+    <module id="Option" name="Параметр" nameEn="Option">
+	  <roles>
+        <role>OptShowOption</role>
+      </roles>
+      <db datasource="">
+		<find parameters="OPTION_ID,MODULE_ID,OBJECT_SHORT_NAME,OBJECT_TYPE_ID,OPTION_NAME,OPTION_SHORT_NAME,OPTION_DESCRIPTION,STRING_VALUE" />
+        <create parameters="MODULE_ID,OBJECT_SHORT_NAME,OBJECT_TYPE_ID,OPTION_SHORT_NAME,VALUE_TYPE_CODE,VALUE_LIST_FLAG,ENCRYPTION_FLAG,TEST_PROD_SENSITIVE_FLAG,OPTION_NAME,OPTION_DESCRIPTION,OPTION_VALUE,STRING_VALUE,DATE_VALUE,NUMBER_VALUE,STRING_LIST_SEPARATOR" />
+        <update parameters="OPTION_ID,MODULE_ID,OBJECT_SHORT_NAME,OBJECT_TYPE_ID,OPTION_SHORT_NAME,VALUE_TYPE_CODE,VALUE_LIST_FLAG,ENCRYPTION_FLAG,TEST_PROD_SENSITIVE_FLAG,OPTION_NAME,OPTION_DESCRIPTION" />
+      </db>
+	  <record primaryKey="OPTION_ID">
+        <field id="DATA_SOURCE" type="String" name="Источник данных" />
+		<field id="OPTION_ID" type="Integer" name="Идентификатор параметра" />
+        <field id="MODULE_ID" type="Integer" name="Наименование модуля" />
+        <field id="MODULE_NAME" type="String" name="Наименование модуля" />
+		<field id="OBJECT_SHORT_NAME" name="Короткое название объекта модуля" like="contains"/>
+		<field id="OBJECT_TYPE_ID" type="Integer" name="Наименование типа объекта" />
+        <field id="OBJECT_TYPE_NAME" type="String" name="Наименование типа объекта" />
+		<field id="OPTION_SHORT_NAME" type="String" name="Короткое название параметра" like="contains"/>
+        <field id="OPTION_NAME" type="String" name="Название параметра" like="contains"/>
+        <field id="OPTION_DESCRIPTION" type="String" name="Описание параметра" like="contains"/>
+		<field id="STRING_VALUE" type="String" name="Значение параметра" like="contains"/>
+		<field id="OPTION_VALUE" type="String" name="Значение параметра" />
+		<field id="DATE_VALUE" type="Date" name="Дата" />
+		<field id="NUMBER_VALUE" type="Integer" name="Число" />
+		<field id="VALUE_TYPE_CODE" type="String" name="Тип значения параметра" />
+		<field id="VALUE_TYPE_NAME" type="String" name="Тип значения параметра" />
+		<field id="OBJECT_TYPE_SHORT_NAME" type="String" name="Короткое название типа объекта" />
+		<field id="VALUE_LIST_FLAG" type="Boolean" name="Признак хранения в параметре списка значений" />
+		<field id="LIST_SEPARATOR" type="Boolean" name="Разделитель в списке значений" />
+		<field id="ENCRYPTION_FLAG" type="Boolean" name="Признак шифрования значения" />
+		<field id="TEST_PROD_SENSITIVE_FLAG" type="Boolean" name="Признак значения для тестовой БД" />
+		<field id="MODULE_SVN_ROOT" type="String" name="Путь в Subversion к корневому каталогу модуля" />
+		<field id="STRING_LIST_SEPARATOR" type="String" name="Символ – разделитель списка значений" />
+      </record>
+      <forms>
+        <form-detail>
+          <field id="DATA_SOURCE" widget="JepComboBoxField" mandatoryWorkstates="true" visibleWorkstates="!EDIT"/>
+          <field id="OPTION_ID" widget="JepNumberField" visibleWorkstates="SEARCH,EDIT"  mandatoryWorkstates="EDIT" editableWorkstates="!EDIT"/>
+          <field id="MODULE_ID" widget="JepComboBoxField" mandatoryWorkstates="!SEARCH" editableWorkstates="!EDIT"/>
+          <field id="OBJECT_SHORT_NAME" widget="JepTextField" editableWorkstates="!EDIT"/>
+          <field id="OBJECT_TYPE_ID" widget="JepComboBoxField" editableWorkstates="!EDIT"/>
+		  <field id="OPTION_SHORT_NAME" widget="JepTextField" mandatoryWorkstates="!SEARCH" editableWorkstates="!EDIT"/>
+		  <field id="VALUE_TYPE_CODE" widget="JepComboBoxField" mandatoryWorkstates="!SEARCH" visibleWorkstates="!SEARCH"/>
+          <field id="VALUE_LIST_FLAG" widget="JepCheckBoxField" visibleWorkstates="!SEARCH" mandatoryWorkstates="EDIT"/>
+          <field id="ENCRYPTION_FLAG" widget="JepCheckBoxField" visibleWorkstates="!SEARCH" mandatoryWorkstates="EDIT"/>
+          <field id="TEST_PROD_SENSITIVE_FLAG" widget="JepCheckBoxField" visibleWorkstates="!SEARCH" mandatoryWorkstates="EDIT"/>
+          <field id="OPTION_NAME" widget="JepTextField" mandatoryWorkstates="!SEARCH"/>
+          <field id="OPTION_DESCRIPTION" widget="JepTextField" mandatoryWorkstates="EDIT"/>
+          <field id="STRING_VALUE" widget="JepTextField" visibleWorkstates="SEARCH"/>
+          <field id="OPTION_VALUE" widget="JepTextField" visibleWorkstates="CREATE"/>
+          <field id="STRING_LIST_SEPARATOR" widget="JepTextField" visibleWorkstates="CREATE"/>
+        </form-detail>
+        <form-list>
+          <field id="OPTION_ID" />
+          <field id="OPTION_NAME" />
+		  <field id="OPTION_SHORT_NAME" />
+		  <field id="VALUE_TYPE_NAME" />
+		  <field id="STRING_VALUE" name="Строка" />
+		  <field id="DATE_VALUE" />
+		  <field id="NUMBER_VALUE" />
+          <field id="OBJECT_SHORT_NAME"/>
+          <field id="OBJECT_TYPE_SHORT_NAME"/>
+          <field id="MODULE_NAME"/>
+          <field id="VALUE_LIST_FLAG"/>
+          <field id="LIST_SEPARATOR"/>
+          <field id="ENCRYPTION_FLAG"/>
+          <field id="TEST_PROD_SENSITIVE_FLAG"/>
+          <field id="MODULE_SVN_ROOT"/>
+        </form-list>
+      </forms>
+      <toolbar view="on" presenter="on">
+      </toolbar>
+    </module>
+        
+    <module id="Value" name="Значение Параметра" nameEn="Value">
+	  <roles>
+        <role>OptShowOption</role>
+      </roles>
+      <db datasource="">
+		<find parameters="VALUE_ID, OPTION_ID" />
+        <create parameters="PROD_VALUE_FLAG,INSTANCE_NAME,STRING_LIST_SEPARATOR,DATE_VALUE,STRING_VALUE,NUMBER_VALUE" />
+        <update parameters="VALUE_ID,DATE_VALUE,STRING_VALUE,NUMBER_VALUE,VALUE_INDEX" />
+      </db>
+	  <record primaryKey="VALUE_ID">
+        <field id="VALUE_ID" type="Integer" name="ID значения параметра" />
+		<field id="OPTION_ID" type="Integer" name="Идентификатор параметра" />
+		
+		<field id="PROD_VALUE_FLAG" type="Boolean" name="Признак использования в промышленных БД" />
+        <field id="INSTANCE_NAME" type="String" name="Имя экземпляра БД" />
+		<field id="VALUE_TYPE_CODE" type="String" name="Код типа значения параметра" />
+		<field id="VALUE_TYPE_NAME" type="String" name="Тип значения параметра" />
+		<field id="STRING_VALUE" type="String" name="Значение параметра"/>
+		<field id="DATE_VALUE" type="Date" name="Дата" />
+		<field id="NUMBER_VALUE" type="Integer" name="Число" />
+		<field id="ENCRYPTION_FLAG" type="Boolean" name="Признак шифрования значения" />
+		<field id="LIST_SEPARATOR" type="String" name="Разделитель в списке значений" />
+		
+		<field id="STRING_LIST_SEPARATOR" type="String" name="Символ – разделитель списка значений" />
+		<field id="VALUE_INDEX" type="String" name="Индекс значения в списке" />
+		
+      </record>
+      <forms>
+        <form-detail>
+          <field id="PROD_VALUE_FLAG" widget="JepTextField" mandatoryWorkstates="true" visibleWorkstates="CREATE"/>
+          <field id="INSTANCE_NAME" widget="JepTextField" visibleWorkstates="CREATE" />
+          <field id="STRING_LIST_SEPARATOR" widget="JepTextField" visibleWorkstates="CREATE"/>
+          <field id="DATE_VALUE" widget="JepDateField"/>
+          <field id="NUMBER_VALUE" widget="JepNumberField"/>
+          <field id="STRING_VALUE" widget="JepTextField"/>
+          <field id="VALUE_INDEX" widget="JepTextField" visibleWorkstates="EDIT"/>
+        </form-detail>
+        <form-list>
+        <field id="VALUE_ID" />
+		<field id="OPTION_ID" />
+		<field id="PROD_VALUE_FLAG"  />
+        <field id="INSTANCE_NAME" />
+		<field id="VALUE_TYPE_CODE" />
+		<field id="VALUE_TYPE_NAME" />
+		<field id="STRING_VALUE" />
+		<field id="DATE_VALUE" />
+		<field id="NUMBER_VALUE"/>
+		<field id="ENCRYPTION_FLAG"/>
+		<field id="LIST_SEPARATOR" />
+        </form-list>
+      </forms>
+      <toolbar view="on" presenter="on">
+      </toolbar>
+    </module>
+  </modules>
+</application>

@@ -1,7 +1,6 @@
 package com.technology.oracle.optionasria.option.client.ui.toolbar;
  
 import com.google.gwt.core.client.GWT;
-import com.technology.jep.jepria.client.security.JepClientSecurity;
 import com.technology.jep.jepria.client.ui.toolbar.ToolBarViewImpl;
 import com.technology.oracle.optionasria.option.client.ui.toolbar.images.OptionImages;
 

@@ -1,41 +1,37 @@
 package com.technology.oracle.optionasria.value.client.ui.form.detail;
- 
-import static com.technology.oracle.optionasria.option.client.OptionClientConstant.optionText;
-import static com.technology.oracle.optionasria.value.client.ValueClientConstant.valueText;
-import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.*;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
 
 import static com.technology.jep.jepria.client.JepRiaClientConstant.JepTexts;
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
+import static com.technology.oracle.optionasria.value.client.ValueClientConstant.valueText;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.DATE_VALUE;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.INSTANCE_NAME;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.NUMBER_VALUE;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.PROD_VALUE_FLAG_CHECKBOX;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.STRING_LIST_SEPARATOR;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.STRING_VALUE;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.TIME_VALUE;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.USED_OPERATOR_ID;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.VALUE_INDEX;
+import static com.technology.oracle.optionasria.value.shared.field.ValueFieldNames.VALUE_TYPE_CODE;
 
-import com.technology.jep.jepria.client.widget.field.multistate.JepComboBoxField;
-import com.technology.jep.jepria.client.widget.field.multistate.JepMoneyField;
-import com.technology.jep.jepria.client.widget.field.multistate.JepTextField;
-import com.technology.jep.jepria.client.widget.field.multistate.JepDateField;
-import com.technology.jep.jepria.client.widget.field.multistate.JepTimeField;
-import com.technology.jep.jepria.client.ui.form.detail.JepDetailFormViewImpl;
-import com.extjs.gxt.ui.client.widget.LayoutContainer;
-import com.extjs.gxt.ui.client.widget.form.NumberField;
-import com.extjs.gxt.ui.client.widget.form.NumberPropertyEditor;
-import com.extjs.gxt.ui.client.widget.form.XNumberPropertyEditor;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.technology.jep.jepria.client.widget.field.StandardLayoutContainer;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gwt.user.client.ui.DoubleBox;
+import com.technology.jep.jepria.client.ui.form.detail.StandardDetailFormViewImpl;
 import com.technology.jep.jepria.client.widget.field.FieldManager;
+import com.technology.jep.jepria.client.widget.field.multistate.JepComboBoxField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepDateField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepTextField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepTimeField;
 import com.technology.jep.jepria.shared.field.option.JepOption;
-import com.technology.jep.jepria.shared.util.JepRiaUtil;
- 
-public class ValueDetailFormViewImpl extends JepDetailFormViewImpl {	
- 
+
+public class ValueDetailFormViewImpl extends StandardDetailFormViewImpl {
+
 	public ValueDetailFormViewImpl() {
 		super(new FieldManager());
-		LayoutContainer container = new StandardLayoutContainer();
- 
+
 		JepComboBoxField prodValueFlagJepComboBoxField = new JepComboBoxField(valueText.value_detail_prod_value_flag());
 		List<JepOption> options = new ArrayList<JepOption>();
 		options.add(new JepOption(JepTexts.yes(), 1));
@@ -46,48 +42,46 @@ public class ValueDetailFormViewImpl extends JepDetailFormViewImpl {
 		JepTextField stringListSeparatorTextField = new JepTextField(valueText.value_detail_string_list_separator());
 		JepDateField dateValueDateField = new JepDateField(valueText.value_detail_date_value());
 		JepTimeField timeValueTimeField = new JepTimeField(valueText.value_detail_time_value());
-		JepNumberField numberValueNumberField = new JepNumberField(valueText.value_detail_number_value(), BigDecimal.class){
-			{
-				NumberPropertyEditor propertyEditor = new XNumberPropertyEditor(BigDecimal.class) {
-					
-					@Override
-					public String getStringValue(Number value) {
-						return value.toString();
-					}
-				};
-				((NumberField)editableCard).setPropertyEditor(propertyEditor);
-			}
-			
-		};
-		
+		JepNumberField numberValueNumberField = new JepNumberField(valueText.value_detail_number_value()) {
+      @Override
+      protected void addEditableCard() {
+        editableCard = new DoubleBox(){
+          @Override
+          public void setValue(Double value) {
+            super.setText(value == null ? "" : value.toString());
+          }
+        };
+        editablePanel.add(editableCard);
+        // Добавляем обработчик события "нажатия клавиши" для проверки ввода символов.
+        initKeyPressHandler();
+      }
+    };
 		JepTextField stringValueTextField = new JepTextField(valueText.value_detail_string_value());
 		JepTextField valueIndexTextField = new JepTextField(valueText.value_detail_value_index());
 		valueIndexTextField.setTitle(valueText.value_detail_value_index_desc());
-		
+
 		JepNumberField maxRowCountField = new JepNumberField(valueText.value_detail_row_count());
 		maxRowCountField.setMaxLength(4);
 		maxRowCountField.setFieldWidth(55);
-		
+
 		JepComboBoxField valueTypeCodeComboBoxField = new JepComboBoxField(valueText.value_list_value_type_name());
 		JepComboBoxField usedOperatorIdComboBoxField = new JepComboBoxField(valueText.value_detail_used_operator_id());
 		usedOperatorIdComboBoxField.setEmptyText(valueText.value_detail_used_operator_id_emptyText());
-		
-		container.add(prodValueFlagJepComboBoxField);
-		container.add(instanceNameTextField);
-		container.add(usedOperatorIdComboBoxField);
-		container.add(valueTypeCodeComboBoxField);
-		container.add(dateValueDateField);
-		container.add(timeValueTimeField);
-		
-		container.add(numberValueNumberField);
-		container.add(stringValueTextField);
-		container.add(valueIndexTextField);
-		container.add(stringListSeparatorTextField);
-		container.add(maxRowCountField);
-		
- 
-		setBody(container);
- 
+
+		panel.add(prodValueFlagJepComboBoxField);
+		panel.add(instanceNameTextField);
+		panel.add(usedOperatorIdComboBoxField);
+		panel.add(valueTypeCodeComboBoxField);
+		panel.add(dateValueDateField);
+		panel.add(timeValueTimeField);
+
+		panel.add(numberValueNumberField);
+		panel.add(stringValueTextField);
+		panel.add(valueIndexTextField);
+		panel.add(stringListSeparatorTextField);
+		panel.add(maxRowCountField);
+
+
 		fields.put(PROD_VALUE_FLAG_CHECKBOX, prodValueFlagJepComboBoxField);
 		fields.put(INSTANCE_NAME, instanceNameTextField);
 		fields.put(USED_OPERATOR_ID, usedOperatorIdComboBoxField);
@@ -99,8 +93,8 @@ public class ValueDetailFormViewImpl extends JepDetailFormViewImpl {
 		fields.put(STRING_VALUE, stringValueTextField);
 		fields.put(VALUE_INDEX, valueIndexTextField);
 		fields.put(MAX_ROW_COUNT, maxRowCountField);
-		
+
 		fields.setLabelWidth(250);
 	}
- 
+
 }

@@ -1,10 +1,10 @@
 package com.technology.oracle.optionasria.option.client.ui.toolbar.images;
 
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.technology.jep.jepria.client.ui.toolbar.images.JepImages;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
-public interface OptionImages extends JepImages {
+public interface OptionImages extends ClientBundle {
 
-	@Resource("option_value.png")
-	AbstractImagePrototype option_value();
+	@Source("option_value.png")
+	ImageResource option_value();
 }

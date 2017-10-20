@@ -1,35 +1,40 @@
 package com.technology.oracle.optionasria.option.client.ui.form.detail;
  
-import static com.technology.oracle.optionasria.option.client.OptionClientConstant.optionText;
-import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.*;
-
-import java.math.BigDecimal;
-
-import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
+import static com.technology.oracle.optionasria.option.client.OptionClientConstant.optionText;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.DATA_SOURCE;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.DATE_VALUE;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.ENCRYPTION_FLAG;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.MODULE_ID;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.NUMBER_VALUE;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OBJECT_SHORT_NAME;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OBJECT_TYPE_ID;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OPTION_DESCRIPTION;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OPTION_ID;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OPTION_NAME;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.OPTION_SHORT_NAME;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.STRING_LIST_SEPARATOR;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.STRING_VALUE;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.TEST_PROD_SENSITIVE_FLAG;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.TIME_VALUE;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.VALUE_INDEX;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.VALUE_LIST_FLAG;
+import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.VALUE_TYPE_CODE;
+
+import com.google.gwt.user.client.ui.DoubleBox;
+import com.technology.jep.jepria.client.ui.form.detail.StandardDetailFormViewImpl;
+import com.technology.jep.jepria.client.widget.field.multistate.JepCheckBoxField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepComboBoxField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepDateField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepIntegerField;
+import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTextAreaField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTextField;
-import com.technology.jep.jepria.client.widget.field.multistate.JepCheckBoxField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTimeField;
-import com.technology.jep.jepria.client.widget.field.multistate.large.JepLargeField;
-import com.technology.jep.jepria.client.ui.form.detail.JepDetailFormViewImpl;
-import com.extjs.gxt.ui.client.widget.Label;
-import com.extjs.gxt.ui.client.widget.LayoutContainer;
-import com.extjs.gxt.ui.client.widget.form.NumberField;
-import com.extjs.gxt.ui.client.widget.form.NumberPropertyEditor;
-import com.extjs.gxt.ui.client.widget.form.XNumberPropertyEditor;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.technology.jep.jepria.client.widget.field.StandardLayoutContainer;
-import com.technology.jep.jepria.client.widget.field.FieldManager;
  
-public class OptionDetailFormViewImpl extends JepDetailFormViewImpl {	
+public class OptionDetailFormViewImpl extends StandardDetailFormViewImpl {	
  
-	public OptionDetailFormViewImpl() {
-		super(new FieldManager());
-		LayoutContainer container = new StandardLayoutContainer();
- 
+	public OptionDetailFormViewImpl() { 
 		JepComboBoxField dataSourceComboBoxField = new JepComboBoxField(optionText.option_detail_data_source());
 		JepNumberField optionIdNumberField = new JepNumberField(optionText.option_detail_option_id());
 		JepComboBoxField moduleIdComboBoxField = new JepComboBoxField(optionText.option_detail_module_id());
@@ -43,14 +48,15 @@ public class OptionDetailFormViewImpl extends JepDetailFormViewImpl {
 		JepTextField optionNameTextField = new JepTextField(optionText.option_detail_option_name());
 		optionNameTextField.setFieldWidth(300);
 		
-		JepTextField optionDescriptionTextField = new JepTextAreaField(optionText.option_detail_option_description());
+		JepTextAreaField optionDescriptionTextField = new JepTextAreaField(optionText.option_detail_option_description());
 		optionDescriptionTextField.setFieldWidth(300);
-		optionDescriptionTextField.getEditableCard().setStyleAttribute("min-height", "80");
+		optionDescriptionTextField.getEditableCard().setStyleName("min-height: 80");
 		
 		JepTextField stringValueTextField = new JepTextField(optionText.option_detail_string_value());
 		JepDateField dateValueDateField = new JepDateField(optionText.option_detail_date_value());
 		JepTimeField timeValueTimeField = new JepTimeField(optionText.option_detail_time_value());
-		JepNumberField numberValueNumberField = new JepNumberField(optionText.option_detail_number_value(), BigDecimal.class) {
+		JepNumberField numberValueNumberField = new JepNumberField(optionText.option_detail_number_value()) 
+		/*{
 			{
 				NumberPropertyEditor propertyEditor = new XNumberPropertyEditor(BigDecimal.class) {
 					
@@ -62,12 +68,28 @@ public class OptionDetailFormViewImpl extends JepDetailFormViewImpl {
 				((NumberField)editableCard).setPropertyEditor(propertyEditor);
 			}
 			
-		};
+		}*/
+		{
+      @Override
+      protected void addEditableCard() {
+        editableCard = new DoubleBox(){
+          @Override
+          public void setValue(Double value) {
+            super.setText(value == null ? "" : value.toString());
+          }
+        };
+        editablePanel.add(editableCard);
+        
+        // Добавляем обработчик события "нажатия клавиши" для проверки ввода символов.
+        initKeyPressHandler();
+      }
+    }
+		;
 //		numberValueNumberField.setNumberFormat(NumberFormat.getFormat("000000.000000"));
 		
 //		JepTextField optionValueTextField = new JepTextField(optionText.option_detail_option_value());
 		JepTextField stringListSeparatorTextField = new JepTextField(optionText.option_detail_string_list_separator());
-		JepNumberField maxRowCountField = new JepNumberField(optionText.option_detail_row_count());
+		JepIntegerField maxRowCountField = new JepIntegerField(optionText.option_detail_row_count());
 		maxRowCountField.setMaxLength(4);
 		maxRowCountField.setFieldWidth(55);
  
@@ -75,29 +97,27 @@ public class OptionDetailFormViewImpl extends JepDetailFormViewImpl {
 		valueIndexTextField.setTitle(optionText.option_detail_value_index_desc());
 		//		Label valueIndexDesc = new Label(optionText.option_detail_value_index_desc());
 		
-		container.add(dataSourceComboBoxField);
-		container.add(optionIdNumberField);
-		container.add(moduleIdComboBoxField);
-		container.add(objectShortNameTextField);
-		container.add(objectTypeIdComboBoxField);
-		container.add(optionShortNameTextField);
-		container.add(valueTypeCodeComboBoxField);
-		container.add(valueListFlagCheckBoxField);
-		container.add(encryptionFlagCheckBoxField);
-		container.add(testProdSensitiveFlagCheckBoxField);
-		container.add(optionNameTextField);
-		container.add(optionDescriptionTextField);
-		container.add(stringValueTextField);
-		container.add(dateValueDateField);
-		container.add(timeValueTimeField);
-		container.add(numberValueNumberField);
+		panel.add(dataSourceComboBoxField);
+		panel.add(optionIdNumberField);
+		panel.add(moduleIdComboBoxField);
+		panel.add(objectShortNameTextField);
+		panel.add(objectTypeIdComboBoxField);
+		panel.add(optionShortNameTextField);
+		panel.add(valueTypeCodeComboBoxField);
+		panel.add(valueListFlagCheckBoxField);
+		panel.add(encryptionFlagCheckBoxField);
+		panel.add(testProdSensitiveFlagCheckBoxField);
+		panel.add(optionNameTextField);
+		panel.add(optionDescriptionTextField);
+		panel.add(stringValueTextField);
+		panel.add(dateValueDateField);
+		panel.add(timeValueTimeField);
+		panel.add(numberValueNumberField);
 //		container.add(optionValueTextField);
-		container.add(valueIndexTextField);
-		container.add(stringListSeparatorTextField);
-		container.add(maxRowCountField);
- 
-		setBody(container);
- 
+		panel.add(valueIndexTextField);
+		panel.add(stringListSeparatorTextField);
+		panel.add(maxRowCountField);
+  
 		fields.put(DATA_SOURCE, dataSourceComboBoxField);
 		fields.put(OPTION_ID, optionIdNumberField);
 		fields.put(MODULE_ID, moduleIdComboBoxField);

@@ -9,33 +9,35 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import com.technology.jep.jepria.server.ejb.JepDataStandard;
+import com.technology.jep.jepria.server.dao.JepDataStandard;
 import com.technology.jep.jepria.server.service.JepDataServiceServlet;
 import com.technology.jep.jepria.server.util.JepServerUtil;
+import com.technology.jep.jepria.shared.exceptions.ApplicationException;
 import com.technology.jep.jepria.shared.exceptions.SystemException;
 import com.technology.jep.jepria.shared.load.FindConfig;
 import com.technology.jep.jepria.shared.load.PagingConfig;
 import com.technology.jep.jepria.shared.load.PagingResult;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.record.JepRecordDefinition;
+import com.technology.oracle.optionasria.main.shared.service.OptionAsRiaService;
+import com.technology.oracle.optionasria.option.server.dao.Option;
 
 import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.*;
 
 
-public class OptionAsRiaServiceImpl extends JepDataServiceServlet {
+public class OptionAsRiaServiceImpl<D extends JepDataStandard> extends DataSourceServiceImpl<D> implements OptionAsRiaService {
 
-	public OptionAsRiaServiceImpl(JepRecordDefinition recordDefinition,
-			String ejbName) {
-		super(recordDefinition, ejbName);
+	public OptionAsRiaServiceImpl(JepRecordDefinition recordDefinition,	D dao) {
+		super(recordDefinition, dao);
 	}
-	
+	/*
 	private void clearFoundRecords(FindConfig findConfig) {
 		HttpSession session = getThreadLocalRequest().getSession();
 		session.removeAttribute(FOUND_RECORDS_SESSION_ATTRIBUTE + findConfig.getListUID());
-	}
+	}*/
 	
 	@Override
-	public JepRecord create(FindConfig createConfig) {
+	public JepRecord create(FindConfig createConfig) throws ApplicationException {
 		JepRecord record = createConfig.getTemplateRecord();
 		
 		logger.trace("BEGIN create(" + record + ")");
@@ -44,8 +46,7 @@ public class OptionAsRiaServiceImpl extends JepDataServiceServlet {
 		prepareFileFields(record);
 		
 		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			Object recordId = ejb.create(record, getOperatorId());
+			Object recordId = getProxyDao().create(record, getOperatorId());
 			String[] primaryKey = recordDefinition.getPrimaryKey();
 			if(recordId != null) {
 				if(primaryKey.length == 1) {
@@ -68,7 +69,7 @@ public class OptionAsRiaServiceImpl extends JepDataServiceServlet {
 	}
 	
 	@Override
-	public JepRecord update(FindConfig updateConfig) {
+	public JepRecord update(FindConfig updateConfig) throws ApplicationException {
 		JepRecord record = updateConfig.getTemplateRecord();
 		
 		logger.trace("BEGIN update(" + record + ")");
@@ -77,8 +78,7 @@ public class OptionAsRiaServiceImpl extends JepDataServiceServlet {
 		prepareFileFields(record);
 		
 		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			ejb.update(record, getOperatorId());
+		  getProxyDao().update(record, getOperatorId());
 			updateLobFields(record);
 			resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(record), record);
 			clearFoundRecords(updateConfig);
@@ -92,7 +92,7 @@ public class OptionAsRiaServiceImpl extends JepDataServiceServlet {
 		return resultRecord;
 	}
 	
-	protected JepRecord findByPrimaryKey(Map<String, Object> primaryKey, JepRecord record) {
+	protected JepRecord findByPrimaryKey(Map<String, Object> primaryKey, JepRecord record) throws ApplicationException {
 		logger.trace("BEGIN findByPrimaryKey(" + primaryKey + ")");
 		
 		JepRecord templateRecord = new JepRecord();

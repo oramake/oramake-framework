@@ -2,7 +2,7 @@ package com.technology.oracle.optionasria.value.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'D:/svn/Oracle/Module/Option/Trunk/App/src/java/com/technology/oracle/optionasria/value/shared/text/ValueText.properties'.
+ * 	'C:/work/workspace/Oracle/Module/Option/Trunk/App/src/java/com/technology/oracle/optionasria/value/shared/text/ValueText.properties'.
  */
 public interface ValueText extends com.google.gwt.i18n.client.Constants {
   
@@ -97,11 +97,11 @@ public interface ValueText extends com.google.gwt.i18n.client.Constants {
   String value_detail_used_operator_id_lastOptionText();
 
   /**
-   * Translated "Оператора, для которого может использоваться значение".
+   * Translated "Оператор, для которого может использоваться значение".
    * 
-   * @return translated "Оператора, для которого может использоваться значение"
+   * @return translated "Оператор, для которого может использоваться значение"
    */
-  @DefaultStringValue("Оператора, для которого может использоваться значение")
+  @DefaultStringValue("Оператор, для которого может использоваться значение")
   @Key("value.detail.used_operator_id")
   String value_detail_used_operator_id();
 

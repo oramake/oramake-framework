@@ -1,35 +1,82 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-    <head> 
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8" /> 
-        <link type="text/css" rel="stylesheet" href="css/gxt-all.css" /> 
-        <link type="text/css" rel="stylesheet" href="css/OptionAsRia.css" /> 
-        <title>OptionAsRia</title> 
-        <script type="text/javascript" language="javascript" src="OptionAsRia/OptionAsRia.nocache.js"></script> 
-    </head> 
-    <body> 
-        <iframe src="javascript:''" id="__gwt_historyFrame" tabindex="-1" style="position:absolute;width:0;height:0;border:0"></iframe> 
-        <noscript> 
-            <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
-                 Your web browser must have JavaScript enabled in order for this application to display correctly. 
+<!DOCTYPE html>
+
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.technology.jep.jepria.client.JepRiaClientConstant" %>
+<%@ page import="static com.technology.jep.jepria.server.util.JepServerUtil.getLocale"%>
+<%@ page import="java.util.ResourceBundle" %>
+
+<% ResourceBundle jepRiaText = ResourceBundle.getBundle("com.technology.jep.jepria.shared.text.JepRiaText", getLocale(request)); %>
+<html style="width: 100%; height: 100%;">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    
+    <!--                                           -->
+    <!-- Any title is fine                         -->
+    <!--                                           -->
+    <title>OptionAsRia Module</title>
+    
+    <!--                                           -->
+    <!-- This script loads your compiled module.   -->
+    <!-- If you add any GWT meta tags, they must   -->
+    <!-- be added before this line.                 -->
+    <!--                                           -->
+    <script type="text/javascript" language="javascript" src="OptionAsRia/OptionAsRia.nocache.js"></script>
+  </head>
+
+  <!--                                           -->
+  <!-- The body can have arbitrary html, or       -->
+  <!-- you can leave the body empty if you want   -->
+  <!-- to create a completely dynamic UI.         -->
+  <!--                                           -->
+  <body style="margin: 0px; padding: 0px; width: 100%; height: 100%;">
+
+    <!-- OPTIONAL: include this if you want history support -->
+    <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position: absolute; width: 0; height: 0; border: 0;"></iframe>
+    
+    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+    <noscript>
+      <div class="jepRia-noJavaScriptEnabledMessage"><%= jepRiaText.getString("noJavaScriptEnabledMessage") %></div>
+    </noscript>
+    <div id="testBuildMessage" class="<%= JepRiaClientConstant.TEST_BUILD_MESSAGE_CLASS %>"> 
+        <div class="jepRia-testBuildMessageNotification error"> 
+            <div class="jepRia-testBuildMessageClose" onclick="document.getElementById('testBuildMessage').style.display = 'none';">
+                X
             </div> 
-        </noscript>  
-        <div id="loading"> 
-            <div class="loading-indicator"> 
-                <img src="images/loading.gif" width="32" height="32" alt="Loading..." /> 
-                <div> 
-                    <p> <span id="loading-header">OptionAsRia</span> </p> 
-                    <span id="loading-msg">Loading&nbsp;Application,&nbsp;please&nbsp;wait...</span> 
-                </div> 
+            <div class="jepRia-testBuildMessageHeader">
+                Attention please!
+            </div> 
+            <div class="jepRia-testBuildMessageInfo">
+                This is test build!
             </div> 
         </div> 
-        <table width="100%" height="100%" cellpadding="0" cellspacing="0"> 
-            <tbody> 
-                <tr> 
-                    <td> 
-                        <div id="JepRiaAppSlot" style="width:100%;height:100%;position:relative"></div> </td> 
-                </tr> 
-            </tbody> 
-        </table> 
-    </body>
+    </div>
+    <div id="loadingProgress" class="jepRia-loadingProgress">
+      <div class="jepRia-loadingIndicator">
+        <img src="images/loading.gif" width="32" height="32" alt="Loading..."/>
+        <div>
+          <p>
+            <span id="loadingHeader">OptionAsRia</span>
+          </p>
+          <span id="loadingMessage" class="jepRia-loadingMessage"><%= jepRiaText.getString("loadingMessage") %></span>
+        </div>
+      </div>
+    </div>
+  
+    <table style="border: 0px; table-layout: fixed; border-collapse: collapse; margin: 0px; padding: 0px; width: 100%; height: 100%;">
+      <tr>
+        <td style="width: 100%; height: 100%;">
+ 
+          <div id="<%= JepRiaClientConstant.APPLICATION_SLOT %>" style="width: 100%; height: 100%; position: relative;"></div>
+
+        </td>
+      </tr>
+    </table>
+    
+    <!-- According to HTML5 Specification we can place link and style tags in any place inside <BODY> -->
+    <!-- For that purpose we should use attribute 'property' -->
+    <!-- It allows us to guarantee that all our styles will be applied in correct order without replacing GWT styles-->
+    <link type="text/css" rel="stylesheet" property='stylesheet' href="css/JepRia.css" />
+    <link type="text/css" rel="stylesheet" property='stylesheet' href="css/OptionAsRia.css" />
+  </body>
 </html>

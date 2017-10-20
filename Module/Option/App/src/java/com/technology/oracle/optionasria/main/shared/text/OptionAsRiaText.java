@@ -2,7 +2,7 @@ package com.technology.oracle.optionasria.main.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'D:/svn/Oracle/Module/Option/Branch/OptionAsRia/App/src/java/com/technology/oracle/option/main/shared/text/OptionAsRiaText.properties'.
+ * 	'C:/work/workspace/Oracle/Module/Option/Trunk/App/src/java/com/technology/oracle/optionasria/main/shared/text/OptionAsRiaText.properties'.
  */
 public interface OptionAsRiaText extends com.google.gwt.i18n.client.Constants {
   

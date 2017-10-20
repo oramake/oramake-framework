@@ -1,67 +1,49 @@
 package com.technology.oracle.optionasria.option.server;
  
-import com.technology.jep.jepria.server.service.JepDataServiceServlet;
-import com.technology.jep.jepria.server.util.JepServerUtil;
-import com.technology.jep.jepria.shared.field.option.JepOption;
-import com.technology.jep.jepria.shared.exceptions.ApplicationException;
-import com.technology.jep.jepria.server.ejb.JepDataStandard;
 import java.util.List;
 
-import com.technology.oracle.optionasria.option.server.ejb.Option;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+import com.technology.jep.jepria.shared.exceptions.ApplicationException;
+import com.technology.jep.jepria.shared.field.option.JepOption;
+import com.technology.oracle.optionasria.option.server.dao.Option;
+import com.technology.oracle.optionasria.option.server.dao.OptionDao;
 import com.technology.oracle.optionasria.option.shared.record.OptionRecordDefinition;
 import com.technology.oracle.optionasria.option.shared.service.OptionService;
-
-import static com.technology.oracle.optionasria.option.server.OptionServerConstant.BEAN_JNDI_NAME;
-
-import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+import com.technology.oracle.optionasria.main.server.OptionAsRiaServiceImpl;
  
 @RemoteServiceRelativePath("OptionService")
-public class OptionServiceImpl extends com.technology.oracle.optionasria.main.server.OptionAsRiaServiceImpl implements OptionService  {
+public class OptionServiceImpl extends OptionAsRiaServiceImpl<Option> implements OptionService  {
  
 	private static final long serialVersionUID = 1L;
  
 	public OptionServiceImpl() {
-		super(OptionRecordDefinition.instance, BEAN_JNDI_NAME);
+		super(OptionRecordDefinition.instance, new OptionDao());
 	}
  
-	public List<JepOption> getDataSource() throws ApplicationException {
+	public List<JepOption> getModule() throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			result = ((Option) ejb).getDataSource();
+			result = getProxyDao().getModule();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
 		return result;
 	}
  
-	public List<JepOption> getModule(String dataSource) throws ApplicationException {
+	public List<JepOption> getObjectType() throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			result = ((Option) ejb).getModule(dataSource);
+			result = getProxyDao().getObjectType();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
 		return result;
 	}
  
-	public List<JepOption> getObjectType(String dataSource) throws ApplicationException {
+	public List<JepOption> getValueType() throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			result = ((Option) ejb).getObjectType(dataSource);
-		} catch (Throwable th) {
-			throw new ApplicationException(th.getLocalizedMessage(), th);
-		}
-		return result;
-	}
- 
-	public List<JepOption> getValueType(String dataSource) throws ApplicationException {
-		List<JepOption> result = null;
-		try {
-			JepDataStandard ejb = (JepDataStandard) JepServerUtil.ejbLookup(ejbName);
-			result = ((Option) ejb).getValueType(dataSource);
+			result = getProxyDao().getValueType();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
