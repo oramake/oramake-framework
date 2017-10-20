@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.moduleroleprivilege.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- *   'D:/svn/Oracle/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/moduleroleprivilege/shared/text/ModuleRolePrivilegeText.properties'.
+ * 	'C:/work/workspace/OraMake/git/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/moduleroleprivilege/shared/text/ModuleRolePrivilegeText.properties'.
  */
 public interface ModuleRolePrivilegeText extends com.google.gwt.i18n.client.Constants {
   

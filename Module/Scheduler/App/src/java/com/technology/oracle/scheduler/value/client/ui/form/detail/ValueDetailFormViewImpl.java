@@ -1,5 +1,5 @@
 package com.technology.oracle.scheduler.value.client.ui.form.detail;
- 
+
 import static com.technology.jep.jepria.client.JepRiaClientConstant.JepTexts;
 import static com.technology.oracle.scheduler.batch.client.BatchClientConstant.batchText;
 import static com.technology.oracle.scheduler.option.client.OptionClientConstant.optionText;
@@ -30,34 +30,33 @@ import com.technology.jep.jepria.client.widget.field.multistate.JepNumberField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTextField;
 import com.technology.jep.jepria.client.widget.field.multistate.JepTimeField;
 import com.technology.jep.jepria.shared.field.option.JepOption;
- 
-public class ValueDetailFormViewImpl extends DetailFormViewImpl {  
- 
+
+public class ValueDetailFormViewImpl extends DetailFormViewImpl {
+
   public ValueDetailFormViewImpl() {
     super(new FieldManager());
-    
+
     ScrollPanel scrollPanel = new ScrollPanel();
     scrollPanel.setSize("100%", "100%");
     VerticalPanel panel = new VerticalPanel();
     panel.getElement().getStyle().setMarginTop(5, Unit.PX);
     scrollPanel.add(panel);
- 
- 
+
+
     JepNumberField batchIdNumberField = new JepNumberField(batchText.batch_detail_batch_id());
     JepComboBoxField prodValueFlagJepComboBoxField = new JepComboBoxField(valueText.value_detail_prod_value_flag());
     List<JepOption> options = new ArrayList<JepOption>();
     options.add(new JepOption(JepTexts.yes(), 1));
     options.add(new JepOption(JepTexts.no(), 0));
-    
+
     prodValueFlagJepComboBoxField.setOptions(options);
-    
+
     JepTextField instanceNameTextField = new JepTextField(valueText.value_detail_instance_name());
     JepTextField stringListSeparatorTextField = new JepTextField(valueText.value_detail_string_list_separator());
     JepDateField dateValueDateField = new JepDateField(valueText.value_detail_date_value());
     JepTimeField timeValueTimeField = new JepTimeField(optionText.option_detail_time_value());
-    
+
     JepNumberField numberValueNumberField = new JepNumberField(valueText.value_detail_number_value()) {
-      
       @Override
       protected void addEditableCard() {
         editableCard = new DoubleBox(){
@@ -67,31 +66,30 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
           }
         };
         editablePanel.add(editableCard);
-        
         // Добавляем обработчик события "нажатия клавиши" для проверки ввода символов.
         initKeyPressHandler();
       }
-    };    
+    };
     JepTextField stringValueTextField = new JepTextField(valueText.value_detail_string_value());
     JepTextField valueIndexTextField = new JepTextField(valueText.value_detail_value_index());
     valueIndexTextField.setTitle(optionText.option_detail_value_index_desc());
-    
+
     JepComboBoxField valueTypeCodeComboBoxField = new JepComboBoxField(valueText.value_list_value_type_name());
-    
+
     panel.add(batchIdNumberField);
     panel.add(prodValueFlagJepComboBoxField);
     panel.add(instanceNameTextField);
     panel.add(valueTypeCodeComboBoxField);
-    
+
     panel.add(dateValueDateField);
     panel.add(timeValueTimeField);
     panel.add(numberValueNumberField);
     panel.add(stringValueTextField);
     panel.add(valueIndexTextField);
     panel.add(stringListSeparatorTextField);
-    
+
     setWidget(scrollPanel);
- 
+
     fields.put(BATCH_ID, batchIdNumberField);
     fields.put(PROD_VALUE_FLAG_COMBOBOX, prodValueFlagJepComboBoxField);
     fields.put(VALUE_TYPE_CODE, valueTypeCodeComboBoxField);
@@ -103,5 +101,5 @@ public class ValueDetailFormViewImpl extends DetailFormViewImpl {
     fields.put(STRING_VALUE, stringValueTextField);
     fields.put(VALUE_INDEX, valueIndexTextField);
   }
- 
+
 }

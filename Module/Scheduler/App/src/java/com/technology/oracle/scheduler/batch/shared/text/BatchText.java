@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.batch.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'D:/git/Oramake/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/batch/shared/text/BatchText.properties'.
+ * 	'C:/work/workspace/OraMake/git/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/batch/shared/text/BatchText.properties'.
  */
 public interface BatchText extends com.google.gwt.i18n.client.Constants {
   

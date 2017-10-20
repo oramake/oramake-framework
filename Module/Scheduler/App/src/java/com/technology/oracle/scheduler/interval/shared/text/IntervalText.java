@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.interval.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- *   'D:/svn/Oracle/Module/Scheduler/Branch/Scheduler/App/src/java/com/technology/oracle/scheduler/interval/shared/text/IntervalText.properties'.
+ * 	'C:/work/workspace/OraMake/git/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/interval/shared/text/IntervalText.properties'.
  */
 public interface IntervalText extends com.google.gwt.i18n.client.Constants {
   

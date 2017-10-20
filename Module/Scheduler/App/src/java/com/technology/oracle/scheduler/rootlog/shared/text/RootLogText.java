@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.rootlog.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- *   'D:/svn/Oracle/Module/Scheduler/Branch/Scheduler/App/src/java/com/technology/oracle/scheduler/rootlog/shared/text/RootLogText.properties'.
+ * 	'C:/work/workspace/OraMake/git/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/rootlog/shared/text/RootLogText.properties'.
  */
 public interface RootLogText extends com.google.gwt.i18n.client.Constants {
   

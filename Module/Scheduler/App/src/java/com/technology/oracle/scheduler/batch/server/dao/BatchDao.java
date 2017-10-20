@@ -45,7 +45,7 @@ import com.technology.oracle.scheduler.main.server.dao.SchedulerDao;
 
 public class BatchDao extends SchedulerDao implements Batch {
  
-  public List<JepRecord> find( JepRecord templateRecord, Mutable<Boolean> autoRefreshFlag, Integer maxRowCount, Integer operatorId) throws ApplicationException {
+  public List<JepRecord> find(JepRecord templateRecord, Mutable<Boolean> autoRefreshFlag, Integer maxRowCount, Integer operatorId) throws ApplicationException {
     String sqlQuery = 
       "begin  " 
         +  "? := pkg_Scheduler.findBatch(" 

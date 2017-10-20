@@ -14,8 +14,9 @@
   <inherits name="com.technology.oracle.scheduler.batchrole.BatchRole" />
   <inherits name="com.technology.oracle.scheduler.option.Option" />
   <inherits name="com.technology.oracle.scheduler.interval.Interval" />
-  <entry-point class="com.technology.oracle.scheduler.main.client.entrance.SchedulerEntryPoint" />
   
+  <entry-point class="com.technology.oracle.scheduler.main.client.entrance.SchedulerEntryPoint" />
+  <!-- inherits name="com.technology.oracle.optionlib.main.OptionLibAbstract" /-->
   <set-property name="user.agent" value="safari,gecko1_8"/>
   
   <!-- Нужно исключительно только для сервера Jetty используемого при автоматизированном Gwt-тестировани. -->
