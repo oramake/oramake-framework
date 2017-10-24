@@ -424,13 +424,17 @@ patchFile()
       elif (( patchRevision == 718 )); then
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
+        # Used "-d" option to exclude error
+        # "Invalid file name ../DB/Makefile -- skipping patch"
+        # in case root directory ".." and when using MSYS2
         if (( patchRevision == 1733 )) || (( patchRevision == 2129 )); then
           # Игнорируем этот патч в случае неудачи
           $runCmd patch                     \
             $patchOption                    \
+            -d "$rootDir" \
             -i "$patchDir/$patchFile"       \
             -r "$tmpFile"                   \
-            "$dstFile"                      \
+            "$baseFile" \
             | gawk '
 {
   if ( index( $0, "FAILED") == 0 \
@@ -442,9 +446,10 @@ patchFile()
         else
           $runCmd patch                     \
             $patchOption                    \
+            -d "$rootDir" \
             -i "$patchDir/$patchFile"       \
-            -r "$dstFile.$patchRevision.rej" \
-            "$dstFile"                      \
+            -r "$baseFile.$patchRevision.rej" \
+            "$baseFile" \
           || logError "error patch: $dstFile, $patchFile"
         fi
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
