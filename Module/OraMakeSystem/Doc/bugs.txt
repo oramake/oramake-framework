@@ -1,5 +1,9 @@
 Title: Ошибки
 
+
+
+group: Общие
+
 [!] В документации могут отсутствовать прототипы процедур/функций в зависимости
     от их названия ( пример: "ChangeTask" ( пакет pkg_CMProjectUser)).
 
@@ -31,6 +35,7 @@ Title: Ошибки
 [!] При невозможности построить ни один из пунктов меню индексов в
 меню документации, при автогенерации меню
 индекс "Все вместе" может перемещаться в начало меню.
+
 
 
 group: Используемые обходные решения
@@ -81,3 +86,23 @@ group: Используемые обходные решения
        reg add "HKCU\Software\Microsoft\Command Processor" /v DisableUNCCheck /t REG_DWORD /d 1 /f
     (end code)
 
+[!] В скрипте <oms-load> при выполнении в MSYS2 ( GNU bash, version
+    4.3.46(2)-release (i686-pc-msys)) программа sqlplus.exe игнорировала
+    ( не видела) команды, передаваемые через пайп. В качестве обходного решения
+    вызов sqlplus стал выполняться через командный процессор Windows:
+
+    (code)
+
+    cmd /c "sqlplus -S /NOLOG"
+
+    (end)
+
+    Однако обходное решение перестает работать если явно монтировать файловую
+    систему без префикса "/cygdrive", добавив в etc/fstab строку
+    ( согласно http://cygwin.com/cygwin-ug-net/using.html#mount-table):
+
+    (code)
+
+    none / cygdrive binary,posix=0,noacl,user 0 0
+
+    (end)
