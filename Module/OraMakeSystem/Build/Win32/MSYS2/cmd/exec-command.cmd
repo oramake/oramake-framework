@@ -303,7 +303,15 @@ if not exist "%OMS_ROOT%\usr\bin\bash.exe" (
   exit /b 16
 )
 
-
+rem Add special option for make
+if not "%scriptName%" == "make.cmd" goto make_args_end
+if not "%OMS_EXEC_CMD%" == "make" goto make_args_end
+if not defined OMS_CMD_ARGS (
+  set OMS_CMD_ARGS=--eval=SHELL=/bin/bash
+) else (
+  set OMS_CMD_ARGS=--eval=SHELL=/bin/bash %OMS_CMD_ARGS%
+)
+:make_args_end
 
 rem Delete temporary variables
 set omsVersion=2.0.0

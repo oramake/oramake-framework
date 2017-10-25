@@ -175,6 +175,34 @@ runMake()
 
 
 
+checkWinScript()
+{
+  startTestCase "check scripts for Windows" || return 1
+
+  # parse arguments
+  runCmd $execCommand echo aaa 'kkk "jjj"' >/dev/null
+  runCmd $execCommand echo '"jjj"' >/dev/null
+  runCmd $execCommand echo 'j"jj' >/dev/null
+  runCmd $execCommand echo >/dev/null
+
+  $oms 0 2>/dev/null \
+    && die "No error code when executing oms.cmd:" \
+      "$oms 0 2>/dev/null"
+
+  $make jjj >/dev/null 2>&1 \
+    && die "No error code when executing make.cmd:" \
+      "$make jjj >/dev/null 2>&1"
+
+  local outStr
+  outStr=$(runCmd $make --oms-version) \
+    || die "Command finished with error"
+  if [[ "$outStr" != make.cmd\ \(OMS\)\ [0-9.]* ]]; then
+    die "Output of the command differs from expected:" "$outStr"
+  fi
+}
+
+
+
 checkOmsConnectInfoUser()
 {
   if [[ $testUserId == ${testUserId%/*} ]]; then
@@ -308,13 +336,7 @@ fi
 
 [[ -f "$oms" ]] || die "Script not found: $oms"
 
-if (( winFlag )); then
-  startTestCase "exec-command.cmd: parse arguments" \
-    && runCmd $execCommand echo aaa 'kkk "jjj"' >/dev/null \
-    && runCmd $execCommand echo '"jjj"' >/dev/null \
-    && runCmd $execCommand echo 'j"jj' >/dev/null \
-    && runCmd $execCommand echo >/dev/null
-fi
+(( winFlag )) && checkWinScript
 
 if (( loadFlag )); then
   checkOmsConnectInfoUser
