@@ -165,7 +165,7 @@ if not "%topScript%" == "" (
   if not "%OMS_EXEC_CMD%" == "" goto check_params
 )
 
-echo %scriptName%: mandatory arguments not specified
+echo exec-command.cmd: mandatory arguments not specified
 echo Usage:
 echo     exec-command.cmd topScript execCommand [OMS options] [command parameters]
 exit /b 15

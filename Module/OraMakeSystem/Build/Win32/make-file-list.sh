@@ -72,5 +72,6 @@ find * -type f -print \
       -e '^usr/bin/\(dash\|peflags\)\.exe$' \
       -e '^usr/bin/\(pacman-rec-filename-grep\|peflagsall\)$' \
     -e '^usr/bin/\(d2u\|mac2unix\|u2d\|unix2mac\)\.exe$' \
+    -e '^usr/bin/\(7z\|7za\|7zr\|p7zip\)$' -e '^usr/lib/p7zip/' \
 
 
