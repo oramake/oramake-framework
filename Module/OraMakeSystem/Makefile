@@ -97,7 +97,7 @@ MSYS2_FLAG = 1
 
 override WIN_ROOT := $(shell cygpath --unix "$(WIN_ROOT)")
 
-override prefix := $(WIN_ROOT)$(prefix)
+override prefix := $(WIN_ROOT)/usr/local
 
 
 # Установка MSYS2

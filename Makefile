@@ -446,6 +446,14 @@ dist:
 	@showUsage() { \
 		echo '( for example usage: "make dist TAG_NAME=Mail-2.0.2 DIST_DIR=..")'; \
 	}; \
+	die() { echo "$$1" >&2; exit 10; }; \
+	setDistFile() { \
+		distFile="$$1"; \
+		if [[ -f "$$distFile" ]]; then \
+			echo "Distributive file \"$$distFile\" already exists"; \
+			exit 6; \
+		fi; \
+	}; \
 	if [[ -z "$(TAG_NAME)" ]]; then \
 	  echo 'No value for parameter TAG_NAME'; \
 		showUsage; \
@@ -464,22 +472,57 @@ dist:
 			echo "Module \"$$moduleName\" not exists"; \
 			exit 6; \
 		fi; \
-		distFile="$(DIST_DIR)/$(TAG_NAME).zip"; \
-		if [[ -f "$$distFile" ]]; then \
-			echo "Distributive file \"$$distFile\" already exists"; \
-			exit 6; \
-		fi; \
+		setDistFile "$(DIST_DIR)/$(TAG_NAME).zip"; \
 		{ cd "Module/$$moduleName" \
 			&& git archive \
 				--prefix="$(TAG_NAME)/" \
 				--format=zip \
 				"$(TAG_NAME)" \
-			; \
+			&& cd - >/dev/null; \
 		} >"$$distFile" \
-			&& echo "created: $$distFile" \
-			|| { echo "Error during creating distributive"; \
-					rm -f "$$distFile"; \
-					exit 7; \
+			|| { rm -f "$$distFile"; \
+					die "Error during creating distributive: $$distFile"; \
 				}; \
+		echo "created: $$distFile"; \
+		if [[ "$$moduleName" == "OraMakeSystem" &&  \
+					"$(TAG_NAME)" != "OraMakeSystem-1.8.0" ]]; then \
+			fullDist=$$distFile; \
+			setDistFile "$(DIST_DIR)/$(TAG_NAME)-cygwin.tar.gz"; \
+			tempDir=`mktemp -d --tmpdir oramake-dist.XXX` \
+				|| die "Error on creating temporary directory"; \
+			./Module/OraMakeSystem/Build/Win32/MSYS2/cmd/exec-command.cmd \
+					- 7za x -o"$$tempDir/src" "$$fullDist" >/dev/null \
+				|| die "Error on unpacking $$fullDist to temp directory $$tempDir"; \
+			srcDir=$$tempDir/src/$(TAG_NAME); \
+			{ cd "Module/$$moduleName" \
+				&& git archive \
+					--prefix="$(TAG_NAME)/" \
+					--format=tar.gz \
+					"$(TAG_NAME)" \
+					`cd $$srcDir && for f in * Build/*; do \
+						case $$f in \
+							*.cmd | Build | Build/Win32) ;; \
+							*) echo $$f; \
+						esac; \
+						done;` \
+				&& cd - >/dev/null; \
+			} >"$$distFile" \
+				|| { rm -f "$$distFile"; \
+						die "Error during creating distributive: $$distFile"; \
+					}; \
+			echo "created: $$distFile"; \
+			setDistFile "$(DIST_DIR)/$(TAG_NAME)-win32.zip"; \
+		  $$srcDir/make.cmd -C "$$srcDir" \
+					install WIN_ROOT="$$tempDir/OraMakeSystem" >/dev/null \
+				|| die "Error on install OraMakeSystem to temp directory: $$tempDir"; \
+			./Module/OraMakeSystem/Build/Win32/MSYS2/cmd/exec-command.cmd \
+					- 7za a -mx9 "$$distFile" "$$tempDir/OraMakeSystem" >/dev/null \
+				|| { \
+					rm -f "$$distFile"; \
+					die "Error on creating $$distFile from temp install: $$tempDir"; \
+				}; \
+			echo "created: $$distFile"; \
+			rm -r "$$tempDir" || die "Error on deleting temp directory: $$tempDir"; \
+		fi; \
 	fi
 
