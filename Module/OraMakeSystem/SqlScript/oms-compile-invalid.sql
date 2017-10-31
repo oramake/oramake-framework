@@ -1,8 +1,8 @@
 -- script: oms-compile-invalid.sql
--- Компилирует инвалидные объекты в текущей схеме.
+-- РљРѕРјРїРёР»РёСЂСѓРµС‚ РёРЅРІР°Р»РёРґРЅС‹Рµ РѕР±СЉРµРєС‚С‹ РІ С‚РµРєСѓС‰РµР№ СЃС…РµРјРµ.
 --
--- Замечания:
---  - скрипт используется внутри OMS;
+-- Р—Р°РјРµС‡Р°РЅРёСЏ:
+--  - СЃРєСЂРёРїС‚ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІРЅСѓС‚СЂРё OMS;
 --
 
 
@@ -43,21 +43,21 @@ declare
       (
       select
         'MATERIALIZED VIEW' as object_type
-        , 'материализованное представление'as object_type_name
+        , 'РјР°С‚РµСЂРёР°Р»РёР·РѕРІР°РЅРЅРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ'as object_type_name
         , 10 as priority_order
         , 'alter materialized view $(object_name) compile' as compile_sql
       from dual
       union all
       select
         'VIEW'
-        , 'представление'
+        , 'РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ'
         , 20
         , 'alter view $(object_name) compile'
       from dual
       union all
       select
         'TYPE BODY'
-        , 'тело типа'
+        , 'С‚РµР»Рѕ С‚РёРїР°'
         , 30
         , 'alter type $(object_name) compile body'
       from dual
@@ -77,7 +77,7 @@ begin
     , compile_all => false
   );
 
-  -- Компиляция дополнительных типов объектов
+  -- РљРѕРјРїРёР»СЏС†РёСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… С‚РёРїРѕРІ РѕР±СЉРµРєС‚РѕРІ
   for rec in invalidObjectCur loop
     begin
       execute immediate
@@ -85,7 +85,7 @@ begin
       ;
     exception when others then
       dbms_output.put_line(
-        'Ошибка при компиляции: '
+        'РћС€РёР±РєР° РїСЂРё РєРѕРјРїРёР»СЏС†РёРё: '
         || rec.object_type_name || ' ' || rec.object_name
         || ':'
       );

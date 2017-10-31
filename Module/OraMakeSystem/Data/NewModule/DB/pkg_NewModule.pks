@@ -1,12 +1,12 @@
 create or replace package $(packageName) is
 /* package: $(packageName)
-  Интерфейсный пакет модуля $(moduleName).
+  РРЅС‚РµСЂС„РµР№СЃРЅС‹Р№ РїР°РєРµС‚ РјРѕРґСѓР»СЏ $(moduleName).
 
   SVN root: $(svnModuleRoot)
 */
 
 /* const: Module_Name
-  Название модуля, к которому относится пакет.
+  РќР°Р·РІР°РЅРёРµ РјРѕРґСѓР»СЏ, Рє РєРѕС‚РѕСЂРѕРјСѓ РѕС‚РЅРѕСЃРёС‚СЃСЏ РїР°РєРµС‚.
 */
 Module_Name constant varchar2(30) := '$(moduleName)';
 

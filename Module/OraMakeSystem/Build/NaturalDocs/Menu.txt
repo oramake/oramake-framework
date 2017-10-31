@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: OraMakeSystem
-SubTitle: Версия 2.0.0
+SubTitle: Р’РµСЂСЃРёСЏ 2.0.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -50,25 +50,25 @@ Don't Index: Constants
 # --------------------------------------------------------------------------
 
 
-Group: О проекте  {
+Group: Рћ РїСЂРѕРµРєС‚Рµ  {
 
-   File: Описание  (Doc/readme.txt)
-   File: Установка  (Doc/install.txt)
-   File: Доработки  (Doc/todo.txt)
-   File: Ошибки  (Doc/bugs.txt)
-   File: Сборка  (Makefile)
-   File: Версии  (Doc/version.txt)
-   }  # Group: О проекте
+   File: РћРїРёСЃР°РЅРёРµ  (Doc/readme.txt)
+   File: РЈСЃС‚Р°РЅРѕРІРєР°  (Doc/install.txt)
+   File: Р”РѕСЂР°Р±РѕС‚РєРё  (Doc/todo.txt)
+   File: РћС€РёР±РєРё  (Doc/bugs.txt)
+   File: РЎР±РѕСЂРєР°  (Makefile)
+   File: Р’РµСЂСЃРёРё  (Doc/version.txt)
+   }  # Group: Рћ РїСЂРѕРµРєС‚Рµ
 
-Group: Соглашения по оформлению модуля  {
+Group: РЎРѕРіР»Р°С€РµРЅРёСЏ РїРѕ РѕС„РѕСЂРјР»РµРЅРёСЋ РјРѕРґСѓР»СЏ  {
 
-   File: Структура каталогов  (Doc/Agreement/directory_tree.txt)
-   File: Файлы  (Doc/Agreement/files.txt)
-   File: Комментарии  (Doc/Agreement/comment.txt)
-   File: Меню документации  (Doc/Agreement/doc_menu_tree.txt)
-   }  # Group: Соглашения по оформлению модуля
+   File: РЎС‚СЂСѓРєС‚СѓСЂР° РєР°С‚Р°Р»РѕРіРѕРІ  (Doc/Agreement/directory_tree.txt)
+   File: Р¤Р°Р№Р»С‹  (Doc/Agreement/files.txt)
+   File: РљРѕРјРјРµРЅС‚Р°СЂРёРё  (Doc/Agreement/comment.txt)
+   File: РњРµРЅСЋ РґРѕРєСѓРјРµРЅС‚Р°С†РёРё  (Doc/Agreement/doc_menu_tree.txt)
+   }  # Group: РЎРѕРіР»Р°С€РµРЅРёСЏ РїРѕ РѕС„РѕСЂРјР»РµРЅРёСЋ РјРѕРґСѓР»СЏ
 
-Group: Скрипты  {
+Group: РЎРєСЂРёРїС‚С‹  {
 
    File: create-patch  (Script/create-patch)
    File: oms  (Script/oms)
@@ -81,9 +81,9 @@ Group: Скрипты  {
    File: oms-load  (Script/oms-load)
    File: oms-module&lparen; DEPRECATED&rparen;  (Script/oms-module)
    File: oms-update-module  (Script/oms-update-module)
-   }  # Group: Скрипты
+   }  # Group: РЎРєСЂРёРїС‚С‹
 
-Group: SQL-скрипты  {
+Group: SQL-СЃРєСЂРёРїС‚С‹  {
 
    Group: OmsInternal  {
 
@@ -95,7 +95,7 @@ Group: SQL-скрипты  {
       File: start-install-file  (no auto-title, SqlScript/OmsInternal/start-install-file.sql)
       }  # Group: OmsInternal
 
-   Group: Используемые в OMS  {
+   Group: РСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РІ OMS  {
 
       File: oms-check-lock  (no auto-title, SqlScript/oms-check-lock.sql)
       File: oms-compile-invalid  (no auto-title, SqlScript/oms-compile-invalid.sql)
@@ -104,9 +104,9 @@ Group: SQL-скрипты  {
       File: oms-save-install-info  (no auto-title, SqlScript/oms-save-install-info.sql)
       File: oms-save-uninstall-info  (no auto-title, SqlScript/oms-save-uninstall-info.sql)
       File: oms-show-invalid  (no auto-title, SqlScript/oms-show-invalid.sql)
-      }  # Group: Используемые в OMS
+      }  # Group: РСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РІ OMS
 
-   Group: Прикладные  {
+   Group: РџСЂРёРєР»Р°РґРЅС‹Рµ  {
 
       File: oms-activate-batch  (no auto-title, SqlScript/oms-activate-batch.sql)
       File: oms-deactivate-batch  (no auto-title, SqlScript/oms-deactivate-batch.sql)
@@ -126,49 +126,49 @@ Group: SQL-скрипты  {
       File: oms-set-lobTablespace  (no auto-title, SqlScript/oms-set-lobTablespace.sql)
       File: oms-stop-batch  (no auto-title, SqlScript/oms-stop-batch.sql)
       File: oms-unindexed-foreign-key  (no auto-title, SqlScript/oms-unindexed-foreign-key.sql)
-      }  # Group: Прикладные
+      }  # Group: РџСЂРёРєР»Р°РґРЅС‹Рµ
 
-   }  # Group: SQL-скрипты
+   }  # Group: SQL-СЃРєСЂРёРїС‚С‹
 
-Group: Настройки  {
+Group: РќР°СЃС‚СЂРѕР№РєРё  {
 
-   File: Настройки баз данных  (no auto-title, Config/Default/database.mk)
-   File: Настройки соединения  (no auto-title, Config/Default/connect.sh)
+   File: РќР°СЃС‚СЂРѕР№РєРё Р±Р°Р· РґР°РЅРЅС‹С…  (no auto-title, Config/Default/database.mk)
+   File: РќР°СЃС‚СЂРѕР№РєРё СЃРѕРµРґРёРЅРµРЅРёСЏ  (no auto-title, Config/Default/connect.sh)
 
-   Group: Файлы для обратной совместимости  {
+   Group: Р¤Р°Р№Р»С‹ РґР»СЏ РѕР±СЂР°С‚РЅРѕР№ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё  {
 
       File: local.mk  (Config/Legacy/local.mk)
       File: localCustom.mk  (Config/Legacy/localCustom.mk)
-      }  # Group: Файлы для обратной совместимости
+      }  # Group: Р¤Р°Р№Р»С‹ РґР»СЏ РѕР±СЂР°С‚РЅРѕР№ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё
 
-   }  # Group: Настройки
+   }  # Group: РќР°СЃС‚СЂРѕР№РєРё
 
-Group: Шаблон модуля  {
+Group: РЁР°Р±Р»РѕРЅ РјРѕРґСѓР»СЏ  {
 
-   Group: О модуле  {
+   Group: Рћ РјРѕРґСѓР»Рµ  {
 
-      File: Описание  (Data/NewModule/DB/Doc/readme.txt)
-      File: Установка  (Data/NewModule/DB/Doc/install.txt)
-      File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
-      File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
-      File: Сборка  (Data/NewModule/DB/Makefile)
-      File: Версии  (Data/NewModule/DB/Doc/version.txt)
-      }  # Group: О модуле
+      File: РћРїРёСЃР°РЅРёРµ  (Data/NewModule/DB/Doc/readme.txt)
+      File: РЈСЃС‚Р°РЅРѕРІРєР°  (Data/NewModule/DB/Doc/install.txt)
+      File: РћС€РёР±РєРё  (Data/NewModule/DB/Doc/bugs.txt)
+      File: Р”РѕСЂР°Р±РѕС‚РєРё  (Data/NewModule/DB/Doc/todo.txt)
+      File: РЎР±РѕСЂРєР°  (Data/NewModule/DB/Makefile)
+      File: Р’РµСЂСЃРёРё  (Data/NewModule/DB/Doc/version.txt)
+      }  # Group: Рћ РјРѕРґСѓР»Рµ
 
-   File: Инициализация OMS  (Data/NewModule/DB/OmsModule/init.mk)
-   File: Сборка OMS  (Data/NewModule/DB/OmsModule/common.mk)
-   }  # Group: Шаблон модуля
+   File: РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ OMS  (Data/NewModule/DB/OmsModule/init.mk)
+   File: РЎР±РѕСЂРєР° OMS  (Data/NewModule/DB/OmsModule/common.mk)
+   }  # Group: РЁР°Р±Р»РѕРЅ РјРѕРґСѓР»СЏ
 
-Group: Индекс  {
+Group: РРЅРґРµРєСЃ  {
 
-   Group: Реализация  {
+   Group: Р РµР°Р»РёР·Р°С†РёСЏ  {
 
-      Variable Index: Переменные
-      Function Index: Функции
-      }  # Group: Реализация
+      Variable Index: РџРµСЂРµРјРµРЅРЅС‹Рµ
+      Function Index: Р¤СѓРЅРєС†РёРё
+      }  # Group: Р РµР°Р»РёР·Р°С†РёСЏ
 
-   Build Function Index: Функции сборки
-   File Index: Скрипты
-   Index: Все вместе
-   }  # Group: Индекс
+   Build Function Index: Р¤СѓРЅРєС†РёРё СЃР±РѕСЂРєРё
+   File Index: РЎРєСЂРёРїС‚С‹
+   Index: Р’СЃРµ РІРјРµСЃС‚Рµ
+   }  # Group: РРЅРґРµРєСЃ
 

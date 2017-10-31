@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: $(moduleName)
-SubTitle: Версия $(moduleVersion)
+SubTitle: Р’РµСЂСЃРёСЏ $(moduleVersion)
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -46,27 +46,27 @@ SubTitle: Версия $(moduleVersion)
 
 
 
-Group: О модуле  {
+Group: Рћ РјРѕРґСѓР»Рµ  {
 
-   File: Описание  (Doc/readme.txt)
-   File: Установка  (Doc/install.txt)
-   File: Ошибки  (Doc/bugs.txt)
-   File: Доработки  (Doc/todo.txt)
-   File: Сборка  (Makefile)
-   File: Версии  (Doc/version.txt)
-   }  # Group: О модуле
+   File: РћРїРёСЃР°РЅРёРµ  (Doc/readme.txt)
+   File: РЈСЃС‚Р°РЅРѕРІРєР°  (Doc/install.txt)
+   File: РћС€РёР±РєРё  (Doc/bugs.txt)
+   File: Р”РѕСЂР°Р±РѕС‚РєРё  (Doc/todo.txt)
+   File: РЎР±РѕСЂРєР°  (Makefile)
+   File: Р’РµСЂСЃРёРё  (Doc/version.txt)
+   }  # Group: Рћ РјРѕРґСѓР»Рµ
 
-Group: Пакеты  {
+Group: РџР°РєРµС‚С‹  {
 
    Group: $(packageName)  {
 
-      File: Спецификация  (no auto-title, $(packageName).pks)
-      File: Реализация  (no auto-title, $(packageName).pkb)
+      File: РЎРїРµС†РёС„РёРєР°С†РёСЏ  (no auto-title, $(packageName).pks)
+      File: Р РµР°Р»РёР·Р°С†РёСЏ  (no auto-title, $(packageName).pkb)
       }  # Group: $(packageName)
 
-   }  # Group: Пакеты
+   }  # Group: РџР°РєРµС‚С‹
 
-Group: Скрипты  {
+Group: РЎРєСЂРёРїС‚С‹  {
 
    Group: Install  {
 
@@ -82,38 +82,38 @@ Group: Скрипты  {
 
       }  # Group: Install
 
-   }  # Group: Скрипты
+   }  # Group: РЎРєСЂРёРїС‚С‹
 
-Group: Индекс  {
+Group: РРЅРґРµРєСЃ  {
 
-   Group: Объекты БД  {
+   Group: РћР±СЉРµРєС‚С‹ Р‘Р”  {
 
-      Database Type Index: Типы
-      Database View Index: Представления
-      Database Materialized View Index: М-Представления
-      Database Table Index: Таблицы
-      Database Trigger Index: Триггеры
-      Database Index Index: Индексы
-      Database Sequence Index: Последовательности
-      }  # Group: Объекты БД
+      Database Type Index: РўРёРїС‹
+      Database View Index: РџСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ
+      Database Materialized View Index: Рњ-РџСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ
+      Database Table Index: РўР°Р±Р»РёС†С‹
+      Database Trigger Index: РўСЂРёРіРіРµСЂС‹
+      Database Index Index: РРЅРґРµРєСЃС‹
+      Database Sequence Index: РџРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё
+      }  # Group: РћР±СЉРµРєС‚С‹ Р‘Р”
 
-   Group: Открытые объявления  {
+   Group: РћС‚РєСЂС‹С‚С‹Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ  {
 
-      Type Index: Типы
-      Constant Index: Константы
-      Variable Index: Переменные
-      Function public Index: Функции
-      }  # Group: Открытые объявления
+      Type Index: РўРёРїС‹
+      Constant Index: РљРѕРЅСЃС‚Р°РЅС‚С‹
+      Variable Index: РџРµСЂРµРјРµРЅРЅС‹Рµ
+      Function public Index: Р¤СѓРЅРєС†РёРё
+      }  # Group: РћС‚РєСЂС‹С‚С‹Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ
 
-   Group: Закрытые объявления  {
+   Group: Р—Р°РєСЂС‹С‚С‹Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ  {
 
-      Type internal Index: Типы
-      Constant internal Index: Константы
-      Variable internal Index: Переменные
-      }  # Group: Закрытые объявления
+      Type internal Index: РўРёРїС‹
+      Constant internal Index: РљРѕРЅСЃС‚Р°РЅС‚С‹
+      Variable internal Index: РџРµСЂРµРјРµРЅРЅС‹Рµ
+      }  # Group: Р—Р°РєСЂС‹С‚С‹Рµ РѕР±СЉСЏРІР»РµРЅРёСЏ
 
-   Function Index: Функции
-   File Index: Скрипты
-   Index: Все вместе
-   }  # Group: Индекс
+   Function Index: Р¤СѓРЅРєС†РёРё
+   File Index: РЎРєСЂРёРїС‚С‹
+   Index: Р’СЃРµ РІРјРµСЃС‚Рµ
+   }  # Group: РРЅРґРµРєСЃ
 

@@ -1,12 +1,12 @@
 # script: oms-gen-spec.awk
-# Скрипт для генерации спефикации пакета по реализации ( body).
+# РЎРєСЂРёРїС‚ РґР»СЏ РіРµРЅРµСЂР°С†РёРё СЃРїРµС„РёРєР°С†РёРё РїР°РєРµС‚Р° РїРѕ СЂРµР°Р»РёР·Р°С†РёРё ( body).
 BEGIN {
   codeType = "IGNORE";
   codePartCount = 0;
 }
 
 # func: addCodePart
-# Добавление нового участка кода
+# Р”РѕР±Р°РІР»РµРЅРёРµ РЅРѕРІРѕРіРѕ СѓС‡Р°СЃС‚РєР° РєРѕРґР°
 function addCodePart( \
   newCodeType  \
 ) \
@@ -20,7 +20,7 @@ function addCodePart( \
 }
 
 # func: addLine
-# Добавление строки в текущий участок кода
+# Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СЂРѕРєРё РІ С‚РµРєСѓС‰РёР№ СѓС‡Р°СЃС‚РѕРє РєРѕРґР°
 function addLine() \
 {
   if ( codeType != "IGNORE") {
@@ -31,7 +31,7 @@ function addLine() \
   }
 }
 
-# Основной блок работы по строкам
+# РћСЃРЅРѕРІРЅРѕР№ Р±Р»РѕРє СЂР°Р±РѕС‚С‹ РїРѕ СЃС‚СЂРѕРєР°Рј
 {
   if ( codeType == "IGNORE" || codeType == "GROUP") {
     if ( match( $0, /\/\* *proc:/) || match( $0, /\/\* *func:/)) {
@@ -60,7 +60,7 @@ function addLine() \
       addCodePart( "IGNORE");
     }
   } else {
-    print "Внутренняя ошибка: ( codeType=" codeType ")" | "cat 1>&2"
+    print "Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР°: ( codeType=" codeType ")" | "cat 1>&2"
   }
   addLine();
 }
@@ -70,7 +70,7 @@ END {
     lastLine = codePartList_lineList[i,codePartList_lineCount[i]];
     switch( codePartList_codeType[i]) {
       case "GROUP":
-        # Если группа непуста
+        # Р•СЃР»Рё РіСЂСѓРїРїР° РЅРµРїСѓСЃС‚Р°
         if ( codePartList_codeType[i+1] == "SPEC_COMMENT") {
           print "";
           print "";
@@ -105,7 +105,7 @@ END {
         for ( j = 1; j < codePartList_lineCount[i]; j++) {
           print codePartList_lineList[i,j];
         }
-        # Используем "," для спецификации объектного типа
+        # РСЃРїРѕР»СЊР·СѓРµРј "," РґР»СЏ СЃРїРµС†РёС„РёРєР°С†РёРё РѕР±СЉРµРєС‚РЅРѕРіРѕ С‚РёРїР°
         if ( objectTypeFlag == 1 ) {
           if ( i < codePartCount) {
             specificationEnd = ",";

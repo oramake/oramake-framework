@@ -1,11 +1,11 @@
- Makefile                      "О модуле"
+ Makefile                      "Рћ РјРѕРґСѓР»Рµ"
  Doc/*/*.txt                   $(asterisk)
- Doc/*.txt                     "О модуле"
- *.typ                         "Объектные типы/$(directoryPath)/$(baseFileName)" Спецификация
- *.tyb                         "Объектные типы/$(directoryPath)/$(baseFileName)" Реализация
- *.pks                         Пакеты/$(directoryPath)/$(baseFileName)           Спецификация
- *.pkb                         Пакеты/$(directoryPath)/$(baseFileName)           Реализация
- *.jav                         "Java-исходники/$(directoryPath)"                 $(baseFileName)
- Java/UsedLib/*/readme.txt     Java/Библиотеки/$(asterisk)
+ Doc/*.txt                     "Рћ РјРѕРґСѓР»Рµ"
+ *.typ                         "РћР±СЉРµРєС‚РЅС‹Рµ С‚РёРїС‹/$(directoryPath)/$(baseFileName)" РЎРїРµС†РёС„РёРєР°С†РёСЏ
+ *.tyb                         "РћР±СЉРµРєС‚РЅС‹Рµ С‚РёРїС‹/$(directoryPath)/$(baseFileName)" Р РµР°Р»РёР·Р°С†РёСЏ
+ *.pks                         РџР°РєРµС‚С‹/$(directoryPath)/$(baseFileName)           РЎРїРµС†РёС„РёРєР°С†РёСЏ
+ *.pkb                         РџР°РєРµС‚С‹/$(directoryPath)/$(baseFileName)           Р РµР°Р»РёР·Р°С†РёСЏ
+ *.jav                         "Java-РёСЃС…РѕРґРЅРёРєРё/$(directoryPath)"                 $(baseFileName)
+ Java/UsedLib/*/readme.txt     Java/Р‘РёР±Р»РёРѕС‚РµРєРё/$(asterisk)
  *.txt                         $(directoryPath)
- *                             Скрипты/$(directoryPath)                          $(baseFileName)
+ *                             РЎРєСЂРёРїС‚С‹/$(directoryPath)                          $(baseFileName)
