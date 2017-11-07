@@ -44,7 +44,7 @@
 # ( end code)
 
 
-# group: Переменные
+# group: Информация о версии
 
 # var: OMS_VERSION
 # Версия программы
@@ -62,6 +62,18 @@ fileChangeDateValue='$Date:: 2017-10-24 09:55:09 +0300 #$'
 
 # Подключение общих констант и функций
 source oms-common.sh || exit 11
+
+
+
+# group: Константы
+
+# const: FUNCTION_GROUP_EXPR
+# Регулярное выражения ( gawk) для начала части функций
+FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<Функции\>[[:blank:]]*\*\/'
+
+# const: END_OBJECT_EXPR
+# Регулярное выражения для конца sql-скрипта для создания plsql-объекта
+END_OBJECT_EXPR='^\/[[:blank:]]*$'
 
 
 
@@ -99,17 +111,9 @@ tmpFileDir="${TEMP:-/tmp}"
 # Признак генерации спецификации объектного типа. 0 - пакет, 1 - объектный тип.
 objectTypeFlag=""
 
-
-
-# group: Константы
-
-# const: FUNCTION_GROUP_EXPR
-# Регулярное выражения ( gawk) для начала части функций
-FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<Функции\>[[:blank:]]*\*\/'
-
-# const: END_OBJECT_EXPR
-# Регулярное выражения для конца sql-скрипта для создания plsql-объекта
-END_OBJECT_EXPR='^\/[[:blank:]]*$'
+# Регулярное выражения ( gawk) для начала части функций ( из
+# <FUNCTION_GROUP_EXPR>) в кодировке документации модуля
+functionGroupExprLC=""
 
 
 
@@ -268,7 +272,7 @@ BEGIN \
       }
     }
   }
-  if ( functionPart == 1 && match( $0, /'$FUNCTION_GROUP_EXPR'/)) {
+  if ( functionPart == 1 && match( $0, /'$functionGroupExprLC'/)) {
     functionPart = 2;
   }
   previousLine = $0;
@@ -284,9 +288,17 @@ BEGIN \
 generateSpec()
 {
   logDebug3 "Set tmpFileDir: '$tmpFileDir'"
+  getModuleGendocEncoding "$rootDir"
+  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+    functionGroupExprLC=$(
+      iconv -f "utf-8" -t "$moduleGendocEncoding" <<<$FUNCTION_GROUP_EXPR
+    )
+  else
+    functionGroupExprLC=$FUNCTION_GROUP_EXPR
+  fi
 
   if [[ -z $(cat $specFileName | getPlsqlObjectPart 3) ]]; then
-    exitError "Incorrect specification: Must be expressions: \"$FUNCTION_GROUP_EXPR\" and \"$END_OBJECT_EXPR\"!"
+    exitError "Incorrect specification: Must be expressions: \"$functionGroupExprLC\" and \"$END_OBJECT_EXPR\"!"
   fi;
 
   # Временный файл - тела функций.
@@ -299,7 +311,7 @@ generateSpec()
   # Проверяем, что тела есть
   if [[ ! -e $tmpBodyFunction ]]; then
    rm $tmpBodyFunction
-   exitError "Expression \"$FUNCTION_GROUP_EXPR\" not found in body!"
+   exitError "Expression \"$functionGroupExprLC\" not found in body!"
   fi;
 
   # Временный файл - копия спецификации.

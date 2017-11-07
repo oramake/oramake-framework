@@ -358,6 +358,8 @@ Arguments:
   MODULE_NAME                 name of new module
 
 Options:
+  -d, --directory DIR         used top level directory DIR
+                              ( default: MODULE_NAME)
   -p, --package-name NAME     add package NAME ( default: pkg_<MODULENAME>)
       --overwrite             overwrite existing files
 
@@ -446,6 +448,18 @@ exec_create-module()
       getSvnInitialPath "$svnModuleRootUrl"
     fi
   fi
+
+  # Encoding of module's documentation
+  if (( isRootExist && isOverwrite )); then
+    getModuleGendocEncoding "$rootDir"
+  else
+    getModuleGendocEncoding ""
+  fi
+
+  # Convert files from UTF-8 enconding to module's documentation enconding?
+  local isConvertEncoding=0
+  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+
   (($isRootExist)) || $runCmd mkdir -p "$rootDir"
   logDebug "Process templateDir: '$templateDir'"
 
@@ -515,24 +529,43 @@ exec_create-module()
           sedOption=" -e s/$/\x0D/"
         fi
         if ((isDryRun)); then
-          echo "sed MACROS: \"$srcPath\" -> \"$dstPath\""
+          if ((isConvertEncoding)); then
+            $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+          else
+            $runCmd cat "$srcPath"
+          fi
+          echo "| sed MACROS: -> \"$dstPath\""
           echo "  \$(moduleName)    : $moduleName"
           echo "  \$(moduleVersion) : $moduleVersion"
           echo "  \$(packageName)   : $packageName"
           echo "  \$(svnModuleRoot) : $svnModuleRoot"
           echo "  \$(svnInitialPath): $svnInitialPath"
         else
-          sed \
+          if ((isConvertEncoding)); then
+            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+          else
+            cat "$srcPath"
+          fi \
+          | sed \
             -e "s/\$(moduleName)/$moduleName/g" \
             -e "s/\$(moduleVersion)/$moduleVersion/g" \
             -e "s/\$(packageName)/$packageName/g" \
             -e "s|\$(svnModuleRoot)|$svnModuleRoot|g" \
             -e "s|\$(svnInitialPath)|$svnInitialPath|g" \
             $sedOption  \
-            "$srcPath" > "$dstPath"
+            > "$dstPath"
         fi
       else
-        $runCmd cp "$srcPath" "$dstPath"
+        if ((isConvertEncoding)); then
+          if ((isDryRun)); then
+            echo iconv -f "utf-8" -t "$moduleGendocEncoding" \
+              "$srcPath" \> "$dstPath"
+          else
+            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath" > "$dstPath"
+          fi
+        else
+          $runCmd cp "$srcPath" "$dstPath"
+        fi
       fi || exitError "Cannot process file \"$dstPath\"."
 
       # Действия с Subversion
@@ -735,14 +768,20 @@ END
 
 
 # func: exec_gen-schema-revert
-# Генерирует файл DB/Install/Schema/revert.sql ( выволнение команды
+# Генерирует файл DB/Install/Schema/revert.sql ( выполнение команды
 # <gen-schema-revert>).
 exec_gen-schema-revert()
 {
   local revertFilePath="$rootDir/DB/Install/Schema/Last/revert.sql"
   local revertFilePathTemp=${revertFilePath}".$$"
+  getModuleGendocEncoding "$rootDir"
   gen-schema-revert_file | unix2dos > $revertFilePathTemp
-  cp $revertFilePathTemp $revertFilePath
+  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+    iconv -f "utf-8" -t "$moduleGendocEncoding" \
+      "$revertFilePathTemp" >"$revertFilePath"
+  else
+    cp $revertFilePathTemp $revertFilePath
+  fi
   rm -f $revertFilePathTemp;
 }
 
@@ -863,14 +902,20 @@ END
 
 
 # func: exec_gen-schema-run
-# Генерирует файл DB/Install/Schema/run.sql ( выволнение команды
+# Генерирует файл DB/Install/Schema/run.sql ( выполнение команды
 # <gen-schema-run>).
 exec_gen-schema-run()
 {
   local runFilePath="$rootDir/DB/Install/Schema/Last/run.sql"
   local runFilePathTemp=${runFilePath}".$$"
+  getModuleGendocEncoding "$rootDir"
   gen-schema-run_file | unix2dos > $runFilePathTemp
-  cp $runFilePathTemp $runFilePath
+  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+    iconv -f "utf-8" -t "$moduleGendocEncoding" \
+      "$runFilePathTemp" >"$runFilePath"
+  else
+    cp $runFilePathTemp $runFilePath
+  fi
   rm -f $runFilePathTemp;
 }
 

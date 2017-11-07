@@ -2,6 +2,7 @@
 - make
 - mkdir
 - find
+- iconv
 - unix2dos
 - gawk
 - sed

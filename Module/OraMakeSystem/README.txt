@@ -1,3 +1,12 @@
+  Documentation
+  =============
+
+Documentation ( in Russian):
+
+Doc/Html/ru/index.html
+
+
+
   Installation on Windows
   ========================
 

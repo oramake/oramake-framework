@@ -194,7 +194,13 @@ END
 #
 getMenuPart()
 {
-  cat $1 | \
+  # Convert menu from UTF-8 enconding to module's documentation enconding?
+  local isConvert=$3
+  if (( isConvert )); then
+    iconv -f "utf-8" -t "$moduleGendocEncoding" "$1"
+  else
+    cat "$1"
+  fi | \
     gawk \
       -v neededPart=$2 \
       -v commentLabel=$(baseName "$processFilesAwkPath" .awk) \
@@ -209,14 +215,15 @@ BEGIN { partNumber = 1 }
       || match( $0, /[ \t]*File:/) == 1 \
       || index( $0, "# " commentLabel ":") == 1 \
     ) \
-    || partNumber == 2 \
-    && ( \
-      match( $0, /[ \t]*Group: Индекс/) == 1 \
-    ) \
   )
     partNumber++;
   if( partNumber == neededPart)
     print
+  if( \
+    partNumber == 2 \
+    && match( $0, /^# oms-auto-doc: part 3/) == 1 \
+  )
+    partNumber++;
 }'
 }
 
@@ -228,9 +235,13 @@ processFiles()
 {
   logMessage "processFiles( see log messages in menu file) ...";
   (
-  cat $configPath; \
-  echo; \
-  getMenuPart "$1" 2 | grep "File:";
+  if (( isConvertEncoding )); then
+    iconv -f "utf-8" -t "$moduleGendocEncoding" "$configPath"
+  else
+    cat $configPath
+  fi
+  echo;
+  getMenuPart "$1" 2 0 | grep "File:";
   ) \
   | gawk -f $processFilesAwkPath \
       -v debugLevel=$debugLevel \
@@ -270,6 +281,12 @@ function initMenuGenerator()
                                        # Пути к настроечным файлам
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
+
+  # Convert files from UTF-8 enconding to module's documentation enconding?
+  isConvertEncoding=0
+  getModuleGendocEncoding "$rootDir"
+  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+
   logMessage "menuPath = "$menuPath
   logMessage "menuOutputFile = "$menuOutputFile
   logMessage "menuTempPath = "$menuTempPath
@@ -297,9 +314,9 @@ function generateMenu()
   fi;
   logMessage "configPath = "$configPath
                                        # Генерируем меню
-  ( getMenuPart "$menuPath" 1 \
+  ( getMenuPart "$menuPath" 1 0 \
     && processFiles $menuPath \
-    && getMenuPart "$moduleConfigMenuPath" 3 \
+    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertEncoding \
   ) > ${menuTempPath};
   menuResult=$?
   logMessage "menuResult = $menuResult"
@@ -316,9 +333,9 @@ function generateMenu()
 function replaceMenuIndex()
 {
   initMenuGenerator;
-  ( getMenuPart "$menuPath" 1 \
-    && getMenuPart "$menuPath" 2 \
-    && getMenuPart "$moduleConfigMenuPath" 3 \
+  ( getMenuPart "$menuPath" 1 0 \
+    && getMenuPart "$menuPath" 2 0 \
+    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertEncoding \
   ) > ${menuTempPath};
   if [[ -z $menuOutputFile ]] && [[ $? -eq 0 ]]; then
     cp $menuTempPath $menuPath

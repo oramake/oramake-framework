@@ -30,7 +30,7 @@ find * -type f -print \
     -e '^usr/bin/\(dd\|df\|dir\|dircolors\|du\|expand\)\.exe$' \
     -e '^usr/bin/\(factor\|fmt\|fold\|awk\|gawk..*\|getconf\)\.exe$' \
     -e '^usr/bin/\(getfacl\.exe\|gkill\|groups\|host.*\)\.exe$' \
-    -e '^usr/bin/\(iconv\|install\|join\|kill\|ldd\)\.exe$' \
+    -e '^usr/bin/\(install\|join\|kill\|ldd\)\.exe$' \
     -e '^usr/bin/\(ldh\|link\|ln\|locale\|locate\|yes\)\.exe$' \
     -e '^usr/bin/\(logname\|md5sum\|minidumper\|mkfifo\)\.exe$' \
     -e '^usr/bin/\(mkgroup\|mknod\|mkpasswd\|nice\)\.exe$' \

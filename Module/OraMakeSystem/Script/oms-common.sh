@@ -273,6 +273,11 @@ fileObjectName=""
 #
 fileObjectType=""
 
+# var: moduleGendocEncoding
+# Encoding of module's documentation ( enconding name for iconv)
+# Is set in <getModuleGendocEncoding>.
+moduleGendocEncoding=""
+
 
 
 # group: Функции
@@ -714,6 +719,30 @@ getFileObject()
   logDebug2 "Set fileObjectName: '$fileObjectName'"
   logDebug2 "Set fileObjectType: '$fileObjectType'"
 }
+
+
+
+# func: getModuleGendocEncoding
+# Returns encoding of module's documentation.
+#
+# Parameters:
+# modulePath                  - Path to root directory of module
+#                               ( empty string for new module)
+#
+# Return:
+# <moduleGendocEncoding>      - Encoding of module's documentation
+#                               ( enconding name for iconv)
+#
+getModuleGendocEncoding()
+{
+  local modulePath="$1"
+  logDebug3 "start: modulePath='$modulePath'"
+
+  # return value
+  moduleGendocEncoding="cp1251"
+  logDebug2 "Set moduleGendocEncoding: '$moduleGendocEncoding'"
+}
+
 
 
 # Вывод стартовой отладочной информации
