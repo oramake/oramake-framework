@@ -368,6 +368,8 @@ if runOms create-module -d "$modDir" TestModule; then
 
   runMake gendoc-menu
 
+  runOms update-module
+
   if (( loadFlag )); then
     startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
     checkOutputCyrillic

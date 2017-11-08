@@ -19,6 +19,8 @@
 #                                 ( вызывает скрипт <oms-gen-spec>)
 #    set-version                - установка версии модуля
 #    show-svn-info              - вывод информации о файла модуля из Subversion
+#    update-module              - обновляет файлы OMS, входящие в состав модуля
+#                                 ( вызывает скрипт <oms-update-module>)
 #
 # Допустимые значения опций ( <options>) и аргументов ( <args>) зависят от
 # выбранной команды ( <command>).
@@ -64,6 +66,7 @@ declare -a omsCommandList=( \
   "gen-spec" \
   "set-version" \
   "show-svn-info" \
+  "update-module" \
 )
 
 # var: commandScriptList
@@ -71,6 +74,7 @@ declare -a omsCommandList=( \
 # ( associative array <command> -> <script>)
 declare -A commandScriptList=( \
   ["gen-spec"]='oms-gen-spec' \
+  ["update-module"]='oms-update-module' \
 )
 
 

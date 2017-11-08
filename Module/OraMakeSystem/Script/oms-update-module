@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # script: oms-update-module
-# Обновляет файлы OMS, входящие в состав модуля.
+# Обновляет файлы OMS, входящие в состав модуля ( реализация команды
+# "update-module" скрипта <oms>).
 # Обновляются файлы в каталоге DB/OmsModule, а также make-файлы модуля
 # ( Makefile, DB/Makefile) и map-файл. Файлы обновляются до текущей
 # установленной версии OMS.
 #
 #
 # Использование:
-#   oms-update-module [options]
+#   oms update-module [options]
 #
 # Опции:
 #       --debug-level DBG_LEVEL - установить уровень вывода отладочной
@@ -103,7 +104,7 @@ usage()
 Update OMS-files in module.
 
 Usage:
-  oms-update-module [options]
+  oms update-module [options]
 
 Options:
       --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
