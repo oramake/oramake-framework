@@ -364,6 +364,7 @@ if runOms create-module -d "$modDir" TestModule; then
 
   runOms gen-schema-run
   runOms gen-schema-revert
+  runOms gen-spec "DB/pkg_TestModule.pkb"
 
   runMake gendoc-menu
 

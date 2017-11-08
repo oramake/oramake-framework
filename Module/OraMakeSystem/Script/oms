@@ -4,11 +4,10 @@
 # Выполняет команду по управлению прикладным модулем.
 #
 # Использование:
-#   oms <command> [<common-options>] [<options>] [<args>]
+#   oms <command> [<options>] [<args>]
 #
 # Выполнение "oms --version" выводит информацию о версии скрипта.
-# Выполнение "oms --help" выводит справочную информацию со списком
-# команд.
+# Выполнение "oms --help" выводит справочную информацию со списком команд.
 #
 # Возможные команды ( <command>):
 #    create-module              - создает структуру нового модуля
@@ -16,21 +15,10 @@
 #                                 объектов модудя в БД ( run.sql)
 #    gen-schema-revert          - генерация файла по удалению объектов модуля
 #                                 из БД
+#    gen-spec                   - генерирует спецификацию по телу plsql-объекта
+#                                 ( вызывает скрипт <oms-gen-spec>)
 #    set-version                - установка версии модуля
 #    show-svn-info              - вывод информации о файла модуля из Subversion
-#
-#
-# Общие опции ( <common-options>):
-#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
-#                                 информации ( 0 не выводить, 1 базовый,
-#                                 2 расширенный, 3 расширенный с выводом
-#                                 содержимого временных файлов, по умолчанию
-#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
-#                                 при отсутствии 0)
-#   -d, --directory DIR         - путь к корневому каталогу модуля ( по
-#                                 умолчанию текущий каталог)
-#   -n, --dry-run               - не выполнять команды, а только выводить их
-#   -h, --help                  - вывести справку по использованию
 #
 # Допустимые значения опций ( <options>) и аргументов ( <args>) зависят от
 # выбранной команды ( <command>).
@@ -73,8 +61,16 @@ declare -a omsCommandList=( \
   "create-module" \
   "gen-schema-revert" \
   "gen-schema-run" \
+  "gen-spec" \
   "set-version" \
   "show-svn-info" \
+)
+
+# var: commandScriptList
+# Scripts that implement external commands
+# ( associative array <command> -> <script>)
+declare -A commandScriptList=( \
+  ["gen-spec"]='oms-gen-spec' \
 )
 
 
@@ -160,7 +156,7 @@ usage()
 Execute command for module.
 
 Usage:
-  oms <command> [<common-options>] [<options>] [<args>]
+  oms <command> [<options>] [<args>]
 
 Type 'oms --version' to see script version.
 Type 'oms --help' to see this help.
@@ -174,12 +170,6 @@ END
   done
 
   cat <<END
-
-Common options:
-      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
-  -d, --directory DIR         path to module root directory ( default: current)
-  -n, --dry-run               don't actually run any commands; just print them
-  -h, --help                  show help for command
 
 The valid values for options (<options>) and arguments (<args>) depend
 on the selected command (<command>).
@@ -216,9 +206,6 @@ processCommonOption()
         (( ++processCommonOptionCount ))
         shift
         ;;
-      -n | --dry-run)
-        setDryRun
-        ;;
       -h | --help)
         if [[ -z $omsCommand ]]; then
           usage
@@ -250,15 +237,24 @@ parseOption()
   logDebug2 "start..."
   while [ $# != 0 ]; do
     if [[ -z $omsCommand ]]; then
-      processCommonOption "$@"
+
+      # ability to specify options before command (for compatibility)
+      if [[ "${0##*/}" == "oms-module" ]]; then
+        processCommonOption "$@"
+      fi
+
       if ! (( processCommonOptionCount )); then
         case $1 in
+          -h | --help)
+            usage
+            exitScript
+            ;;
           --version)
             showVersion
             exitScript
             ;;
           -* | --*)
-            exitArgError "Illegal common option: '$1'."
+            exitArgError "Illegal option before command: '$1'."
             ;;
           *)
             local cmd
@@ -274,9 +270,9 @@ parseOption()
             fi
             ;;
         esac
-      elif (( processCommonOptionCount > 1 )); then
-        local i=$processCommonOptionCount
-        while (( --i )); do shift; done
+        shift
+      else
+        shift $processCommonOptionCount
       fi
     else
       case $1 in
@@ -288,12 +284,15 @@ parseOption()
           ;;
       esac
     fi
-    shift
     if [[ -n $omsCommand ]]; then
-      local parseFunction="parseOption_$omsCommand"
-      if type -t $parseFunction >/dev/null; then
-        $parseFunction "$@"
+      if [[ -n ${commandScriptList["$omsCommand"]} ]]; then
         break
+      else
+        local parseFunction="parseOption_$omsCommand"
+        if type -t $parseFunction >/dev/null; then
+          $parseFunction "$@"
+          break
+        fi
       fi
     fi
   done
@@ -305,10 +304,28 @@ parseOption()
   fi
 
   # Устанавливаем значения по умолчанию
-  if [[ -z $rootDir ]]; then
-    rootDir="."
-    logDebug3 "Set rootDir: '$rootDir'"
+  if [[ -z ${commandScriptList["$omsCommand"]} ]]; then
+    if [[ -z $rootDir ]]; then
+      rootDir="."
+      logDebug3 "Set rootDir: '$rootDir'"
+    fi
   fi
+}
+
+
+
+# func: execCommandScript
+# Run script that implement external command.
+#
+execCommandScript()
+{
+  local commandScript=${commandScriptList["$omsCommand"]}
+
+  # skip comman name
+  shift
+
+  # run script from directory of current script
+  $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/$commandScript "$@"
 }
 
 
@@ -317,12 +334,22 @@ parseOption()
 # Создает структуру нового модуля.
 #
 # Использование:
-#   oms create-module [<common-options>] [<options>] moduleName
+#   oms create-module [<options>] moduleName
 #
 # Параметры:
 #   moduleName                    имя нового модуля
 #
 # Опции:
+#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+#   -d, --directory DIR         - путь к корневому каталогу модуля ( по
+#                                 умолчанию текущий каталог)
+#   -n, --dry-run               - не выполнять команды, а только выводить их
+#   -h, --help                  - вывести справку по использованию
 #   -p, --package-name NAME     - имя пакета ( по умолчанию: pkg_<moduleName>)
 #   --overwrite                 - переписывать существующие файлы
 #                                 ( по умолчанию: не менять)
@@ -352,18 +379,19 @@ usage_create-module()
 Create structure of new OMS module.
 
 Usage:
-  oms create-module [<common-options>] [<options>] MODULE_NAME
+  oms create-module [<options>] MODULE_NAME
 
 Arguments:
   MODULE_NAME                 name of new module
 
 Options:
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
   -d, --directory DIR         used top level directory DIR
                               ( default: MODULE_NAME)
+  -n, --dry-run               don't actually run any commands; just print them
+  -h, --help                  show this help
   -p, --package-name NAME     add package NAME ( default: pkg_<MODULENAME>)
       --overwrite             overwrite existing files
-
-Type 'oms --help' to see help for <common-options>.
 END
 }
 
@@ -379,6 +407,9 @@ parseOption_create-module()
     processCommonOption "$@"
     if ! (( processCommonOptionCount )); then
       case $1 in
+        -n | --dry-run)
+          setDryRun
+          ;;
         -p | --package-name)
           packageName="$2"; shift;
           logDebug3 "Set packageName: '$packageName'"
@@ -399,11 +430,10 @@ parseOption_create-module()
           fi
           ;;
       esac
-    elif (( processCommonOptionCount > 1 )); then
-      local i=$processCommonOptionCount
-      while (( --i )); do shift; done
+      shift
+    else
+      shift $processCommonOptionCount
     fi
-    shift
   done
 
   # Проверяем параметры выполнения
@@ -599,8 +629,21 @@ exec_create-module()
 # Генерирует файл DB/Install/Schema/Last/revert.sql
 # ( см. <Структура каталогов>).
 #
+# Использование:
+#   oms gen-schema-revert [<options>]
+#
+# Опции:
+#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+#   -d, --directory DIR         - путь к корневому каталогу модуля ( по
+#                                 умолчанию текущий каталог)
+#   -h, --help                  - вывести справку по использованию
+#
 # Замечания:
-# - команда должна выполняться из каталога модуля;
 # - для генерации используется информация из имён файлов, поэтому для
 #   получения корректного скрипта имена файлов должны соответствовать принятым
 #   соглашениям;
@@ -616,12 +659,12 @@ usage_gen-schema-revert()
 Generate file DB/Install/Schema/revert.sql.
 
 Usage:
-  oms gen-schema-revert [<common-options>]
+  oms gen-schema-revert [<options>]
 
-The current directory must be the module directory ( Trunk).
-
-
-Type 'oms --help' to see help for <common-options>.
+Options:
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -h, --help                  show this help
 END
 }
 
@@ -633,6 +676,10 @@ END
 parseOption_gen-schema-revert()
 {
   processCommonOption "$@"
+  shift $processCommonOptionCount
+  if (( $# )); then
+    exitArgError "Illegal command option: '$1'."
+  fi
 }
 
 
@@ -772,7 +819,11 @@ END
 # <gen-schema-revert>).
 exec_gen-schema-revert()
 {
-  local revertFilePath="$rootDir/DB/Install/Schema/Last/revert.sql"
+  local schemaDir="$rootDir/DB/Install/Schema/Last"
+  if [[ ! -d "$schemaDir" ]]; then
+    exitError "Schema dir \"$schemaDir\" does not exist."
+  fi
+  local revertFilePath="$schemaDir/revert.sql"
   local revertFilePathTemp=${revertFilePath}".$$"
   getModuleGendocEncoding "$rootDir"
   gen-schema-revert_file | unix2dos > $revertFilePathTemp
@@ -791,8 +842,21 @@ exec_gen-schema-revert()
 # Генерирует файл DB/Install/Schema/Last/run.sql
 # ( см. <Структура каталогов>).
 #
+# Использование:
+#   oms gen-schema-run [<options>]
+#
+# Опции:
+#       --debug-level DBG_LEVEL - установить уровень вывода отладочной
+#                                 информации ( 0 не выводить, 1 базовый,
+#                                 2 расширенный, 3 расширенный с выводом
+#                                 содержимого временных файлов, по умолчанию
+#                                 из переменной окружения <OMS_DEBUG_LEVEL>,
+#                                 при отсутствии 0)
+#   -d, --directory DIR         - путь к корневому каталогу модуля ( по
+#                                 умолчанию текущий каталог)
+#   -h, --help                  - вывести справку по использованию
+#
 # Замечания:
-# - команда должна выполняться из каталога модуля;
 # - для генерации используется информация из имён файлов, поэтому для
 #   получения корректного скрипта имена файлов должны соответствовать принятым
 #   соглашениям;
@@ -808,12 +872,12 @@ usage_gen-schema-run()
 Generate file DB/Install/Schema/run.sql.
 
 Usage:
-  oms gen-schema-run [<common-options>]
+  oms gen-schema-run [<options>]
 
-The current directory must be the module directory ( Trunk).
-
-
-Type 'oms --help' to see help for <common-options>.
+Options:
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -h, --help                  show this help
 END
 }
 
@@ -825,6 +889,10 @@ END
 parseOption_gen-schema-run()
 {
   processCommonOption "$@"
+  shift $processCommonOptionCount
+  if (( $# )); then
+    exitArgError "Illegal command option: '$1'."
+  fi
 }
 
 
@@ -906,7 +974,11 @@ END
 # <gen-schema-run>).
 exec_gen-schema-run()
 {
-  local runFilePath="$rootDir/DB/Install/Schema/Last/run.sql"
+  local schemaDir="$rootDir/DB/Install/Schema/Last"
+  if [[ ! -d "$schemaDir" ]]; then
+    exitError "Schema dir \"$schemaDir\" does not exist."
+  fi
+  local runFilePath="$schemaDir/run.sql"
   local runFilePathTemp=${runFilePath}".$$"
   getModuleGendocEncoding "$rootDir"
   gen-schema-run_file | unix2dos > $runFilePathTemp
@@ -936,14 +1008,14 @@ usage_show-svn-info()
 Show information about module's files from Subversion.
 
 Usage:
-  oms show-svn-info [<common-options>] [<options>]
+  oms show-svn-info [<options>]
 
 Options:
-  --quiet             - minimize output
-                        ( string with format: "<svnversion> <svn_path>")
-  --used-only         - set version number only if it used in module
-
-Type 'oms --help' to see help for <common-options>.
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -h, --help                  show this help
+      --quiet                 minimize output
+                              ( string with format: "<svnversion> <svn_path>")
 END
 }
 
@@ -970,11 +1042,10 @@ parseOption_show-svn-info()
           exitArgError "Illegal command argument: '$1'."
           ;;
       esac
-    elif (( processCommonOptionCount > 1 )); then
-      local i=$processCommonOptionCount
-      while (( --i )); do shift; done
+      shift
+    else
+      shift $processCommonOptionCount
     fi
-    shift
   done
 }
 
@@ -1043,16 +1114,18 @@ usage_set-version()
 Set module version.
 
 Usage:
-  oms set-version [<common-options>] [<options>] VERSION
+  oms set-version [<options>] VERSION
 
 Arguments:
   VERSION             - new version number ( digits delimited by dot, for
                         example "1.5.0")
 Options:
-  --quiet             - minimize output ( print only new version number)
-  --used-only         - set version number only if it used in module
-
-Type 'oms --help' to see help for <common-options>.
+      --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory ( default: current)
+  -n, --dry-run               don't actually run any commands; just print them
+  -h, --help                  show this help
+      --quiet                 minimize output ( print only new version number)
+      --used-only             set version number only if it used in module
 END
 }
 
@@ -1068,6 +1141,9 @@ parseOption_set-version()
     processCommonOption "$@"
     if ! (( processCommonOptionCount )); then
       case $1 in
+        -n | --dry-run)
+          setDryRun
+          ;;
         --quiet)
           isQuiet=1
           logDebug3 "Set isQuiet: $isQuiet"
@@ -1201,7 +1277,11 @@ exec_set-version()
 parseOption "$@"
 
 # Выполняем команду
-exec_$omsCommand
+if [[ -n ${commandScriptList["$omsCommand"]} ]]; then
+  execCommandScript "$@"
+else
+  exec_$omsCommand
+fi
 
 # Завершаем выполнение
 exitScript "$?"

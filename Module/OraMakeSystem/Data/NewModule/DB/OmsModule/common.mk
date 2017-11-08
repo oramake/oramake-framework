@@ -257,7 +257,7 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms --directory .. show-svn-info --quiet)
+getSvnInfo := $(shell oms show-svn-info --directory .. --quiet)
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 

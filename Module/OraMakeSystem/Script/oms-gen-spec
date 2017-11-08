@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # script: oms-gen-spec
-# Генерирует спецификацию по телу plsql-объекта ( пакета или # объектного
-# типа).
+# Генерирует спецификацию по телу plsql-объекта ( пакета или объектного
+# типа) ( реализация команды "gen-spec" скрипта <oms>).
 #
 # Использование:
-#   oms-gen-spec [options] bodyFileName
+#   oms gen-spec [options] bodyFileName
 #
 # Параметры:
 #   bodyFileName                  имя файла тела plsql-объекта
@@ -40,7 +40,7 @@
 # Пример использования:
 #
 # ( code)
-# $ oms-gen-spec ./Db/pkg_AutoDialer.pkb
+# $ oms gen-spec ./DB/pkg_ModuleInfo.pkb
 # ( end code)
 
 
@@ -125,10 +125,10 @@ functionGroupExprLC=""
 usage()
 {
   cat <<END
-  Generate specification for plsql object ( package or object type) body.
+Generate specification for plsql object ( package or object type) body.
 
 Usage:
-  oms-gen-spec [options] bodyFileName
+  oms gen-spec [options] bodyFileName
 
 Arguments:
   bodyFileName                name of body file name
