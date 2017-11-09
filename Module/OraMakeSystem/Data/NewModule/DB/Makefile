@@ -373,6 +373,7 @@ LOAD_FILE_MASK :=
 # Файлы для загрузки
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
+    $(wildcard $(addprefix Install/Schema/Last/,*.vw *.trg)) \
     $(wildcard *.typ *.pks *.tyb *.pkb) \
   )                                      \
   $(addsuffix .$(lu2),                  \
