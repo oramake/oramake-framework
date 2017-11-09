@@ -88,6 +88,8 @@ isUseSubversion=0
 # обновления.
 isNeedGendoc=0
 
+# Convert files from UTF-8 enconding to module's documentation enconding?
+isConvertEncoding=0
 
 
 
@@ -307,20 +309,30 @@ expandFile()
   fi
                                         # Создаем файл
   if ((isDryRun)); then
-    echo "sed MACROS: \"$srcPath\" -> \"$dstPath\""
+    if ((isConvertEncoding)); then
+      $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    else
+      $runCmd cat "$srcPath"
+    fi
+    echo "| sed MACROS: -> \"$dstPath\""
     echo "  \$(moduleName)    : $moduleName"
     echo "  \$(moduleVersion) : $moduleVersion"
     echo "  \$(svnModuleRoot) : $svnModuleRoot"
     echo "  \$(svnInitialPath): $svnInitialPath"
     echo "  \$sedOption[${#sedOption[@]}]    :" "${sedOption[@]}"
   else
-    sed \
+    if ((isConvertEncoding)); then
+      iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    else
+      cat "$srcPath"
+    fi \
+    | sed \
       -e "s/\$(moduleName)/$moduleName/g" \
       -e "s/\$(moduleVersion)/$moduleVersion/g" \
       -e "s|\$(svnModuleRoot)|$svnModuleRoot|g" \
       -e "s|\$(svnInitialPath)|$svnInitialPath|g" \
       "${sedOption[@]}"  \
-      "$srcPath" > "$dstPath"
+      > "$dstPath"
   fi
 }
 
@@ -425,34 +437,44 @@ patchFile()
       elif (( patchRevision == 718 )); then
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
+        local catCmd
+        if (( isConvertEncoding )); then
+          catCmd="iconv -f utf-8 -t $moduleGendocEncoding"
+        else
+          catCmd="cat"
+        fi
+        catCmd="$catCmd $patchDir/$patchFile"
+        if (( isDryRun )); then
+          echo -n $catCmd "| "
+          catCmd=":"
+        fi
         # Used "-d" option to exclude error
         # "Invalid file name ../DB/Makefile -- skipping patch"
         # in case root directory ".." and when using MSYS2
-        if (( patchRevision == 1733 )) || (( patchRevision == 2129 )); then
-          # Игнорируем этот патч в случае неудачи
-          $runCmd patch                     \
-            $patchOption                    \
-            -d "$rootDir" \
-            -i "$patchDir/$patchFile"       \
-            -r "$tmpFile"                   \
-            "$baseFile" \
-            | gawk '
-{
-  if ( index( $0, "FAILED") == 0 \
-    && index( $0, "Skipping patch") == 0 \
-    && index( $0, "saving rejects") == 0) {
-    print;
-  }
-}'
-        else
-          $runCmd patch                     \
-            $patchOption                    \
-            -d "$rootDir" \
-            -i "$patchDir/$patchFile"       \
-            -r "$baseFile.$patchRevision.rej" \
-            "$baseFile" \
-          || logError "error patch: $dstFile, $patchFile"
-        fi
+        $catCmd \
+          | if (( patchRevision == 1733 || patchRevision == 2129 )); then
+            # Игнорируем этот патч в случае неудачи
+            $runCmd patch                     \
+              $patchOption                    \
+              -d "$rootDir" \
+              -r "$tmpFile"                   \
+              "$baseFile" \
+              | gawk '
+  {
+    if ( index( $0, "FAILED") == 0 \
+      && index( $0, "Skipping patch") == 0 \
+      && index( $0, "saving rejects") == 0) {
+      print;
+    }
+  }'
+          else
+            $runCmd patch                     \
+              $patchOption                    \
+              -d "$rootDir" \
+              -r "$baseFile.$patchRevision.rej" \
+              "$baseFile" \
+            || logError "error patch: $dstFile, $patchFile"
+          fi
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
           $runCmd unix2dos "$dstFile" 2>/dev/null
         fi
@@ -529,6 +551,11 @@ updateModule()
   if [[ -n "$svnModuleRoot" ]]; then
     isUseSubversion=1
   fi
+
+  # Encoding of module's documentation
+  getModuleGendocEncoding "$rootDir"
+  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+
                                         # Ветки .svn игнорируются для удобства
                                         # тестирования ( запуск на текущей
                                         # версии шаблона без выполнения
@@ -580,7 +607,16 @@ updateModule()
       elif ((isExpand)) && ! [[ -f "$dstPath" ]] ; then
         expandFile "$file" "$dstPath" "$srcPath" "$isUnixFormat"
       elif ((isCopyFile)) || ! [[ -f "$dstPath" ]] ; then
-        $runCmd cp "$srcPath" "$dstPath"
+        if ((isConvertEncoding)); then
+          if ((isDryRun)); then
+            echo iconv -f "utf-8" -t "$moduleGendocEncoding" \
+              "$srcPath" \> "$dstPath"
+          else
+            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath" > "$dstPath"
+          fi
+        else
+          $runCmd cp "$srcPath" "$dstPath"
+        fi
       else
         if [[ -n "$fromRevision" ]] && [[ -d "$patchConfigDir/$dstFile" ]]; then
           patchFile "$file" "$dstPath" "$patchConfigDir/$dstFile" \
