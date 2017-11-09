@@ -17,7 +17,7 @@ create table
   , constraint cmn_database_config_chk_is_pro check
     (is_production in ( 0, 1))
   , constraint cmn_database_config_chk_not_fl check
-    (notify_flag in ( 0, 1))
+    (test_notify_flag in ( 0, 1))
   , constraint cmn_database_config_chk_if_def check
     (default_flag in ( 0, 1))
 )
