@@ -328,18 +328,6 @@ make test TEST_USERID=???/???@???
 
 
 
-group: Удаление модуля из БД
-
-Команда для удаления модуля из БД:
-
-(code)
-
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end)
-
-
-
 group: Отмена установки
 
 Для отмены установки с сохранением настроечных файлов в корневом каталоге
