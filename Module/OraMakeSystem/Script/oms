@@ -42,11 +42,11 @@ OMS_VERSION=2.0.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25170234 $'
+fileRevisionValue='$Revision:: 25175881 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2017-11-09 10:54:41 +0300 #$'
+fileChangeDateValue='$Date:: 2017-11-13 09:01:33 +0300 #$'
 
 
 
@@ -1258,8 +1258,15 @@ exec_set-version()
       "$dstFile" \
       || exitError "error on set version in map file: '$dstFile'"
     dstFile="$rootDir/DB/OmsModule/NaturalDocs/Menu.txt"
+    local versionExpr="s|^SubTitle:.*|SubTitle: Версия $moduleVersion|"
+    getModuleGendocEncoding "$rootDir"
+    if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+      versionExpr=$(
+        iconv -f "utf-8" -t "$moduleGendocEncoding" <<<$versionExpr
+      )
+    fi
     $runCmd sed --in-place \
-      -e "s|^SubTitle:.*|SubTitle: Версия $moduleVersion|" \
+      -e "$versionExpr" \
       "$dstFile" \
       || exitError \
         "error on set version in SubTitle of documentation menu: '$dstFile'"
