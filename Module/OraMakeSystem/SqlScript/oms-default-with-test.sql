@@ -1,16 +1,16 @@
---script: oms-default-with-test.sql
---Устанавливает значение по умолчанию для макропеременной SQL*Plus с учетом
---типа БД ( промышленная или тестовая).
+-- script: oms-default-with-test.sql
+-- Устанавливает значение по умолчанию для макропеременной SQL*Plus с учетом
+-- типа БД ( промышленная или тестовая).
 --
---Параметры:
---varName                     - имя макропеременной
---prodDefaultValue            - значение по умолчанию для промышленной БД
---testDefaultValue            - значение по умолчанию для тестовой БД
---...                         - дополнительные параметры, которые можно
+-- Параметры:
+-- varName                    - имя макропеременной
+-- prodDefaultValue           - значение по умолчанию для промышленной БД
+-- testDefaultValue           - значение по умолчанию для тестовой БД
+-- ...                        - дополнительные параметры, которые можно
 --                              использовать в defaultValue с помощью ссылок
 --                              вида $(3),$(4),...,$(7)
 --
---Замечания:
+-- Замечания:
 --  - прикладной скрипт, предназначен для вызова из пользовательских скриптов;
 --  - тип БД ( промышленная или тестовая) определяется на основе результата
 --    выполнения функции pkg_Common.IsProduction ( 1 промышленная, иначе
@@ -30,28 +30,26 @@
 --
 --
 --
---Примеры:
+-- Примеры:
 --  - установка строкового значения
 --
---(code)
+-- (code)
 --
---@oms-default-with-test.sql sourceDbLink Nic NicT
+-- @oms-default-with-test.sql sourceDbLink Nic NicT
 --
---(end)
+-- (end)
 --
 --  - установка значения с использованием SQL-выражения
 --
---(code)
+-- (code)
 --
---@oms-default-with-test.sql sourceDbLink "' || case pkg_Common.GetInstanceName when 'ProdDb' then 'Prod' else 'Test' end || '" TestDbLink
+-- @oms-default-with-test.sql sourceDbLink "' || case pkg_Common.GetInstanceName when 'ProdDb' then 'Prod' else 'Test' end || '" TestDbLink
 --
---(end)
+-- (end)
 --
 
-                                        --Параметры передаются неявно, т.к.
-                                        --при вызове с помощью "@@" может
-                                        --возникать ошибка при определенных
-                                        --значениях параметров
+-- Parameters are passed implicitly, because When called with "@@", an error
+-- may occur with certain parameter values
 define 4 = "&3"
 define 3 = "&2"
 define 2 = "' ||-

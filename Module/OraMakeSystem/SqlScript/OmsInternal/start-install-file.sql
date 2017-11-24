@@ -64,8 +64,9 @@ end;
 exception when others then
   raise_application_error(
     -20001
-    , 'OMS: Ошибка при сохранении информации о начале установки файла в БД'
-      || ' ( скрипт OmsInternal/start-install-file.sql).'
+    , 'OMS: Error while saving information about beginning of installation'
+      || ' of file in DB'
+      || ' ( script OmsInternal/start-install-file.sql).'
     , true
   );
 end;

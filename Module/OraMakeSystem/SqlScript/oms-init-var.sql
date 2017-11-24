@@ -37,14 +37,15 @@
 --    стандартной установке Cygwin) в переменную окружения SQLPATH;
 --
 
--- Путь к собственным скриптам в случае установки по-умолчанию Cygwin и OMS
+-- Path to OMS scripts in the case of the default installation of Cygwin and
+-- OMS
 define OMS_SCRIPT_DIR = "C:/cygwin/usr/local/share/oms/SqlScript"
 
--- В качестве временного каталога используется /tmp из Cygwin, однако не
--- добавляется уникальный для каждой сессии элемент
+-- /tmp from Cygwin is used as the temporary directory, but the element unique
+-- for each session is not added
 define OMS_TEMP_FILE_PREFIX = "C:/cygwin/tmp/oms.sqltmp"
 
--- Определяем и очищаем значения аргументов запуска скриптов ( используется в
+-- Define and clear the values of arguments for starting scripts (used in
 -- oms-run.sql)
 define 1 = ""
 define 2 = ""
@@ -58,29 +59,28 @@ define 9 = ""
 define 10 = ""
 
 
--- Макропеременные с параметрами прикладных скриптов
+-- Macro variables with application script parameters
 define OMS_RESUME_BATCH_SECOND = ""
 define OMS_STOP_BATCH_SECOND = ""
 
 
--- Общие параметры
+-- Common parameters
 var oms_debug_level number
 
--- Список значений элементов массива fileExtensionList с разделителем элементов
--- запятая
+-- List of values of the elements of the array fileExtensionList with a comma
+-- delimiter
 var oms_file_extension_list varchar2(1000)
 
 var oms_initial_svn_path varchar2(1000)
 
--- Путь к каталогу с собственными SQL-скриптами OMS ( идентично
--- макропеременной OMS_SCRIPT_DIR)
+-- Path to OMS scripts (identical to the macro variable OMS_SCRIPT_DIR)
 var oms_script_dir varchar2(1000)
 
 var oms_svn_root varchar2(1000)
 
 
 
--- Параметры установки
+-- Installation parameters
 var oms_action_goal_list varchar2(1000)
 var oms_action_option_list varchar2(4000)
 var oms_file_module_initial_svn_pa varchar2(1000)
@@ -99,12 +99,12 @@ var oms_process_start_time varchar2(50)
 var oms_svn_file_path varchar2(255)
 var oms_svn_version_info varchar2(50)
 
--- Исходный файл для установки ( путь относительно каталога DB либо SqlScript
--- для SQL-скриптов OMS)
+-- The source file for installation (path relative to the DB directory or
+-- SqlScript for OMS SQL scripts)
 var oms_source_file varchar2(1000)
 
 
--- Переменные скрипта oms-run.sql
+-- oms-run.sql script variables
 var oms_file_mask varchar2(4000)
 var oms_run_file_stack varchar2(4000)
 var oms_skip_file_mask varchar2(3999)

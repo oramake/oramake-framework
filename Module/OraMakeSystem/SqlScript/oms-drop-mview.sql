@@ -1,12 +1,13 @@
---script: oms-drop-mview.sql
---Удаляет материализованное представление
+-- script: oms-drop-mview.sql
+-- Удаляет материализованное представление
 --
---Параметры:
---mviewName                    - имя материализованного представления
+-- Параметры:
+-- mviewName                  - имя материализованного представления
 --
---Замечания:
---  - если материализованное представление создавалась с опцией "on prebuilt table",
---    то после удаления материализованного представления удаляется также одноименная таблица;
+-- Замечания:
+--  - если материализованное представление создавалась с опцией "on prebuilt
+--    table", то после удаления материализованного представления удаляется
+--    также одноименная таблица;
 --
 
 define mviewName = &1
@@ -19,18 +20,18 @@ declare
 begin
   execute immediate 'drop materialized view ' || mviewName;
   dbms_output.put_line( 'Materialized view ' || mviewName || ' dropped' );
-  
-  -- поиск одноименной таблицы 
+
+  -- search for the same name table
   select nvl(max(table_name),'')
   into tablename
   from user_tables
   where upper(table_name) = upper(mviewName);
-  
-  -- если одноименная таблица найдена, то удалить её 
-  if upper(tablename) = upper(mviewName) Then      
+
+  -- if the table of the same name is found, then delete it
+  if upper(tablename) = upper(mviewName) Then
     execute immediate 'drop table '||tablename;
       dbms_output.put_line( 'Table ' || tablename || ' dropped' );
-  end If;  
+  end If;
 
 exception
   when others

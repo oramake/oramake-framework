@@ -1,9 +1,9 @@
---script: OmsInternal/set-environment.sql
---Выполняет наcтройку среды выполнения в SQL*Plus.
---Выполняется автоматически при загрузке файла через <oms-load> с помощью
---SQL*Plus ( после подключения к БД до выполнения загружаемого файла).
+-- script: OmsInternal/set-environment.sql
+-- Выполняет наcтройку среды выполнения в SQL*Plus.
+-- Выполняется автоматически при загрузке файла через <oms-load> с помощью
+-- SQL*Plus ( после подключения к БД до выполнения загружаемого файла).
 --
---Замечания:
+-- Замечания:
 --  - внутренний скрипт, используется внутри OMS;
 --  - для уменьшения вероятности переноса строк и улучшения читабельности вывода
 --    рекомендуется устанавливать ширину буфера консоли, в которой запускается
@@ -11,57 +11,60 @@
 --    4000 символов);
 --
 
---Отключаем автоматический commit после каждого выполнения SQL или PL/SQL.
+-- Disable automatic commit after each SQL or PL / SQL execution
 set autocommit off
 
---Отключаем автоматический вывод значений bind-переменных.
+-- Disable automatic output of values of bind variables
 set autoprint off
 
---Устанавливаем разделитель колонок при выводе.
+-- Set the column separator in the output
 set colsep " "
 
---Включает подстановку переменных в команды ( символ подстановки '&').
---Подстановка отключается в oms-load для определенных типов файлов
---( в связи с возможными ошибками при загрузке исходников с Java).
+-- Enables the substitution of variables in commands ( the substitution symbol
+-- '&').
+-- The substitution is disabled in oms-load for certain file types
+-- ( due to possible errors when loading sources from Java).
 set define on
 
---Отключаем показ команд перед выполнением.
+-- Disable showing commands before execution
 set echo off
 
---Включаем показ заголовка ( названия колонок) при выборке.
+-- Enables the display of title (the name of the columns)
 set heading on
 
---Максимальное число байт для показа CLOB, LONG, BLOB, XMLType.
+-- Maximum number of bytes to display CLOB, LONG, BLOB, XMLType
 set long 10000
 
---Устанавливаем максимальную длину строки чтобы избежать переноса.
+-- Set the maximum length of line (to avoid splitting)
 set linesize 4000
 
---Число байт для выборки из LOB в одной итерации.
+-- Number of bytes to retrieve from the LOB in one iteration
 set longchunksize 10000
 
---Устанавливаем максимальное число строк в странице ( чтобы избежать разбиения).
+-- Set the maximum number of lines per page (to avoid splitting)
 set pagesize 9999
 
---Включаем показ вывода, выполняемого через dbms_output с максимальным размером.
+-- We turn on display of the output executed through dbms_output with the
+-- maximum size
 set serveroutput on size 1000000
 
---Использовать пробелы вместо табуляции при форматировании вывода.
+-- Use spaces instead of tabs when formatting output
 set tab off
 
---Удаление пробелов в конце строки.
+-- Removing spaces at the end of a line
 set trimspool on
 
---Не показывать текст SQL до и после подстановки значений переменных.
+-- Do not show the text of SQL before and after substituting the values of
+-- variables
 set verify off
 
 
 
---Временно отключаем вывод перед выполнением PL/SQL.
+-- Temporarily disable output before executing PL / SQL
 set termout off
 set feedback off
 
---Разрешаем вывод на консоль из Java.
+-- Разрешаем вывод на консоль из Java.
 begin
   execute immediate 'begin dbms_java.set_output( 1000000); end;';
 exception when others then
@@ -69,8 +72,8 @@ exception when others then
 end;
 /
 
---Восстанавливаем вывод
+-- Enable output
 set termout on
 
---Включаем показ числа выбранных записей.
+-- Enable showing the number of selected records
 set feedback on
