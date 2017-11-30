@@ -56,9 +56,9 @@ begin
       'ProdDefaultDBConfig' as instance_name
       , 1 as is_production
       , 0 as test_notify_flag
-      , 'rusfinance.ru' as sender_domain
-      , 'smtpmail.rusfinance.ru' as smtp_server
-      , 'alertIT@rusfinance.ru' as notify_email
+      , null as sender_domain
+      , null as smtp_server
+      , null as notify_email
       , null as ip_address_production
       , 1 as default_flag
     from dual
@@ -67,9 +67,9 @@ begin
       'TestDefaultDBConfig' as instance_name
       , 0 as is_production
       , 0 as test_notify_flag
-      , 'rusfinance.ru' as sender_domain
-      , 'smtpmail.rusfinance.ru' as smtp_server
-      , 'alertItTest@rusfinance.ru' as notify_email
+      , null as sender_domain
+      , null as smtp_server
+      , null as notify_email
       , null as ip_address_production
       , 1 as default_flag
     from dual
