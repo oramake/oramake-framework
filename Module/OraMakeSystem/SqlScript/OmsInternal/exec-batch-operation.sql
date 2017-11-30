@@ -1,7 +1,7 @@
 -- script: OmsInternal/exec-batch-operation.sql
 -- Выполняет операцию над пакетными заданиями, реализованными с помощью модуля
 -- Scheduler.
--- 
+--
 -- Параметры:
 -- operationCode              - код операции ( возможные коды перечислены ниже)
 -- patternList                - список масок пакетных заданий ( формат:
@@ -52,7 +52,8 @@ var oms_stopSessionUidList varchar2(4000)
 
 set feedback off
 
--- Определяем поле с именем типа батча для сравнения с маской
+-- Define a field with a name of the type of a batch for comparison with a
+-- mask
 define oms_batchTypeNameColumn = ""
 
 column oms_batch_type_name_column new_value oms_batchTypeNameColumn noprint
@@ -94,39 +95,39 @@ end;
 
 declare
 
-  -- Допустимые коды операций
+  -- Valid operation codes
   Activate_Code constant varchar2(10)       := 'ACT';
   Deactivate_Code constant varchar2(10)     := 'DEACT';
   Reactivate_Code constant varchar2(10)     := 'REACT';
   Resume_Code constant varchar2(10)         := 'RESUME';
   Stop_Code constant varchar2(10)           := 'STOP';
 
-  -- Таймаут ( в днях) для повторной активации
+  -- Timeout (in days) for reactivation
   reactivateTimeout constant number := 1;
 
-  -- Id текущего оператора
+  -- Id of the current operator
   operatorId constant integer := pkg_Operator.GetCurrentUserId();
 
-  -- Код выполняемой операции 
+  -- Code of the operation to be performed
   mainOperationCode constant varchar2(10) := :oms_operationCode;
 
-  -- Список масок
+  -- List of masks
   patternList constant varchar2(1000) := :oms_patternList;
 
-  -- Список Id обработанных пакетных заданий ( через запятую)
+  -- List of processed batch Id (separated by commas)
   resumeBatchIdList varchar2(4000);
 
-  -- Список сессий, завершения которых нужно ожидать по операции STOP
-  -- ( через запятую, "<sid>:<serial#>")
+  -- List of sessions to wait for completion in the case of a STOP operation
+  -- (separated by commas, "<sid>:<serial#>")
   stopSessionUidList varchar2(4000);
 
 
 
   /*
-    Возвращает название выполняемой операции ( с большой буквы).
+    Returns the name of the operation to be performed (with a capital letter).
 
-    Параметры:
-    operationCode             - код операции
+    Parameters:
+    operationCode             - operation code
   */
   function getOperationName(
     operationCode varchar2
@@ -134,7 +135,7 @@ declare
   return varchar2
   is
 
-    -- Название операции
+    -- Operation name
     operationName varchar2(30);
 
   begin
@@ -155,7 +156,7 @@ declare
     if operationName is null then
       raise_application_error(
         pkg_Error.IllegalArgument
-        , 'Неизвестный код типа операции ('
+        , 'Unknown operation code ('
           || ' operationCode="' || operationCode || '"'
           || ').'
       );
@@ -166,23 +167,23 @@ declare
 
 
   /*
-    Выполняет обработку подходящих пакетных заданий.
+    Performs processing of suitable batchs.
 
-    Параметры:
-    operationCode             - код операции
+    Parameters:
+    operationCode             - operation code
 
-    Возврат:
-    число обработанных пакетных заданий
+    Return:
+    number of batchs processed
 
-    Замечания:
-    - заполняется resumeBatchIdList, а также stopSessionUidList при операции
-      STOP;
+    Remarks:
+    - resumeBatchIdList is filled in, as well as stopSessionUidList in the
+      case of STOP operation;
   */
   function processBatch( operationCode varchar2)
   return pls_integer
   is
 
-    -- Основная операция над пакетными заданиями
+    -- Basic operation of batchs
     baseOperationCode varchar2(10) :=
       case operationCode
         when Resume_Code  then Reactivate_Code
@@ -191,7 +192,7 @@ declare
       end
     ;
 
-    -- Батчи для выполнения операции
+    -- Batchs for the operation
     cursor curBatch is
 select
   f.*
@@ -214,7 +215,7 @@ from
   (
   select
     e.*
-      -- Необходимость обработки батча
+      -- Need to process a batch?
     , case
         when
           baseOperationCode = Activate_Code
@@ -233,8 +234,8 @@ from
                     inner join sch_log lg
                       on lg.log_id = brl.log_id
                   where
-                    -- По батчу выполнялись действия текущим оператором за
-                    -- последний период
+                    -- Current operator performed actions on the batch during
+                    -- the last period
                     brl.batch_id = e.batch_id
                     and brl.message_type_code
                       = pkg_Scheduler.BManage_MessageTypeCode
@@ -254,7 +255,7 @@ from
       , d.oracle_job_id
     from
       (
-      -- Разбор списка масок
+      -- Parsing a list of masks
       select
         b.order_number
         , case when b.delim_pos > b.begin_pos then
@@ -336,10 +337,10 @@ order by
   1, 2
 ;
 
-    -- Число проверенных батчей, подходящих под маску
+    -- Number of checked batches, satisfying the mask
     nChecked pls_integer := 0;
 
-    -- Число обработанных батчей
+    -- Number of processed batches
     nProcessed pls_integer := 0;
 
   --processBatch
@@ -352,27 +353,27 @@ order by
             getOperationName( baseOperationCode) || ' batch:'
           );
         end if;
-        dbms_output.put_line( 
+        dbms_output.put_line(
           rpad( rec.batch_short_name, 30)
           || ' ( batch_id =' || lpad( rec.batch_id, 5)
           || ', job =' || lpad( rec.oracle_job_id, 6)
           || ')'
         );
-        case 
+        case
           when baseOperationCode in ( Activate_Code, Reactivate_Code) then
-            pkg_Scheduler.ActivateBatch( 
+            pkg_Scheduler.ActivateBatch(
               batchId       => rec.batch_id
               , operatorId  => operatorId
             );
           when baseOperationCode = Deactivate_Code then
-            pkg_Scheduler.DeactivateBatch( 
+            pkg_Scheduler.DeactivateBatch(
               batchId       => rec.batch_id
               , operatorId  => operatorId
             );
           else
             raise_application_error(
               pkg_Error.IllegalArgument
-              , 'Неизвестный код базовой операции ('
+              , 'Unknown code of base operation ('
                 || ' baseOperationCode="' || baseOperationCode || '"'
                 || ').'
             );
@@ -421,7 +422,7 @@ order by
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , 'Ошибка при обработке пакетных заданий ('
+      , 'Error processing batches ('
         || ' operationCode="' || operationCode || '"'
         || ').'
       , true
@@ -448,7 +449,7 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , 'Ошибка при выполнении операции над пакетными заданиями ('
+    , 'Error while executing operation on batches ('
       || ' mainOperationCode="' || mainOperationCode || '"'
       || ', patternList="' || patternList || '"'
       || ').'
@@ -459,37 +460,37 @@ end;
 
 
 --
--- Ожидание вынесено в отдельный PL/SQL-блок, чтобы до его начала в консоли
--- был выведен список обработанных пакетных заданий.
+-- The wait is placed in a separate PL / SQL block, so that before it starts,
+-- the console displays a list of processed batches
 --
 
 declare
 
-  -- Максимальное время ожидания запуска/остановки сессий пакетных заданий
+  -- Maximum waiting time for starting / stopping batches
   batchWaitSecond integer := coalesce( :oms_batchWaitSecond, 60);
 
-  -- Список Id обработанных пакетных заданий ( через запятую)
+  -- Id list of processed batches (separated by commas)
   resumeBatchIdList varchar2(4000) := :oms_resumeBatchIdList;
 
-  -- Список сессий, завершения которых нужно ожидать по операции STOP
-  -- ( через запятую, "<sid>:<serial#>")
+  -- List of sessions for waiting of terminate during STOP operation
+  -- (comma separated, "<sid>:<serial #>")
   stopSessionUidList varchar2(4000) := :oms_stopSessionUidList;
 
 
 
   /*
-    Ожидает запуска сессий пакетных заданий из списка resumeBatchIdList.
+    Waiting for batches to start from the list resumeBatchIdList.
   */
   procedure waitBatchStart
   is
 
-    -- Время завершения ожидания
+    -- Time to end waiting
     limitDate date := sysdate + batchWaitSecond / 86400;
 
-    -- Число сессий пакетных заданий 
+    -- Number of sessions of batches
     nSession integer;
 
-    -- Число ожидающих запуска пакетных заданий
+    -- Number of batches waiting to be launched
     nWaitStart integer;
 
   begin
@@ -515,8 +516,8 @@ declare
       ;
       exit when nWaitStart = 0 or sysdate >= limitDate;
 
-      -- Используем динамически, чтобы обеспечить возможность выполнения
-      -- других операций ( кроме STOP) при отсутствии прав на dbms_lock
+      -- We use it dynamically to allow execution of other operations (except
+      -- STOP) when there are no rights to dbms_lock
       execute immediate 'begin dbms_lock.sleep( 1); end;';
     end loop;
     if nWaitStart > 0 then
@@ -533,7 +534,7 @@ declare
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , 'Ошибка при ожидании запуска пакетных заданий ('
+      , 'Error on waiting to start batches ('
         || ' resumeBatchIdList="' || stopSessionUidList || '"'
         || ').'
       , true
@@ -543,18 +544,18 @@ declare
 
 
   /*
-    Ожидает завершения сессий, перечисленных в списке stopSessionUidList.
+    Pending the sessions listed in stopSessionUidList.
   */
   procedure waitSessionStop
   is
 
-    -- Время завершения ожидания
+    -- Time to end waiting
     limitDate date := sysdate + batchWaitSecond / 86400;
 
-    -- Число сессий пакетных заданий 
+    -- Number of sessions of batches
     nSession integer := 0;
 
-    -- Число незавершившихся сессий
+    -- Number of uncompleted sessions
     nWaitStop integer := 0;
 
   begin
@@ -579,8 +580,8 @@ declare
       ;
       exit when nWaitStop = 0 or sysdate >= limitDate;
 
-      -- Используем динамически, чтобы обеспечить возможность выполнения
-      -- других операций ( кроме STOP) при отсутствии прав на dbms_lock
+      -- We use it dynamically to allow execution of other operations (except
+      -- STOP) when there are no rights to dbms_lock
       execute immediate 'begin dbms_lock.sleep( 1); end;';
     end loop;
 
@@ -598,7 +599,7 @@ declare
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , 'Ошибка при ожидании завершения сессий ('
+      , 'Error waiting to start batches ('
         || ' stopSessionUidList="' || stopSessionUidList || '"'
         || ').'
       , true
@@ -615,7 +616,7 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , 'Ошибка при ожидании запуска или завершения пакетных заданий ('
+    , 'Error on waiting to start or finish batches ('
       || ' batchWaitSecond=' || batchWaitSecond
       || ').'
     , true

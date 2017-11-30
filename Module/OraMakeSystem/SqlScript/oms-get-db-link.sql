@@ -1,25 +1,25 @@
---script: oms-get-db-link.sql
---Определяет имя доступного для пользователя линка к БД из указанного списка и
---использует его в качестве значения по умолчанию для макропеременной.
+-- script: oms-get-db-link.sql
+-- Определяет имя доступного для пользователя линка к БД из указанного списка и
+-- использует его в качестве значения по умолчанию для макропеременной.
 --
---Приоритет для выбора в случае, если найдено несколько подходящих
---линков:
+-- Приоритет для выбора в случае, если найдено несколько подходящих
+-- линков:
 --  - тип линка ( личные, затем публичные);
 --  - точность совпадения ( по имени, затем по базовому ( до разделяющей точки)
 --    имени);
 --  - позиция в списке ( первые имеют больший приоритет)
 --
---Параметры:
---varName                     - имя макропеременной, в которую сохраняется имя
+-- Параметры:
+-- varName                    - имя макропеременной, в которую сохраняется имя
 --                              линка в качестве значения по умолчанию
---prodLinkList                - список имен линков для промышленной БД ( через
+-- prodLinkList               - список имен линков для промышленной БД ( через
 --                              запятую, без учета регистра, пробелы
 --                              игнорируются)
---testLinkList                - список имен линков для тестовой БД ( через
+-- testLinkList               - список имен линков для тестовой БД ( через
 --                              запятую, без учета регистра, пробелы
 --                              игнорируются)
 --
---Замечания:
+-- Замечания:
 --  - прикладной скрипт, предназначен для вызова из пользовательских скриптов;
 --  - тип БД ( промышленная или тестовая) определяется на основе результата
 --    выполнения функции pkg_Common.IsProduction ( 1 промышленная, иначе
@@ -37,23 +37,22 @@
 --
 --
 --
---Примеры:
+-- Примеры:
 --  - определение линка к БД
 --
---(code)
+-- (code)
 --
---@oms-get-db-link.sql dbLink ProdDb TestDb
+-- @oms-get-db-link.sql dbLink ProdDb TestDb
 --
---(end)
+-- (end)
 --
 
 define oms_gdl_varName = "&1"
 define oms_gdl_prodLinkList = "&2"
 define oms_gdl_testLinkList = "&3"
 
-                                       --Используется bind-переменная вместо
-                                       --макропеременной для уменьшения числа
-                                       --разборов используемого далее SQL
+-- A bind variable is used instead of a macro variable to reduce the number of
+-- parsing of the SQL used later
 var oms_gdl_link_list varchar2(1024)
 
 set feedback off
@@ -79,10 +78,11 @@ end;
 
 set feedback on
 
-                                        --Формируем параметры для oms-default
+-- Prepare parameters for oms-default
 define 1 = "&oms_gdl_varName"
-                                        --SQL поделен на части в связи
-                                        --ограничением на длину макропеременной
+
+-- SQL is divided into parts due to the restriction on the length of the macro
+-- variable
 define 2 = "' || ( -
 select-
   b.db_link-
@@ -130,15 +130,11 @@ order by-
   , a.base_name_pos nulls last-
 "
 
-                                        --Параметры передаются неявно, т.к.
-                                        --при вызове с помощью "@@" может
-                                        --возникать ошибка при определенных
-                                        --значениях параметров
+-- Parameters are passed implicitly, because When called with "@@", an error
+-- may occur with certain parameter values
 @@oms-default.sql
 
-                                        --Проверяем итоговое значение
-                                        --макропеременной
-
+-- Check the final value of the macro variable
 define oms_temp_file_name = "&OMS_TEMP_FILE_PREFIX..oms-get-db-link"
 
 set termout off
@@ -151,7 +147,7 @@ prompt  begin
 prompt    if dbLink is null then
 prompt      raise_application_error(
 prompt        -20185
-prompt        , 'Не задано значение макропеременной ' || varName || '.'
+prompt        , 'Value of the macro variable "' || varName || '" is not set.'
 prompt      ); ;
 prompt    else
 prompt      select count(*) into isFound from all_db_links t
@@ -159,7 +155,7 @@ prompt      where upper( t.db_link) = upper( dbLink); ;
 prompt      if isFound = 0 then
 prompt        raise_application_error(
 prompt          -20185
-prompt          , 'Линк "' || dbLink || '" не найден.'
+prompt          , 'Database link "' || dbLink || '" not found.'
 prompt        ); ;
 prompt      end if; ;
 prompt    end if; ;

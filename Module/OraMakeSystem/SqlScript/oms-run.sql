@@ -1,29 +1,29 @@
---script: oms-run.sql
---Выполняет SQL-скрипт.
---Предназначен для использования вместо стандартной команды SQL*Plus "@@" и
---работает аналогично этой команде с дополнительным выводом информации о
---выполняемом скрипте, а также игнорированием выполнения скриптов, подпадающих
---под значение масок игнорируемых файлов <SKIP_FILE_MASK> и не подпадающих под
---<FILE_MASK> в случае задания.
+-- script: oms-run.sql
+-- Выполняет SQL-скрипт.
+-- Предназначен для использования вместо стандартной команды SQL*Plus "@@" и
+-- работает аналогично этой команде с дополнительным выводом информации о
+-- выполняемом скрипте, а также игнорированием выполнения скриптов, подпадающих
+-- под значение масок игнорируемых файлов <SKIP_FILE_MASK> и не подпадающих под
+-- <FILE_MASK> в случае задания.
 --
---Информация о выполняемом скрипте выводится в виде строки
---"<scriptPath>: ...", где scriptPath - путь к выполняемому скрипту
---относительно текущего каталога ( каталог DB). Если в присутствует только имя
---файла, то это означает, что скрипт находится в текущем каталоге ( DB), либо
---в каталоге поиска скриптов по умолчанию ( переменная окружения SQLPATH,
---используется для OMS-скриптов).  Если скрипт не выполняется в связи со
---значением <SKIP_FILE_MASK>, то ничего не выводится ( точнее, выводится
---пустая строка, которая не попадает в лог).
+-- Информация о выполняемом скрипте выводится в виде строки
+-- "<scriptPath>: ...", где scriptPath - путь к выполняемому скрипту
+-- относительно текущего каталога ( каталог DB). Если в присутствует только имя
+-- файла, то это означает, что скрипт находится в текущем каталоге ( DB), либо
+-- в каталоге поиска скриптов по умолчанию ( переменная окружения SQLPATH,
+-- используется для OMS-скриптов).  Если скрипт не выполняется в связи со
+-- значением <SKIP_FILE_MASK>, то ничего не выводится ( точнее, выводится
+-- пустая строка, которая не попадает в лог).
 --
 --
---Параметры:
---scriptFile                  - скрипт для выполнения ( без пути, если скрипт
+-- Параметры:
+-- scriptFile                 - скрипт для выполнения ( без пути, если скрипт
 --                              расположен в том же каталоге, что и текущий
 --                              файл, либо с путем относительно текущего
 --                              каталога SQL*PLus ( DB))
---...                         - параметры скрипта ( максимум 9 параметров)
+-- ...                        - параметры скрипта ( максимум 9 параметров)
 --
---Замечания:
+-- Замечания:
 --  - прикладной скрипт, предназначен для вызова из пользовательских скриптов;
 --  - начальные и конечные пробелы в параметре scriptFile игнорируются, в
 --    случае указания пустого значения никакие действия не выполняются
@@ -51,41 +51,39 @@
 --    при этом в соответствующих переменных должны быть указаны параметры
 --    выполняемой установки ( подробнее см. <oms-load>);
 --
---Пример: ( шаблонный файл DB/Install/Schema/N.N.N/run.sql):
---в основном файле:
+-- Пример: ( шаблонный файл DB/Install/Schema/N.N.N/run.sql):
+-- в основном файле:
 --
---(code)
+-- (code)
 --
---@oms-set-indexTablespace.sql
+-- @oms-set-indexTablespace.sql
 --
---@@test_table.sql
+-- @@test_table.sql
 --
---@Install/Schema/Last/new_table.tab
---@Install/Schema/Last/new_table.con
+-- @Install/Schema/Last/new_table.tab
+-- @Install/Schema/Last/new_table.con
 --
---@oms-refresh-mview.sql test_mview
+-- @oms-refresh-mview.sql test_mview
 --
---(end)
+-- (end)
 --
---вместо стандартных команд "@@" и "@" используем
---данный скрипт:
+-- вместо стандартных команд "@@" и "@" используем
+-- данный скрипт:
 --
---(code)
+-- (code)
 --
---@oms-set-indexTablespace.sql
+-- @oms-set-indexTablespace.sql
 --
---@oms-run.sql test_table.sql
+-- @oms-run.sql test_table.sql
 --
---@oms-run.sql Install/Schema/Last/new_table.tab
---@oms-run.sql Install/Schema/Last/new_table.con
+-- @oms-run.sql Install/Schema/Last/new_table.tab
+-- @oms-run.sql Install/Schema/Last/new_table.con
 --
---                                      --Добавляем "./", т.к. вызываемый
---                                      --скрипт расположен не в каталоге
---                                      --скрипта, из которого выполняется
---                                      --вызов
---@oms-run.sql ./oms-refresh-mview.sql test_mview
+-- -- Добавляем "./", т.к. вызываемый скрипт расположен не в каталоге
+-- -- скрипта, из которого выполняется вызов
+-- @oms-run.sql ./oms-refresh-mview.sql test_mview
 --
---(end)
+-- (end)
 --
 
 define oms_run_script = ""
@@ -105,47 +103,48 @@ end;
 
 declare
 
-  -- Скрипт для выполнения ( mixed путь)
+  -- Script to run ( mixed path)
   scriptFile varchar2( 1000) := trim( replace( :oms_run_script, '\', '/'));
 
-  -- Стек выполняемых файлов
+  -- Stack of running files
   runFileStack varchar2( 4000) := :oms_run_file_stack;
 
-  -- Список SQL-масок файлов ( через запятую)
+  -- List of SQL-masks of files (separated by commas)
   fileMaskList varchar2( 2000) :=
     translate( :oms_file_mask, ' *?', ',%_')
   ;
 
-  -- Список SQL-масок игнорируемых файлов ( через запятую)
+  -- List of SQL masks of ignored files (separated by commas)
   skipMaskList varchar2( 2000) :=
     translate( :oms_skip_file_mask, ' *?', ',%_')
   ;
 
 
-  -- Исходный файл скрипта ( путь относительно каталога DB либо SqlScript
-  -- для SQL-скриптов OMS), если от отличается от scriptFile
+  -- The original script file (the path relative to the DB directory or
+  -- SqlScript for the OMS SQL scripts), if from is different from scriptFile
   scriptSourceFile varchar2( 1000);
 
-  -- Скрипт относится к OMS
+  -- The script refers to OMS
   isOmsScript boolean := false;
 
 
 
   /*
-    Уточняет путь к скрипту для выполнения и определяет его параметры.
+    Specifies the path to the script for execution and defines its parameters.
   */
   procedure FixScriptPath
   is
 
-    -- Начальная позиция пути к текущему выполняемому файлу
+    -- The initial position of the path to the current executable file
     iStart binary_integer;
 
-    -- Позиция разделителя после пути
+    -- Separator position after path
     iEnd binary_integer;
 
   begin
 
-    -- Если не указан путь, то подставляем путь к каталогу загружаемого файла
+    -- If no path is specified, then substitute the path to the directory of
+    -- the executed file
     if instr( scriptFile, '/') = 0 then
       iStart := instr( runFileStack, ',', -1) + 1;
       iEnd := instr( runFileStack, '/', -1);
@@ -166,7 +165,7 @@ declare
       scriptFile := substr( scriptFile, 3);
     end if;
 
-    -- Добавляем стандартное расширение
+    -- Adding a standard extension
     if instr( scriptFile, '.') = 0 then
       scriptFile := scriptFile || '.sql';
     end if;
@@ -175,32 +174,33 @@ declare
 
 
   /*
-    Определяет необходимость выполнения файла с учетом масок файлов (
-    OMS_SKIP_FILE_MASK, OMS_FILE_MASK).
+    Specifies whether to run the file according to the file masks
+    (OMS_SKIP_FILE_MASK, OMS_FILE_MASK).
   */
   function IsAllowRun
   return boolean
   is
 
     /*
-      Определяет соотвествие имени скрипта списку масок
+      Specifies the name of the script to match the list of masks
     */
     function isOfMask(
       maskList varchar2
     )
     return boolean
     is
-      -- Длина списка
+
       listLen binary_integer;
 
-      -- Начальная позиция маски
+      -- The initial position of the mask
       iStart binary_integer;
 
-      -- Позиция разделителя после маски
+      -- The position of the separator after the mask
       iEnd binary_integer;
 
     begin
-      -- Цикл по маскам skipMaskList
+
+      -- Loop through skipMaskList
       iStart := 1;
       listLen := length( maskList);
       while iStart < listLen loop
@@ -232,7 +232,8 @@ declare
 
 
   /*
-    Сохраняет информацию о начале установки вложенного файла.
+    Saves information about the beginning of the installation of the nested
+    file
   */
   procedure SaveNestedFileStart
   is
@@ -245,24 +246,25 @@ declare
 
 
     /*
-      Определяет имя и тип объекта БД, к которому относится файл.
+      Specifies the name and type of the database object to which the file
+      belongs.
     */
     procedure getFileObject
     is
 
-      -- Позиция последнего слэша в пути к скрипту
+      -- The position of the last slash on the path to the script
       lastSlashPos pls_integer;
 
-      -- Позиция последней точки в пути к скрипту
+      -- The position of the last point in the path to the script
       lastPeriodPos pls_integer;
 
-      -- Расширение файла ( последнее, без точки)
+      -- File extension (last, without a period)
       fileExtension varchar2(30);
 
-      -- Текущая позиция для разбора элемента
+      -- The current position for parsing an item
       pos pls_integer;
 
-      -- Позиция за найденным элементом списка
+      -- The position behind the found list item
       endPos pls_integer;
 
 
@@ -274,7 +276,6 @@ declare
         pos1 pls_integer;
         pos2 pls_integer;
 
-      --getNextField
       begin
         if pos >= endPos then
           return null;
@@ -291,7 +292,7 @@ declare
 
 
 
-    --getFileObject
+    -- getFileObject
     begin
       lastSlashPos := instr( scriptFile, '/', -1);
       lastPeriodPos := instr( scriptFile, '.', -1);
@@ -355,8 +356,8 @@ end;
   exception when others then
     raise_application_error(
       -20001
-      , 'OMS: Ошибка при сохранении из oms-run.sql информации о начале'
-        || ' установки вложенного файла.'
+      , 'OMS: Error while saving from oms-run.sql information about beginning'
+        || ' of installation of nested file.'
       , true
     );
   end SaveNestedFileStart;
@@ -373,8 +374,7 @@ begin
       SaveNestedFileStart;
     end if;
   else
-    -- Вызываем ничего не делающий скрипт, чтобы избежать вывода предупреждения
-    -- SQL*Plus
+    -- Calling nothing doing a script to avoid SQL * Plus warnings
     :oms_run_script := :oms_script_dir || '/OmsInternal/nothing.sql';
     :oms_run_info := '';
     :oms_run_file_stack := runFileStack || ',';
@@ -382,7 +382,7 @@ begin
 end;
 /
 
--- Устанавливаем макропеременные
+-- Set the macro variables
 column oms_run_script new_value oms_run_script format A1000 noprint
 column oms_run_info new_value oms_run_info format A1000 noprint
 
@@ -399,7 +399,7 @@ column oms_run_info clear
 set heading on
 set feedback on
 
--- Выполняем сдвиг аргументов
+-- Perform the shift of the arguments
 define 1 = "&2"
 define 2 = "&3"
 define 3 = "&4"
@@ -411,13 +411,13 @@ define 8 = "&9"
 define 9 = "&10"
 define 10 = ""
 
--- Выполняем скрипт
+-- Run the script
 prompt &oms_run_info
 
 @&oms_run_script
 
 
--- Восстанавливаем oms_run_file_stack
+-- Restore oms_run_file_stack
 set feedback off
 
 declare
@@ -425,7 +425,8 @@ declare
 
 
   /*
-    Сохраняет информацию о завершении установки вложенного файла.
+    Saves information about the finishing of the installation of the nested
+    file
   */
   procedure SaveNestedFileFinish is
   begin
@@ -438,8 +439,8 @@ end;
   exception when others then
     raise_application_error(
       -20001
-      , 'OMS: Ошибка при сохранении из oms-run.sql информации о завершении'
-        || ' установки вложенного файла.'
+      , 'OMS: Error while saving from oms-run.sql information about finishing'
+        || ' of installation of nested file.'
       , true
     );
   end;

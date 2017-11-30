@@ -60,7 +60,7 @@ OSTYPE := $(shell echo $$OSTYPE)
 
 # build var: WIN_ROOT
 # Путь к корневому каталогу установки в Windows
-# ( по умолчанию устанавливается в "C:/OraMakeSystem").
+# (по умолчанию устанавливается в "C:/OraMakeSystem").
 # При указании другого каталога в пути следует используется слэш "/" вместо
 # принятого в Windows обратного слэша "\", который пришлось бы экранировать.
 #
@@ -73,7 +73,7 @@ prefix := /usr/local
 
 # build var: FORCE
 # Флаг затирания настроек приложения
-# ( 1 затирать ( удалять), по умолчанию сохранять).
+# (1 затирать (удалять), по умолчанию сохранять).
 #
 # Замечания:
 # - в случае установки для Windows при указании FORCE=1 также будут удален
@@ -87,8 +87,8 @@ shareDir = $(prefix)/share/oms
 # Каталог для настроек
 configDir     = $(prefix)/etc/oms
 
-# Флаг установки в MSYS2 ( Windows)
-# ( 1 да, "" нет)
+# Флаг установки в MSYS2 (Windows)
+# (1 да, "" нет)
 MSYS2_FLAG =
 
 ifeq ($(OSTYPE),msys)
@@ -102,7 +102,11 @@ override prefix := $(WIN_ROOT)/usr/local
 
 # Установка MSYS2
 install-msys2:
-	@if [[ ! -d "$(WIN_ROOT)" ]]; then \
+	@if [[ "$(WIN_ROOT)" == "/" ]]; then \
+		echo -e "Cannot reinstall running programs\n(use \"./make.cmd install ...\" to install OraMakeSystem for Windows from Cygwin terminal)" >&2; \
+		exit 10; \
+	fi; \
+	if [[ ! -d "$(WIN_ROOT)" ]]; then \
 		mkdir "$(WIN_ROOT)"; \
 	fi \
 	&& cd Build/Win32/MSYS2 \
@@ -155,7 +159,11 @@ install-oms: install-oms-msys2
 
 # Удаление файлов OMS, предназначенных только для MSYS2
 uninstall-oms-msys2:
-	-@rm -rf \
+	@if [[ "$(WIN_ROOT)" == "/" ]]; then \
+		echo -e "Cannot uninstall running programs\n(use \"./make.cmd uninstall ...\" to uninstall OraMakeSystem for Windows from Cygwin terminal)" >&2; \
+		exit 10; \
+	fi; \
+	rm -rf \
 		"$(WIN_ROOT)/cmd" \
 		$(WIN_ROOT)/*.cmd
 
@@ -198,12 +206,12 @@ install-oms:
 	&& if [[ -z "$(MSYS2_FLAG)" ]]; then \
 			echo "installed with prefix: $(prefix)" \
 			&& if [[ -z "$(FORCE)" ]]; then \
-					echo "( use \"make install FORCE=1\" to rewrite config files in $(configDir))"; \
+					echo "(use \"make install FORCE=1\" to rewrite config files in $(configDir))"; \
 				fi; \
 		else \
 			echo "installed into: \"$$(cygpath --windows "$(WIN_ROOT)")\"" \
 			&& if [[ -z "$(FORCE)" ]]; then \
-					echo "( use \"make install FORCE=1\" to rewrite config files in \"$$(cygpath --windows "$(configDir)")\")"; \
+					echo "(use \"make install FORCE=1\" to rewrite config files in \"$$(cygpath --windows "$(configDir)")\")"; \
 				fi; \
 		fi
 
@@ -220,7 +228,8 @@ install: install-oms
 # Отменяет установку приложения.
 
 uninstall:
-	-@rm -f \
+	@die() { echo -e "$$1" >&2; exit 10; }; \
+	rm -f \
 		$(prefix)/bin/$(scriptPrefix) \
 		$(prefix)/bin/$(scriptPrefix)-*[^~]; \
 	rm -rf "$(shareDir)"; \
@@ -229,12 +238,12 @@ uninstall:
 			rm -rf "$(configDir)"; \
 		else \
 			echo "OraMakeSystem files deleted"; \
-			echo "( use \"make uninstall FORCE=1\" to delete config files in $(configDir))"; \
+			echo "(use \"make uninstall FORCE=1\" to delete config files in $(configDir))"; \
 		fi; \
 	else \
 		winRoot=$$(cygpath --windows "$(WIN_ROOT)"); \
 		if ! [[ -d "$(WIN_ROOT)" ]]; then \
-			echo "Installation directory not found: \"$$winRoot\""; \
+			die "Installation directory not found: \"$$winRoot\""; \
 		elif [[  -n "$(FORCE)" ]]; then \
 			rm -rf "$(WIN_ROOT)" \
 			&& echo "Installation directory removed: \"$$winRoot\""; \
@@ -253,7 +262,7 @@ uninstall:
 				fi; \
 			done; \
 			echo "OraMakeSystem files deleted"; \
-			echo "( use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\" along with config files)"; \
+			echo "(use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\" along with config files)"; \
 		fi; \
 	fi;
 
@@ -312,7 +321,7 @@ gendoc:
 
 
 # target: gendoc-clean
-# Удаляет сгенерированные файлы документации ( если они не зафиксированы в SVN).
+# Удаляет сгенерированные файлы документации (если они не зафиксированы в SVN).
 
 gendoc-clean:
 	@echo "Clean docs and temporary files..."; \
@@ -338,7 +347,7 @@ OMS_VERSION=
 # build var: OMS_VERSION_REVISION
 # Новое значение для номера ревизии версии OMS.
 # Параметр может указываться при вызове <set-oms-version>, по умолчанию номер
-# ревизии рассчитывается на основе текущего времени ( число минут, прошедших с
+# ревизии рассчитывается на основе текущего времени (число минут, прошедших с
 # 1970-01-01 00:00:00 UTC).
 OMS_VERSION_REVISION=
 
@@ -378,7 +387,7 @@ set-oms-version:
 		; \
 	else \
 		echo "No value for parameter OMS_VERSION"; \
-		echo '( for example usage: "make set-oms-version OMS_VERSION=2.0.0")'; \
+		echo '(for example usage: "make set-oms-version OMS_VERSION=2.0.0")'; \
 		exit 5; \
 	fi
 
@@ -410,7 +419,7 @@ create-patch:
 
 # build var: TEST_USERID
 # Пользователь БД Oracle для использования при тестировании
-# ( формат: [userName[/password]]@dbName).
+# (формат: [userName[/password]]@dbName).
 #
 # Если значение не задано, то тесты, связанные с загрузкой данных в БД,
 # будут пропущены.
@@ -419,16 +428,16 @@ TEST_USERID =
 
 # build var: TEST_OPERATORID
 # Оператор модуля AccessOperator для использования при тестировании
-# ( формат: operatorName[/password] ).
+# (формат: operatorName[/password] ).
 #
 TEST_OPERATORID =
 
 # build var: TEST_CASE_NUMBER
-# Номер проверяемого тестового случая ( по умолчанию без ограничений).
+# Номер проверяемого тестового случая (по умолчанию без ограничений).
 #
 # Замечания:
 # - некоторые тестовые случаи выполняются всегда вне зависимости от значения
-#   <TEST_CASE_NUMBER> ( если их выполнение необходимо для продолжения
+#   <TEST_CASE_NUMBER> (если их выполнение необходимо для продолжения
 #   тестирования);
 #
 TEST_CASE_NUMBER =
@@ -438,7 +447,7 @@ test:
 		echo \
 			"Warning: Tests with loading files to DB are skipped, because connection parameters are not specified"; \
 		echo -e \
-			'( for example usage: "make test TEST_USERID=om_main/om_main@TestDb")\n'; \
+			'(for example usage: "make test TEST_USERID=om_main/om_main@TestDb")\n'; \
 	fi; \
 	Test/run.sh \
 		--test-userid "$(TEST_USERID)" \

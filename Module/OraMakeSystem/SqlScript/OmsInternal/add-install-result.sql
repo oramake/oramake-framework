@@ -45,14 +45,14 @@ declare
   modulePartNumber integer;
   installResultId integer;
 
-  -- переменные для разбора списка
+  -- variables for parsing the list
   iStart pls_integer := 1;
   len pls_integer;
 
 
 
   /*
-    Выделяет очередной номер части модуля из списка.
+    Selects the next part number of the module from the list.
   */
   procedure setPartNumber
   is
@@ -94,25 +94,25 @@ begin
       then
     raise_application_error(
       -20195
-      , 'Необходимо в параметре UNINSTALL_RESULT_VERSION указать версию модуля,'
-        || ' которая остается в БД после отмены установки текущей версии.'
+      , 'UNINSTALL_RESULT_VERSION parameter must specify version of module'
+        || ' that remains in database after uninstall current version.'
     );
   elsif installTypeCode = 'PRI' and trim( privsUser) is null then
     raise_application_error(
       -20195
-      , 'Необходимо в параметре TO_USERNAME указать имя пользователя БД,'
-        || ' для которого выполнялась настройка прав доступа.'
+      , 'TO_USERNAME parameter must specify username of database'
+        || ' for configuring access rights.'
     );
   end if;
 
   loop
     setPartNumber();
     if modulePartNumber is null then
-      -- должны выполнить сохрание информации хотя бы один раз
+      -- must keep the information at least once
       if installResultId is null then
         raise_application_error(
           -20195
-          , 'Не указан номер части модуля.'
+          , 'Part number of module is not specified.'
         );
       end if;
       exit;
@@ -169,9 +169,9 @@ end;
 exception when others then
   raise_application_error(
     -20150
-    , 'OMS: Ошибка при добавлении информации о результате установки ('
-      || ' скрипт OmsInternal/add-install-result.sql'
-      || ' modulePartNumberList="' || modulePartNumberList || '"'
+    , 'OMS: Error while adding installation result information ('
+      || ' script: OmsInternal/add-install-result.sql'
+      || ', modulePartNumberList="' || modulePartNumberList || '"'
       || ', installVersion="' || installVersion || '"'
       || ', installTypeCode="' || installTypeCode || '"'
       || ', isFullInstall=' || isFullInstall

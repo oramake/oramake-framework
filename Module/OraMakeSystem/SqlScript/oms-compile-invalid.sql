@@ -43,21 +43,18 @@ declare
       (
       select
         'MATERIALIZED VIEW' as object_type
-        , 'материализованное представление'as object_type_name
         , 10 as priority_order
         , 'alter materialized view $(object_name) compile' as compile_sql
       from dual
       union all
       select
         'VIEW'
-        , 'представление'
         , 20
         , 'alter view $(object_name) compile'
       from dual
       union all
       select
         'TYPE BODY'
-        , 'тело типа'
         , 30
         , 'alter type $(object_name) compile body'
       from dual
@@ -77,7 +74,7 @@ begin
     , compile_all => false
   );
 
-  -- Компиляция дополнительных типов объектов
+  -- Compiling additional types of objects
   for rec in invalidObjectCur loop
     begin
       execute immediate
@@ -85,8 +82,8 @@ begin
       ;
     exception when others then
       dbms_output.put_line(
-        'Ошибка при компиляции: '
-        || rec.object_type_name || ' ' || rec.object_name
+        'Error compiling ' || lower( rec.object_type)
+        || ': ' || rec.object_name
         || ':'
       );
       dbms_output.put_line( substr( SQLERRM, 1, 250));

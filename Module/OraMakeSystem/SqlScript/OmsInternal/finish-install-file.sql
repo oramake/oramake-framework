@@ -1,13 +1,13 @@
---script: OmsInternal/finish-install-file.sql
---Сохраняет информацию о завершении установки файла в БД.
---Для сохранения информации вызывается процедура FinishInstallFile пакета
---pkg_ModuleInstall ( модуль Oracle/Module/ModuleInfo).
+-- script: OmsInternal/finish-install-file.sql
+-- Сохраняет информацию о завершении установки файла в БД.
+-- Для сохранения информации вызывается процедура FinishInstallFile пакета
+-- pkg_ModuleInstall ( модуль Oracle/Module/ModuleInfo).
 --
---Скрипт вызывается автоматически при загрузке файла через <oms-load> с помощью
---SQL*Plus в случае необходимости сохранения информации об установке файлов
---( см. <OMS_SAVE_FILE_INSTALL_INFO>).
+-- Скрипт вызывается автоматически при загрузке файла через <oms-load> с помощью
+-- SQL*Plus в случае необходимости сохранения информации об установке файлов
+-- ( см. <OMS_SAVE_FILE_INSTALL_INFO>).
 --
---Замечания:
+-- Замечания:
 --  - внутренний скрипт, используется внутри OMS;
 --  - ошибка, возникающая из-за недоступности пакета pkg_ModuleInstall,
 --    игнорируется;
@@ -25,8 +25,8 @@ end;
 exception when others then
   raise_application_error(
     -20001
-    , 'OMS: Ошибка при сохранении информации о завершении установки файла в БД'
-      || ' ( скрипт OmsInternal/finish-install-file.sql).'
+    , 'OMS: Error on saving information about completion of installation'             || ' of file in DB'
+      || ' ( script OmsInternal/finish-install-file.sql).'
     , true
   );
 end;

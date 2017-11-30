@@ -1,11 +1,11 @@
---script: oms-drop-type.sql
---Удаляет SQL-тип принудительным ( "force") образом, при этом зависящие от
---удаляемого типа объекты становятся инвалидными.
+-- script: oms-drop-type.sql
+-- Удаляет SQL-тип принудительным ( "force") образом, при этом зависящие от
+-- удаляемого типа объекты становятся инвалидными.
 --
---Параметры:
---typeName                    - имя SQL-типа
+-- Параметры:
+-- typeName                   - имя SQL-типа
 --
---Замечания:
+-- Замечания:
 --  - прикладной скрипт, предназначен для вызова из пользовательских скриптов;
 --  - скрипт используется для удаления типа перед пересозданием, чтобы не было
 --    ошибки из-за наличия зависимостей;
@@ -24,12 +24,12 @@ define typeName = "&1"
 declare
 
   typeName varchar2(30) := '&typeName';
-  
+
 begin
   dbms_output.put_line( 'drop type: ' || typeName);
   execute immediate 'drop type ' || typeName || ' force';
 exception when others then
-                                        --ORA-04043: object * does not exist
+  -- ORA-04043: object * does not exist
   if SQLCODE = -04043 then
     null;
   else

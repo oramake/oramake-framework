@@ -1,15 +1,15 @@
---script: oms-check-lock.sql
---Проверяет наличие блокировок на указанные объекты и в случае их наличия
---выбрасывает исключение.
+-- script: oms-check-lock.sql
+-- Проверяет наличие блокировок на указанные объекты и в случае их наличия
+-- выбрасывает исключение.
 --
---Параметры:
---objectList                  - список имен проверяемых объектов ( через пробел)
+-- Параметры:
+-- objectList                 - список имен проверяемых объектов ( через пробел)
 --                              с добавлением стандартных расширений,
 --                              указывающих тип объекта ( %.pks %.pkb %.prc
 --                              %.snp %.tab %typ %tyb %.vw) либо без расширения
 --                              ( проверка без учета типа)
 --
---Замечания:
+-- Замечания:
 --  - скрипт используется внутри OMS;
 --  - для выполнения проверки используются представления dba_ddl_locks,
 --    dba_jobs_running и v$session, при отсутствии доступа к которым проверка
@@ -23,7 +23,7 @@
 
 define objectList = "&1"
 
-                                        --Сессии, блокирующие объекты
+-- Sessions blocking objects
 var rc refcursor
 
 declare
@@ -102,12 +102,12 @@ from
         lc.owner = sys_context( ''USERENV'', ''CURRENT_SCHEMA'')
       ) b
     where
-                                          --в списке есть объект данного типа
+      -- object of this type
       instr(
           b.check_object_list
           , upper( '' '' || b.name || b.file_extension || '' '')
         ) > 0
-                                          --в списке есть имя объекта без типа
+      -- object name without type
       or instr(
           b.check_object_list
           , upper( '' '' || b.name || '' '')
@@ -144,7 +144,8 @@ getBatchShortNameText varchar2( 1000) :='
   schSchema varchar2( 100);
 
 begin
-                                        --Определяем схему установки Scheduler
+
+  -- Get scheme of installation Scheduler module
   select
     max( tb.owner) as sch_schema
   into schSchema
@@ -153,6 +154,7 @@ begin
   where
     tb.table_name = 'SCH_BATCH'
   ;
+
   open :rc for
     replace( sqlText, '$(getBatchShortNameText)'
       , case when schSchema is not null then
@@ -176,8 +178,7 @@ exception when others then
 end;
 /
 
-                                        --Обеспечиваем выброс исключения
-                                        --если найдены блокировки
+-- Throw an exception if locks are found
 define lockSessionSid = ""
 column sid new_value lockSessionSid
 print rc
