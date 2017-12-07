@@ -61,6 +61,29 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 3.0.0
+(<Версии::3.0.0 ( 2017-12-07)>)
+
+Предварительные требования:
+
+- установка модуля OraMakeSystem версии 2.0.0;
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+После установки требуется установить:
+
+- настройки БД в таблице <cmn_database_config>
+
+
+
 group: 2.9.0
 (<Версии::2.9.0 ( 2017-09-20)>)
 

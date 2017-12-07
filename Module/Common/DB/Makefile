@@ -554,10 +554,12 @@ getInstallDataFile = \
 
 
 # Скрипты для загрузки установочных данных в БД.
+# Добавлена установка конфигурации системы
+# $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Common
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
-    $(call getInstallDataFile, Custom) \
+    $(wildcard $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Common/*.sql) \
   ) \
   $(addsuffix .$(lu2), \
   ) \

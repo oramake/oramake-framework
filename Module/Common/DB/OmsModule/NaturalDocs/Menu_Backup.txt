@@ -124,6 +124,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: acl-get-ip-address-PromDW  (no auto-title, Install/Grant/Last/acl-get-ip-address-PromDW.sql)
             File: acl-grant  (no auto-title, Install/Grant/Last/acl-grant.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             File: acl-host.sql  (Install/Grant/Last/acl-host.sql)
@@ -131,20 +132,63 @@ Group: Скрипты  {
 
          }  # Group: Grant
 
-      Group: Last  {
+      Group: Schema  {
 
-         File: run  (no auto-title, Install/Schema/Last/run.sql)
-         File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-         File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
-         File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
-         File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
-         File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
-         File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
-         }  # Group: Last
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
+            File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
+            File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
+            }  # Group: Last
+
+         Group: 2.8.0  {
+
+            File: run  (no auto-title, Install/Schema/2.8.0/run.sql)
+            File: drop-object  (no auto-title, Install/Schema/2.8.0/drop-object.sql)
+            }  # Group: 2.8.0
+
+         Group: 2.7.2  {
+
+            File: run  (no auto-title, Install/Schema/2.7.2/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.7.2/revert.sql)
+            File: cmn_case_exception  (no auto-title, Install/Schema/2.7.2/cmn_case_exception.sql)
+            }  # Group: 2.7.2
+
+         Group: 2.7.0  {
+
+            File: run  (no auto-title, Install/Schema/2.7.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.7.0/revert.sql)
+            }  # Group: 2.7.0
+
+         Group: 2.6.0  {
+
+            File: run  (no auto-title, Install/Schema/2.6.0/run.sql)
+            }  # Group: 2.6.0
+
+         }  # Group: Schema
 
       }  # Group: Install
 
-   File: run  (no auto-title, Test/run.sql)
+   Group: Test  {
+
+      Group: ObjectView  {
+
+         File: run  (no auto-title, Test/ObjectView/run.sql)
+         File: create-test-object  (no auto-title, Test/ObjectView/create-test-object.sql)
+         File: drop-test-object  (no auto-title, Test/ObjectView/drop-test-object.sql)
+         File: select-with-constructor-bug  (no auto-title, Test/ObjectView/select-with-constructor-bug.sql)
+         File: select-with-constructor-bug.use  (no auto-title, Test/ObjectView/select-with-constructor-bug.use.sql)
+         File: update-object-view  (no auto-title, Test/ObjectView/update-object-view.sql)
+         }  # Group: ObjectView
+
+      File: run  (no auto-title, Test/run.sql)
+      File: send-mail  (no auto-title, Test/send-mail.sql)
+      }  # Group: Test
+
    }  # Group: Скрипты
 
 Group: Индекс  {
