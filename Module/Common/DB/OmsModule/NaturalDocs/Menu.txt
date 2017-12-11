@@ -88,7 +88,6 @@ Group: Пакеты  {
 
       File: Спецификация  (no auto-title, pkg_Common.pks)
       File: Реализация  (no auto-title, pkg_Common.pkb)
-      File: run.sql  (Install/Schema/2.9.0/run.sql)
       }  # Group: pkg_Common
 
    Group: pkg_Error  {
@@ -125,26 +124,39 @@ Group: Скрипты  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
             File: acl-grant  (no auto-title, Install/Grant/Last/acl-grant.sql)
+            File: acl-host  (no auto-title, Install/Grant/Last/acl-host.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
-            File: acl-host.sql  (Install/Grant/Last/acl-host.sql)
             }  # Group: Last
 
          }  # Group: Grant
 
-      Group: Last  {
+      Group: Schema  {
 
-         File: run  (no auto-title, Install/Schema/Last/run.sql)
-         File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-         File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
-         File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
-         File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
-         File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
-         File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
-         }  # Group: Last
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: cmn_database_config  (no auto-title, Install/Schema/Last/cmn_database_config.tab)
+            File: cmn_sequence  (no auto-title, Install/Schema/Last/cmn_sequence.tab)
+            File: cmn_string_uid_tmp  (no auto-title, Install/Schema/Last/cmn_string_uid_tmp.tab)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
+            File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
+            }  # Group: Last
+
+         Group: 2.9.0  {
+
+            File: run  (no auto-title, Install/Schema/2.9.0/run.sql)
+            }  # Group: 2.9.0
+
+         }  # Group: Schema
 
       }  # Group: Install
 
-   File: run  (no auto-title, Test/run.sql)
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      }  # Group: Test
+
    }  # Group: Скрипты
 
 Group: Индекс  {
