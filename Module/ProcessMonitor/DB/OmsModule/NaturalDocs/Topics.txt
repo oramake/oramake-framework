@@ -94,7 +94,6 @@ Alter Topic Type: Class
       struct, structs
       namespace, namespaces
 
-
 Alter Topic Type: Section
 
    Scope: Start
@@ -108,8 +107,8 @@ Alter Topic Type: File
 Alter Topic Type: Function
 
    Add Keywords:
-      ifunc
-      iproc
+     ifunc
+     iproc
 
 
 Topic Type: Build Variable
@@ -200,7 +199,6 @@ Topic Type: Function public
       pprocedure, pprocedures
       pproc, pprocs
 
-
 Topic Type: Makefile
 
    Plural: Makefiles
@@ -210,7 +208,6 @@ Topic Type: Makefile
 
    Keywords:
       makefile
-
 
 Topic Type: Package
 
