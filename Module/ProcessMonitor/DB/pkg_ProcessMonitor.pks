@@ -215,6 +215,20 @@ procedure batchTraceOn(
 
 /* group: Слежение за процессами */
 
+/* pfunc: formatLargeNumber
+  Преобразование большого числа в строку ( с разделителями для лучшей
+  читаемости).
+
+  Параметры:
+  numberValue                 - числовое значение
+
+  ( <body::formatLargeNumber>)
+*/
+function formatLargeNumber(
+  numberValue number
+)
+return varchar2;
+
 /* pproc: batchBegin
   Процедура, вызываемая в начале работы батча.
 
@@ -298,7 +312,7 @@ function getOsMemory
 return number;
 
 /* pproc: checkMemory
-  Проверка превышения заданных порогов использовануемой оперативной памяти.
+  Проверка превышения заданных порогов используемой оперативной памяти.
 
   Параметры:
   osMemoryThreshold           - объём памяти процесса операционной системы в
