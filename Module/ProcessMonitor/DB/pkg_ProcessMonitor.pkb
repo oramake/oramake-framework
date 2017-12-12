@@ -1616,13 +1616,10 @@ is
     return
       to_number(
         regexp_replace(
-          replace(
-            sizeString
-            -- Разделитель разрядов ( неразрывный пробел)
-            , chr(160)
-            , ''
-          )
-          , '[,| |K]', ''
+          sizeString
+          -- Удаляем все не цифры
+          , '[^[:digit:]]'
+          , ''
         )
       ) * 1024
     ;
