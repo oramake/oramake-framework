@@ -9,6 +9,20 @@ create or replace package pkg_TaskProcessorTest is
 
 /* group: Функции */
 
+/* pproc: waitForTask
+  Ожидание обработки задания.
+
+  taskId                      - дентификатор задания
+  maxCount                    - интервал ожидания в сек
+                                ( по умолчанию 200)
+
+  ( <body::executeLoadFileTask>)
+*/
+procedure waitForTask(
+  taskId                      integer
+, maxCount                    integer := null
+);
+
 /* pfunc: createProcessFileTask
   Создает задание по обработке файла ( без выполнения commit).
 

@@ -147,6 +147,9 @@ end checkAccess;
                                 которого неиспользуемые бездействующие задания
                                 автоматически удаляются ( по умолчанию
                                 неограничено)
+  ignoreCheckFlag             - признак игнорирования проверки корректности
+                                выполняемого действия
+                                ( по умолчанию не игнорируется)
   operatorId                  - Id оператора, выполняющего операцию ( по
                                 умолчанию текущий)
 
@@ -166,11 +169,18 @@ function mergeTaskType(
   , fileNamePattern varchar2 := null
   , accessRoleShortName varchar2 := null
   , taskKeepDay integer := null
+  , ignoreCheckFlag boolean := null
   , operatorId integer := null
 )
 return integer
 is
 begin
+  if coalesce( ignoreCheckFlag, false) then
+    pkg_TaskProcessorHandler.checkExecCommandParsed(
+      execCommand => execCommand
+    , isProcessFile => fileNamePattern is not null
+    );
+  end if;
   merge into
     tp_task_type d
   using

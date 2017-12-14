@@ -67,6 +67,127 @@ currentStartNumber tp_task.start_number%type;
 
 /* group: ‘ункции */
 
+/* func: getExecCommandText
+  ‘ункци€ возвращает PL/SQL код дл€ выполнени€
+
+  ѕараметры:
+  execCommand                 - команда выполнени€ задачи
+  isProcessFile               - признак загрузки файла
+  isOnlyParse                 - признак проверки корректности кода задани€,
+                                при этом код не выполн€етс€
+                                ( по умолчанию false)
+*/
+function getExecCommandText(
+  execCommand                 varchar2
+, isProcessFile               boolean
+, isOnlyParse                 boolean := null
+)
+return varchar2
+is
+
+  /*
+    ƒобавл€ет текст, если предназначено дл€ выполнени€
+  */
+  function addIfExec(
+    addedText varchar2
+  )
+  return varchar2
+  is
+  begin
+    if not coalesce( isOnlyParse, false) then
+      return addedText;
+    else
+      return '';
+    end if;
+  end addIfExec;
+
+-- getExecCommandText
+begin
+  return '
+declare
+  taskId tp_task.task_id%type' || addIfExec( ' := :taskId') || ';
+  manageOperatorId tp_task.manage_operator_id%type'
+    || addIfExec( ' := :manageOperatorId') || ';
+  startNumber tp_task.start_number%type' || addIfExec( ' := :startNumber') || ';
+  startDate tp_task.start_date%type' || addIfExec( ' := :startDate') || ';
+  nextStartDate tp_task.next_start_date%type := null;
+  resultCode tp_task.result_code%type := pkg_TaskProcessorBase.True_ResultCode;
+  execResult tp_task.exec_result%type := null;
+  errorCode tp_task.error_code%type := null;
+  errorMessage tp_task.error_message%type := null;'
+  || case when isProcessFile then
+'
+  fileName tp_file.file_name%type' || addIfExec( ' := :fileName') || ';
+  fileData tp_file.file_data%type' || addIfExec( ' := :fileData') || ';'
+    end
+  || '
+begin'
+  -- ќбеспечиваем посто€нное число и пор€док bind-переменных
+  || case when not isProcessFile and not coalesce( isOnlyParse, false) then
+'
+  if :fileName is null and :fileData is null then null; end if;'
+    end
+  || '
+' || execCommand || '
+' || addIfExec(
+'  :nextStartDate := nextStartDate;
+  :resultCode := resultCode;
+  :execResult := execResult;
+  :errorCode := errorCode;
+  :errorMessage := errorMessage;'
+  ) || '
+end;'
+     ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'ќшибка при формировании команды.('
+        || 'execCommand="' || execCommand || '"'
+        || ')'
+      )
+    , true
+  );
+end getExecCommandText;
+
+/* proc: checkExecCommandParsed
+  ѕроцедура проверки корректности выполн€емого PL/SQL кода
+
+  ѕараметры:
+  execCommand                 - текст выполнени€ задани€
+  isProcessFile               - признак загрузки файла
+*/
+procedure checkExecCommandParsed(
+  execCommand                 varchar2
+, isProcessFile               boolean
+)
+is
+  cur number;
+
+-- checkExecCommandParsed
+begin
+  cur := dbms_sql.open_cursor();
+  dbms_sql.parse(
+    cur
+  , getExecCommandText(
+      execCommand => execCommand
+    , isProcessFile => isProcessFile
+    , isOnlyParse => true
+    )
+  , dbms_sql.native
+  );
+  dbms_sql.close_cursor( cur);
+exception when others then
+  dbms_sql.close_cursor( cur);
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'ќшибка проверки корректности выполн€емой задачи.'
+      )
+    , true
+  );
+end checkExecCommandParsed;
+
 /* func: taskHandler
   ќбработчик заданий.
   ¬ыполн€ет задани€, наход€щиес€ в очереди, а также переводит в корректное
@@ -119,6 +240,12 @@ currentStartNumber tp_task.start_number%type;
                                 ( с любым результатом) одного задани€ либо
                                 нескольких идущих подр€д заданий одного типа
                                 ( 1 завершить, 0 не завершать ( по умолчанию))
+  forceTaskTypeIdList         - список идентификаторов типов заданий
+                                на выполнение через ";"
+                                ( по умолчанию нет ограничений)
+  ignoreTaskTypeIdList        - список идентификаторов типов заданий,
+                                которые не будут выполн€тьс€, через ";"
+                                ( по умолчанию нет ограничений)
 
   ¬озврат:
   - число обработанных заданий
@@ -133,9 +260,13 @@ currentStartNumber tp_task.start_number%type;
     то задание ставитс€ на повторное выполнение, а функци€ обработки заданий
     завершаетс€ с исключением, т.к. повторное выполнение задани€ в новой
     сессии может завершитьс€ успешно;
+  - предполагаетс€ заполнение одного из параметров forceTaskTypeIdList
+    или ignoreTaskTypeIdList
 */
 function taskHandler(
   isFinishAfterProcess integer := null
+, forceTaskTypeIdList varchar2 := null
+, ignoreTaskTypeIdList varchar2 := null
 )
 return integer
 is
@@ -257,6 +388,7 @@ is
         ) a
       where
         -- задание не выполн€етс€ и его можно выполн€ть
+        (
         a.sid is null
           and (
             maxOpTypeTaskExecCount is null
@@ -273,6 +405,32 @@ is
             where
               ss.sid = a.sid
               and ss.serial# = a.serial#
+            )
+        )
+        -- ограничение по типам заданий
+        and (
+            forceTaskTypeIdList is null
+            or
+            exists (
+               select
+                1
+              from
+                table( pkg_Common.split( forceTaskTypeIdList, ';'))
+              where
+                trim( column_value) = a.task_type_id
+              )
+            )
+        and (
+            ignoreTaskTypeIdList is null
+            or
+            not exists (
+               select
+                1
+              from
+                table( pkg_Common.split( ignoreTaskTypeIdList, ';'))
+              where
+                trim( column_value) = a.task_type_id
+              )
             )
       order by
         -- в первую очередь корректируем состо€ние прерванных заданий
@@ -658,38 +816,11 @@ is
           end
       );
       task.result_code := pkg_TaskProcessorBase.True_ResultCode;
-      execute immediate '
-declare
-  taskId tp_task.task_id%type := :taskId;
-  manageOperatorId tp_task.manage_operator_id%type := :manageOperatorId;
-  startNumber tp_task.start_number%type := :startNumber;
-  startDate tp_task.start_date%type := :startDate;
-  nextStartDate tp_task.next_start_date%type := null;
-  resultCode tp_task.result_code%type := pkg_TaskProcessorBase.True_ResultCode;
-  execResult tp_task.exec_result%type := null;
-  errorCode tp_task.error_code%type := null;
-  errorMessage tp_task.error_message%type := null;'
-  || case when isProcessFile then
-'
-  fileName tp_file.file_name%type := :fileName;
-  fileData tp_file.file_data%type := :fileData;'
-    end
-  || '
-begin'
-  -- ќбеспечиваем посто€нное число и пор€док bind-переменных
-  || case when not isProcessFile then
-'
-  if :fileName is null and :fileData is null then null; end if;'
-    end
-  || '
-' || execCommand || '
-  :nextStartDate := nextStartDate;
-  :resultCode := resultCode;
-  :execResult := execResult;
-  :errorCode := errorCode;
-  :errorMessage := errorMessage;
-end;
-'
+      execute immediate
+        getExecCommandText(
+          execCommand => execCommand
+        , isProcessFile => isProcessFile
+        )
       using
         in task.task_id
         , in task.manage_operator_id

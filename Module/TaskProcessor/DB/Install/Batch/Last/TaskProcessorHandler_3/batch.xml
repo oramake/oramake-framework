@@ -10,6 +10,12 @@
     <option short_name="IsFinishAfterProcess" type="number" name="Флаг завершения обработки после выполнения ( с любым результатом) одного задания либо нескольких идущих подряд заданий одного типа ( 1 завершить, 0 не завершать ( по умолчанию))">
       <value>1</value>
     </option>
+    <option short_name="ForceTaskTypeIdList" type="string" name="Список типов задач, перечисленных через ;, которые выполняет обработчик ( по умолчанию нет ограничений)">
+      <value></value>
+    </option>
+    <option short_name="IgnoreTaskTypeIdList" type="string" name="Список типов задач, перечисленных через ;, которые обработчик игнорирует ( по умолчанию нет ограничений)">
+      <value></value>
+    </option>
   </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
   <content id="2" job="task_handler">

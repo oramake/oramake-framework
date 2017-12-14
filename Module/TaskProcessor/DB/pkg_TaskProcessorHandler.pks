@@ -9,6 +9,39 @@ create or replace package pkg_TaskProcessorHandler is
 
 /* group: Функции */
 
+/* pfunc: getExecCommandText
+  Функция возвращает PL/SQL код для выполнения
+
+  Параметры:
+  execCommand                 - команда выполнения задачи
+  isProcessFile               - признак загрузки файла
+  isOnlyParse                 - признак проверки корректности кода задания,
+                                при этом код не выполняется
+                                ( по умолчанию false)
+
+  ( <body::getExecCommandText>)
+*/
+function getExecCommandText(
+  execCommand                 varchar2
+, isProcessFile               boolean
+, isOnlyParse                 boolean := null
+)
+return varchar2;
+
+/* pproc: checkExecCommandParsed
+  Процедура проверки корректности выполняемого PL/SQL кода
+
+  Параметры:
+  execCommand                 - текст выполнения задания
+  isProcessFile               - признак загрузки файла
+
+  ( <body::checkExecCommandParsed>)
+*/
+procedure checkExecCommandParsed(
+  execCommand                 varchar2
+, isProcessFile               boolean
+);
+
 /* pfunc: taskHandler
   Обработчик заданий.
   Выполняет задания, находящиеся в очереди, а также переводит в корректное
@@ -26,8 +59,12 @@ create or replace package pkg_TaskProcessorHandler is
                                 ( автоматически увеличивается при каждой
                                 попытке запуска задания)
   startDate                   - дата запуска
+  fileName                    - имя обрабатываемого файла
+                                ( только для заданий обработки файла)
+  fileData                    - данные обрабатываемого файла ( тип CLOB)
+                                ( только для заданий обработки файла)
   resultCode                  - код результата ( модификация, по умолчанию
-                                <pkg_TaskProcessor.True_ResultCode>)
+                                <pkg_TaskProcessorBase.True_ResultCode>)
   execResult                  - результат выполнения ( модификация, по умолчанию
                                 null)
   errorCode                   - код ошибки ( модификация, по умолчанию null)
@@ -42,13 +79,14 @@ create or replace package pkg_TaskProcessorHandler is
   случае оно переводится в бездействующие.
 
   В случае, если при выполнении задания возникло исключение, выполняется
-  rollback, устанавливается код результата <pkg_TaskProcessor.Error_ResultCode>,
-  сохраняются код и сообщение об ошибке и задание переводится в бездействующие
-  ( в случае исключения из-за инвалидации объектов задание ставится на
-  повторное выполнение, см. замечание ниже).
+  rollback, устанавливается код результата
+  <pkg_TaskProcessorBase.Error_ResultCode>, сохраняются код и сообщение об
+  ошибке и задание переводится в бездействующие ( в случае исключения из-за
+  инвалидации объектов задание ставится на повторное выполнение, см. замечание
+  ниже).
 
   В случае, если обнаружено задание, обработка которого была прервана,
-  устанавливается код результата <pkg_TaskProcessor.Abort_ResultCode> и
+  устанавливается код результата <pkg_TaskProcessorBase.Abort_ResultCode> и
   задание переводится в бездействующие.
 
   Параметры:
@@ -56,6 +94,12 @@ create or replace package pkg_TaskProcessorHandler is
                                 ( с любым результатом) одного задания либо
                                 нескольких идущих подряд заданий одного типа
                                 ( 1 завершить, 0 не завершать ( по умолчанию))
+  forceTaskTypeIdList         - список идентификаторов типов заданий
+                                на выполнение через ";"
+                                ( по умолчанию нет ограничений)
+  ignoreTaskTypeIdList        - список идентификаторов типов заданий,
+                                которые не будут выполняться, через ";"
+                                ( по умолчанию нет ограничений)
 
   Возврат:
   - число обработанных заданий
@@ -70,11 +114,15 @@ create or replace package pkg_TaskProcessorHandler is
     то задание ставится на повторное выполнение, а функция обработки заданий
     завершается с исключением, т.к. повторное выполнение задания в новой
     сессии может завершиться успешно;
+  - предполагается заполнение одного из параметров forceTaskTypeIdList
+    или ignoreTaskTypeIdList
 
   ( <body::taskHandler>)
 */
 function taskHandler(
   isFinishAfterProcess integer := null
+, forceTaskTypeIdList varchar2 := null
+, ignoreTaskTypeIdList varchar2 := null
 )
 return integer;
 
@@ -89,6 +137,12 @@ return integer;
                                 с 1, 0 если сообщение не относится к строке
                                 ( по умолчанию))
   operatorId                  - Id оператора ( по умолчанию текущий)
+
+  Замечания:
+  - функция предназначена для логирования процесса выполнения текущего
+    задания, в случае вызова при отсутствии выполняемого задания будет
+    выброшено исключение;
+  - функция выполняется в автономной транзакции;
 
   ( <body::logMessage>)
 */

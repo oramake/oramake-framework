@@ -6,10 +6,31 @@ references
   op_operator( operator_id)
 ;
 
-alter table tp_task_type add constraint
+declare
+  roleShortNameColumn varchar2( 30);
+begin
+  select
+    column_name
+  into
+    roleShortNameColumn
+  from
+    all_cons_columns c
+  where
+    c.table_name = 'OP_ROLE'
+    and c.constraint_name = 'OP_ROLE_UK'
+  ;
+ execute immediate
+  'alter table tp_task_type add constraint
   tp_task_type_op_role_fk
 foreign key
   ( access_role_short_name)
 references
-  op_role( role_short_name)
-;
+  op_role(' || roleShortNameColumn || ')';
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Не найдено поле "Краткое наименование роли"'
+    , true
+  );
+end;
+/

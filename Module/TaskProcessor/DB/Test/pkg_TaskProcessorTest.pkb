@@ -17,6 +17,45 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* proc: waitForTask
+  Ожидание обработки задания.
+
+  taskId                      - дентификатор задания
+  maxCount                    - интервал ожидания в сек
+                                ( по умолчанию 200)
+*/
+procedure waitForTask(
+  taskId                      integer
+, maxCount                    integer := null
+)
+is
+  nCount integer;
+  usedMaxCount integer := coalesce( maxCount, 200);
+begin
+  for i in 1..usedMaxCount loop
+    dbms_lock.sleep( 1);
+    select
+      count(1)
+    into
+      nCount
+    from
+      tp_task
+    where
+      task_id = taskId
+      and task_status_code = pkg_TaskProcessorBase.Idle_TaskStatusCode
+    ;
+    exit when nCount = 1;
+  end loop;
+  if nCount = 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Превышен интервал ожидания ( ' || usedMaxCount
+        || 'сек.). Проверьте работающие'
+        || ' обработчики TaskProcessor'
+    );
+  end if;
+end waitForTask;
+
 /* func: createProcessFileTask
   Создает задание по обработке файла ( без выполнения commit).
 
@@ -108,38 +147,6 @@ is
     commit;
   end createTask;
 
-
-
-  /*
-    Ожидание обработки задания.
-  */
-  procedure waitForTask
-  is
-    nCount integer;
-  begin
-    for i in 1..200 loop
-      dbms_lock.sleep( 1);
-      select
-        count(1)
-      into
-        nCount
-      from
-        tp_task
-      where
-        task_id = taskId
-        and task_status_code = pkg_TaskProcessorBase.Idle_TaskStatusCode
-      ;
-      exit when nCount = 1;
-    end loop;
-    if nCount = 0 then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Превышен интервал ожидания ( 200сек.). Проверьте работающие'
-          || ' обработчики TaskProcessor'
-      );
-    end if;
-  end waitForTask;
-
   /*
     Вывод лога задания.
   */
@@ -181,7 +188,7 @@ is
 -- executeLoadFileTask
 begin
   createTask();
-  waitForTask();
+  waitForTask( taskId => taskId);
   showLog();
 exception when others then
   raise_application_error(
