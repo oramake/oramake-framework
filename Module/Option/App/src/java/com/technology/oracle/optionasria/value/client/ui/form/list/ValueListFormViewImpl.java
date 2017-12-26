@@ -48,7 +48,7 @@ public class ValueListFormViewImpl extends StandardListFormViewImpl {
 
 		columnConfigurations.add(new JepColumn(VALUE_TYPE_NAME, valueText.value_list_value_type_name(), 150));
 		columnConfigurations.add(new JepColumn(STRING_VALUE, valueText.value_list_string_value(), 150));
-		columnConfigurations.add(new JepColumn(DATE_VALUE, valueText.value_list_date_value(), 150, new DateCell(defaultDateFormatter)));
+		columnConfigurations.add(new JepColumn(DATE_VALUE, valueText.value_list_date_value(), 150, new DateCell(dateWithTimeFormatter)));
 		columnConfigurations.add(new JepColumn(NUMBER_VALUE, valueText.value_list_number_value(), 150, new NumberCell(defaultNumberFormatter)));
 
 		columnConfigurations.add(new JepColumn(ENCRYPTION_FLAG, valueText.value_list_encryption_flag(), 150, new BooleanCell()));

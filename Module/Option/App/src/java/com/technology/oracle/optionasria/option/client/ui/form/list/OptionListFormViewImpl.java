@@ -1,5 +1,5 @@
 package com.technology.oracle.optionasria.option.client.ui.form.list;
- 
+
 import static com.technology.jep.jepria.shared.JepRiaConstant.DEFAULT_DATE_FORMAT;
 import static com.technology.jep.jepria.shared.JepRiaConstant.DEFAULT_TIME_FORMAT;
 import static com.technology.oracle.optionasria.option.client.OptionClientConstant.optionText;
@@ -32,15 +32,15 @@ import com.technology.jep.jepria.client.widget.list.JepColumn;
 import com.technology.jep.jepria.client.widget.list.cell.BooleanCell;
 
 public class OptionListFormViewImpl extends StandardListFormViewImpl {
- 
+
   public OptionListFormViewImpl() {
     super(OptionListFormViewImpl.class.getCanonicalName());
   }
- 
+
 	private static DateTimeFormat defaultDateFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT);
 	private static DateTimeFormat dateWithTimeFormatter = DateTimeFormat.getFormat(DEFAULT_DATE_FORMAT+" "+DEFAULT_TIME_FORMAT);
-	private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");  
-		
+	private static NumberFormat defaultNumberFormatter = NumberFormat.getFormat("#");
+
 	protected List<JepColumn> getColumnConfigurations() {
 		final List<JepColumn> columnConfigurations = new ArrayList<JepColumn>();
 		columnConfigurations.add(new JepColumn(OPTION_ID, optionText.option_list_option_id(), 150, new NumberCell(defaultNumberFormatter)));
@@ -48,7 +48,7 @@ public class OptionListFormViewImpl extends StandardListFormViewImpl {
 		columnConfigurations.add(new JepColumn(OPTION_SHORT_NAME, optionText.option_list_option_short_name(), 150));
 		columnConfigurations.add(new JepColumn(VALUE_TYPE_NAME, optionText.option_list_value_type_name(), 150));
 		columnConfigurations.add(new JepColumn(STRING_VALUE, optionText.option_list_string_value(), 150));
-		columnConfigurations.add(new JepColumn(DATE_VALUE, optionText.option_list_date_value(), 150, new DateCell(defaultDateFormatter)));
+		columnConfigurations.add(new JepColumn(DATE_VALUE, optionText.option_list_date_value(), 150, new DateCell(dateWithTimeFormatter)));
 		columnConfigurations.add(new JepColumn(NUMBER_VALUE, optionText.option_list_number_value(), 150, new NumberCell(defaultNumberFormatter)));
 		columnConfigurations.add(new JepColumn(OBJECT_SHORT_NAME, optionText.option_list_object_short_name(), 150));
 		columnConfigurations.add(new JepColumn(OBJECT_TYPE_SHORT_NAME, optionText.option_list_object_type_short_name(), 150));
@@ -61,5 +61,5 @@ public class OptionListFormViewImpl extends StandardListFormViewImpl {
 		columnConfigurations.add(new JepColumn(MODULE_SVN_ROOT, optionText.option_list_module_svn_root(), 150));
 		return columnConfigurations;
 	}
- 
+
 }
