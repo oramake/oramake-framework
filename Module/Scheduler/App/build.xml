@@ -62,7 +62,6 @@
     <pathelement location="${SERVLET-API_LIB}" />
     <pathelement location="${VALIDATION-API_LIB}" />
     <pathelement location="${VALIDATION-API-SOURCES_LIB}" />
-    <!--pathelement location="${OPTIONLIB_LIB}" /-->
   </path>
   
   <path id="jepria-toolkit-libs">
@@ -667,7 +666,6 @@
           <fileset file="${LOG4J_LIB}" />
           <fileset file="${STANDARD_LIB}" />
           <fileset file="${COMMONS-FILEUPLOAD_LIB}" />
-          <!--fileset file="${OPTIONLIB_LIB}" /-->
         </copy>
 	<!-- выделяем копирование библиотек для формирования отчетов-->
 	<if>
