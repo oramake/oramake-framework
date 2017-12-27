@@ -14,7 +14,9 @@
       </interval>
     </schedule>
     <option short_name="BatchList" type="string" name="Имена пакетов (через &quot;,&quot;) для перезапуска">
-      <value>TaskProcessorHandler,TaskProcessorHandler_2,TaskProcessorHandler_3,TaskProcessorHandler_4,TaskProcessorHandler_5</value>
+      <value>
+TaskProcessorHandler,TaskProcessorHandler_2,TaskProcessorHandler_3,TaskProcessorHandler_4,TaskProcessorHandler_5,TaskProcessorHandler_6,TaskProcessorHandler_7,TaskProcessorHandler_8,TaskProcessorHandler_9,TaskProcessorHandler_10,TaskProcessorHandler_11,TaskProcessorHandler_12,TaskProcessorHandler_13,TaskProcessorHandler_14,TaskProcessorHandler_15
+      </value>
     </option>
     <option short_name="CheckTimeout" type="number" name="Таймаут перед проверкой рестарта сессий в секундах RestartTaskProcessing">
       <value>600</value>
