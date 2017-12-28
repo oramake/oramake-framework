@@ -1307,14 +1307,26 @@ from
           )
       ) as warning_time_hour
     , case when c.batch_short_name is not null then
-        c.abort_time_hour
-      else
+        abort_time_hour
+      when
+        is_real_time = 0
+      then
         abortTimeHour
+      when
+        is_real_time = 1
+      then
+        handlerAbortTimeHour
       end as abort_time_hour
     , case when c.batch_short_name is not null then
-        c.orakill_wait_hour
-      else
+        orakill_wait_hour
+      when
+        is_real_time = 0
+      then
         orakillTimeHour
+      when
+        is_real_time = 1
+      then
+        handlerOrakillTimeHour
       end as orakill_wait_time_hour
     , c.trace_time_hour as trace_time_hour
     , c.sql_trace_level as sql_trace_level
@@ -1382,13 +1394,9 @@ from
     c.batch_short_name = d.batch_short_name
   ) l
 where
-  is_real_time = 0
-  and
-  (
-    -- l.warning_time_hour учитывает warning_time_percent
-    l.execution_hour > l.warning_time_hour
-    or l.execution_hour > l.abort_time_hour
-  )
+  -- l.warning_time_hour учитывает warning_time_percent
+  l.execution_hour > l.warning_time_hour
+  or l.execution_hour > l.abort_time_hour
   or l.execution_hour > l.trace_time_hour
   ;
 
@@ -1586,14 +1594,14 @@ begin
   logger.debug( 'minWarningTimeHour=' || to_char( minWarningTimeHour));
   for rec in longBatchCur loop
     logger.debug(
-      'Проверка батча ( '
-      || ' batch_short_name="' || rec.batch_short_name || '"'
-      || ' , sid=' || to_char( rec.sid)
-      || ' , serial#=' || to_char( rec.serial#)
-      || ' , execution_hour=' || to_char( rec.execution_hour)
-      || ' , warning_time_hour=' || to_char( rec.warning_time_hour)
-      || ' , abort_time_hour=' || to_char( rec.abort_time_hour)
-      || ' , trace_time_hour=' || to_char( rec.trace_time_hour)
+      'Проверка батча ('
+      || 'batch_short_name="' || rec.batch_short_name || '"'
+      || ', sid=' || to_char( rec.sid)
+      || ', serial#=' || to_char( rec.serial#)
+      || ', execution_hour=' || to_char( rec.execution_hour)
+      || ', warning_time_hour=' || to_char( rec.warning_time_hour)
+      || ', abort_time_hour=' || to_char( rec.abort_time_hour)
+      || ', trace_time_hour=' || to_char( rec.trace_time_hour)
       || ')'
     );
     messageText := '';
