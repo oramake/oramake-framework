@@ -1,44 +1,67 @@
 -- Проверка длительности выполнения пакетов
 -- Проверка длительности выполнения пакетов.
--- 
+--
 -- WarningTimePercent            - порог предупреждения ( в процентах)
 -- WarningTimeHour               - порог предупреждения ( в часах)
 -- MinWarningTimeHour            - минимальный порог предупреждения ( в часах)
 -- AbortTimeHour                 - порог прерывания ( в часах)
 -- OrakillWaitTimeHour           - порог прерывания через
 --                                 orakill ( в часах)
+-- HandlerWarningTimeHour        - порог предупреждения для обработчиков (в
+--                                 часах)
+-- HandlerAbortTimeHour          - порог прерывания для обработчиков (в часах)
+-- HandlerOrakillTimeHour        - порог прерывания через orakill для
+--                                 обработчиков (в часах)
 declare
-  --Порог предупреждения ( в процентах)
+  -- Порог предупреждения ( в процентах)
   warningTimePercent number := pkg_Scheduler.getContextInteger(
     'WarningTimePercent', riseException => 1
   );
 
-  --Порог предупреждения ( в часах)
+  -- Порог предупреждения ( в часах)
   warningTimeHour number := pkg_Scheduler.getContextInteger(
     'WarningTimeHour', riseException => 1
   );
 
-  --Минимальный порог предупреждения ( в часах)
+  -- Минимальный порог предупреждения ( в часах)
   minWarningTimeHour number := pkg_Scheduler.getContextInteger(
     'MinWarningTimeHour', riseException => 1
   );
 
-  --Порог прерывания ( в часах)
+  -- Порог прерывания ( в часах)
   abortTimeHour number := pkg_Scheduler.getContextInteger(
     'AbortTimeHour', riseException => 1
   );
 
-  --Порог прерывания через orakill ( в часах)
-  orakillWaitTimeHour number := pkg_Scheduler.getContextInteger(
-    'OrakillWaitTimeHour', riseException => 1
+  -- Порог прерывания через orakill ( в часах)
+  orakillTimeHour number := pkg_Scheduler.getContextInteger(
+    'OrakillTimeHour', riseException => 1
+  );
+
+  -- Порог предупреждения для обработчиков (в часах)
+  handlerWarningTimeHour number := pkg_Scheduler.getContextInteger(
+    'HandlerWarningTimeHour', riseException => 1
+  );
+
+  -- Порог прерывания через orakill для обработчиков (в часах)
+  handlerAbortTimeHour number := pkg_Scheduler.getContextInteger(
+    'HandlerAbortTimeHour', riseException => 1
+  );
+
+  -- Порог прерывания через orakill для обработчиков (в часах)
+  handlerOrakillTimeHour number := pkg_Scheduler.getContextInteger(
+    'HandlerOrakillTimeHour', riseException => 1
   );
 
 begin
   pkg_ProcessMonitor.checkBatchExecution(
-    warningTimePercent => warningTimePercent
-    , warningTimeHour => warningTimeHour
-    , minWarningTimeHour => minWarningTimeHour
-    , abortTimeHour => abortTimeHour
-    , orakillWaitTimeHour => orakillWaitTimeHour
+    warningTimePercent      => warningTimePercent
+  , warningTimeHour         => warningTimeHour
+  , minWarningTimeHour      => minWarningTimeHour
+  , abortTimeHour           => abortTimeHour
+  , orakillTimeHour         => orakillTimeHour
+  , handlerWarningTimeHour  => handlerWarningTimeHour
+  , handlerAbortTimeHour    => handlerAbortTimeHour
+  , handlerOrakillTimeHour  => handlerOrakillTimeHour
   );
 end;

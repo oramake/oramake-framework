@@ -280,23 +280,35 @@ procedure checkSendTrace(
   ќтслеживание работы батчей
 
   ѕараметры:
-  warningTimePercent          - порог предупреждени€ ( в процентах)
-  warningTimeHour             - порог предупреждени€ ( в часах)
-  minWarningTimeHour          - минимальный порог предупреждени€ ( в часах)
-  abortTimeHour               - порог прерывани€ ( в часах)
-  orakillWaitTimeHour         - порог прерывани€ через orakill ( в часах).
+  warningTimePercent          - порог предупреждени€ (в процентах)
+  warningTimeHour             - порог предупреждени€ (в часах)
+  minWarningTimeHour          - минимальный порог предупреждени€ (в часах)
+  abortTimeHour               - порог прерывани€ (в часах)
+  orakillTimeHour             - порог прерывани€ через orakill (в часах).
                                 ѕорог времени отсчитываетс€ с начала
                                 прерывани€ сессии.
+  handlerWarningTimeHour      - порог предупреждени€ дл€ обработчиков (в
+                                часах)
+  handlerAbortTimeHour        - порог прерывани€ дл€ обработчиков (в часах)
+  handlerOrakillTimeHour      - порог прерывани€ через orakill дл€
+                                обработчиков (в часах)
+
+  ѕримечание:
+  - параметры дл€ не обработчиков без префикса handler не вли€ют на
+    отслеживание батчей обработчиков;
 
   ( <body::checkBatchExecution>)
 */
 procedure checkBatchExecution(
-  warningTimePercent integer
-  , warningTimeHour integer
-  , minWarningTimeHour integer
-  , abortTimeHour integer
-  , orakillWaitTimeHour integer
-  , traceCopyPath varchar2 := null
+  warningTimePercent      integer
+, warningTimeHour         integer
+, minWarningTimeHour      integer
+, abortTimeHour           integer
+, orakillTimeHour         integer
+, handlerWarningTimeHour  integer
+, handlerAbortTimeHour    integer
+, handlerOrakillTimeHour  integer
+, traceCopyPath           varchar2 := null
 );
 
 /* pfunc: getOsMemory
