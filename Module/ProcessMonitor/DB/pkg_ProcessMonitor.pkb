@@ -78,7 +78,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        ''
+        ' ('
+        || ' hour=' || to_char( hour)
+        || ').'
       )
     , true
   );
@@ -844,7 +846,13 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка установки трассировки для сессии батча'
+        'Ошибка установки трассировки для сессии батча ('
+        || ' sid=' || to_char( sid)
+        || ', serial#=' || to_char( serial#)
+        || ', isFinalTraceSending=' || to_char( isFinalTraceSending)
+        || ', sqlTraceLevel=' || to_char( sqlTraceLevel)
+        || ', batchShortName="' || batchShortName || '"'
+        || ').'
       )
     , true
   );
@@ -938,7 +946,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка процедуры начала работы батча'
+        'Ошибка процедуры начала работы батча ('
+        || ' sqlTraceLevel=' || to_char( sqlTraceLevel)
+        || ').'
       )
     , true
   );
@@ -1198,7 +1208,9 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка отправки писем по трассировочным файлам'
+        'Ошибка отправки писем по трассировочным файлам ('
+        || ' isBatchEnd=' || to_char( isBatchEnd)
+        || ').'
       )
     , true
   );
@@ -1208,21 +1220,33 @@ end checkSendTrace;
   Отслеживание работы батчей
 
   Параметры:
-  warningTimePercent          - порог предупреждения ( в процентах)
-  warningTimeHour             - порог предупреждения ( в часах)
-  minWarningTimeHour          - минимальный порог предупреждения ( в часах)
-  abortTimeHour               - порог прерывания ( в часах)
-  orakillWaitTimeHour         - порог прерывания через orakill ( в часах).
+  warningTimePercent          - порог предупреждения (в процентах)
+  warningTimeHour             - порог предупреждения (в часах)
+  minWarningTimeHour          - минимальный порог предупреждения (в часах)
+  abortTimeHour               - порог прерывания (в часах)
+  orakillTimeHour             - порог прерывания через orakill (в часах).
                                 Порог времени отсчитывается с начала
                                 прерывания сессии.
+  handlerWarningTimeHour      - порог предупреждения для обработчиков (в
+                                часах)
+  handlerAbortTimeHour        - порог прерывания для обработчиков (в часах)
+  handlerOrakillTimeHour      - порог прерывания через orakill для
+                                обработчиков (в часах)
+
+  Примечание:
+  - параметры для не обработчиков без префикса handler не влияют на
+    отслеживание батчей обработчиков;
 */
 procedure checkBatchExecution(
-  warningTimePercent integer
-  , warningTimeHour integer
-  , minWarningTimeHour integer
-  , abortTimeHour integer
-  , orakillWaitTimeHour integer
-  , traceCopyPath varchar2 := null
+  warningTimePercent      integer
+, warningTimeHour         integer
+, minWarningTimeHour      integer
+, abortTimeHour           integer
+, orakillTimeHour         integer
+, handlerWarningTimeHour  integer
+, handlerAbortTimeHour    integer
+, handlerOrakillTimeHour  integer
+, traceCopyPath           varchar2 := null
 )
 is
   pragma autonomous_transaction;
@@ -1235,7 +1259,7 @@ is
   -- Выполнена ли трассировка
   isTrace boolean;
 
-  cursor curLongBatch is
+  cursor longBatchCur is
 select
   l.*
 from
@@ -1250,8 +1274,12 @@ from
             max_execution_hour *
               case when c.batch_short_name is not null then
                 c.warning_time_percent
-              else
+              when
+                is_real_time = 0
+              then
                 warningTimePercent
+              else
+                null
               end
             / 100
             , execution_hour + 1
@@ -1260,6 +1288,10 @@ from
           coalesce(
             case when c.batch_short_name is not null then
               c.warning_time_hour
+            when
+              is_real_time = 1
+            then
+              handlerWarningTimeHour
             else
               warningTimeHour
             end
@@ -1275,14 +1307,26 @@ from
           )
       ) as warning_time_hour
     , case when c.batch_short_name is not null then
-        c.abort_time_hour
-      else
+        abort_time_hour
+      when
+        is_real_time = 0
+      then
         abortTimeHour
+      when
+        is_real_time = 1
+      then
+        handlerAbortTimeHour
       end as abort_time_hour
     , case when c.batch_short_name is not null then
-        c.orakill_wait_hour
-      else
-        orakillWaitTimeHour
+        orakill_wait_hour
+      when
+        is_real_time = 0
+      then
+        orakillTimeHour
+      when
+        is_real_time = 1
+      then
+        handlerOrakillTimeHour
       end as orakill_wait_time_hour
     , c.trace_time_hour as trace_time_hour
     , c.sql_trace_level as sql_trace_level
@@ -1332,6 +1376,7 @@ from
             where
               iv.schedule_id = sd.schedule_id
             )
+          and rownum <= 1
         ) as is_real_time
     from
       v_sch_batch b
@@ -1349,13 +1394,9 @@ from
     c.batch_short_name = d.batch_short_name
   ) l
 where
-  is_real_time = 0
-  and
-  (
-    -- l.warning_time_hour учитывает warning_time_percent
-    l.execution_hour > l.warning_time_hour
-    or l.execution_hour > l.abort_time_hour
-  )
+  -- l.warning_time_hour учитывает warning_time_percent
+  l.execution_hour > l.warning_time_hour
+  or l.execution_hour > l.abort_time_hour
   or l.execution_hour > l.trace_time_hour
   ;
 
@@ -1376,14 +1417,16 @@ where
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
-          'Ошибка добавления сообщения'
+          'Ошибка добавления сообщения ('
+          || ' addedMessage="' || addedMessage || '"'
+          || ').'
         )
       , true
     );
   end addMessage;
 
   procedure abortBatch(
-    rec curLongBatch%rowtype
+    rec longBatchCur%rowtype
   )
   is
   -- Прерывание пакета
@@ -1407,7 +1450,7 @@ where
   end abortBatch;
 
   procedure checkExecution(
-    rec curLongBatch%rowtype
+    rec longBatchCur%rowtype
   )
   is
   begin
@@ -1457,7 +1500,7 @@ where
   end checkExecution;
 
   procedure trace(
-    rec curLongBatch%rowtype
+    rec longBatchCur%rowtype
   )
   is
   -- Включение трассировки для батча
@@ -1495,7 +1538,7 @@ where
   end trace;
 
   procedure sendMessage(
-    rec curLongBatch%rowtype
+    rec longBatchCur%rowtype
   )
   is
   -- Отправка email-сообщения
@@ -1549,16 +1592,16 @@ begin
     , processName => 'checkBatchExecution'
   );
   logger.debug( 'minWarningTimeHour=' || to_char( minWarningTimeHour));
-  for rec in curLongBatch loop
+  for rec in longBatchCur loop
     logger.debug(
-      'Проверка батча ( '
-      || ' batch_short_name="' || rec.batch_short_name || '"'
-      || ' , sid=' || to_char( rec.sid)
-      || ' , serial#=' || to_char( rec.serial#)
-      || ' , execution_hour=' || to_char( rec.execution_hour)
-      || ' , warning_time_hour=' || to_char( rec.warning_time_hour)
-      || ' , abort_time_hour=' || to_char( rec.abort_time_hour)
-      || ' , trace_time_hour=' || to_char( rec.trace_time_hour)
+      'Проверка батча ('
+      || 'batch_short_name="' || rec.batch_short_name || '"'
+      || ', sid=' || to_char( rec.sid)
+      || ', serial#=' || to_char( rec.serial#)
+      || ', execution_hour=' || to_char( rec.execution_hour)
+      || ', warning_time_hour=' || to_char( rec.warning_time_hour)
+      || ', abort_time_hour=' || to_char( rec.abort_time_hour)
+      || ', trace_time_hour=' || to_char( rec.trace_time_hour)
       || ')'
     );
     messageText := '';
@@ -1580,15 +1623,18 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка отслеживания работы батчей ( '
-        || 'warningTimePercent=' || to_char( warningTimePercent)
+        'Ошибка отслеживания работы батчей (  ('
+        || ' warningTimePercent=' || to_char( warningTimePercent)
         || ', warningTimeHour=' || to_char( warningTimeHour)
+        || ', minWarningTimeHour=' || to_char( minWarningTimeHour)
         || ', abortTimeHour=' || to_char( abortTimeHour)
-        || ', orakillWaitTimeHour=' || to_char( orakillWaitTimeHour)
-        || ', traceCopyPath=' || to_char( traceCopyPath)
-        || ')'
+        || ', orakillTimeHour=' || to_char( orakillTimeHour)
+        || ', handlerWarningTimeHour=' || to_char( handlerWarningTimeHour)
+        || ', handlerAbortTimeHour=' || to_char( handlerAbortTimeHour)
+        || ', handlerOrakillTimeHour=' || to_char( handlerOrakillTimeHour)
+        || ', traceCopyPath="' || traceCopyPath || '"'
+        || ').'
       )
-    , true
   );
 end checkBatchExecution;
 

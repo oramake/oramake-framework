@@ -12,20 +12,29 @@
         <value>35</value>
       </interval>
     </schedule>
-    <option short_name="AbortTimeHour" type="number" name="ѕорог прерывани€ выполнени€ пакета ( в часах)">
-      <value>20</value>
-    </option>
-    <option short_name="MinWarningTimeHour" type="number" name="ћинимальный порог предупреждени€ по времени выполнени€ пакета ( в часах)">
-      <value>3</value>
-    </option>
-    <option short_name="OrakillWaitTimeHour" type="number" name="ѕорог прерывани€ выполнени€ пакета через OraKill ( в часах)">
-      <value>12</value>
-    </option>
-    <option short_name="WarningTimeHour" type="number" name="ѕорог предупреждени€ по времени выполнени€ пакета ( в часах)">
+    <option short_name="WarningTimeHour" type="number" name="ѕорог предупреждени€ по времени выполнени€ пакета (в часах)">
       <value>15</value>
     </option>
-    <option short_name="WarningTimePercent" type="number" name="ѕорог предупреждени€ по превышению максимального времени выполнени€ пакета ( в процентах)">
+    <option short_name="WarningTimePercent" type="number" name="ѕорог предупреждени€ по превышению максимального времени выполнени€ пакета (в процентах)">
       <value>130</value>
+    </option>
+    <option short_name="AbortTimeHour" type="number" name="ѕорог прерывани€ выполнени€ пакета (в часах)">
+      <value>20</value>
+    </option>
+    <option short_name="MinWarningTimeHour" type="number" name="ћинимальный порог предупреждени€ по времени выполнени€ пакета (в часах)">
+      <value>3</value>
+    </option>
+    <option short_name="OrakillTimeHour" type="number" name="ѕорог прерывани€ выполнени€ пакета через OraKill (в часах)">
+      <value>12</value>
+    </option>
+    <option short_name="HandlerWarningTimeHour" type="number" name="ѕорог предупреждени€ дл€ обработчиков (в часах)">
+      <value>25</value>
+    </option>
+    <option short_name="HandlerAbortTimeHour" type="number" name="ѕорог прерывани€ дл€ обработчиков (в часах)">
+      <value></value>
+    </option>
+    <option short_name="HandlerOrakillTimeHour" type="number" name="ѕорог прерывани€ дл€ обработчиков (в часах)">
+      <value></value>
     </option>
   </batch_config>
   <name>ѕроверка длительности выполнени€ пакетов</name>
