@@ -8,7 +8,7 @@
 
 # build var: OMS_VERSION
 # Версия OMS-файлов, входящих в состав модуля.
-OMS_VERSION=1.8.0
+OMS_VERSION=2.0.0
 
 
 
@@ -42,9 +42,13 @@ tab := $(empty)	$(empty)
 # group: Общие параметры
 #
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 
 
 
@@ -80,11 +84,8 @@ getDateFromKeyword = $(strip $(shell \
   ))
 
 
-# Включаем файл локальной инициализации
-include $(OMS_INSTALL_DATA_DIR)/Config/local.mk
-
-# Включаем пользовательские настройки OMS
-include $(OMS_INSTALL_DATA_DIR)/Config/localCustom.mk
+# Включаем пользовательские настройки БД
+include $(OMS_INSTALL_CONFIG_DIR)/database.mk
 
 
 

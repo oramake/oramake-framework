@@ -153,5 +153,5 @@ Language: Shell
    Extension: sh
    Shebang String: /bin/bash
    Line Comment: #
-   Variable Prototype Ender: \n
    Line Extender: \
+   Variable Prototype Ender: \n
