@@ -1,5 +1,6 @@
--- script: Install/Data/Last/opt_option.sql
--- Создает настроечные параметры модуля.
+-- ModuleConfig/Scheduler/opt_option.sql
+-- Создает настроечные параметры модуля Scheduler, специфичные для БД или
+-- пользователя и БД.
 --
 -- Параметры:
 -- productionDbName           - имя промышленной БД, к которой относится
@@ -9,7 +10,7 @@
 -- Замечания:
 --  - значение для параметра <pkg_SchedulerMain.LocalRoleSuffix_OptSName>
 --    определяется согласно настройкам, заданным скриптом
---    <Install/Data/Last/Custom/set-schDbRoleSuffixList.sql>,
+--    <ModuleConfig/Scheduler/set-schDbRoleSuffixList.sql>;
 --    по значению productionDbName с учетом текущей схемы, при этом
 --    если параметру уже было присвоено значение, отличное от null, то оно не
 --    изменяется;
@@ -21,7 +22,7 @@ define productionDbName = "&1"
 
 prompt get local roles config...
 
-@Install/Data/Last/Custom/set-schDbRoleSuffixList.sql
+@@set-schDbRoleSuffixList.sql
 
 
 

@@ -78,6 +78,21 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 4.5.0
+(<Версии::4.5.0 ( 2018-01-10)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=4.5.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 4.4.0
 
 Порядок установки:

@@ -409,7 +409,7 @@ override PRODUCTION_DB_NAME := $(call getProductionDbName,$(PRODUCTION_DB_NAME))
 
 # Передача параметров скрипту <Install/Data/Last/opt_option.sql>
 loadArgumentList += \
-  $(call getArgumentDefine,Install/Data/Last/opt_option.sql.$(lu), \
+  $(call getArgumentDefine,$(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Scheduler/opt_option.sql.$(lu), \
    "$(PRODUCTION_DB_NAME)")
 
 
@@ -582,10 +582,11 @@ getInstallDataFile = \
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
-    $(call getInstallDataFile,Local/$(LOCAL_USER_DIR)) \
+    $(wildcard $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Scheduler/opt_option.sql) \
   ) \
   $(addsuffix .$(lu2), \
     $(call getInstallDataFile,AccessOperatorDb) \
+    $(wildcard $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Scheduler/op_role.sql) \
   ) \
   $(addsuffix .$(lu3), \
   ) \
