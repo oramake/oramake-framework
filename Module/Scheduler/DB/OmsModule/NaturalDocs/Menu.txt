@@ -149,12 +149,6 @@ Group: Скрипты  {
                File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
                }  # Group: AccessOperatorDb
 
-            Group: Custom  {
-
-               File: set-schDbRoleSuffixList  (no auto-title, Install/Data/Last/Custom/set-schDbRoleSuffixList.sql)
-               }  # Group: Custom
-
-            File: opt_option  (no auto-title, Install/Data/Last/opt_option.sql)
             }  # Group: Last
 
          }  # Group: Data
@@ -221,6 +215,12 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: OmsConfig  {
+
+      File: op_role  (no auto-title, OmsConfig/op_role.sql)
+      File: set-schDbRoleSuffixList  (no auto-title, OmsConfig/set-schDbRoleSuffixList.sql)
+      }  # Group: OmsConfig
 
    Group: Show  {
 

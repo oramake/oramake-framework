@@ -79,7 +79,6 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 group: 4.5.0
-(<Версии::4.5.0 ( 2018-01-10)>)
 
 Порядок установки:
 
