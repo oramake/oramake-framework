@@ -450,7 +450,7 @@ begin
   if rec.current_job_id is null then
     dbms_job.submit(
       rec.current_job_id
-      , 'pkg_Scheduler.execBatch( JOB, NEXT_date);'
+      , 'pkg_Scheduler.execBatch(JOB /* batch: ' || rec.batch_short_name || ' */, NEXT_date);'
       , newDate
     );
     -- Связываем пакет с заданием Oracle
@@ -3731,6 +3731,7 @@ is
     -- Текст sql для запуска задания
     sqlText varchar2( 32767) := replace(replace(
 'declare
+  /* batch: ' || batchShortName || ' */
   batchShortName sch_batch.batch_short_name%type:= :batchShortName;
   jobResultId sch_result.result_id%type := :lJobResult;
   jobResultMessage sch_log.message_text%type := :lJobResultMessage;
