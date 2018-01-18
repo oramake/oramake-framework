@@ -67,7 +67,11 @@ function addLine() \
 
 END {
   for ( i = 1; i <= codePartCount; i++ ) {
-    lastLine = codePartList_lineList[i,codePartList_lineCount[i]];
+    lastLine = \
+      gensub( \
+        /[[:space:]]*$/, "", "g" \
+      , codePartList_lineList[i,codePartList_lineCount[i]] \
+      );
     switch( codePartList_codeType[i]) {
       case "GROUP":
         # Если группа непуста
@@ -85,7 +89,11 @@ END {
         if ( commentPos == 0) {
           commentPos = index( commentLine, "func:");
         }
-        commentName = substr( commentLine, commentPos + 6);
+        commentName =  \
+          gensub( \
+            /[[:space:]]*$/, "", "g" \
+          , substr( commentLine, commentPos + 6) \
+          );
         for ( j = 1; j < codePartList_lineCount[i]; j++) {
           print \
             gensub( \

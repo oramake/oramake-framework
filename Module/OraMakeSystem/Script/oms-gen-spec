@@ -73,7 +73,7 @@ FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<Функции\>[[:
 
 # const: END_OBJECT_EXPR
 # Регулярное выражения для конца sql-скрипта для создания plsql-объекта
-END_OBJECT_EXPR='^\/[[:blank:]]*$'
+END_OBJECT_EXPR='^\/[[:space:]]*$'
 
 
 
