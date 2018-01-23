@@ -30,6 +30,7 @@ allModuleList = \
 	Calendar \
 	TestUtility \
 	TextService \
+	WebUtility \
 
 
 
@@ -256,6 +257,9 @@ install:
 				addonOpt=" PRODUCTION_DB_NAME=ProdDb"; \
 				;; \
 			TaskHandler) \
+				grantSysPrivsFlag=1; \
+				;; \
+			WebUtility) \
 				grantSysPrivsFlag=1; \
 				;; \
 		esac \
