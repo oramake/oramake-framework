@@ -194,8 +194,10 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
 	private void setDataSourceDependFields(JepOption dataSource){
 		Boolean enabled = false;
 		if(!JepRiaUtil.isEmpty(dataSource) || _workstate.equals(EDIT)) {
+		  OptionAsRiaScope.instance.setDataSource(dataSource);
 			enabled = true;
 		}
+
 		fields.setFieldEnabled(OPTION_ID, enabled);
 		fields.setFieldEnabled(MODULE_ID, enabled);
 		fields.setFieldEnabled(OBJECT_SHORT_NAME, enabled);
