@@ -461,6 +461,13 @@ patchFile()
               "$baseFile" \
               | gawk '
   {
+    # Замена DOS-овского переноса строки
+    if (NR == 1 && $0 ~ "\r") {
+     RS="\r\n"
+     sub("\r","")
+    }
+    ORS=RS
+    
     if ( index( $0, "FAILED") == 0 \
       && index( $0, "Skipping patch") == 0 \
       && index( $0, "saving rejects") == 0) {

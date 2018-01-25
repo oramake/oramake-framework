@@ -1105,6 +1105,13 @@ BEGIN {
 # Вызывает <loadConfigString> или <loadFileString>.
 #
 { 
+  # Замена DOS-овского переноса строки
+  if (NR == 1 && $0 ~ "\r") {
+      RS="\r\n"
+      sub("\r","")
+  }
+  ORS=RS
+  
   isComment = match( $0, /[\ \t]*\#.*/);
   if( isComment != 1) {
     isFileMatched = ( match( $0, /[^\#]*File: .*\(.*.)/) == 1);
