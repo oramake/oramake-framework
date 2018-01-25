@@ -14,6 +14,16 @@ LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
 
 
+group: 1.0.10
+
+Update command:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.10 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
 
 group: Первоначальная установка
 

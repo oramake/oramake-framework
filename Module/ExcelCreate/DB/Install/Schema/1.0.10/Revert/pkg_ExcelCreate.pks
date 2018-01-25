@@ -3,7 +3,7 @@ as
 /* package: pkg_ExcelCreate
    Пакет содержит функции для формирования документа в формате Excel
 
-   Root: *oramake/Module/ExcelCreate*
+   SVN root: *Oracle/Module/ExcelCreate*
 */
 
 
@@ -154,15 +154,6 @@ Windows1251_DocumentEncoding constant varchar2(30) := 'Windows-1251';
 Utf8_DocumentEncoding constant varchar2(30) := 'UTF-8';
 
 
-/* group: Row height constants */
-
-
-/* const: RowHeight_Max
-   Maximum row height in Excel
-*/
-RowHeight_Max               constant number := 409.5;
-
-
 /* group: Функции */
 
 
@@ -177,41 +168,39 @@ RowHeight_Max               constant number := 409.5;
 procedure newDocument;
 
 /* pproc: addStyle
-  Создает новый стиль для использования в документе Excel
+   Создает новый стиль для использования в документе Excel
 
-  Параметры:
-   
-  styleName                 - наименование стиля
-  styleDataType             - тип данных стиля (см. константы %_DataType)
-  parentStyleName           - наименование родительского стиля (для наследования свойств)
-  verticalAlignment         - выравнивание по вертикали
-  horizontalAlignment       - выравнивание по горизонтали
-  formatValue               - формат значения
-  isTextWrapped             - перенос по словам
-  fontName                  - наименование шрифта
-  fontSize                  - размер шрифта
-  isFontBold                - жирный шрифт
-  isFontUnderlined          - use underlined font
-  borderPosition            - позиция границы ячейки (сумма констант %_BorderPosition)
-  interiorColor             - цвет заливки фона
-  
-  (<body::addStyle>)
+   Параметры:
+     styleName           - наименование стиля
+     styleDataType       - тип данных стиля (см. константы %_DataType)
+     parentStyleName     - наименование родительского стиля (для наследования
+                           свойств)
+     verticalAlignment   - выравнивание по вертикали
+     horizontalAlignment - выравнивание по горизонтали
+     formatValue         - формат значения
+     isTextWrapped       - перенос по словам
+     fontName            - наименование шрифта
+     fontSize            - размер шрифта
+     isFontBold          - жирный шрифт
+     borderPosition      - позиция границы ячейки (сумма констант %_BorderPosition)
+     interiorColor       - цвет заливки фона
+
+  ( <body::addStyle>)
 */
-procedure addStyle(
-  styleName                 in varchar2
-, styleDataType             in varchar2
-, parentStyleName           in varchar2    := null
-, verticalAlignment         in varchar2    := null
-, horizontalAlignment       in varchar2    := null
-, formatValue               in varchar2    := null
-, isTextWrapped             in boolean     := null
-, fontName                  in varchar2    := null
-, fontSize                  in pls_integer := null
-, isFontBold                in boolean     := null
-, isFontUnderlined          in boolean     := null
-, borderPosition            in pls_integer := null
-, interiorColor             in varchar2    := null
-);
+procedure addStyle (
+    styleName           in varchar2
+  , styleDataType       in varchar2
+  , parentStyleName     in varchar2    := null
+  , verticalAlignment   in varchar2    := null
+  , horizontalAlignment in varchar2    := null
+  , formatValue         in varchar2    := null
+  , isTextWrapped       in boolean     := null
+  , fontName            in varchar2    := null
+  , fontSize            in pls_integer := null
+  , isFontBold          in boolean     := null
+  , borderPosition      in pls_integer := null
+  , interiorColor       in varchar2    := null
+  );
 
 /* pproc: removeStyle
    Удаляет выбранный стиль
@@ -459,7 +448,7 @@ procedure addAutoSumByName (
   , cellIndex         in pls_integer := null
   );
 
-/* pproc: addRow (DEPRECATED, use addRow(height, autoFit) instead)
+/* pproc: addRow
    Добавляет строку. Вызывается после того, как сформированы все ячейки,
    которые должны быть в строке
 
@@ -469,9 +458,11 @@ procedure addAutoSumByName (
    Примечание: после того, как создано нужное кол-во строк необходимо
                вызвать addWorksheet для переноса сформированных строк на
                лист Excel
+
+  ( <body::addRow>)
 */
 procedure addRow (
-  autoFitHeight in boolean
+  autoFitHeight in boolean := null
   );
 
 /* pproc: addHeaderRow
@@ -486,24 +477,6 @@ procedure addHeaderRow (
   style in varchar2 := null
   );
 
-/* pproc: addRow
-  Add a row (after all its cells have been generated)
-
-  Params:
-   
-  height                    - Row height in points. The value specified will be reset to a maximum
-                              of RowHeight_Max if exceeded.
-  autoFit                   - Determine row height automatically (true or false)
-
-  Note: Please call addWorksheet() once all required rows have been created
-  
-  (<body::addRow>)
-*/
-procedure addRow(
-  height                    in number   := null
-, autoFit                   in boolean  := true
-);
-
 /* pproc: setColumnWidth
    Устанавливает ширину колонок документа на листе Excel
 
@@ -512,25 +485,18 @@ procedure addRow(
 procedure setColumnWidth;
 
 /* pproc: addWorksheet
-  Add a sheet into an Excel workbook
+   Добавляет лист в книгу Excel
 
-  Params:
-  
-  sheetName                 - Excel sheet name
-  addAutoFilter             - Enable auto filter (default, true)
-  fitToPage                 - Fit contents to page (default, false)
-  fitHeight                 - Fit to: N pages tall
-  fitWidth                  - Fit to: N pages wide
-  
-  (<body::addWorksheet>)
+   Параметры:
+     sheetName     - имя листа Excel
+     addAutoFilter - добавить строку автофильтра на лист Excel?
+
+  ( <body::addWorksheet>)
 */
 procedure addWorksheet (
-  sheetName                 in varchar2
-, addAutoFilter             in boolean := true
-, fitToPage                 in boolean := false
-, fitHeight                 in pls_integer := null
-, fitWidth                  in pls_integer := null
-);
+    sheetName     in varchar2
+  , addAutoFilter in boolean := true
+  );
 
 /* pproc: prepareDocument
    Формирует документ. Вызывается после того, как сформированы все листы в Excel

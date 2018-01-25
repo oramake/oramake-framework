@@ -2,21 +2,18 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 1856 $
-# $LastChangedDate:: 2013-12-13 11:42:40 +0400 #$
+# $Revision:: 25147135 $
+# $Date:: 2017-10-24 09:55:09 +0300 #$
 #
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.1
 
 
 
 # Строка для фиктивного изменения файла ( для получения новой правки для OMS,
 # необходимой для корректного обновления OMS-файлов модулей в случае применения
 # патчей, например при изменении в шаблоне файла DB/Makefile).
-# -
+# +
 
 
 
@@ -107,6 +104,8 @@ endif
   install-load.oms            \
   install-save-info.oms       \
   install-schema.oms          \
+  install-test.oms            \
+  test.oms                    \
   uninstall.oms               \
   uninstall-after.oms         \
   uninstall-before.oms        \
@@ -131,9 +130,13 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
@@ -186,7 +189,7 @@ ifeq ($(MODULE_VERSION),)
       ifeq ($(call compareVersion,$(INSTALL_VERSION),$(moduleVersion)),1)
 
         moduleVersionNew := $(shell \
-          oms-module set-version --directory .. \
+          oms set-version --directory .. \
             --used-only --quiet "$(INSTALL_VERSION)" \
           && echo \
             "OMS: module version changed using INSTALL_VERSION: $(INSTALL_VERSION) ( please, run \"make gendoc\")" >&2 \
@@ -254,7 +257,7 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms-module --directory .. show-svn-info --quiet)
+getSvnInfo := $(shell oms --directory .. show-svn-info --quiet)
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 
@@ -266,7 +269,7 @@ export OMS_ACTION_GOALS = $(MAKECMDGOALS)
 # Устанавливает номер текущей версии модуля.
 
 set-version.oms:
-	@oms-module set-version --directory .. "$(MODULE_VERSION)"
+	@oms set-version --directory .. "$(MODULE_VERSION)"
 
 
 
@@ -275,20 +278,14 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 1856                     $$
+omsRevisionKeyword    := \$$Revision:: 25147135 $$
 
-omsRevision          := $(strip $(shell           \
-  omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:25}"               \
-  ))
+omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateValue  := \$$Date:: 2013-12-13 11:42:40 +0400 #$$
+omsChangeDateKeyword  := \$$Date:: 2017-10-24 09:55:09 +0300 #$$
 
-omsChangeDate      := $(strip $(shell             \
-  omsChangeDateValue='$(omsChangeDateValue)';     \
-  echo "$${omsChangeDateValue:8:11}"              \
-  ))
+omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
 
 
@@ -351,7 +348,7 @@ gendoc-menu.oms:
 #
 
 # Каталог со стандартными SQL-скриптами
-omsSqlScriptDir  = $(OMS_INSTALL_DATA_DIR)/SqlScript
+omsSqlScriptDir  = $(OMS_INSTALL_SHARE_DIR)/SqlScript
 
 # Каталог с файлами, создаваемыми при загрузке в БД.
 loadDir           = $(omsModuleDir)/Load
@@ -564,6 +561,36 @@ runFunction  = \
 	fi; \
 	}
 
+# Скрипт, реализующий проверку имени файла по SKIP_FILE_MASK и FILE_MASK,
+# а также вызывающий дополнительный скрипт.
+#
+# Параметры:
+#
+# 1                           - наименование переменной, в которой находится
+#                               текст дополнительного скрипта для проверки
+#                               файла
+#
+# Переменные:
+# loadFileTargetList          - список целей для проверяемых файлов
+#
+# Результат выводится в стандартный выходной поток в виде списка целей для
+# файлов загрузки.
+checkFileTargetScript = \
+  loadExtList="$(addprefix .,$(foreach e,$(loadExt) $(runExt),$(addsuffix $(e),$(loadUserListReal))))"; \
+  for loadFileTarget in $$loadFileTargetList ; do \
+    for loadExt in $$loadExtList ; do \
+      loadFile="$${loadFileTarget%$$loadExt}"; \
+      if [[ "$$loadFileTarget" = "$${loadFile}$${loadExt}" ]] ; then \
+        $(1) \
+        $(checkFileMaskScript) \
+        if (( isNeedLoad)) && (( isNeedProcess)) ; then \
+          echo "$$loadFileTarget"; \
+        fi; \
+        break; \
+      fi; \
+    done; \
+  done;
+
 
 
 #
@@ -601,20 +628,7 @@ checkLoadFileMaskScript = \
 filterLoadFileTarget = \
   $(if $(strip $(LOAD_FILE_MASK) $(SKIP_FILE_MASK) $(FILE_MASK)),$(strip $(shell \
     loadFileTargetList="$(strip $(1))"; \
-    loadExtList="$(addprefix .,$(foreach e,$(loadExt) $(runExt),$(addsuffix $(e),$(loadUserListReal))))"; \
-    for loadFileTarget in $$loadFileTargetList ; do \
-      for loadExt in $$loadExtList ; do \
-        loadFile="$${loadFileTarget%$$loadExt}"; \
-        if [[ "$$loadFileTarget" = "$${loadFile}$${loadExt}" ]] ; then \
-          $(checkLoadFileMaskScript) \
-          $(checkFileMaskScript) \
-          if (( isNeedLoad)) && (( isNeedProcess )) ; then \
-            echo "$$loadFileTarget"; \
-          fi; \
-          break; \
-        fi; \
-      done; \
-    done; \
+	  $(call checkFileTargetScript, $(checkLoadFileMaskScript)) \
   )),$1)
 
 # Проверяет присутствие загружаемого файла в списке загрузки для цели load.
@@ -643,6 +657,93 @@ loadFunction  =  \
 		&& mkdir -p "$(loadStateDir)/$(@D)" && touch "$(loadStateDir)/$@"; \
 	fi;
 
+
+#
+# Загрузка батчей в БД.
+#
+
+# Скрипт, реализующий проверку файла, относящегося к батчу.
+#
+# Переменные:
+# loadFile                    - имя проверяемого файла предполагается, что
+#								директория файла совпадает с именем батча
+# isNeedLoad                  - результат проверки ( 1 если подпадает под
+#                               маску, иначе 0)
+#
+checkBatchScript = \
+  batchDirName=$${loadFile%/*}; \
+  batchName=$${batchDirName\#\#*/}; \
+  skipBatchMask="$(strip $(subst $(comma),$(space),$(SKIP_BATCH_MASK)))"; \
+  isNeedLoad=1; \
+  set -f ; set -- $$skipBatchMask; set +f ; \
+  for mask in "$$@" ; do \
+    case "$$batchName" in $$mask) \
+      isNeedLoad=0; break; ;; \
+    esac; \
+  done; \
+  if (( isNeedLoad)); then \
+    batchMask="$(strip $(subst $(comma),$(space),$(BATCH_MASK)))"; \
+    set -f ; set -- $$batchMask; set +f ; \
+    for mask in "$$@" ; do \
+      isNeedLoad=0; \
+      case "$$batchName" in $$mask) \
+        isNeedLoad=1; break; ;; \
+      esac; \
+    done; \
+  fi;
+
+# Получает имена скриптов из списка целей.
+getSourceFileList = \
+  $(foreach u, $(loadUserListReal), \
+    $(foreach e, $(loadExt) $(runExt), \
+      $(patsubst %.$(u)$(e),%, \
+        $(filter %.$(u)$(e),$(1)) \
+      ) \
+    ) \
+  )
+
+# Оставляет в списке только те цели для файлов, в директории которых есть файл
+# batch.xml в том же списке.
+getBatchLocalTargetList = \
+  $(foreach fileTarget, $(1), \
+   $(if \
+     $(filter \
+        $(dir $(call getSourceFileList, $(fileTarget)))batch.xml \
+        , $(call getSourceFileList, $(1)) \
+     ) \
+     , $(fileTarget) \
+   ) \
+  )
+
+# Оставляет в списке только те цели для файлов батчей, которые не входят
+# в список getBatchLocalTargetList.
+getBatchCommonTargetList = \
+  $(filter-out \
+    $(call getBatchLocalTargetList, $(1)) \
+    , $(1) \
+  )
+
+
+# Оставляет в списке файлов батчей только файлы, соответствующие батчам,
+# которые удовлетворяют маске BATCH_MASK или SKIP_BATCH_MASK.
+#
+# Фильтр осуществляется только для файлов батчей, которые можно отнести к
+# какому-либо батчу, т.е. в директории которого есть также файл batch.xml,
+# который входит в installBatchTarget.
+#
+# Параметры:
+# $(1)    - список имен загружаемых файлов ( с суффиксами $(lu),...)
+#
+filterInstallBatchTarget = \
+  $(if \
+    $(strip $(BATCH_MASK) $(SKIP_BATCH_MASK)) \
+    ,  $(strip $(shell \
+          echo "$(call getBatchCommonTargetList, $(strip $(1)))"; \
+          loadFileTargetList="$(call getBatchLocalTargetList, $(strip $(1)))"; \
+          $(call checkFileTargetScript, $(checkBatchScript)) \
+       )) \
+    , $1 \
+  )
 
 
 #
@@ -984,7 +1085,7 @@ load-start-log.oms:
 				&& usedOmsRevision=$${omsLoadVersion#*File revision*: } \
 				&& usedOmsRevision=$${usedOmsRevision%% *} \
 				&& usedOmsChangeDate=$${omsLoadVersion#*File change date*: } \
-				&& usedOmsChangeDate=$${usedOmsChangeDate:0:10} \
+				&& usedOmsChangeDate=$${usedOmsChangeDate:0:25} \
 				&& echo "installed OMS version : $$usedOmsVersion ( rev. $$usedOmsRevision, $$usedOmsChangeDate)" \
 				; } \
 			&& echo "" \
@@ -1014,6 +1115,12 @@ load-start-log.oms:
 			&& echo "SKIP_FILE_MASK      : $(SKIP_FILE_MASK)" \
 			&& echo "SQL_DEFINE          : $(subst ",\",$(SQL_DEFINE))" \
 			&& echo "PLSQL_WARNINGS      : $(PLSQL_WARNINGS)" \
+			&& if [[ -n "$(BATCH_MASK)" ]]; then \
+			   echo "BATCH_MASK          : $(BATCH_MASK)"; \
+			   fi \
+			&& if [[ -n "$(SKIP_BATCH_MASK)" ]]; then \
+			   echo "SKIP_BATCH_MASK     : $(SKIP_BATCH_MASK)"; \
+			   fi \
 			&& if [[ -n "$(SKIP_LOAD_OPTION)" ]]; then \
 			   echo "SKIP_LOAD_OPTION    : $(SKIP_LOAD_OPTION)"; \
 			   fi \
@@ -1030,8 +1137,11 @@ load-start-log.oms:
 			&& if [[ "$(OMS_DEBUG_LEVEL)" != "0" ]]; then \
 			   echo "OMS_DEBUG_LEVEL     : $(OMS_DEBUG_LEVEL)"; \
 			   fi \
-			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
-			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			&& if [[ "$(OMS_INSTALL_SHARE_DIR)" != "/usr/local/share/oms" ]]; then \
+			   echo "OMS_INSTALL_SHARE_DIR: $(OMS_INSTALL_SHARE_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \
@@ -1189,12 +1299,24 @@ install-data.oms: \
 
 
 
+# Реально загружаемые файлы батчей.
+# Исключаются:
+# - игнорируемые из-за отсутствия БД;
+# - не удовлетворяющие SKIP_FILE_MASK, FILE_MASK, если они заданы;
+# - не удовлетворяющие BATCH_MASK, SKIP_BATCH_MASK, если они заданы и если файл
+#   относится к какому либо батчу ( в списке файлов для загрузки в той же
+#   директории присутствует batch.xml);
+#
+installBatchTargetReal = $(call filterInstallBatchTarget, $(call filterOutZeroDbTarget,$(installBatchTarget)))
+
+
+
 # target: install-batch.oms
 # Устанавливает пакетные задания в БД.
 
 install-batch.oms: \
   load-start-log.oms \
-  $(call filterOutZeroDbTarget,$(installBatchTarget))
+  $(installBatchTargetReal)
 
 
 

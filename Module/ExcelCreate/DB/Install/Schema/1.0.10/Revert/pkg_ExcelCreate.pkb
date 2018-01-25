@@ -670,50 +670,48 @@ end newDocument;
 
 
 /* proc: addStyle
-  Создает новый стиль для использования в документе Excel
+   Создает новый стиль для использования в документе Excel
 
-  Параметры:
-   
-  styleName                 - наименование стиля
-  styleDataType             - тип данных стиля (см. константы %_DataType)
-  parentStyleName           - наименование родительского стиля (для наследования свойств)
-  verticalAlignment         - выравнивание по вертикали
-  horizontalAlignment       - выравнивание по горизонтали
-  formatValue               - формат значения
-  isTextWrapped             - перенос по словам
-  fontName                  - наименование шрифта
-  fontSize                  - размер шрифта
-  isFontBold                - жирный шрифт
-  isFontUnderlined          - use underlined font
-  borderPosition            - позиция границы ячейки (сумма констант %_BorderPosition)
-  interiorColor             - цвет заливки фона
+   Параметры:
+     styleName           - наименование стиля
+     styleDataType       - тип данных стиля (см. константы %_DataType)
+     parentStyleName     - наименование родительского стиля (для наследования
+                           свойств)
+     verticalAlignment   - выравнивание по вертикали
+     horizontalAlignment - выравнивание по горизонтали
+     formatValue         - формат значения
+     isTextWrapped       - перенос по словам
+     fontName            - наименование шрифта
+     fontSize            - размер шрифта
+     isFontBold          - жирный шрифт
+     borderPosition      - позиция границы ячейки (сумма констант %_BorderPosition)
+     interiorColor       - цвет заливки фона
 */
 procedure addStyle (
-  styleName                 in varchar2
-, styleDataType             in varchar2
-, parentStyleName           in varchar2    := null
-, verticalAlignment         in varchar2    := null
-, horizontalAlignment       in varchar2    := null
-, formatValue               in varchar2    := null
-, isTextWrapped             in boolean     := null
-, fontName                  in varchar2    := null
-, fontSize                  in pls_integer := null
-, isFontBold                in boolean     := null
-, isFontUnderlined          in boolean     := null
-, borderPosition            in pls_integer := null
-, interiorColor             in varchar2    := null
-)
+    styleName           in varchar2
+  , styleDataType       in varchar2
+  , parentStyleName     in varchar2    := null
+  , verticalAlignment   in varchar2    := null
+  , horizontalAlignment in varchar2    := null
+  , formatValue         in varchar2    := null
+  , isTextWrapped       in boolean     := null
+  , fontName            in varchar2    := null
+  , fontSize            in pls_integer := null
+  , isFontBold          in boolean     := null
+  , borderPosition      in pls_integer := null
+  , interiorColor       in varchar2    := null
+  )
 is
-  vStyleName                TName       := trim(styleName);
-  vStyleDataType            TName       := trim(styleDataType);
-  vParentStyleName          TName       := trim(parentStyleName);
-  vVerticalAlignment        TName       := trim(verticalAlignment);
-  vHorizontalAlignment      TName       := trim(horizontalAlignment);
-  vFormatValue              TName       := trim(formatValue);
-  vFontName                 TName       := trim(fontName);
-  vInteriorColor            TName       := trim(interiorColor);
-  vFontSize                 pls_integer := nullif(fontSize, 0);
-  vBorderPosition           pls_integer := nullif(borderPosition, 0);
+  vStyleName           TName := trim( styleName );
+  vStyleDataType       TName := trim( styleDataType );
+  vParentStyleName     TName := trim( parentStyleName );
+  vVerticalAlignment   TName := trim( verticalAlignment );
+  vHorizontalAlignment TName := trim( horizontalAlignment );
+  vFormatValue         TName := trim( formatValue );
+  vFontName            TName := trim( fontName );
+  vInteriorColor       TName := trim( interiorColor );
+  vFontSize            pls_integer  := nullif( fontSize, 0 );
+  vBorderPosition      pls_integer  := nullif( borderPosition, 0 );
 
 
   /*
@@ -726,45 +724,45 @@ is
     -- наименование стиля
     if vStyleName is null then
       raise_application_error(
-        pkg_Error.IllegalArgument
-      , 'Не указано наименование стиля.'
-      );
+          pkg_Error.IllegalArgument
+        , 'Не указано наименование стиля.'
+        );
     end if;
     -- тип данных стиля
     if vStyleDataType is null then
       raise_application_error(
-        pkg_Error.IllegalArgument
-      , 'Не указан тип данных стиля.'
-      );
+          pkg_Error.IllegalArgument
+        , 'Не указан тип данных стиля.'
+        );
     end if;
     -- существование стиля с таким же именем
-    if styles.exists(vStyleName) then
+    if styles.exists( vStyleName ) then
       raise_application_error(
-        pkg_Error.IllegalArgument
-      , 'Стиль с указанным именем уже существует. ' ||
-          'Чтобы пересоздать существующий стиль его необходимо сначала удалить.'
-      );
+          pkg_Error.IllegalArgument
+        , 'Стиль с указанным именем уже существует. ' ||
+            'Чтобы пересоздать существующий стиль его необходимо сначала удалить.'
+        );
     end if;
     -- существование стиля-родителя
     if (
            vParentStyleName is not null
-       and not styles.exists(vParentStyleName)
+       and not styles.exists( vParentStyleName )
        ) then
       raise_application_error(
-        pkg_Error.IllegalArgument
-      , 'Указанный стиль-родитель не существует'
-      );
+          pkg_Error.IllegalArgument
+        , 'Указанный стиль-родитель не существует'
+        );
     end if;
 
   exception
     when others then
       raise_application_error(
-        pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при проверке параметров для создания стиля в документе Excel'
-        )
-      , true
-      );
+          pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при проверке параметров для создания стиля в документе Excel'
+            )
+        , true
+        );
 
   end checkInput;
 
@@ -775,13 +773,13 @@ is
   function getAlignmentTag
   return varchar2
   is
-    tag                     TMaxVarchar2;
+    tag TMaxVarchar2;
 
   -- getAlignmentTag
   begin
     -- формируем xml-тэг только если указан хотя бы один его параметр
     if (
-          coalesce(vVerticalAlignment, vHorizontalAlignment) is not null
+          coalesce( vVerticalAlignment, vHorizontalAlignment ) is not null
        or isTextWrapped is not null
        ) then
 
@@ -824,16 +822,15 @@ is
   function getFontTag
   return varchar2
   is
-    tag                     TMaxVarchar2;
+    tag TMaxVarchar2;
 
   -- getFontTag
   begin
     -- формируем xml-тэг только если указан хотя бы один его параметр
     if (
-          vFontName         is not null
-       or vFontSize         is not null
-       or isFontBold        is not null
-       or isFontUnderlined  is not null
+          vFontName  is not null
+       or vFontSize  is not null
+       or isFontBold is not null
        ) then
 
       tag := '<Font' ||
@@ -843,7 +840,7 @@ is
         end ||
         case
           when vFontSize is not null then
-            ' ss:Size="' || to_char(vFontSize) || '"'
+            ' ss:Size="' || to_char( vFontSize ) || '"'
         end ||
         case
           when isFontBold is not null then
@@ -854,10 +851,6 @@ is
                 else
                   '0'
               end || '"'
-        end ||
-        case
-          when nvl(isFontUnderlined, false) then
-            ' ss:Underline="Single"'
         end ||
         '/>'
       ;
@@ -879,7 +872,7 @@ is
   function getNumberFormatTag
   return varchar2
   is
-    tag                     TMaxVarchar2;
+    tag TMaxVarchar2;
 
   -- getNumberFormatTag
   begin
@@ -905,23 +898,23 @@ is
   function getBordersTag
   return varchar2
   is
-    tag                     TMaxVarchar2;
+    tag TMaxVarchar2;
 
 
     /*
        Проверяет, необходимо ли рисовать границу в указанной позиции
     */
     function isBorderEnabled (
-      checkPosition         in pls_integer
-    )
+      checkPosition in pls_integer
+      )
     return boolean
     is
     -- isBorderEnabled
     begin
 
       return (
-        bitand(vBorderPosition, checkPosition) / checkPosition = 1
-      );
+        bitand( vBorderPosition, checkPosition ) / checkPosition = 1
+        );
 
     end isBorderEnabled;
 
@@ -932,19 +925,19 @@ is
     if vBorderPosition is not null then
       tag := '<Borders>' ||
         case
-          when isBorderEnabled(Top_BorderPosition) then
+          when isBorderEnabled( Top_BorderPosition ) then
             '<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>'
         end ||
         case
-          when isBorderEnabled(Bottom_BorderPosition) then
+          when isBorderEnabled( Bottom_BorderPosition ) then
             '<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>'
         end ||
         case
-          when isBorderEnabled(Left_BorderPosition) then
+          when isBorderEnabled( Left_BorderPosition ) then
             '<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>'
         end ||
         case
-          when isBorderEnabled(Right_BorderPosition) then
+          when isBorderEnabled( Right_BorderPosition ) then
             '<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>'
         end ||
         '</Borders>'
@@ -990,7 +983,7 @@ begin
   checkInput();
 
   -- создаем новый стиль
-  styles(vStyleName).xmlTag :=
+  styles( vStyleName ).xmlTag :=
     -- наименование стиля
     '<Style ss:ID="' || vStyleName || '"' ||
       -- стиль-родитель
@@ -1012,57 +1005,50 @@ begin
   ;
 
   -- сохраняем порядковый номер стиля
-  styles(vStyleName).styleOrder := styles.count;
+  styles( vStyleName ).styleOrder := styles.count;
 
   -- сохраняем тип данных стиля
-  styles(vStyleName).styleDataType := vStyleDataType;
+  styles( vStyleName ).styleDataType := vStyleDataType;
 
   -- сохраняем стиль-родитель
   if vParentStyleName is not null then
-    styles(vStyleName).parentStyleName := vParentStyleName;
+    styles( vStyleName ).parentStyleName := vParentStyleName;
   end if;
 
 exception
   when others then
     raise_application_error(
-      pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении стиля в документ Excel (' ||
-          'styleName="' || vStyleName || '"' ||
-          ', styleDataType="' || vStyleDataType || '"' ||
-          ', parentStyleName="' || vParentStyleName || '"' ||
-          ', verticalAlignment="' || vVerticalAlignment || '"' ||
-          ', horizontalAlignment="' || vHorizontalAlignment || '"' ||
-          ', formatValue="' || vFormatValue || '"' ||
-          ', isTextWrapped="' ||
-            case
-              when isTextWrapped then
-                'Y'
-              when not isTextWrapped then
-                'N'
-            end || '"' ||
-          ', fontName="' || vFontName || '"' ||
-          ', fontSize=' || to_char(vFontSize) ||
-          ', isFontBold="' ||
-            case
-              when isFontBold then
-                'Y'
-              when not isFontBold then
-                'N'
-            end || '"' ||
-          ', isFontUnderlined="' ||
-            case
-              when isFontUnderlined then
-                'Y'
-              when not isFontUnderlined then
-                'N'
-            end || '"' ||
-          ', borderPosition=' || to_char(vBorderPosition) ||
-          ', interiorColor=' || to_char(vInteriorColor) ||
-          ')'
-      )
-    , true
-    );
+        pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при добавлении стиля в документ Excel ( ' ||
+            'styleName="' || vStyleName || '"' ||
+            ', styleDataType="' || vStyleDataType || '"' ||
+            ', parentStyleName="' || vParentStyleName || '"' ||
+            ', verticalAlignment="' || vVerticalAlignment || '"' ||
+            ', horizontalAlignment="' || vHorizontalAlignment || '"' ||
+            ', formatValue="' || vFormatValue || '"' ||
+            ', isTextWrapped="' ||
+              case
+                when isTextWrapped then
+                  'Y'
+                when not isTextWrapped then
+                  'N'
+              end || '"' ||
+            ', fontName="' || vFontName || '"' ||
+            ', fontSize=' || to_char( vFontSize ) ||
+            ', isFontBold="' ||
+              case
+                when isFontBold then
+                  'Y'
+                when not isFontBold then
+                  'N'
+              end || '"' ||
+            ', borderPosition=' || to_char( vBorderPosition ) ||
+            ', interiorColor=' || to_char( vInteriorColor ) ||
+            ' )'
+          )
+      , true
+      );
 
 end addStyle;
 
@@ -1839,7 +1825,7 @@ exception
 end addAutoSumByName;
 
 
-/* proc: addRow (DEPRECATED, use addRow(height, autoFit) instead)
+/* proc: addRow
    Добавляет строку. Вызывается после того, как сформированы все ячейки,
    которые должны быть в строке
 
@@ -1851,81 +1837,57 @@ end addAutoSumByName;
                лист Excel
 */
 procedure addRow (
-  autoFitHeight in boolean
+  autoFitHeight in boolean := null
   )
 is
+  vAutoFitHeight number(1) :=
+    case
+      when autoFitHeight then
+        1
+      when not autoFitHeight then
+        0
+      else
+        null
+    end
+  ;
+
 -- addRow
 begin
-  -- pass parameters into the new interface
-  addRow( autoFit => autoFitHeight );
-
-end addRow;
-
-
-/* proc: addRow
-  Add a row (after all its cells have been generated)
-
-  Params:
-   
-  height                    - row height in points. The value specified will be reset to a maximum
-                              of RowHeight_Max if exceeded.
-  autoFit                   - determine row height automatically (true or false)
-
-  Note: Please call addWorksheet() once all required rows have been created
-*/
-procedure addRow(
-  height                    in number   := null
-, autoFit                   in boolean  := true
-)
-is
-  -- maximum height - RowHeight_Max
-  vHeight                   number := least(height, RowHeight_Max);
-  vAutoFit                  number(1) :=  case
-                                            when nvl(autoFit, true) then
-                                              1
-                                            else
-                                              0
-                                          end;
-
-begin
-  -- opening tag
+  -- добавляем открывающий тэг
   appendRows(
     '<Row' ||
-      ' ss:AutoFitHeight="' || to_char(vAutoFit) || '"' ||
       case
-        when vHeight is not null then
-          ' ss:Height="' || to_char(vHeight, 'fm99990.00') || '"'
+        when vAutoFitHeight is not null then
+          ' ss:AutoFitHeight="' || to_char( vAutoFitHeight ) || '"'
       end || '>'
-  , true
-  );
-  
-  -- move all the cells into the row
+    , true
+    )
+  ;
+  -- перенос ячеек в строку
   moveCells();
-  
-  -- closing tag
+  -- добавляем закрывающий тэг
   appendRows( '</Row>' );
 
-  -- keep track of current row number
+  -- обновление номера строки на текущем листе Excel
   rowNumber := rowNumber + 1;
 
 exception
   when others then
     raise_application_error(
-      pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Error in adding a row onto an Excel worksheet (' ||
-          'height="' || to_char(vHeight) || '"' ||
-          ', autoFit="' ||
+        pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при добавлении строки на лист Excel ( ' ||
+            'autoFitHeight="' ||
               case
-                when autoFit then
+                when autoFitHeight then
                   'Y'
-                else
+                when not autoFitHeight then
                   'N'
               end || '"' ||
-          ')'
-      )
-    , true
-    );
+            ' )'
+          )
+      , true
+      );
 
 end addRow;
 
@@ -2011,79 +1973,58 @@ end setColumnWidth;
 
 
 /* proc: addWorksheet
-  Add a sheet into an Excel workbook
+   Добавляет лист в книгу Excel
 
-  Params:
-  
-  sheetName                 - Excel sheet name
-  addAutoFilter             - Enable auto filter (default, true)
-  fitToPage                 - Fit contents to page (default, false)
-  fitHeight                 - Fit to: N pages tall
-  fitWidth                  - Fit to: N pages wide
+   Параметры:
+     sheetName     - имя листа Excel
+     addAutoFilter - добавить строку автофильтра на лист Excel?
 */
 procedure addWorksheet (
-  sheetName                 in varchar2
-, addAutoFilter             in boolean := true
-, fitToPage                 in boolean := false
-, fitHeight                 in pls_integer := null
-, fitWidth                  in pls_integer := null
-)
+    sheetName     in varchar2
+  , addAutoFilter in boolean := true
+  )
 is
   -- начальные тэги xml для формирования листа (до данных)
-  Template_Header           constant varchar2(4000) := '<Worksheet ss:Name="$(sheetName)">';
+  header     varchar2(4000) := '<Worksheet ss:Name="$(sheetName)"><Table>';
+
   -- автофильтр
-  Template_AutoFilter       constant varchar2(4000) := '<AutoFilter x:Range="$(range)" xmlns="urn:schemas-microsoft-com:office:excel"/>';
+  autoFilter varchar2(4000) :=
+'<AutoFilter x:Range="$(range)" xmlns="urn:schemas-microsoft-com:office:excel"/>';
+
   -- конечные тэги xml (после данных)
-  Template_Footer           constant varchar2(4000) := '</Worksheet>';
+  footer     varchar2(4000) := '</Table>$(autoFilter)
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+  </WorksheetOptions>
+</Worksheet>';
 
 -- addWorksheet
 begin
   -- открываем лист
   appendWorksheets(
-    replace(Template_Header, '$(sheetName)', sheetName)
-  );
-  
+    replace( header, '$(sheetName)', sheetName )
+    )
+  ;
   -- добавление строк
-  appendWorksheets('<Table>');
   moveRows();
-  appendWorksheets('</Table>');
 
   -- формируем строку-автофильтр
-  if (addAutoFilter and nullif(headerRowNumber, 0) is not null) then
-    appendWorksheets(
-      replace(
-        Template_AutoFilter, '$(range)',
-          'R' || to_char(headerRowNumber) || 'C1:' ||
-            'R' || to_char(headerRowNumber) || 'C' || to_char(cols.count)
-      )
-    );
+  if (   addAutoFilter
+     and nullif( headerRowNumber, 0 ) is not null
+     ) then
+    autoFilter := replace(
+      autoFilter, '$(range)',
+        'R' || to_char( headerRowNumber ) || 'C1:' ||
+          'R' || to_char( headerRowNumber ) || 'C' || to_char( cols.count )
+      );
+  else
+    autoFilter := null;
   end if;
 
-  -- spreadsheet options
-  appendWorksheets(
-    '<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">' ||
-    case
-      when fitToPage then
-        '<FitToPage/>'
-    end                                                                 ||
-    case
-      when fitHeight is not null or fitWidth is not null then
-        '<Print>'                                                       ||
-        case
-          when fitHeight is not null then
-            '<FitHeight>' || to_char(fitHeight) || '</FitHeight>'
-        end                                                             ||
-        case
-          when fitWidth is not null then
-            '<FitWidth>' || to_char(fitWidth) || '</FitWidth>'
-        end                                                             ||
-        '</Print>'
-    end                                                                 ||
-    '</WorksheetOptions>'
-  );
-
   -- закрываем лист
-  appendWorksheets(Template_Footer);
+  appendWorksheets(
+    replace( footer, '$(autoFilter)', autoFilter )
+    )
+  ;
 
   -- устанавливаем текущий лист
   sheetNumber := sheetNumber + 1;
@@ -2093,30 +2034,21 @@ begin
 exception
   when others then
     raise_application_error(
-      pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при добавлении листа Excel (' ||
-          'sheetName="' || sheetName || '"' ||
-          ', addAutoFilter="' ||
-            case
-              when addAutoFilter then
-                'Y'
-              when not addAutoFilter then
-                'N'
-            end || '"' ||
-          ', fitToPage="' ||
-            case
-              when fitToPage then
-                'Y'
-              else
-                'N'
-            end || '"' ||
-          ', fitHeight=' || to_char(fitHeight) ||
-          ', fitWidth='  || to_char(fitWidth)  ||
-          ')'
-      )
-    , true
-    );
+        pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при добавлении листа Excel ( ' ||
+            'sheetName="' || sheetName || '"' ||
+            ', addAutoFilter="' ||
+              case
+                when addAutoFilter then
+                  'Y'
+                when not addAutoFilter then
+                  'N'
+              end || '"' ||
+            ' )'
+          )
+      , true
+      );
 
 end addWorksheet;
 

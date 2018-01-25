@@ -1,6 +1,16 @@
 title: Версии
 
 
+group: 1.0.10 (2018-01-25)
+(<Установка::1.0.10>)
+
+[+] Add ability to use _underlined_ font in <pkg_ExcelCreate.addStyle>
+
+[+] Add ability to specify row height in <pkg_ExcelCreate.addRow>
+    
+[+] Add ability to set *Fit To Page*, *Fit Height*, *Fit Width* print options in
+    <pkg_ExcelCreate.addWorksheet>
+
 
 group: 1.0.9 ( 2014-05-20 )
 (<Установка::1.0.9>)
