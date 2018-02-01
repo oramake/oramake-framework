@@ -66,7 +66,56 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??
   utl_http, dbms_lob, dbms_utility;
 
 «амечани€:
-- дл€ корректной работы отправки запросов в прикладных модул€х нужно выдать
-  права ACL выполн€ющему процедуру пользователю
+- дл€ успешной отправки запросов может потребоватьс€ выдать
+  права ACL выполн€ющему процедуру пользователю ( с помощью
+  пакета dbms_network_acl_admin);
 
 
+
+group: Run tests
+
+Prerequisites:
+- install Option module;
+- install TestUtility module;
+
+Command to create the objects used to run
+tests:
+
+(code)
+
+$ make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Command for changing test parameters ( listed in
+<pkg_WebUtilityTest::Test parameters>, the example sets URL for downloading
+text data (<pkg_WebUtilityTest.TestHttpTextUrl_OptSName>) to
+"http://www.example.com"):
+
+(code)
+
+$ make -B install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/opt_option.sql SQL_DEFINE=TestHttpTextUrl=http://www.example.com
+
+(end)
+
+Command for run tests:
+
+(code)
+
+$ make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Remarks:
+- if error "ORA-24247: network access denied by access control list (ACL)"
+  occurs during the tests, it is necessary to give the user access to the host;
+  For example, you can use script
+  <Test/grant-host-access.sql>:
+
+(code)
+
+SQL> @WebUtility/DB/Test/grant-host-access.sql *.example.com scott
+
+(end)
+
+  (grant access to *.example.com hosts to scott)

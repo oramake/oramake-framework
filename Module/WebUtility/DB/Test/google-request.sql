@@ -1,3 +1,5 @@
+set define off
+
 declare
   statusCode integer;
   reasonPhrase varchar2( 256);
@@ -21,3 +23,5 @@ User-Agent:Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like G
   );
 end;
 /
+
+set define on

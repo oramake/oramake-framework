@@ -4,7 +4,7 @@
   <name>WebUtility</name>
   <description></description>
   <version>1.0.0</version>
-  <prefix></prefix>
+  <prefix>wbu</prefix>
   <team>
     <programmerDB></programmerDB>
     <programmerAPP></programmerAPP>

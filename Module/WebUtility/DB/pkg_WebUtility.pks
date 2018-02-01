@@ -18,6 +18,21 @@ Module_Name constant varchar2(30) := 'WebUtility';
 
 
 
+/* group: HTTP Methods */
+
+/* const: Get_HttpMethod
+  HTTP Method "GET".
+*/
+Get_HttpMethod constant varchar2(10) := 'GET';
+
+/* const: Post_HttpMethod
+  HTTP Method "POST".
+*/
+Post_HttpMethod constant varchar2(10) := 'POST';
+
+
+
+
 /* group: ‘ункции */
 
 
@@ -42,6 +57,9 @@ Module_Name constant varchar2(30) := 'WebUtility';
                                 ( возврат)
   requestUrl                  - URL дл€ выполнени€ запроса
   requestText                 - “екст запроса
+  httpMethod                  - HTTP method for request
+                                ( default POST if requestText not empty
+                                  oterwise GET)
   maxWaitSecond               - ћаксимальное врем€ ожидани€ ответа по запросу
                                 ( в секундах, по умолчанию 60 секунд)
   headerText                  - список заголовков к запросу
@@ -68,9 +86,33 @@ procedure processHttpRequest(
   , execSecond out nocopy number
   , requestUrl varchar2
   , requestText clob
+  , httpMethod varchar2 := null
   , maxWaitSecond integer := null
   , headerText varchar2 := null
 );
+
+/* pfunc: getHttpResponse
+  Returns data received by using an HTTP request at a given URL.
+
+  Parameters:
+  requestUrl                  - URL for request
+  requestText                 - Request text
+                                ( default is absent)
+  httpMethod                  - HTTP method for request
+                                ( default POST if requestText not empty
+                                  oterwise GET)
+
+  Return values:
+  text data, returned from the HTTP request.
+
+  ( <body::getHttpResponse>)
+*/
+function getHttpResponse(
+  requestUrl varchar2
+  , requestText clob := null
+  , httpMethod varchar2 := null
+)
+return clob;
 
 end pkg_WebUtility;
 /

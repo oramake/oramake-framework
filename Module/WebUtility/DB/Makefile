@@ -703,6 +703,7 @@ installTestTarget = \
     $(wildcard \
       $(addprefix Test/, \
         *.typ *.pks *.tyb *.pkb \
+        Data/*.sql \
       ) \
     ) \
   ) \
@@ -975,6 +976,11 @@ grant-save-info: grant-save-info.oms
 grant: grant.oms
 
 
+# Include config for tests
+include Test/Config/define.mk
+
+# Include custom config ( optional)
+-include $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/WebUtility/define.mk
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk

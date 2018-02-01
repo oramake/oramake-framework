@@ -39,6 +39,9 @@ logger lg_logger_t := lg_logger_t.getLogger(
                                 ( возврат)
   requestUrl                  - URL для выполнения запроса
   requestText                 - Текст запроса
+  httpMethod                  - HTTP method for request
+                                ( default POST if requestText not empty
+                                  oterwise GET)
   maxWaitSecond               - Максимальное время ожидания ответа по запросу
                                 ( в секундах, по умолчанию 60 секунд)
   headerText                  - список заголовков к запросу
@@ -63,6 +66,7 @@ procedure processHttpRequest(
   , execSecond out nocopy number
   , requestUrl varchar2
   , requestText clob
+  , httpMethod varchar2 := null
   , maxWaitSecond integer := null
   , headerText varchar2 := null
 )
@@ -104,9 +108,7 @@ is
         , fieldName
         , fieldValue
       );
-      logger.trace(
-        'HTTP header ' || fieldName || ': ' || fieldValue
-      );
+      logger.trace( fieldName || ': ' || fieldValue);
     end setHeader;
 
     /*
@@ -162,29 +164,40 @@ is
   begin
     req:= utl_http.begin_request(
       url             => requestUrl
-      , method        => 'POST'
+      , method        => coalesce(
+            httpMethod
+            , case when requestText is not null then
+                Post_HttpMethod
+              else
+                Get_HttpMethod
+              end
+          )
       , http_version  => utl_http.HTTP_VERSION_1_1
     );
     begin
       if logger.isTraceEnabled() then
-        logger.trace(
-          'HTTP request: ' || requestUrl
-        );
+        logger.trace( '*** HTTP request start: ' || requestUrl);
+        logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
       end if;
 
 
       utl_http.set_body_charset( req, 'UTF-8');
 
-      -- Конвертация в UTF-8
-      utf8RequestText := convert( requestText, 'utf8');
+      if requestText is not null then
+        -- Конвертация в UTF-8
+        utf8RequestText := convert( requestText, 'utf8');
+      end if;
 
       if headerText is null then
-        setHeader( 'Content-Type', 'text/xml');
-        -- Указываем длину тела запроса с учетом конвертации в UTF-8
-        setHeader( 'Content-Length', dbms_lob.getLength( utf8RequestText));
+        if requestText is not null then
+          setHeader( 'Content-Type', 'text/xml');
+          -- Указываем длину тела запроса с учетом конвертации в UTF-8
+          setHeader( 'Content-Length', dbms_lob.getLength( utf8RequestText));
+        end if;
       else
         setHeaderList();
       end if;
+      logger.trace( '*** HTTP request header: finish');
 
       -- Записываем тело запроса
       loop
@@ -327,6 +340,84 @@ exception when others then
     , true
   );
 end processHttpRequest;
+
+/* func: getHttpResponse
+  Returns data received by using an HTTP request at a given URL.
+
+  Parameters:
+  requestUrl                  - URL for request
+  requestText                 - Request text
+                                ( default is absent)
+  httpMethod                  - HTTP method for request
+                                ( default POST if requestText not empty
+                                  oterwise GET)
+
+  Return values:
+  text data, returned from the HTTP request.
+*/
+function getHttpResponse(
+  requestUrl varchar2
+  , requestText clob := null
+  , httpMethod varchar2 := null
+)
+return clob
+is
+
+  -- Response data
+  statusCode integer;
+  reasonPhrase varchar2(1024);
+  contentType varchar2(1024);
+  entityBody clob;
+
+  execSecond number;
+
+-- getHttpResponse
+begin
+  processHttpRequest(
+    statusCode            => statusCode
+    , reasonPhrase        => reasonPhrase
+    , contentType         => contentType
+    , entityBody          => entityBody
+    , execSecond          => execSecond
+    , requestUrl          => requestUrl
+    , requestText         => requestText
+    , httpMethod          => httpMethod
+    , maxWaitSecond       => null
+    , headerText          => null
+  );
+  if logger.isTraceEnabled() and entityBody is not null then
+    logger.trace(
+      'HTTP entity ( length=' || length( entityBody) || '):'
+      || chr(10) || substr( entityBody, 1, 3900)
+      || case when length( entityBody) > 3900 then
+          chr(10) || '...'
+        end
+    );
+  end if;
+  if statusCode <> utl_http.HTTP_OK then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'HTTP error ' || to_char( statusCode)
+        || ': ' || reasonPhrase
+        || chr(10) || substr( entityBody, 1, 500)
+        || case when length( entityBody) > 500 then
+            chr(10) || '...'
+          end
+    );
+  end if;
+  return entityBody;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while executing HTTP request ('
+        || 'requestUrl="' || requestUrl || '"'
+        || ', httpMethod="' || httpMethod || '"'
+        || ').'
+      )
+    , true
+  );
+end getHttpResponse;
 
 end pkg_WebUtility;
 /

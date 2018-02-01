@@ -63,6 +63,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_WebUtility.pkb)
       }  # Group: pkg_WebUtility
 
+   Group: Test  {
+
+      Group: pkg_WebUtilityTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_WebUtilityTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_WebUtilityTest.pkb)
+         }  # Group: pkg_WebUtilityTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -80,6 +90,17 @@ Group: Скрипты  {
          }  # Group: Grant
 
       }  # Group: Install
+
+   Group: Test  {
+
+      Group: Data  {
+
+         File: opt_option  (no auto-title, Test/Data/opt_option.sql)
+         }  # Group: Data
+
+      File: run  (no auto-title, Test/run.sql)
+      File: grant-host-access  (no auto-title, Test/grant-host-access.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 
