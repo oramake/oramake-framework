@@ -86,12 +86,6 @@ is
   procedure writeRequest
   is
 
-    len number := 1;
-
-    maxVarchar2Length number := 32767;
-
-    utf8RequestText clob;
-
 
 
     /*
@@ -160,6 +154,43 @@ is
       );
     end setHeaderList;
 
+
+
+    /*
+      Write body of request.
+    */
+    procedure writeBody
+    is
+
+      maxVarchar2Length integer := 32767;
+
+      len integer;
+      offset integer := 1;
+
+    begin
+      len := coalesce( length( requestText), 0);
+      if len > 0 then
+        loop
+          utl_http.write_text(
+            req
+            , substr( requestText, offset, maxVarchar2Length)
+          );
+          offset := offset + maxVarchar2Length;
+          exit when offset > len;
+        end loop;
+      end if;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Error while write body of request.'
+          )
+        , true
+      );
+    end writeBody;
+
+
+
   -- writeRequest
   begin
     req:= utl_http.begin_request(
@@ -180,34 +211,25 @@ is
         logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
       end if;
 
-
+      -- Text data is automatically converted in UTL_HTTP from the database
+      -- character set to the request body character set
       utl_http.set_body_charset( req, 'UTF-8');
-
-      if requestText is not null then
-        -- Конвертация в UTF-8
-        utf8RequestText := convert( requestText, 'utf8');
-      end if;
 
       if headerText is null then
         if requestText is not null then
           setHeader( 'Content-Type', 'text/xml');
-          -- Указываем длину тела запроса с учетом конвертации в UTF-8
-          setHeader( 'Content-Length', dbms_lob.getLength( utf8RequestText));
         end if;
       else
         setHeaderList();
       end if;
+
+      if requestText is not null then
+        -- UTL_HTTP will performs chunked transfer-encoding on the request body
+        setHeader( 'Transfer-Encoding', 'chunked');
+      end if;
       logger.trace( '*** HTTP request header: finish');
 
-      -- Записываем тело запроса
-      loop
-        utl_http.write_text(
-          req
-        , substr( utf8RequestText, len, maxVarchar2Length)
-        );
-        len := len + maxVarchar2Length;
-        exit when len > coalesce( dbms_lob.getLength( utf8RequestText), 0);
-      end loop;
+      writeBody();
     exception when others then
       -- Закрываем запрос в случае ошибки
       utl_http.end_request( req);
@@ -217,7 +239,7 @@ is
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
-          'Ошибка при отправке запроса.'
+          'Error while sending request.'
         )
       , true
     );
@@ -281,7 +303,7 @@ is
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
-            'Ошибка при получении ответа.'
+            'Error while getting response.'
           )
         , true
       );
@@ -333,7 +355,7 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка при выполнении HTTP-запроса ('
+        'Error while processing HTTP request ('
         || ' maxWaitSecond=' || maxWaitSecond
         || ').'
       )
@@ -410,7 +432,7 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Error while executing HTTP request ('
+        'Error while returning data of HTTP request ('
         || 'requestUrl="' || requestUrl || '"'
         || ', httpMethod="' || httpMethod || '"'
         || ').'
