@@ -10,7 +10,7 @@ declare
 begin
   lg_logger_t.getRootLogger().setLevel( lg_logger_t.getTraceLevelCode());
   -- Отправка тестового запроса к www.google.com
-  pkg_WebUtility.processHttpRequest(
+  pkg_WebUtility.execHttpRequest(
     statusCode    => statusCode
   , reasonPhrase  => reasonPhrase
   , contentType   => contentType

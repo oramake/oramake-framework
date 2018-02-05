@@ -21,7 +21,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Execute of HTTP requests */
 
-/* proc: processHttpRequest
+/* proc: execHttpRequest
   Execute of HTTP request.
 
   Параметры:
@@ -61,7 +61,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
   - для успешного выполнения запроса необходимо выдать права ACL пользователю,
     вызывающему процедуру
 */
-procedure processHttpRequest(
+procedure execHttpRequest(
   statusCode out nocopy integer
   , reasonPhrase out nocopy varchar2
   , contentType out nocopy varchar2
@@ -462,7 +462,7 @@ is
 
 
 
--- processHttpRequest
+-- execHttpRequest
 begin
   if nParameter > 0 and requestText is not null then
     raise_application_error(
@@ -493,13 +493,13 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Error while processing HTTP request ('
+        'Error while executing HTTP request ('
         || ' maxWaitSecond=' || maxWaitSecond
         || ').'
       )
     , true
   );
-end processHttpRequest;
+end execHttpRequest;
 
 /* func: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
@@ -536,7 +536,7 @@ is
 
 -- getHttpResponse
 begin
-  processHttpRequest(
+  execHttpRequest(
     statusCode            => statusCode
     , reasonPhrase        => reasonPhrase
     , contentType         => contentType

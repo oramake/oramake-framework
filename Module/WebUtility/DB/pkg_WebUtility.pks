@@ -57,7 +57,7 @@ TransferEncoding_HttpHField constant varchar2(100) := 'Transfer-Encoding';
 
 /* group: Execute of HTTP requests */
 
-/* pproc: processHttpRequest
+/* pproc: execHttpRequest
   Execute of HTTP request.
 
   Параметры:
@@ -97,9 +97,9 @@ TransferEncoding_HttpHField constant varchar2(100) := 'Transfer-Encoding';
   - для успешного выполнения запроса необходимо выдать права ACL пользователю,
     вызывающему процедуру
 
-  ( <body::processHttpRequest>)
+  ( <body::execHttpRequest>)
 */
-procedure processHttpRequest(
+procedure execHttpRequest(
   statusCode out nocopy integer
   , reasonPhrase out nocopy varchar2
   , contentType out nocopy varchar2
