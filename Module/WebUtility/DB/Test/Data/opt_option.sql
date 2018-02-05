@@ -9,6 +9,7 @@
 
 @oms-default TestHttpAbsentHost ""
 @oms-default TestHttpAbsentPath ""
+@oms-default TestHttpEchoUrl ""
 @oms-default TestHttpTextUrl ""
 @oms-default TestHttpTextPattern ""
 
@@ -90,6 +91,12 @@ begin
     , optionName      =>
         'Tests: URL with non-existent path on accessible host'
     , stringValue     => '&TestHttpAbsentPath'
+  );
+  addString(
+    optionShortName   => pkg_WebUtilityTest.TestHttpEchoUrl_OptSName
+    , optionName      =>
+        'Tests: URL to echo server ( returns headers and request data as plain text)'
+    , stringValue     => '&TestHttpEchoUrl'
   );
   addString(
     optionShortName   => pkg_WebUtilityTest.TestHttpTextUrl_OptSName

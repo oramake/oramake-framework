@@ -3,10 +3,10 @@ create or replace package body pkg_WebUtility is
 
 
 
-/* group: Переменные */
+/* group: Variables */
 
 /* ivar: logger
-  Логер пакета.
+  Logger of package.
 */
 logger lg_logger_t := lg_logger_t.getLogger(
   moduleName    => Module_Name
@@ -19,10 +19,10 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 
 
-/* group: Отправка внешних запросов по http */
+/* group: Execute of HTTP requests */
 
 /* proc: processHttpRequest
-  Выполняет запрос по протоколу HTTP.
+  Execute of HTTP request.
 
   Параметры:
   statusCode                  - Код результата запроса ( HTTP Status-Code)
@@ -38,10 +38,13 @@ logger lg_logger_t := lg_logger_t.getLogger(
                                 ( в секундах, -1 если не удалось измерить)
                                 ( возврат)
   requestUrl                  - URL для выполнения запроса
-  requestText                 - Текст запроса
+  requestText                 - Request text
+                                ( default is absent)
+  parameterList               - Request parameters
+                                ( default is absent)
   httpMethod                  - HTTP method for request
-                                ( default POST if requestText not empty
-                                  oterwise GET)
+                                ( default POST if requestText or parameterList
+                                  is not empty oterwise GET)
   maxWaitSecond               - Максимальное время ожидания ответа по запросу
                                 ( в секундах, по умолчанию 60 секунд)
   headerText                  - список заголовков к запросу
@@ -65,18 +68,31 @@ procedure processHttpRequest(
   , entityBody out nocopy clob
   , execSecond out nocopy number
   , requestUrl varchar2
-  , requestText clob
+  , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
   , maxWaitSecond integer := null
   , headerText varchar2 := null
 )
 is
 
+  -- Number of parameters
+  nParameter pls_integer :=
+    case when parameterList is not null
+      then parameterList.count()
+      else 0
+    end
+  ;
+
   -- HTTP-запрос
   req utl_http.req;
 
   -- Время начала выполнения HTTP-запроса
   startTime number;
+
+  -- Buffer for work with CLOB
+  Buffer_Size constant pls_integer := 32767;
+  buffer varchar2(32767);
 
 
 
@@ -85,6 +101,91 @@ is
   */
   procedure writeRequest
   is
+
+    -- Data of request parameters ( joined)
+    parameterData clob;
+
+    -- HTTP method of current request
+    reqMethod varchar2(100);
+
+
+
+    /*
+      Prepare data of parameters into parameterData variable.
+    */
+    procedure prepareParameterData(
+      maxLength integer
+    )
+    is
+
+      -- utl_url.escape can increase the length of the string 3 times
+      Escape_Factor constant pls_integer := 3;
+
+      i pls_integer := parameterList.first();
+
+      len integer;
+      offset integer;
+      amount integer;
+
+    begin
+      dbms_lob.createTemporary(
+        lob_loc     => parameterData
+        , cache     => true
+        , dur       => dbms_lob.session
+      );
+      while i is not null loop
+        len := coalesce( length( parameterList( i).parameter_value), 0);
+        if parameterList( i).parameter_name is not null then
+          offset := 1;
+          amount :=
+            floor( Buffer_Size / Escape_Factor)
+            - length( parameterList( i).parameter_name) - 2
+          ;
+          loop
+            exit when offset > len;
+            dbms_lob.read(
+              parameterList( i).parameter_value
+              , amount, offset, buffer
+            );
+            offset := offset + amount;
+            buffer :=
+              case when i > 1  then '&' end
+              || utl_url.escape( parameterList( i).parameter_name, true)
+              || '='
+              || utl_url.escape( buffer, true)
+            ;
+            dbms_lob.writeAppend( parameterData, length( buffer), buffer);
+          end loop;
+        elsif len > 0 then
+          raise_application_error(
+            pkg_Error.IllegalArgument
+            , 'Value of parameter without a name is specified ('
+              || 'parameter index: ' || i
+              || ').'
+          );
+        end if;
+        i := parameterList.next( i);
+      end loop;
+      if length( parameterData) > maxLength then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Maximum allowed length of parameters exceeded ('
+            || 'max length: ' || maxLength
+            || ', actual length: ' || length( parameterData)
+            || ').'
+        );
+      end if;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Error while preparing data of parameters ('
+            || 'maxLength=' || maxLength
+            || ').'
+          )
+        , true
+      );
+    end prepareParameterData;
 
 
 
@@ -104,6 +205,8 @@ is
       );
       logger.trace( fieldName || ': ' || fieldValue);
     end setHeader;
+
+
 
     /*
       Разбирает список заголовов
@@ -159,25 +262,36 @@ is
     /*
       Write body of request.
     */
-    procedure writeBody
+    procedure writeBody(
+      bodyText clob
+    )
     is
 
-      maxVarchar2Length integer := 32767;
-
-      len integer;
+      len integer := coalesce( length( bodyText), 0);
       offset integer := 1;
 
     begin
-      len := coalesce( length( requestText), 0);
       if len > 0 then
+        -- UTL_HTTP will performs chunked transfer-encoding on the request body
+        setHeader( TransferEncoding_HttpHField, 'chunked');
+      end if;
+      logger.trace( '* HTTP request header: finish');
+
+      if len > 0 then
+
+        -- Text data is automatically converted in UTL_HTTP from the database
+        -- character set to the request body character set
+        utl_http.set_body_charset( req, 'UTF-8');
+
+        logger.trace( '* HTTP message body: start');
         loop
-          utl_http.write_text(
-            req
-            , substr( requestText, offset, maxVarchar2Length)
-          );
-          offset := offset + maxVarchar2Length;
+          buffer := substr( bodyText, offset, Buffer_Size);
+          utl_http.write_text( req, buffer);
+          logger.trace( buffer);
+          offset := offset + Buffer_Size;
           exit when offset > len;
         end loop;
+        logger.trace( '* HTTP message body: finish');
       end if;
     exception when others then
       raise_application_error(
@@ -193,43 +307,65 @@ is
 
   -- writeRequest
   begin
-    req:= utl_http.begin_request(
-      url             => requestUrl
-      , method        => coalesce(
-            httpMethod
-            , case when requestText is not null then
-                Post_HttpMethod
-              else
-                Get_HttpMethod
-              end
-          )
+    logger.trace( '*** HTTP request: ' || requestUrl);
+    reqMethod := coalesce(
+      httpMethod
+      , case when
+          requestText is not null or nParameter > 0
+        then
+          Post_HttpMethod
+        else
+          Get_HttpMethod
+        end
+    );
+    if nParameter > 0 then
+      prepareParameterData(
+        maxLength =>
+          case when reqMethod = Get_HttpMethod then
+            32767 - 1 - length( requestUrl)
+          end
+      );
+    end if;
+    req := utl_http.begin_request(
+      url             =>
+          requestUrl
+          || case when
+              reqMethod = Get_HttpMethod and nParameter > 0
+            then
+              '?' || cast( parameterData as varchar2)
+            end
+      , method        => reqMethod
       , http_version  => utl_http.HTTP_VERSION_1_1
     );
     begin
       if logger.isTraceEnabled() then
-        logger.trace( '*** HTTP request start: ' || requestUrl);
         logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
+        logger.trace( '* HTTP request header: start');
       end if;
 
-      -- Text data is automatically converted in UTL_HTTP from the database
-      -- character set to the request body character set
-      utl_http.set_body_charset( req, 'UTF-8');
-
       if headerText is null then
-        if requestText is not null then
-          setHeader( 'Content-Type', 'text/xml');
+        if reqMethod = Post_HttpMethod and nParameter > 0 then
+          setHeader(
+            ContentType_HttpHField
+            , 'application/x-www-form-urlencoded'
+          );
+        elsif requestText is not null then
+          setHeader( ContentType_HttpHField, 'text/xml');
         end if;
       else
         setHeaderList();
       end if;
 
-      if requestText is not null then
-        -- UTL_HTTP will performs chunked transfer-encoding on the request body
-        setHeader( 'Transfer-Encoding', 'chunked');
+      writeBody(
+        case when
+            reqMethod = Post_HttpMethod and nParameter > 0
+          then parameterData
+          else requestText
+        end
+      );
+      if parameterData is not null then
+        dbms_lob.freeTemporary( parameterData);
       end if;
-      logger.trace( '*** HTTP request header: finish');
-
-      writeBody();
     exception when others then
       -- Закрываем запрос в случае ошибки
       utl_http.end_request( req);
@@ -253,10 +389,6 @@ is
   procedure readResponse
   is
 
-    -- Буфер для работы с CLOB
-    buff varchar2(32767);
-    Buff_Size constant integer := 32767;
-
     -- HTTP-ответ
     resp utl_http.resp;
 
@@ -270,7 +402,7 @@ is
     reasonPhrase := resp.reason_phrase;
 
     -- Обрабатываем поля заголовка ответа
-    logger.trace( '*** HTTP response header: start');
+    logger.trace( '* HTTP response header: start');
     logger.trace(
       'HTTP: '|| resp.status_code || ' ' || resp.reason_phrase
     );
@@ -279,11 +411,11 @@ is
       logger.trace( headerName || ': ' || headerValue);
 
       -- Сохраняем значения ключевых полей
-      if headerName = 'Content-Type' then
+      if headerName = ContentType_HttpHField then
         contentType := substr( headerValue, 1, 1024);
       end if;
     end loop;
-    logger.trace( '*** HTTP response header: finish');
+    logger.trace( '* HTTP response header: finish');
 
     -- Сохраняем тело ответа в CLOB
     dbms_lob.createTemporary(
@@ -291,8 +423,8 @@ is
       , cache     => true
     );
     loop
-      utl_http.read_text( resp, buff, Buff_Size);
-      dbms_lob.writeAppend( entityBody, length( buff), buff);
+      utl_http.read_text( resp, buffer, Buffer_Size);
+      dbms_lob.writeAppend( entityBody, length( buffer), buffer);
     end loop;
   exception
     when utl_http.end_of_body then
@@ -332,6 +464,12 @@ is
 
 -- processHttpRequest
 begin
+  if nParameter > 0 and requestText is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Simultaneous use of request text and parameters is incorrect.'
+    );
+  end if;
 
   -- Ограничиваем время ожидания ответа ( по умолчанию 60 секунд, что
   -- соответствует значению по умолчанию в utl_http)
@@ -370,6 +508,8 @@ end processHttpRequest;
   requestUrl                  - URL for request
   requestText                 - Request text
                                 ( default is absent)
+  parameterList               - Request parameters
+                                ( default is absent)
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
                                   oterwise GET)
@@ -380,6 +520,7 @@ end processHttpRequest;
 function getHttpResponse(
   requestUrl varchar2
   , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
 )
 return clob
@@ -403,6 +544,7 @@ begin
     , execSecond          => execSecond
     , requestUrl          => requestUrl
     , requestText         => requestText
+    , parameterList       => parameterList
     , httpMethod          => httpMethod
     , maxWaitSecond       => null
     , headerText          => null

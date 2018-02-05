@@ -55,6 +55,20 @@ Group: О модуле  {
    File: Версии  (Doc/version.txt)
    }  # Group: О модуле
 
+Group: Объектные типы  {
+
+   Group: wbu_parameter_list_t  {
+
+      File: Спецификация  (no auto-title, wbu_parameter_list_t.typ)
+      }  # Group: wbu_parameter_list_t
+
+   Group: wbu_parameter_t  {
+
+      File: Спецификация  (no auto-title, wbu_parameter_t.typ)
+      }  # Group: wbu_parameter_t
+
+   }  # Group: Объектные типы
+
 Group: Пакеты  {
 
    Group: pkg_WebUtility  {
@@ -109,6 +123,7 @@ Group: Индекс  {
    Group: Открытые объявления  {
 
       Constant Index: Константы
+      Variable Index: Переменные
       Function public Index: Функции
       }  # Group: Открытые объявления
 

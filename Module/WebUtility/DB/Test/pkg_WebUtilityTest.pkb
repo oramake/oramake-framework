@@ -49,9 +49,9 @@ is
     caseDescription varchar2
     , requestUrl varchar2
     , requestText clob := null
+    , parameterList wbu_parameter_list_t := null
     , httpMethod varchar2 := null
-    , resultHeadMask varchar2 := null
-    , resultTailMask varchar2 := null
+    , resultTeplateList cmn_string_table_t := null
     , execErrorMessageMask varchar2 := null
     , nextCaseUsedCount pls_integer := null
   )
@@ -68,6 +68,8 @@ is
 
     -- Result of execution
     execResult clob;
+
+    i integer;
 
   -- checkCase
   begin
@@ -86,6 +88,7 @@ is
       execResult := pkg_WebUtility.getHttpResponse(
         requestUrl          => requestUrl
         , requestText       => requestText
+        , parameterList     => parameterList
         , httpMethod        => httpMethod
       );
       if execErrorMessageMask is not null then
@@ -122,15 +125,20 @@ is
 
     -- Checking for a successful result
     if execErrorMessageMask is null then
-      if resultHeadMask is not null
-            and substr( execResult, 1, 32767) not like resultHeadMask
-          then
-        pkg_TestUtility.compareChar(
-          actualString        => substr( execResult, 1, 32767)
-          , expectedString    => resultHeadMask
-          , failMessageText   =>
-              cinfo || 'Result does not match head mask'
-        );
+      if resultTeplateList is not null then
+        i := 1;
+        while i <= resultTeplateList.last() loop
+          if coalesce( execResult not like resultTeplateList( i), true) then
+            pkg_TestUtility.failTest(
+              failMessageText   =>
+                cinfo || 'Result does not match mask #' || i
+                || ' ( mask="' || resultTeplateList( i) || '"'
+                || ')'
+            );
+            exit;
+          end if;
+          i := resultTeplateList.next( i);
+        end loop;
       end if;
     end if;
   exception when others then
@@ -173,7 +181,54 @@ begin
   checkCase(
     'Receive text by URL'
     , opt.getString( TestHttpTextUrl_OptSName)
-    , resultHeadMask          => opt.getString( TestHttpTextPattern_OptSName)
+    , resultTeplateList       =>
+        cmn_string_table_t(
+          opt.getString( TestHttpTextPattern_OptSName)
+        )
+  );
+
+  checkCase(
+    'Illegal arguments: use requestText and parameterList'
+    , opt.getString( TestHttpTextUrl_OptSName)
+    , requestText             => 'test'
+    , parameterList           =>
+        wbu_parameter_list_t( wbu_parameter_t( 'param1', null))
+    , execErrorMessageMask    =>
+        '%ORA-20195: Simultaneous use of request text and parameters is incorrect.%'
+  );
+
+  checkCase(
+    'POST (by default) with parameters'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , parameterList           =>
+        wbu_parameter_list_t(
+          wbu_parameter_t( 'param1', 'valueOfParam1')
+          , wbu_parameter_t( 'param2', 'valueOfParam2')
+        )
+    , resultTeplateList       =>
+        cmn_string_table_t(
+          '%POST%'
+          , '%application/x-www-form-urlencoded%'
+          , '%param1%=%valueOfParam1%'
+          , '%param2%=%valueOfParam2%'
+        )
+  );
+
+  checkCase(
+    'GET with parameters'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , parameterList           =>
+        wbu_parameter_list_t(
+          wbu_parameter_t( 'param1', 'valueOfParam1')
+          , wbu_parameter_t( 'param2', 'valueOfParam2')
+        )
+    , httpMethod              => pkg_WebUtility.Get_HttpMethod
+    , resultTeplateList       =>
+        cmn_string_table_t(
+          '%GET%'
+          , '%param1%=%valueOfParam1%'
+          , '%param2%=%valueOfParam2%'
+        )
   );
 
   pkg_TestUtility.endTest();

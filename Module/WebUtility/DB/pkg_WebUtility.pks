@@ -23,13 +23,31 @@ Module_Name constant varchar2(30) := 'WebUtility';
 /* const: Get_HttpMethod
   HTTP Method "GET".
 */
-Get_HttpMethod constant varchar2(10) := 'GET';
+Get_HttpMethod constant varchar2(64) := 'GET';
 
 /* const: Post_HttpMethod
   HTTP Method "POST".
 */
-Post_HttpMethod constant varchar2(10) := 'POST';
+Post_HttpMethod constant varchar2(64) := 'POST';
 
+
+
+/* group: HTTP Header Fields */
+
+/* const: ContentLength_HttpHField
+  HTTP Header Field "Content-Length".
+*/
+ContentLength_HttpHField constant varchar2(100) := 'Content-Length';
+
+/* const: ContentType_HttpHField
+  HTTP Header Field "Content-Type".
+*/
+ContentType_HttpHField constant varchar2(100) := 'Content-Type';
+
+/* const: TransferEncoding_HttpHField
+  HTTP Header Field "Transfer-Encoding".
+*/
+TransferEncoding_HttpHField constant varchar2(100) := 'Transfer-Encoding';
 
 
 
@@ -37,10 +55,10 @@ Post_HttpMethod constant varchar2(10) := 'POST';
 
 
 
-/* group: Отправка внешних запросов по http */
+/* group: Execute of HTTP requests */
 
 /* pproc: processHttpRequest
-  Выполняет запрос по протоколу HTTP.
+  Execute of HTTP request.
 
   Параметры:
   statusCode                  - Код результата запроса ( HTTP Status-Code)
@@ -56,10 +74,13 @@ Post_HttpMethod constant varchar2(10) := 'POST';
                                 ( в секундах, -1 если не удалось измерить)
                                 ( возврат)
   requestUrl                  - URL для выполнения запроса
-  requestText                 - Текст запроса
+  requestText                 - Request text
+                                ( default is absent)
+  parameterList               - Request parameters
+                                ( default is absent)
   httpMethod                  - HTTP method for request
-                                ( default POST if requestText not empty
-                                  oterwise GET)
+                                ( default POST if requestText or parameterList
+                                  is not empty oterwise GET)
   maxWaitSecond               - Максимальное время ожидания ответа по запросу
                                 ( в секундах, по умолчанию 60 секунд)
   headerText                  - список заголовков к запросу
@@ -85,7 +106,8 @@ procedure processHttpRequest(
   , entityBody out nocopy clob
   , execSecond out nocopy number
   , requestUrl varchar2
-  , requestText clob
+  , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
   , maxWaitSecond integer := null
   , headerText varchar2 := null
@@ -97,6 +119,8 @@ procedure processHttpRequest(
   Parameters:
   requestUrl                  - URL for request
   requestText                 - Request text
+                                ( default is absent)
+  parameterList               - Request parameters
                                 ( default is absent)
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
@@ -110,6 +134,7 @@ procedure processHttpRequest(
 function getHttpResponse(
   requestUrl varchar2
   , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
 )
 return clob;

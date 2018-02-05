@@ -25,6 +25,12 @@ TestHttpAbsentHost_OptSName constant varchar2(30) := 'TestHttpAbsentHost';
 */
 TestHttpAbsentPath_OptSName constant varchar2(30) := 'TestHttpAbsentPath';
 
+/* const: TestHttpEchoUrl_OptSName
+  Short name of parameter
+  "Tests: URL to echo server ( returns headers and request data as plain text)".
+*/
+TestHttpEchoUrl_OptSName constant varchar2(30) := 'TestHttpEchoUrl';
+
 /* const: TestHttpTextUrl_OptSName
   Short name of parameter
   "Tests: URL for downloading text data available via HTTP"
