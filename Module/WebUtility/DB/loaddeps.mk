@@ -28,12 +28,17 @@
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
 
+wbu_header_list_t.typ.$(lu): \
+  wbu_header_t.typ.$(lu) \
+
+
 wbu_parameter_list_t.typ.$(lu): \
   wbu_parameter_t.typ.$(lu) \
 
 
 pkg_WebUtility.pkb.$(lu): \
   pkg_WebUtility.pks.$(lu) \
+	wbu_header_list_t.typ.$(lu) \
 	wbu_parameter_list_t.typ.$(lu) \
 
 

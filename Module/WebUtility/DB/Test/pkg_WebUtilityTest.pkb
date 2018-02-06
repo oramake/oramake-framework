@@ -51,6 +51,9 @@ is
     , requestText clob := null
     , parameterList wbu_parameter_list_t := null
     , httpMethod varchar2 := null
+    , maxWaitSecond integer := null
+    , headerList wbu_header_list_t := null
+    , bodyCharset varchar2 := null
     , resultTeplateList cmn_string_table_t := null
     , execErrorMessageMask varchar2 := null
     , nextCaseUsedCount pls_integer := null
@@ -86,10 +89,13 @@ is
 
     begin
       execResult := pkg_WebUtility.getHttpResponse(
-        requestUrl          => requestUrl
-        , requestText       => requestText
-        , parameterList     => parameterList
-        , httpMethod        => httpMethod
+        requestUrl            => requestUrl
+        , requestText         => requestText
+        , parameterList       => parameterList
+        , httpMethod          => httpMethod
+        , maxWaitSecond       => maxWaitSecond
+        , headerList          => headerList
+        , bodyCharset         => bodyCharset
       );
       if execErrorMessageMask is not null then
         pkg_TestUtility.failTest(
@@ -229,6 +235,55 @@ begin
           , '%param1%=%valueOfParam1%'
           , '%param2%=%valueOfParam2%'
         )
+  );
+
+  checkCase(
+    'Use headerList'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , headerList              =>
+        wbu_header_list_t(
+          wbu_header_t( 'X-Custom-Header', 'value of custom header')
+          , wbu_header_t(
+              'User-Agent'
+              , 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+          )
+        )
+    , resultTeplateList       =>
+        cmn_string_table_t(
+          '%value of custom header%'
+          , '%Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36%'
+        )
+  );
+
+  checkCase(
+    'Set Content-Type for XML'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , requestText             => '<?xml version="1.0"><a/>'
+    , resultTeplateList       => cmn_string_table_t( '%text/xml%')
+  );
+
+  checkCase(
+    'Set Content-Type for JSON object'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , requestText             => '{ "n": 1 }'
+    , resultTeplateList       => cmn_string_table_t( '%application/json%')
+  );
+
+  checkCase(
+    'Set Content-Type for JSON array'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , requestText             => '[ 1, 2 ]'
+    , resultTeplateList       => cmn_string_table_t( '%application/json%')
+  );
+
+  checkCase(
+    'Priority of custom Content-Type'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , requestText             => '[ 1, 2 ]'
+    , headerList              => wbu_header_list_t(
+        wbu_header_t( pkg_WebUtility.ContentType_HttpHeader, 'text/plain')
+      )
+    , resultTeplateList       => cmn_string_table_t( '%text/plain%')
   );
 
   pkg_TestUtility.endTest();

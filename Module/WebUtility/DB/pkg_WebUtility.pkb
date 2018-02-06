@@ -15,7 +15,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 
 
-/* group: Функции */
+/* group: Functions */
 
 
 
@@ -25,41 +25,50 @@ logger lg_logger_t := lg_logger_t.getLogger(
   Execute of HTTP request.
 
   Параметры:
-  statusCode                  - Код результата запроса ( HTTP Status-Code)
-                                ( возврат)
-  reasonPhrase                - Описание результата запроса
-                                ( HTTP Reason-Phrase)
-                                ( возврат, максимум 256 символов)
-  contentType                 - Тип тела ответа ( HTTP Content-Type)
-                                ( возврат, максимум 1024 символа)
-  entityBody                  - Тело ответа ( HTTP entity-body)
-                                ( возврат)
-  execSecond                  - время выполнения запроса
-                                ( в секундах, -1 если не удалось измерить)
-                                ( возврат)
-  requestUrl                  - URL для выполнения запроса
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (out)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (out, maximum 256 chars)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (out, maximum 1024 chars)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (out)
+  execSecond                  - Request execution time
+                                (in seconds, -1 if it was not possible to
+                                  measure)
+                                (out)
+  requestUrl                  - Request URL
   requestText                 - Request text
-                                ( default is absent)
+                                (default is absent)
   parameterList               - Request parameters
-                                ( default is absent)
+                                (default is absent)
   httpMethod                  - HTTP method for request
-                                ( default POST if requestText or parameterList
+                                (default POST if requestText or parameterList
                                   is not empty oterwise GET)
-  maxWaitSecond               - Максимальное время ожидания ответа по запросу
-                                ( в секундах, по умолчанию 60 секунд)
-  headerText                  - список заголовков к запросу
-                                ( по умолчанию передается Content-Type
-                                  и Content-Length)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  bodyCharset                 - Sets the character set of the request body when
+                                the media type is text but the character set
+                                is not specified in the Content-Type header
+                                (default is UTF-8)
 
-  Замечания:
-  - заголовки передаются в виде текста
-  (code)
-  Host: ads.betweendigital.com
-  Connection: keep-alive
-  ...
-  (end code)
-  - для успешного выполнения запроса необходимо выдать права ACL пользователю,
-    вызывающему процедуру
+  Remarks:
+  - headers in headerList with null value are not sent;
+  - by default, request uses chunked transfer-encoding and sends
+    "Transfer-Encoding: chunked" header ( this will be disabled if you use
+    <ContentLength_HttpHeader> or <TransferEncoding_HttpHeader> in headerList);
+  - by default, request sends <ContentType_HttpHeader> header with value
+    "application/x-www-form-urlencoded" if it is POST request with parameters,
+    with value "text/xml" if request text starts with "<?xml ",
+    with value "application/json" header if request text starts with "[" or "{"
+    ( this will be disabled if you use <ContentType_HttpHeader> in
+    headerList);
+  - data is automatically converted from the database character set to the
+    request body character set;
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
@@ -72,7 +81,8 @@ procedure execHttpRequest(
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
   , maxWaitSecond integer := null
-  , headerText varchar2 := null
+  , headerList wbu_header_list_t := null
+  , bodyCharset varchar2 := null
 )
 is
 
@@ -84,10 +94,10 @@ is
     end
   ;
 
-  -- HTTP-запрос
+  -- HTTP request
   req utl_http.req;
 
-  -- Время начала выполнения HTTP-запроса
+  -- Time to start the HTTP request
   startTime number;
 
   -- Buffer for work with CLOB
@@ -97,7 +107,7 @@ is
 
 
   /*
-     Отправляет HTTP-запрос
+     Write request.
   */
   procedure writeRequest
   is
@@ -107,6 +117,11 @@ is
 
     -- HTTP method of current request
     reqMethod varchar2(100);
+
+    -- Availability of appropriate headers in headerList
+    isContentLengthUsed boolean := false;
+    isContentTypeUsed boolean := false;
+		isTransferEncodingUsed boolean := false;
 
 
 
@@ -190,72 +205,70 @@ is
 
 
     /*
-      Добавляет поле заголовка запроса.
+      Add request header.
     */
-    procedure setHeader(
-      fieldName varchar2
-      , fieldValue varchar2
+    procedure addHeader(
+      headerName varchar2
+      , headerValue varchar2
     )
     is
     begin
       utl_http.set_header(
         req
-        , fieldName
-        , fieldValue
+        , headerName
+        , headerValue
       );
-      logger.trace( fieldName || ': ' || fieldValue);
-    end setHeader;
+      logger.trace( headerName || ': ' || headerValue);
+    end addHeader;
 
 
 
     /*
-      Разбирает список заголовов
+      Add headers from headerList.
     */
-    procedure setHeaderList
+    procedure processHeaderList
     is
-      -- Наименование заголовка
-      headerName varchar2( 1000);
-      -- Значение заголовка
-      headerValue varchar2( 1000);
+
+      i pls_integer := headerList.first();
+
     begin
-      for header in (
-        select
-          column_value
-        from
-          table( pkg_Common.split( headerText, chr(10)))
-      )
-      loop
-        if instr( header.column_value, ':') > 0 then
-          -- До первой ":"
-          headerName :=
-            trim(
-              substr(
-                header.column_value
-              , 1
-              , instr( header.column_value, ':') - 1)
+      while i is not null loop
+        case headerList( i).header_name
+          when ContentLength_HttpHeader then
+            isContentLengthUsed := true;
+          when ContentType_HttpHeader then
+            isContentTypeUsed := true;
+          when TransferEncoding_HttpHeader then
+            isTransferEncodingUsed := true;
+          else
+            null;
+        end case;
+        if headerList( i).header_value is not null then
+          if headerList( i).header_name is not null then
+            addHeader(
+              headerList( i).header_name
+              , headerList( i).header_value
             );
-          -- После первой ":"
-          headerValue :=
-            trim(
-              substr(
-                header.column_value
-              , instr( header.column_value, ':') + 1)
+          else
+            raise_application_error(
+              pkg_Error.IllegalArgument
+              , 'Value of header without a name is specified ('
+                || 'header index: ' || i
+                || ').'
             );
-          setHeader(
-            headerName
-          , headerValue
-          );
+          end if;
         end if;
+        i := headerList.next( i);
       end loop;
     exception when others then
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
-            'Ошибка разбора списка заголовков'
+            'Error while adding headers from headerList.'
           )
         , true
       );
-    end setHeaderList;
+    end processHeaderList;
 
 
 
@@ -271,9 +284,9 @@ is
       offset integer := 1;
 
     begin
-      if len > 0 then
+      if len > 0 and not ( isContentLengthUsed or isTransferEncodingUsed) then
         -- UTL_HTTP will performs chunked transfer-encoding on the request body
-        setHeader( TransferEncoding_HttpHField, 'chunked');
+        addHeader( TransferEncoding_HttpHeader, 'chunked');
       end if;
       logger.trace( '* HTTP request header: finish');
 
@@ -281,7 +294,7 @@ is
 
         -- Text data is automatically converted in UTL_HTTP from the database
         -- character set to the request body character set
-        utl_http.set_body_charset( req, 'UTF-8');
+        utl_http.set_body_charset( req, coalesce( bodyCharset, 'UTF-8'));
 
         logger.trace( '* HTTP message body: start');
         loop
@@ -343,17 +356,20 @@ is
         logger.trace( '* HTTP request header: start');
       end if;
 
-      if headerText is null then
+      if headerList is not null then
+        processHeaderList();
+      end if;
+      if not isContentTypeUsed then
         if reqMethod = Post_HttpMethod and nParameter > 0 then
-          setHeader(
-            ContentType_HttpHField
+          addHeader(
+            ContentType_HttpHeader
             , 'application/x-www-form-urlencoded'
           );
-        elsif requestText is not null then
-          setHeader( ContentType_HttpHField, 'text/xml');
+        elsif substr( requestText, 1, 6) = '<?xml ' then
+          addHeader( ContentType_HttpHeader, 'text/xml');
+        elsif substr( requestText, 1, 1) in ( '{', '[') then
+          addHeader( ContentType_HttpHeader, 'application/json');
         end if;
-      else
-        setHeaderList();
       end if;
 
       writeBody(
@@ -367,7 +383,7 @@ is
         dbms_lob.freeTemporary( parameterData);
       end if;
     exception when others then
-      -- Закрываем запрос в случае ошибки
+      -- Close the request in case of an error
       utl_http.end_request( req);
       raise;
     end;
@@ -384,12 +400,11 @@ is
 
 
   /*
-    Читает ответ в CLOB и поля response.
+    Read response.
   */
   procedure readResponse
   is
 
-    -- HTTP-ответ
     resp utl_http.resp;
 
     nHeader integer;
@@ -401,7 +416,6 @@ is
     statusCode := resp.status_code;
     reasonPhrase := resp.reason_phrase;
 
-    -- Обрабатываем поля заголовка ответа
     logger.trace( '* HTTP response header: start');
     logger.trace(
       'HTTP: '|| resp.status_code || ' ' || resp.reason_phrase
@@ -410,27 +424,33 @@ is
       utl_http.get_header( resp, i, headerName, headerValue);
       logger.trace( headerName || ': ' || headerValue);
 
-      -- Сохраняем значения ключевых полей
-      if headerName = ContentType_HttpHField then
+      if headerName = ContentType_HttpHeader then
         contentType := substr( headerValue, 1, 1024);
       end if;
     end loop;
     logger.trace( '* HTTP response header: finish');
 
-    -- Сохраняем тело ответа в CLOB
     dbms_lob.createTemporary(
       lob_loc     => entityBody
       , cache     => true
     );
     loop
       utl_http.read_text( resp, buffer, Buffer_Size);
+      if length( entityBody) = 0 then
+        logger.trace( '* HTTP response body: start');
+      end if;
+      logger.trace( buffer);
       dbms_lob.writeAppend( entityBody, length( buffer), buffer);
     end loop;
   exception
     when utl_http.end_of_body then
-      -- Игнорируем псевдоошибку исчерпания данных для чтения
+      -- ignore the pseudo error of data exhaustion for reading
       utl_http.end_response( resp);
       logger.clearErrorStack();
+      logger.trace(
+        '* HTTP response body: finish'
+        || ' (length=' || length( entityBody) || ')'
+      );
     when others then
       raise_application_error(
         pkg_Error.ErrorStackInfo
@@ -444,7 +464,7 @@ is
 
 
   /*
-    Возвращает длительность прошедшего времени в секундах.
+    Returns elapsed time in seconds.
   */
   function timeDiff(
     newTime number
@@ -471,8 +491,7 @@ begin
     );
   end if;
 
-  -- Ограничиваем время ожидания ответа ( по умолчанию 60 секунд, что
-  -- соответствует значению по умолчанию в utl_http)
+  -- Limit waiting time for response ( 60 seconds is default in utl_http)
   utl_http.set_transfer_timeout( coalesce( maxWaitSecond, 60));
 
   startTime := dbms_utility.get_time() / 100;
@@ -481,7 +500,6 @@ begin
   writeRequest();
   readResponse();
 
-  -- Определяем время выполнения
   execSecond := coalesce(
     timeDiff(
       newTime   => dbms_utility.get_time() / 100
@@ -513,6 +531,15 @@ end execHttpRequest;
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
                                   oterwise GET)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  bodyCharset                 - Sets the character set of the request body when
+                                the media type is text but the character set
+                                is not specified in the Content-Type header
+                                (default is UTF-8)
 
   Return values:
   text data, returned from the HTTP request.
@@ -522,6 +549,9 @@ function getHttpResponse(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
+  , maxWaitSecond integer := null
+  , headerList wbu_header_list_t := null
+  , bodyCharset varchar2 := null
 )
 return clob
 is
@@ -546,18 +576,10 @@ begin
     , requestText         => requestText
     , parameterList       => parameterList
     , httpMethod          => httpMethod
-    , maxWaitSecond       => null
-    , headerText          => null
+    , maxWaitSecond       => maxWaitSecond
+    , headerList          => headerList
+    , bodyCharset         => bodyCharset
   );
-  if logger.isTraceEnabled() and entityBody is not null then
-    logger.trace(
-      'HTTP entity ( length=' || length( entityBody) || '):'
-      || chr(10) || substr( entityBody, 1, 3900)
-      || case when length( entityBody) > 3900 then
-          chr(10) || '...'
-        end
-    );
-  end if;
   if statusCode <> utl_http.HTTP_OK then
     raise_application_error(
       pkg_Error.ProcessError

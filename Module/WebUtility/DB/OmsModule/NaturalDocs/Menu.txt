@@ -57,6 +57,16 @@ Group: О модуле  {
 
 Group: Объектные типы  {
 
+   Group: wbu_header_list_t  {
+
+      File: Спецификация  (no auto-title, wbu_header_list_t.typ)
+      }  # Group: wbu_header_list_t
+
+   Group: wbu_header_t  {
+
+      File: Спецификация  (no auto-title, wbu_header_t.typ)
+      }  # Group: wbu_header_t
+
    Group: wbu_parameter_list_t  {
 
       File: Спецификация  (no auto-title, wbu_parameter_list_t.typ)

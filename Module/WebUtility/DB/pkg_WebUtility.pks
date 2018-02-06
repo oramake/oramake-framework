@@ -2,17 +2,17 @@ create or replace package pkg_WebUtility
 authid current_user
 is
 /* package: pkg_WebUtility
-  Интерфейсный пакет модуля WebUtility.
+  Functions for performing HTTP requests.
 
   SVN root: Oracle/Module/WebUtility
 */
 
 
 
-/* group: Константы */
+/* group: Constants */
 
 /* const: Module_Name
-  Название модуля, к которому относится пакет.
+  Name of the module to which the package belongs.
 */
 Module_Name constant varchar2(30) := 'WebUtility';
 
@@ -32,26 +32,26 @@ Post_HttpMethod constant varchar2(64) := 'POST';
 
 
 
-/* group: HTTP Header Fields */
+/* group: HTTP Headers */
 
-/* const: ContentLength_HttpHField
-  HTTP Header Field "Content-Length".
+/* const: ContentLength_HttpHeader
+  HTTP Header "Content-Length".
 */
-ContentLength_HttpHField constant varchar2(100) := 'Content-Length';
+ContentLength_HttpHeader constant varchar2(100) := 'Content-Length';
 
-/* const: ContentType_HttpHField
-  HTTP Header Field "Content-Type".
+/* const: ContentType_HttpHeader
+  HTTP Header "Content-Type".
 */
-ContentType_HttpHField constant varchar2(100) := 'Content-Type';
+ContentType_HttpHeader constant varchar2(100) := 'Content-Type';
 
-/* const: TransferEncoding_HttpHField
-  HTTP Header Field "Transfer-Encoding".
+/* const: TransferEncoding_HttpHeader
+  HTTP Header "Transfer-Encoding".
 */
-TransferEncoding_HttpHField constant varchar2(100) := 'Transfer-Encoding';
+TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
 
 
 
-/* group: Функции */
+/* group: Functions */
 
 
 
@@ -61,41 +61,50 @@ TransferEncoding_HttpHField constant varchar2(100) := 'Transfer-Encoding';
   Execute of HTTP request.
 
   Параметры:
-  statusCode                  - Код результата запроса ( HTTP Status-Code)
-                                ( возврат)
-  reasonPhrase                - Описание результата запроса
-                                ( HTTP Reason-Phrase)
-                                ( возврат, максимум 256 символов)
-  contentType                 - Тип тела ответа ( HTTP Content-Type)
-                                ( возврат, максимум 1024 символа)
-  entityBody                  - Тело ответа ( HTTP entity-body)
-                                ( возврат)
-  execSecond                  - время выполнения запроса
-                                ( в секундах, -1 если не удалось измерить)
-                                ( возврат)
-  requestUrl                  - URL для выполнения запроса
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (out)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (out, maximum 256 chars)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (out, maximum 1024 chars)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (out)
+  execSecond                  - Request execution time
+                                (in seconds, -1 if it was not possible to
+                                  measure)
+                                (out)
+  requestUrl                  - Request URL
   requestText                 - Request text
-                                ( default is absent)
+                                (default is absent)
   parameterList               - Request parameters
-                                ( default is absent)
+                                (default is absent)
   httpMethod                  - HTTP method for request
-                                ( default POST if requestText or parameterList
+                                (default POST if requestText or parameterList
                                   is not empty oterwise GET)
-  maxWaitSecond               - Максимальное время ожидания ответа по запросу
-                                ( в секундах, по умолчанию 60 секунд)
-  headerText                  - список заголовков к запросу
-                                ( по умолчанию передается Content-Type
-                                  и Content-Length)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  bodyCharset                 - Sets the character set of the request body when
+                                the media type is text but the character set
+                                is not specified in the Content-Type header
+                                (default is UTF-8)
 
-  Замечания:
-  - заголовки передаются в виде текста
-  (code)
-  Host: ads.betweendigital.com
-  Connection: keep-alive
-  ...
-  (end code)
-  - для успешного выполнения запроса необходимо выдать права ACL пользователю,
-    вызывающему процедуру
+  Remarks:
+  - headers in headerList with null value are not sent;
+  - by default, request uses chunked transfer-encoding and sends
+    "Transfer-Encoding: chunked" header ( this will be disabled if you use
+    <ContentLength_HttpHeader> or <TransferEncoding_HttpHeader> in headerList);
+  - by default, request sends <ContentType_HttpHeader> header with value
+    "application/x-www-form-urlencoded" if it is POST request with parameters,
+    with value "text/xml" if request text starts with "<?xml ",
+    with value "application/json" header if request text starts with "[" or "{"
+    ( this will be disabled if you use <ContentType_HttpHeader> in
+    headerList);
+  - data is automatically converted from the database character set to the
+    request body character set;
 
   ( <body::execHttpRequest>)
 */
@@ -110,7 +119,8 @@ procedure execHttpRequest(
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
   , maxWaitSecond integer := null
-  , headerText varchar2 := null
+  , headerList wbu_header_list_t := null
+  , bodyCharset varchar2 := null
 );
 
 /* pfunc: getHttpResponse
@@ -125,6 +135,15 @@ procedure execHttpRequest(
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
                                   oterwise GET)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  bodyCharset                 - Sets the character set of the request body when
+                                the media type is text but the character set
+                                is not specified in the Content-Type header
+                                (default is UTF-8)
 
   Return values:
   text data, returned from the HTTP request.
@@ -136,6 +155,9 @@ function getHttpResponse(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
+  , maxWaitSecond integer := null
+  , headerList wbu_header_list_t := null
+  , bodyCharset varchar2 := null
 )
 return clob;
 
