@@ -25,6 +25,24 @@ opt opt_plsql_object_option_t := opt_plsql_object_option_t(
 
 /* group: Функции */
 
+/* func: getTestOptionList
+  Returns test parameters.
+*/
+function getTestOptionList
+return opt_option_list_t
+is
+begin
+  return opt;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while returning test parameters.'
+      )
+    , true
+  );
+end getTestOptionList;
+
 /* proc: testGetHttpResponse
   Test data retrieval using an HTTP request at a given URL.
 
@@ -239,7 +257,7 @@ begin
 
   checkCase(
     'Use headerList'
-    , opt.getString( TestHttpEchoUrl_OptSName)
+    , opt.getString( TestHttpHeadersUrl_OptSName)
     , headerList              =>
         wbu_header_list_t(
           wbu_header_t( 'X-Custom-Header', 'value of custom header')
@@ -257,28 +275,28 @@ begin
 
   checkCase(
     'Set Content-Type for XML'
-    , opt.getString( TestHttpEchoUrl_OptSName)
+    , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '<?xml version="1.0"><a/>'
     , resultTeplateList       => cmn_string_table_t( '%text/xml%')
   );
 
   checkCase(
     'Set Content-Type for JSON object'
-    , opt.getString( TestHttpEchoUrl_OptSName)
+    , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '{ "n": 1 }'
     , resultTeplateList       => cmn_string_table_t( '%application/json%')
   );
 
   checkCase(
     'Set Content-Type for JSON array'
-    , opt.getString( TestHttpEchoUrl_OptSName)
+    , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '[ 1, 2 ]'
     , resultTeplateList       => cmn_string_table_t( '%application/json%')
   );
 
   checkCase(
     'Priority of custom Content-Type'
-    , opt.getString( TestHttpEchoUrl_OptSName)
+    , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '[ 1, 2 ]'
     , headerList              => wbu_header_list_t(
         wbu_header_t( pkg_WebUtility.ContentType_HttpHeader, 'text/plain')

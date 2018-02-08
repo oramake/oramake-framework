@@ -5,6 +5,7 @@ SQL_DEFINE = \
   ,TestHttpAbsentHost=http://nonexistent.example.com \
   ,TestHttpAbsentPath=http://www.example.com/nonexistent.html \
   ,TestHttpEchoUrl=http://httpbin.org/anything \
+  ,TestHttpHeadersUrl=http://httpbin.org/headers \
   ,TestHttpTextPattern=%Example Domain% \
   ,TestHttpTextUrl=http://www.example.com \
 

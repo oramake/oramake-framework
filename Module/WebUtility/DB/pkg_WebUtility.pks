@@ -123,6 +123,24 @@ procedure execHttpRequest(
   , bodyCharset varchar2 := null
 );
 
+/* pproc: checkResponseError
+  Raises an exception when the Web server returns a status code other than
+  successful code ( HTTP 200).
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+  entityBody                  - Response to request (HTTP entity-body)
+
+  ( <body::checkResponseError>)
+*/
+procedure checkResponseError(
+  statusCode integer
+  , reasonPhrase varchar2
+  , entityBody clob
+);
+
 /* pfunc: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
 

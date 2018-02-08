@@ -31,6 +31,12 @@ TestHttpAbsentPath_OptSName constant varchar2(30) := 'TestHttpAbsentPath';
 */
 TestHttpEchoUrl_OptSName constant varchar2(30) := 'TestHttpEchoUrl';
 
+/* const: TestHttpHeadersUrl_OptSName
+  Short name of parameter
+  "Tests: URL to returns request headers".
+*/
+TestHttpHeadersUrl_OptSName constant varchar2(30) := 'TestHttpHeadersUrl';
+
 /* const: TestHttpTextUrl_OptSName
   Short name of parameter
   "Tests: URL for downloading text data available via HTTP"
@@ -49,6 +55,14 @@ TestHttpTextPattern_OptSName constant varchar2(30) := 'TestHttpTextPattern';
 
 
 /* group: Функции */
+
+/* pfunc: getTestOptionList
+  Returns test parameters.
+
+  ( <body::getTestOptionList>)
+*/
+function getTestOptionList
+return opt_option_list_t;
 
 /* pproc: testGetHttpResponse
   Test data retrieval using an HTTP request at a given URL.

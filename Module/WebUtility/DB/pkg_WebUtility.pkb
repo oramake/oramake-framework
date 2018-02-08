@@ -24,7 +24,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
 /* proc: execHttpRequest
   Execute of HTTP request.
 
-  Параметры:
+  Parameters:
   statusCode                  - Request result code (HTTP Status-Code)
                                 (out)
   reasonPhrase                - Description of the query result
@@ -93,6 +93,10 @@ is
       else 0
     end
   ;
+
+  -- Time out value for reading the HTTP response
+  -- (60 seconds is default in utl_http)
+  transferTimeout integer := coalesce( maxWaitSecond, 60);
 
   -- HTTP request
   req utl_http.req;
@@ -280,6 +284,8 @@ is
     )
     is
 
+      usedBodyCharset varchar2(100);
+
       len integer := coalesce( length( bodyText), 0);
       offset integer := 1;
 
@@ -291,10 +297,15 @@ is
       logger.trace( '* HTTP request header: finish');
 
       if len > 0 then
+        usedBodyCharset := substr( coalesce( bodyCharset, 'UTF-8'), 1, 100);
 
         -- Text data is automatically converted in UTL_HTTP from the database
         -- character set to the request body character set
-        utl_http.set_body_charset( req, coalesce( bodyCharset, 'UTF-8'));
+        utl_http.set_body_charset( req, usedBodyCharset);
+        logger.trace(
+          'message body: source length=' || length( bodyText)
+          || ', set body charset: ' || usedBodyCharset
+        );
 
         logger.trace( '* HTTP message body: start');
         loop
@@ -455,7 +466,9 @@ is
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
-            'Error while getting response.'
+            'Error while getting response ('
+            || ' transferTimeout=' || transferTimeout
+            || ').'
           )
         , true
       );
@@ -491,8 +504,7 @@ begin
     );
   end if;
 
-  -- Limit waiting time for response ( 60 seconds is default in utl_http)
-  utl_http.set_transfer_timeout( coalesce( maxWaitSecond, 60));
+  utl_http.set_transfer_timeout( transferTimeout);
 
   startTime := dbms_utility.get_time() / 100;
   execSecond := -1;
@@ -511,13 +523,41 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Error while executing HTTP request ('
-        || ' maxWaitSecond=' || maxWaitSecond
-        || ').'
+        'Error while executing HTTP request.'
       )
     , true
   );
 end execHttpRequest;
+
+/* proc: checkResponseError
+  Raises an exception when the Web server returns a status code other than
+  successful code ( HTTP 200).
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+  entityBody                  - Response to request (HTTP entity-body)
+*/
+procedure checkResponseError(
+  statusCode integer
+  , reasonPhrase varchar2
+  , entityBody clob
+)
+is
+begin
+  if statusCode <> utl_http.HTTP_OK then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'HTTP error ' || to_char( statusCode)
+        || ': ' || reasonPhrase
+        || chr(10) || substr( entityBody, 1, 500)
+        || case when length( entityBody) > 500 then
+            chr(10) || '...'
+          end
+    );
+  end if;
+end checkResponseError;
 
 /* func: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
@@ -580,17 +620,11 @@ begin
     , headerList          => headerList
     , bodyCharset         => bodyCharset
   );
-  if statusCode <> utl_http.HTTP_OK then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , 'HTTP error ' || to_char( statusCode)
-        || ': ' || reasonPhrase
-        || chr(10) || substr( entityBody, 1, 500)
-        || case when length( entityBody) > 500 then
-            chr(10) || '...'
-          end
-    );
-  end if;
+  checkResponseError(
+    statusCode        => statusCode
+    , reasonPhrase    => reasonPhrase
+    , entityBody      => entityBody
+  );
   return entityBody;
 exception when others then
   raise_application_error(
