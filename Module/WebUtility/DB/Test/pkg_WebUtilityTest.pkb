@@ -284,14 +284,16 @@ begin
     'Set Content-Type for JSON object'
     , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '{ "n": 1 }'
-    , resultTeplateList       => cmn_string_table_t( '%application/json%')
+    , resultTeplateList       =>
+        cmn_string_table_t( '%' || pkg_WebUtility.Json_ContentType || '%')
   );
 
   checkCase(
     'Set Content-Type for JSON array'
     , opt.getString( TestHttpHeadersUrl_OptSName)
     , requestText             => '[ 1, 2 ]'
-    , resultTeplateList       => cmn_string_table_t( '%application/json%')
+    , resultTeplateList       =>
+        cmn_string_table_t( '%' || pkg_WebUtility.Json_ContentType || '%')
   );
 
   checkCase(

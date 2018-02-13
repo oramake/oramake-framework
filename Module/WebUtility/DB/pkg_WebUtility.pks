@@ -44,10 +44,29 @@ ContentLength_HttpHeader constant varchar2(100) := 'Content-Length';
 */
 ContentType_HttpHeader constant varchar2(100) := 'Content-Type';
 
+/* const: SoapAction_HttpHeader
+  HTTP Header "SOAPAction", used to indicate the intent of the SOAP request.
+*/
+SoapAction_HttpHeader constant varchar2(100) := 'SOAPAction';
+
 /* const: TransferEncoding_HttpHeader
   HTTP Header "Transfer-Encoding".
 */
 TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
+
+
+
+/* group: Values for "Content-Type" HTTP Header */
+
+/* const: SoapMessage_ContentType
+  Value of "Content-Type" HTTP Header for data in JSON format.
+*/
+Json_ContentType constant varchar2(100) := 'application/json';
+
+/* const: SoapMessage_ContentType
+  Value of "Content-Type" HTTP Header for SOAP message.
+*/
+SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
 
 
 
@@ -60,7 +79,7 @@ TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
 /* pproc: execHttpRequest
   Execute of HTTP request.
 
-  Параметры:
+  Parameters:
   statusCode                  - Request result code (HTTP Status-Code)
                                 (out)
   reasonPhrase                - Description of the query result
@@ -100,7 +119,7 @@ TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
   - by default, request sends <ContentType_HttpHeader> header with value
     "application/x-www-form-urlencoded" if it is POST request with parameters,
     with value "text/xml" if request text starts with "<?xml ",
-    with value "application/json" header if request text starts with "[" or "{"
+    with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);
   - data is automatically converted from the database character set to the
@@ -132,6 +151,13 @@ procedure execHttpRequest(
   reasonPhrase                - Description of the query result
                                 (HTTP Reason-Phrase)
   entityBody                  - Response to request (HTTP entity-body)
+  soapRequestFlag             - SOAP request was sent
+                                (1 yes, 0 no (by default))
+
+  Remarks:
+  - in the case of specifying soapRequestFlag = 1, an attempt is made to
+    obtain error information according to the format of the SOAP response
+    (from the tag Fault);
 
   ( <body::checkResponseError>)
 */
@@ -139,7 +165,27 @@ procedure checkResponseError(
   statusCode integer
   , reasonPhrase varchar2
   , entityBody clob
+  , soapRequestFlag integer := null
 );
+
+/* pfunc: getResponseXml
+  Attempts to return response in XML format.
+
+  Parameters:
+  entityBody                  - Response text
+  contentType                 - Type of response (HTTP Content-Type)
+                                (default is unknown)
+
+  Return:
+  response in XML format.
+
+  ( <body::getResponseXml>)
+*/
+function getResponseXml(
+  entityBody clob
+  , contentType varchar2 := null
+)
+return xmltype;
 
 /* pfunc: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
@@ -163,7 +209,7 @@ procedure checkResponseError(
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
 
-  Return values:
+  Return:
   text data, returned from the HTTP request.
 
   ( <body::getHttpResponse>)
@@ -178,6 +224,54 @@ function getHttpResponse(
   , bodyCharset varchar2 := null
 )
 return clob;
+
+/* pfunc: getSoapResponse
+  Returns SOAP message, received by using HTTP request to web service.
+
+  Parameters:
+  requestUrl                  - URL of web service
+  soapAction                  - Action for request
+  soapMessage                 - Text of SOAP message to web service
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+
+  Return:
+  XML with SOAP message, received from web service.
+
+  ( <body::getSoapResponse>)
+*/
+function getSoapResponse(
+  requestUrl varchar2
+  , soapAction varchar2
+  , soapMessage clob
+  , maxWaitSecond integer := null
+)
+return xmltype;
+
+/* pfunc: getSoapResponse( PARAMETERS)
+  Returns SOAP message, received by using HTTP POST-request with parameters.
+
+  Parameters:
+  requestUrl                  - URL of web service
+  parameterList               - Request parameters
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+
+  Return:
+  XML with SOAP message, received by request.
+
+  ( <body::getSoapResponse( PARAMETERS)>)
+*/
+function getSoapResponse(
+  requestUrl varchar2
+  , parameterList wbu_parameter_list_t
+  , maxWaitSecond integer := null
+  , headerList wbu_header_list_t := null
+)
+return xmltype;
 
 end pkg_WebUtility;
 /

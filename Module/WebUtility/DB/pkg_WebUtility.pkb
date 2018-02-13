@@ -64,7 +64,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
   - by default, request sends <ContentType_HttpHeader> header with value
     "application/x-www-form-urlencoded" if it is POST request with parameters,
     with value "text/xml" if request text starts with "<?xml ",
-    with value "application/json" header if request text starts with "[" or "{"
+    with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);
   - data is automatically converted from the database character set to the
@@ -379,7 +379,7 @@ is
         elsif substr( requestText, 1, 6) = '<?xml ' then
           addHeader( ContentType_HttpHeader, 'text/xml');
         elsif substr( requestText, 1, 1) in ( '{', '[') then
-          addHeader( ContentType_HttpHeader, 'application/json');
+          addHeader( ContentType_HttpHeader, Json_ContentType);
         end if;
       end if;
 
@@ -538,26 +538,152 @@ end execHttpRequest;
   reasonPhrase                - Description of the query result
                                 (HTTP Reason-Phrase)
   entityBody                  - Response to request (HTTP entity-body)
+  soapRequestFlag             - SOAP request was sent
+                                (1 yes, 0 no (by default))
+
+  Remarks:
+  - in the case of specifying soapRequestFlag = 1, an attempt is made to
+    obtain error information according to the format of the SOAP response
+    (from the tag Fault);
 */
 procedure checkResponseError(
   statusCode integer
   , reasonPhrase varchar2
   , entityBody clob
+  , soapRequestFlag integer := null
 )
 is
+
+
+
+  /*
+    Attempts to return additional error information from the SOAP response.
+  */
+  function getSoapErrorInfo
+  return varchar2
+  is
+
+    -- Response in XML format (null in case of parsing error)
+    responseXml xmltype;
+
+    faultXml xmltype;
+    faultCode xmltype;
+    faultString xmltype;
+
+  begin
+    begin
+      responseXml := xmltype( entityBody);
+    exception when others then
+      logger.trace(
+        'getSoapErrorInfo: ignored XML parse error:'
+        || chr(10) || logger.getErrorStack( isStackPreserved => 1)
+      );
+      -- Ignore the error and clear errors stack
+      logger.clearErrorStack();
+    end;
+    if responseXml is not null then
+      faultXml := responseXml.extract(
+        '/Envelope/Body/Fault/node()'
+        , 'xmlns="' || responseXml.getNamespace() || '"'
+      );
+    end if;
+    if faultXml is not null then
+      faultCode := faultXml.extract( '/faultcode/text()');
+      faultString := faultXml.extract( '/faultstring/text()');
+    end if;
+    return
+      case when faultXml is not null then
+        substr( trim(
+          dbms_xmlgen.convert(
+            case when faultCode is not null then
+              'faultcode: ' || faultCode.getStringVal()
+              || case when faultString is not null then
+                  ', ' || chr(10) || 'faultstring: '
+                  || faultString.getStringVal()
+                end
+            else
+              'SOAP Fault: ' || faultXml.getStringVal()
+            end
+            , dbms_xmlgen.ENTITY_DECODE
+          )
+        ), 1, 500)
+      end
+    ;
+  end getSoapErrorInfo;
+
+
+
+-- checkResponseError
 begin
   if statusCode <> utl_http.HTTP_OK then
     raise_application_error(
       pkg_Error.ProcessError
       , 'HTTP error ' || to_char( statusCode)
         || ': ' || reasonPhrase
-        || chr(10) || substr( entityBody, 1, 500)
-        || case when length( entityBody) > 500 then
-            chr(10) || '...'
+        || case when entityBody is not null then
+            chr(10)
+            || coalesce(
+                case when soapRequestFlag = 1 then
+                    getSoapErrorInfo()
+                  end
+                , substr( entityBody, 1, 500)
+                  || case when length( entityBody) > 500 then
+                      chr(10) || '...'
+                    end
+              )
           end
     );
   end if;
 end checkResponseError;
+
+/* func: getResponseXml
+  Attempts to return response in XML format.
+
+  Parameters:
+  entityBody                  - Response text
+  contentType                 - Type of response (HTTP Content-Type)
+                                (default is unknown)
+
+  Return:
+  response in XML format.
+*/
+function getResponseXml(
+  entityBody clob
+  , contentType varchar2 := null
+)
+return xmltype
+is
+
+  -- Response in XML format
+  responseXml xmltype;
+
+begin
+  return xmltype( entityBody);
+exception when others then
+  if contentType = 'text/xml' or contentType like 'text/xml;%' then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Error parsing response as text in XML format ('
+          || ' response length=' || length( entityBody)
+          || ', substr(response,1,200)="'
+            || chr(10) || substr( entityBody, 1, 200) || chr(10)
+            || '"'
+          || ').'
+        )
+      , true
+    );
+  else
+    logger.clearErrorStack();
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Response was not in XML format ('
+        || ' response length=' || length( entityBody)
+        || ', content_type="' || contentType || '"'
+        || ').'
+    );
+  end if;
+end getResponseXml;
 
 /* func: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
@@ -581,7 +707,7 @@ end checkResponseError;
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
 
-  Return values:
+  Return:
   text data, returned from the HTTP request.
 */
 function getHttpResponse(
@@ -638,6 +764,158 @@ exception when others then
     , true
   );
 end getHttpResponse;
+
+/* ifunc: getSoapResponse(INTERNAL)
+  Returns SOAP message, received by using HTTP request.
+
+  Parameters:
+  requestUrl                  - URL of web service
+  requestText                 - Request text
+  parameterList               - Request parameters
+  maxWaitSecond               - Maximum response time on request
+  headerList                  - Request headers
+
+  Return:
+  XML with SOAP message, received from web service.
+*/
+function getSoapResponse(
+  requestUrl varchar2
+  , requestText clob
+  , parameterList wbu_parameter_list_t
+  , maxWaitSecond integer
+  , headerList wbu_header_list_t
+)
+return xmltype
+is
+
+  -- Response data
+  statusCode integer;
+  reasonPhrase varchar2(1024);
+  contentType varchar2(1024);
+  entityBody clob;
+
+  execSecond number;
+
+-- getSoapResponse
+begin
+  execHttpRequest(
+    statusCode            => statusCode
+    , reasonPhrase        => reasonPhrase
+    , contentType         => contentType
+    , entityBody          => entityBody
+    , execSecond          => execSecond
+    , requestUrl          => requestUrl
+    , requestText         => requestText
+    , parameterList       => parameterList
+    , httpMethod          => Post_HttpMethod
+    , maxWaitSecond       => maxWaitSecond
+    , headerList          => headerList
+  );
+  checkResponseError(
+    statusCode        => statusCode
+    , reasonPhrase    => reasonPhrase
+    , entityBody      => entityBody
+    , soapRequestFlag => 1
+  );
+  return
+    getResponseXml(
+      entityBody      => entityBody
+      , contentType   => contentType
+    )
+  ;
+end getSoapResponse;
+
+/* func: getSoapResponse
+  Returns SOAP message, received by using HTTP request to web service.
+
+  Parameters:
+  requestUrl                  - URL of web service
+  soapAction                  - Action for request
+  soapMessage                 - Text of SOAP message to web service
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+
+  Return:
+  XML with SOAP message, received from web service.
+*/
+function getSoapResponse(
+  requestUrl varchar2
+  , soapAction varchar2
+  , soapMessage clob
+  , maxWaitSecond integer := null
+)
+return xmltype
+is
+begin
+  return
+    getSoapResponse(
+      requestUrl            => requestUrl
+      , requestText         => soapMessage
+      , parameterList       => null
+      , maxWaitSecond       => maxWaitSecond
+      , headerList          => wbu_header_list_t(
+          wbu_header_t( ContentType_HttpHeader, SoapMessage_ContentType)
+          , wbu_header_t( SoapAction_HttpHeader, soapAction)
+        )
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while returning data from SOAP web service ('
+        || 'requestUrl="' || requestUrl || '"'
+        || ', soapAction="' || soapAction || '"'
+        || ').'
+      )
+    , true
+  );
+end getSoapResponse;
+
+/* func: getSoapResponse( PARAMETERS)
+  Returns SOAP message, received by using HTTP POST-request with parameters.
+
+  Parameters:
+  requestUrl                  - URL of web service
+  parameterList               - Request parameters
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+
+  Return:
+  XML with SOAP message, received by request.
+*/
+function getSoapResponse(
+  requestUrl varchar2
+  , parameterList wbu_parameter_list_t
+  , maxWaitSecond integer := null
+  , headerList wbu_header_list_t := null
+)
+return xmltype
+is
+begin
+  return
+    getSoapResponse(
+      requestUrl            => requestUrl
+      , requestText         => null
+      , parameterList       => parameterList
+      , maxWaitSecond       => maxWaitSecond
+      , headerList          => headerList
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while returning SOAP message, received by request ('
+        || 'requestUrl="' || requestUrl || '"'
+        || ').'
+      )
+    , true
+  );
+end getSoapResponse;
 
 end pkg_WebUtility;
 /
