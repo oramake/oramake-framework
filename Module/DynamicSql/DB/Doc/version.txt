@@ -2,6 +2,23 @@ title: Версии
 
 
 
+group: 1.1.1 (2017-12-11)
+(<Установка::1.1.1>)
+
+[*] Minor changes in formatting
+
+[+] Ability to group filter conditions (see <dyn_dynamic_sql_t.openGroup>, <dyn_dynamic_sql_t.closeGroup>)
+
+[*] Ability to specify a logical operator for a newly created filter condition
+
+[-] Remove call to @oms-drop-type.sql from spec of <dyn_dynamic_sql_t>, use "create or replace type
+    ... force" instead
+
+[!] Fix an error causing an infinite loop in getParameterName() when an empty value passed into
+    the conditionText parameter (see <dyn_dynamic_sql_t.addCondition>)
+
+
+
 group: 1.1.0 ( 2012-08-30)
 
 [+] Добавлен функционал для кэширования курсоров пакета dbms_sql ( см. <dyn_cursor_cache_t>).

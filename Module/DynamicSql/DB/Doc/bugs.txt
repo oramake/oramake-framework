@@ -1,17 +1,1 @@
 Title: Ошибки
-
-[!] Происходит зависание процедуры <dyn_dynamic_sql_t.addCondition> в случае
-    вызова с пустой строкой в качестве первого аргумента:
-
-(code)
-
-declare
-
-  dsql dyn_dynamic_sql_t := dyn_dynamic_sql_t( 'select * from dual');
-
-begin
-  dsql.addCondition( '', isNullValue => true);
-end;
-/
-
-(end)

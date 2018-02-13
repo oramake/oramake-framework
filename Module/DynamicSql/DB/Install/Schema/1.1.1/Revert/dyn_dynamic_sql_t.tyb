@@ -1,0 +1,324 @@
+create or replace type body dyn_dynamic_sql_t is
+/* db object type body: dyn_dynamic_sql_t::body */
+
+/* func: dyn_dynamic_sql_t
+  Создает объект.
+
+  Параметры:
+  sqlText                     - базовый текст SQL-запроса
+*/
+constructor function dyn_dynamic_sql_t(
+  sqlText varchar2
+)
+return self as result
+is
+begin
+  mSqlText := sqlText;
+  mConditionText := null;
+  mParameterCount := 0;
+  return;
+end dyn_dynamic_sql_t;
+
+/* proc: addCondition
+  Добавляет условие в запрос.
+
+  В случае, если фактическое значение параметра не null ( isNullValue false),
+  условие добавляется в виде бинарной операции сравнения над полем и параметром,
+  в противном случае добавляется тождественно истинное условие с параметром.
+
+  Указанная схема обеспечивает постоянное число и порядок параметров при
+  выполнении динамического SQL при том, что фактически часть параметров
+  может быть не задана ( имеет значение null). Также обеспечивается разный
+  текст запроса в зависимости от наличия фактических значений параметров,
+  что позволяет использовать разные планы выполнения запроса.
+
+  Параметры:
+  conditionText               - текст условия
+  isNullValue                 - признак null-значения параметра, используемого
+                                в условии ( в этом случае добавляется
+                                тождественно истинное условие с параметром
+                                вида ":<parameterName> is null")
+  parameterName               - имя параметра для использования ( по умолчанию
+                                определяется автоматически)
+
+  Замечания:
+  - в случае, если в тексте условия не используется параметр, то текст условия
+    дополняется справа ссылкой на параметр, при этом наличие параметра в
+    условии проверяется примитивно ( по наличие двоеточия в тексте условия);
+  - добавляемое условия объединяется с существующими условиями с помощью
+    логического оператора "and";
+  - имя параметра, используемого при дополнении условия либо в тривиальном
+    условии, формируется автоматически ( имя параметра из условия либо имя поля,
+    используемого в условии вместе с алиасом, либо автогенерируемое вида
+    "parameter<N>");
+
+  Пример:
+
+(code)
+
+var rc refcursor
+
+declare
+
+function find(
+  objectId number := null
+  , objectName varchar2 := null
+  , rowCount integer := null
+)
+return sys_refcursor
+is
+
+  -- Возвращаемый курсор
+  rc sys_refcursor;
+
+  -- Динамически формируемый текст запроса
+  dsql dyn_dynamic_sql_t := dyn_dynamic_sql_t( '
+select
+  *
+from
+  user_objects t
+'
+  );
+
+begin
+
+  -- Добавляем условия в запрос
+  dsql.addCondition(
+    't.objectId =', objectId is null
+  );
+  dsql.addCondition(
+    'upper( t.object_name) like upper( :objectName)'
+    , objectName is null
+  );
+  dsql.addCondition(
+    'rownum <=', rowCount is null, 'rowCount'
+  );
+
+  -- Вывод текста запроса для отладки
+  pkg_Common.OutputMessage( dsql.getSqlText);
+
+  -- Выполняем запрос
+  open rc for
+    dsql.getSqlText
+  using
+    objectId
+    , objectName
+    , rowCount
+  ;
+  return rc;
+end find;
+
+begin
+  :rc := find( null, '%a%', 10);
+end;
+
+(end)
+*/
+member procedure addCondition(
+  conditionText varchar2
+  , isNullValue boolean
+  , parameterName varchar2 := null
+)
+is
+
+
+
+  function IsParameterUsed
+  return boolean
+  is
+  -- Возвращает истину, если в условии используется параметр.
+  begin
+    return
+      instr( conditionText, ':') > 0
+    ;
+  end IsParameterUsed;
+
+
+
+  function IsName(
+    str varchar2
+  )
+  return boolean
+  is
+  -- Возвращает истину, если строка является допустимым именем.
+  begin
+    return
+      length( str) > 0
+      and substr( str, 1, 1) <> '_'
+      and translate( lower( str), '._abcdefghijklmnopqrstuvwxyz', '.') is null
+    ;
+  end IsName;
+
+
+
+  function getParameterName
+  return varchar2
+  is
+  -- Возвращает имя параметра, используемого в условии или null, если параметр
+  -- не используется.
+
+    -- Имя параметра
+    parameterName varchar2(30);
+
+    -- Позиция двоеточия в строке
+    iStart binary_integer := 1;
+
+    -- Следующая позиция после имени параметра
+    iEnd binary_integer;
+
+    -- Возможная следующая позиция после имени параметра
+    iEnd2 binary_integer;
+
+  -- getParameterName
+  begin
+    loop
+      iStart := instr( conditionText, ':', iStart);
+      if iStart > 0 then
+
+        -- Завершение по пробелу
+        iEnd := instr( conditionText, ' ', iStart + 1);
+        if iEnd = 0 then
+          iEnd := length( conditionText) + 1;
+        end if;
+
+        -- Завершение по правой скобке
+        iEnd2 := instr( conditionText, ')', iStart + 1);
+        if iEnd2 > iStart and iEnd2 < iEnd then
+          iEnd := iEnd2;
+        end if;
+
+        -- Выделение имени
+        if iEnd > iStart + 1 then
+          parameterName :=
+            substr( conditionText, iStart + 1, iEnd - iStart - 1)
+          ;
+          if not coalesce( IsName( parameterName), false) then
+            parameterName := null;
+          end if;
+        end if;
+        iStart := iEnd;
+      end if;
+      exit when iStart = 0 or parameterName is not null;
+    end loop;
+    return parameterName;
+  end getParameterName;
+
+
+
+  function makeParameterName
+  return varchar2
+  is
+  -- Создает имя параметра для использования вместе с условием.
+
+    -- Имя параметра
+    parameterName varchar2(30);
+
+    -- Позиция точки в строке
+    iStart binary_integer;
+
+    -- Позиция пробела в строке
+    iEnd binary_integer;
+
+  -- makeParameterName
+  begin
+
+    -- Пробуем создать имя по имени поля
+    iStart := instr( conditionText, '.');
+    if iStart > 0 then
+      iEnd := instr( conditionText, ' ');
+      if iEnd > iStart + 1 then
+        parameterName := substr( conditionText, iStart + 1, iEnd - iStart - 1);
+        if not coalesce( IsName( parameterName), false) then
+          parameterName := null;
+        end if;
+      end if;
+    end if;
+
+    -- Создаем автоматическое имя
+    if parameterName is null then
+      parameterName := 'parameter' || to_char( mParameterCount + 1);
+    end if;
+    return parameterName;
+  end makeParameterName;
+
+
+
+-- addCondition
+begin
+  mConditionText :=
+    mConditionText
+    || case when mConditionText is not null then
+        ' and '
+      end
+    || case
+        when isNullValue then
+          ':'
+            || coalesce( parameterName, getParameterName, MakeParameterName)
+            || ' is null'
+        when IsParameterUsed then
+          conditionText
+        else
+          conditionText || ' :' || coalesce( parameterName, MakeParameterName)
+      end
+  ;
+  mParameterCount := mParameterCount + 1;
+end addCondition;
+
+/* func: useCondition
+  Заменяет макропеременную $(macroName) в тексте запроса на выражение с
+  параметрами.
+
+  Параметры:
+  macroName                   - имя макропеременной
+
+  Замечания:
+    - в случае если макропеременная в тексте не найдена, генерируется
+      исключение;
+    - информация о параметрах при вызове очищается;
+
+  ( см. пример <Test/complex-condition.sql>).
+*/
+member procedure useCondition(
+  macroName varchar2
+)
+is
+
+  -- Текст для поиска в запросе
+  usedMacro varchar2(1000);
+
+-- useCondition
+begin
+  usedMacro := '$(' || macroName || ')';
+  if instr( mSqlText, usedMacro) = 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Макропеременная ' || usedMacro || ' не найдена в тексте запроса'
+    );
+  end if;
+  mSqlText := replace( mSqlText, usedMacro, mConditionText);
+  mConditionText := null;
+  mParameterCount := 0;
+end useCondition;
+
+/* func: getSqlText
+  Возвращает текст SQL-запроса.
+
+  Замечания:
+  - при наличии параметров к базовому текст SQL-запроса добавляется фраза
+    " where " и параметры запроса;
+*/
+member function getSqlText
+return varchar2
+is
+begin
+  return
+    case when mParameterCount > 0 then
+      mSqlText || ' where ' || mConditionText
+    else
+      mSqlText
+    end
+  ;
+end getSqlText;
+
+end;
+/

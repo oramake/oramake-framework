@@ -1,42 +1,42 @@
-<?xml version="1.0" encoding="Windows-1251"?>
-<map>
-  <map_version>1.3</map_version>
-  <name>DynamicSql</name>
-  <description>Модуль для формирования текста динамического SQL и кэширования курсоров пакета dbms_sql</description>
-  <version>1.1.0</version>
-  <prefix>dyn</prefix>
-  <team>
-    <programmerDB></programmerDB>
-    <programmerAPP></programmerAPP>
-    <analyst></analyst>
-  </team>
-  <request>
-    <msp></msp>
-  </request>
-  <path>Oracle/Module/DynamicSql</path>
-  <initialPath>Oracle/Module/DynamicSql@788</initialPath>
-  <db>
-    <database>
-      <instance></instance>
-      <instance></instance>
-      <instance></instance>
-      <instance></instance>
-      <table></table>
-      <package>pkg_DynamicSqlCache</package>
-    </database>
-  </db>
-  <app>
-  </app>
-  <batchSpec></batchSpec>
-  <diagram>
-    <database></database>
-    <process></process>
-    <infrastructure></infrastructure>
-  </diagram>
-  <depend>
-    <module></module>
-    <module></module>
-    <link></link>
-  </depend>
-  <image></image>
-</map>
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>DynamicSql</name>
+  <description>Модуль для формирования текста динамического SQL и кэширования курсоров пакета dbms_sql</description>
+  <version>1.1.1</version>
+  <prefix>dyn</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/DynamicSql</path>
+  <initialPath>Oracle/Module/DynamicSql@788</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <instance></instance>
+      <instance></instance>
+      <instance></instance>
+      <table></table>
+      <package>pkg_DynamicSqlCache</package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module></module>
+    <module></module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>

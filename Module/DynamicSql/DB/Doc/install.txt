@@ -19,6 +19,18 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
+group: 1.1.1
+
+To upgrade module:
+
+(code)
+
+$ make install INSTALL_VERSION=1.1.1 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: Первоначальная установка модуля
 
 Порядок первоначальной установки текущей версии модуля:
