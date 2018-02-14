@@ -58,7 +58,7 @@ TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
 
 /* group: Values for "Content-Type" HTTP Header */
 
-/* const: SoapMessage_ContentType
+/* const: Json_ContentType
   Value of "Content-Type" HTTP Header for data in JSON format.
 */
 Json_ContentType constant varchar2(100) := 'application/json';
@@ -101,8 +101,9 @@ SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
   httpMethod                  - HTTP method for request
                                 (default POST if requestText or parameterList
                                   is not empty oterwise GET)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
@@ -110,12 +111,15 @@ SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
                                 the media type is text but the character set
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Remarks:
   - headers in headerList with null value are not sent;
   - by default, request uses chunked transfer-encoding and sends
-    "Transfer-Encoding: chunked" header ( this will be disabled if you use
-    <ContentLength_HttpHeader> or <TransferEncoding_HttpHeader> in headerList);
+    "Transfer-Encoding: chunked" header ( this will be disabled if
+    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
+    <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
     "application/x-www-form-urlencoded" if it is POST request with parameters,
     with value "text/xml" if request text starts with "<?xml ",
@@ -137,9 +141,10 @@ procedure execHttpRequest(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
   , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
 );
 
 /* pproc: checkResponseError
@@ -199,8 +204,9 @@ return xmltype;
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
                                   oterwise GET)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
@@ -208,6 +214,8 @@ return xmltype;
                                 the media type is text but the character set
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Return:
   text data, returned from the HTTP request.
@@ -219,9 +227,10 @@ function getHttpResponse(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
   , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
 )
 return clob;
 
@@ -232,6 +241,9 @@ return clob;
   requestUrl                  - URL of web service
   soapAction                  - Action for request
   soapMessage                 - Text of SOAP message to web service
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
 
@@ -244,6 +256,7 @@ function getSoapResponse(
   requestUrl varchar2
   , soapAction varchar2
   , soapMessage clob
+  , disableChunkedEncFlag integer := null
   , maxWaitSecond integer := null
 )
 return xmltype;
@@ -254,11 +267,14 @@ return xmltype;
   Parameters:
   requestUrl                  - URL of web service
   parameterList               - Request parameters
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Return:
   XML with SOAP message, received by request.
@@ -268,8 +284,9 @@ return xmltype;
 function getSoapResponse(
   requestUrl varchar2
   , parameterList wbu_parameter_list_t
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
+  , maxWaitSecond integer := null
 )
 return xmltype;
 

@@ -21,6 +21,72 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Execute of HTTP requests */
 
+/* ifunc: getTextLength
+  Returns length of text in bytes after conversion to specified character set.
+
+  Parameters:
+  textData                    - Text data
+  destCharset                 - Name of the character set to which textData is
+                                converted
+
+  Returns:
+  length of text in bytes (null if textData is null, length(textData) if
+  destCharset is null).
+*/
+function getTextLength(
+  textData clob
+  , destCharset varchar2
+)
+return integer
+is
+
+  blobLength integer;
+
+  tmpBlob blob;
+  destCsid integer;
+
+  amount integer := dbms_lob.getLength( textData);
+  src_offset integer := 1;
+  dest_offset integer := 1;
+  def_lang_context integer := dbms_lob.DEFAULT_LANG_CTX;
+  wrn integer;
+
+begin
+  if amount > 0 and destCharset is not null then
+    dbms_lob.createTemporary(
+      lob_loc     => tmpBlob
+      , cache     => true
+      , dur       => dbms_lob.call
+    );
+    destCsid := nls_charset_id( destCharset);
+    dbms_lob.convertToBlob(
+      dest_lob          => tmpBlob
+      , src_clob        => textData
+      , amount          => amount
+      , dest_offset     => dest_offset
+      , src_offset      => src_offset
+      , blob_csid       => destCsid
+      , lang_context    => def_lang_context
+      , warning         => wrn
+    );
+    blobLength := dbms_lob.getLength( tmpBlob);
+    dbms_lob.freeTemporary( tmpBlob);
+  else
+    blobLength := amount;
+  end if;
+  return blobLength;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while getting length of text in specified character set ('
+        || ' destCharset="' || destCharset || '"'
+        || ').'
+      )
+    , true
+  );
+end getTextLength;
+
 /* proc: execHttpRequest
   Execute of HTTP request.
 
@@ -46,8 +112,9 @@ logger lg_logger_t := lg_logger_t.getLogger(
   httpMethod                  - HTTP method for request
                                 (default POST if requestText or parameterList
                                   is not empty oterwise GET)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
@@ -55,12 +122,15 @@ logger lg_logger_t := lg_logger_t.getLogger(
                                 the media type is text but the character set
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Remarks:
   - headers in headerList with null value are not sent;
   - by default, request uses chunked transfer-encoding and sends
-    "Transfer-Encoding: chunked" header ( this will be disabled if you use
-    <ContentLength_HttpHeader> or <TransferEncoding_HttpHeader> in headerList);
+    "Transfer-Encoding: chunked" header ( this will be disabled if
+    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
+    <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
     "application/x-www-form-urlencoded" if it is POST request with parameters,
     with value "text/xml" if request text starts with "<?xml ",
@@ -80,9 +150,10 @@ procedure execHttpRequest(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
   , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
 )
 is
 
@@ -289,15 +360,48 @@ is
       len integer := coalesce( length( bodyText), 0);
       offset integer := 1;
 
+      tmpClob clob;
+
     begin
-      if len > 0 and not ( isContentLengthUsed or isTransferEncodingUsed) then
-        -- UTL_HTTP will performs chunked transfer-encoding on the request body
-        addHeader( TransferEncoding_HttpHeader, 'chunked');
+      if len > 0 then
+        if not isContentTypeUsed then
+          if reqMethod = Post_HttpMethod and nParameter > 0 then
+            addHeader(
+              ContentType_HttpHeader
+              , 'application/x-www-form-urlencoded'
+            );
+          elsif substr( requestText, 1, 6) = '<?xml ' then
+            addHeader( ContentType_HttpHeader, 'text/xml');
+          elsif substr( requestText, 1, 1) in ( '{', '[') then
+            addHeader( ContentType_HttpHeader, Json_ContentType);
+          end if;
+        end if;
+
+        usedBodyCharset := substr( coalesce( bodyCharset, 'UTF-8'), 1, 100);
+        if coalesce( disableChunkedEncFlag, 0) != 1
+              and not ( isContentLengthUsed or isTransferEncodingUsed)
+            then
+          -- UTL_HTTP will performs chunked transfer-encoding on the request
+          -- body
+          addHeader( TransferEncoding_HttpHeader, 'chunked');
+        elsif not isContentLengthUsed then
+          addHeader(
+            ContentLength_HttpHeader
+            , getTextLength(
+                textData        => bodyText
+                , destCharset   =>
+                    utl_i18n.map_charset(
+                      usedBodyCharset
+                      , utl_i18n.GENERIC_CONTEXT
+                      , utl_i18n.IANA_TO_ORACLE
+                    )
+              )
+          );
+        end if;
       end if;
       logger.trace( '* HTTP request header: finish');
 
       if len > 0 then
-        usedBodyCharset := substr( coalesce( bodyCharset, 'UTF-8'), 1, 100);
 
         -- Text data is automatically converted in UTL_HTTP from the database
         -- character set to the request body character set
@@ -370,19 +474,6 @@ is
       if headerList is not null then
         processHeaderList();
       end if;
-      if not isContentTypeUsed then
-        if reqMethod = Post_HttpMethod and nParameter > 0 then
-          addHeader(
-            ContentType_HttpHeader
-            , 'application/x-www-form-urlencoded'
-          );
-        elsif substr( requestText, 1, 6) = '<?xml ' then
-          addHeader( ContentType_HttpHeader, 'text/xml');
-        elsif substr( requestText, 1, 1) in ( '{', '[') then
-          addHeader( ContentType_HttpHeader, Json_ContentType);
-        end if;
-      end if;
-
       writeBody(
         case when
             reqMethod = Post_HttpMethod and nParameter > 0
@@ -697,8 +788,9 @@ end getResponseXml;
   httpMethod                  - HTTP method for request
                                 ( default POST if requestText not empty
                                   oterwise GET)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
@@ -706,6 +798,8 @@ end getResponseXml;
                                 the media type is text but the character set
                                 is not specified in the Content-Type header
                                 (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Return:
   text data, returned from the HTTP request.
@@ -715,9 +809,10 @@ function getHttpResponse(
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
   , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
 )
 return clob
 is
@@ -733,18 +828,19 @@ is
 -- getHttpResponse
 begin
   execHttpRequest(
-    statusCode            => statusCode
-    , reasonPhrase        => reasonPhrase
-    , contentType         => contentType
-    , entityBody          => entityBody
-    , execSecond          => execSecond
-    , requestUrl          => requestUrl
-    , requestText         => requestText
-    , parameterList       => parameterList
-    , httpMethod          => httpMethod
-    , maxWaitSecond       => maxWaitSecond
-    , headerList          => headerList
-    , bodyCharset         => bodyCharset
+    statusCode                => statusCode
+    , reasonPhrase            => reasonPhrase
+    , contentType             => contentType
+    , entityBody              => entityBody
+    , execSecond              => execSecond
+    , requestUrl              => requestUrl
+    , requestText             => requestText
+    , parameterList           => parameterList
+    , httpMethod              => httpMethod
+    , disableChunkedEncFlag   => disableChunkedEncFlag
+    , headerList              => headerList
+    , bodyCharset             => bodyCharset
+    , maxWaitSecond           => maxWaitSecond
   );
   checkResponseError(
     statusCode        => statusCode
@@ -772,8 +868,10 @@ end getHttpResponse;
   requestUrl                  - URL of web service
   requestText                 - Request text
   parameterList               - Request parameters
-  maxWaitSecond               - Maximum response time on request
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
   headerList                  - Request headers
+  maxWaitSecond               - Maximum response time on request
 
   Return:
   XML with SOAP message, received from web service.
@@ -782,8 +880,9 @@ function getSoapResponse(
   requestUrl varchar2
   , requestText clob
   , parameterList wbu_parameter_list_t
-  , maxWaitSecond integer
+  , disableChunkedEncFlag integer
   , headerList wbu_header_list_t
+  , maxWaitSecond integer
 )
 return xmltype
 is
@@ -799,17 +898,18 @@ is
 -- getSoapResponse
 begin
   execHttpRequest(
-    statusCode            => statusCode
-    , reasonPhrase        => reasonPhrase
-    , contentType         => contentType
-    , entityBody          => entityBody
-    , execSecond          => execSecond
-    , requestUrl          => requestUrl
-    , requestText         => requestText
-    , parameterList       => parameterList
-    , httpMethod          => Post_HttpMethod
-    , maxWaitSecond       => maxWaitSecond
-    , headerList          => headerList
+    statusCode                => statusCode
+    , reasonPhrase            => reasonPhrase
+    , contentType             => contentType
+    , entityBody              => entityBody
+    , execSecond              => execSecond
+    , requestUrl              => requestUrl
+    , requestText             => requestText
+    , parameterList           => parameterList
+    , httpMethod              => Post_HttpMethod
+    , disableChunkedEncFlag   => disableChunkedEncFlag
+    , headerList              => headerList
+    , maxWaitSecond           => maxWaitSecond
   );
   checkResponseError(
     statusCode        => statusCode
@@ -832,6 +932,9 @@ end getSoapResponse;
   requestUrl                  - URL of web service
   soapAction                  - Action for request
   soapMessage                 - Text of SOAP message to web service
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
 
@@ -842,6 +945,7 @@ function getSoapResponse(
   requestUrl varchar2
   , soapAction varchar2
   , soapMessage clob
+  , disableChunkedEncFlag integer := null
   , maxWaitSecond integer := null
 )
 return xmltype
@@ -849,14 +953,16 @@ is
 begin
   return
     getSoapResponse(
-      requestUrl            => requestUrl
-      , requestText         => soapMessage
-      , parameterList       => null
+      requestUrl                => requestUrl
+      , requestText             => soapMessage
+      , parameterList           => null
+      , disableChunkedEncFlag   => disableChunkedEncFlag
+      , headerList              =>
+          wbu_header_list_t(
+            wbu_header_t( ContentType_HttpHeader, SoapMessage_ContentType)
+            , wbu_header_t( SoapAction_HttpHeader, soapAction)
+          )
       , maxWaitSecond       => maxWaitSecond
-      , headerList          => wbu_header_list_t(
-          wbu_header_t( ContentType_HttpHeader, SoapMessage_ContentType)
-          , wbu_header_t( SoapAction_HttpHeader, soapAction)
-        )
     )
   ;
 exception when others then
@@ -878,11 +984,14 @@ end getSoapResponse;
   Parameters:
   requestUrl                  - URL of web service
   parameterList               - Request parameters
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
 
   Return:
   XML with SOAP message, received by request.
@@ -890,19 +999,21 @@ end getSoapResponse;
 function getSoapResponse(
   requestUrl varchar2
   , parameterList wbu_parameter_list_t
-  , maxWaitSecond integer := null
+  , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
+  , maxWaitSecond integer := null
 )
 return xmltype
 is
 begin
   return
     getSoapResponse(
-      requestUrl            => requestUrl
-      , requestText         => null
-      , parameterList       => parameterList
-      , maxWaitSecond       => maxWaitSecond
-      , headerList          => headerList
+      requestUrl                => requestUrl
+      , requestText             => null
+      , parameterList           => parameterList
+      , disableChunkedEncFlag   => disableChunkedEncFlag
+      , headerList              => headerList
+      , maxWaitSecond           => maxWaitSecond
     )
   ;
 exception when others then

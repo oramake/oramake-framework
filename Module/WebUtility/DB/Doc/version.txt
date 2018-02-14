@@ -1,1 +1,7 @@
 title: Версии
+
+
+
+group: 1.0.0 ( 2018-02-14)
+
+[+] Implemented functions to execute HTTP requests with GET/POST methods.
