@@ -1,42 +1,42 @@
-<?xml version="1.0" encoding="Windows-1251"?>
-<map>
-  <map_version>1.3</map_version>
-  <name>TaskProcessor</name>
-  <description>Организация выполнения прикладных заданий, вводимых пользователями</description>
-  <version>2.3.1.1</version>
-  <prefix>tp</prefix>
-  <team>
-    <programmerDB></programmerDB>
-    <programmerAPP></programmerAPP>
-    <analyst></analyst>
-  </team>
-  <request>
-    <msp></msp>
-  </request>
-  <path>Oracle/Module/TaskProcessor</path>
-  <initialPath>Oracle/Module/TaskProcessor@99</initialPath>
-  <db>
-    <database>
-      <instance></instance>
-      <table></table>
-      <package></package>
-    </database>
-  </db>
-  <app>
-  </app>
-  <batchSpec></batchSpec>
-  <diagram>
-    <database></database>
-    <process></process>
-    <infrastructure></infrastructure>
-  </diagram>
-  <depend>
-    <module>Oracle/Module/Common</module>
-    <module>Oracle/Module/Logging</module>
-    <module>Oracle/Module/Option</module>
-    <module>Oracle/Module/TaskHandler</module>
-    <module>Oracle/Module/AccessOperator</module>
-    <link></link>
-  </depend>
-  <image></image>
-</map>
+<?xml version="1.0" encoding="Windows-1251"?>
+<map>
+  <map_version>1.3</map_version>
+  <name>TaskProcessor</name>
+  <description>Организация выполнения прикладных заданий, вводимых пользователями</description>
+  <version>2.3.1.2</version>
+  <prefix>tp</prefix>
+  <team>
+    <programmerDB></programmerDB>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
+  </team>
+  <request>
+    <msp></msp>
+  </request>
+  <path>Oracle/Module/TaskProcessor</path>
+  <initialPath>Oracle/Module/TaskProcessor@99</initialPath>
+  <db>
+    <database>
+      <instance></instance>
+      <table></table>
+      <package></package>
+    </database>
+  </db>
+  <app>
+  </app>
+  <batchSpec></batchSpec>
+  <diagram>
+    <database></database>
+    <process></process>
+    <infrastructure></infrastructure>
+  </diagram>
+  <depend>
+    <module>Oracle/Module/Common</module>
+    <module>Oracle/Module/Logging</module>
+    <module>Oracle/Module/Option</module>
+    <module>Oracle/Module/TaskHandler</module>
+    <module>Oracle/Module/AccessOperator</module>
+    <link></link>
+  </depend>
+  <image></image>
+</map>
