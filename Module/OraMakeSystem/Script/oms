@@ -1249,6 +1249,7 @@ exec_set-version()
     local dstFile="$rootDir/Doc/map.xml"
     $runCmd sed --in-place \
       -e "s|<version>.*</version>|<version>$moduleVersion</version>|" \
+      -e 's/\x0D//g' \
       -e 's/$/\x0D/' \
       "$dstFile" \
       || exitError "error on set version in map file: '$dstFile'"
