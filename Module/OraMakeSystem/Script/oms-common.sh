@@ -612,7 +612,8 @@ getSvnModuleRoot()
       svnPath=${svnPath#svn://*/}
       svnPath=${svnPath#http://*/}
       svnPath=${svnPath#https://*/}
-      svnRoot=${svnRootUrl%/Trunk}
+      svnRootUrl=${svnRootUrl%/Trunk}
+      svnRoot=$svnRootUrl
       svnRoot=${svnRoot#svn://*/}
       svnRoot=${svnRoot#http://*/}
       svnRoot=${svnRoot#https://*/}
