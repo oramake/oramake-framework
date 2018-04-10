@@ -7,6 +7,7 @@ create table
   instance_name                   varchar2(20)                        not null
   , is_production                 number(1,0)                         not null
   , ip_address_production         varchar2(15)
+  , main_instance_name            varchar2(20)
   , test_notify_flag              number(1,0)
   , sender_domain                 varchar2(100)
   , smtp_server                   varchar2(50)
@@ -37,6 +38,9 @@ comment on column cmn_database_config.is_production is
 /
 comment on column cmn_database_config.ip_address_production is
   'IP-адрес промышленного сервера БД ( если указан, то БД будет считаться промышленной только в случае совпадения IP-адреса сервера с указанным, при отсутствии IP-адрес сервера БД не проверяется)'
+/
+comment on column cmn_database_config.main_instance_name is
+  'Имя основного экземляра БД (если задано, то по умолчанию возвращается функцией pkg_Common.getInstanceName вместо instance_name; полезно для standby БД)'
 /
 comment on column cmn_database_config.test_notify_flag is
   'Флаг отправки нотификации в тестовой среде ( 1 идет, 0 не идет, по умолчанию нотификация не идет)'
