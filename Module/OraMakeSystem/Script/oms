@@ -557,6 +557,9 @@ exec_create-module()
           $runCmd mkdir "$dstPath"
         fi
       elif ((isExpand)); then
+        if (( ! isUnixFormat)) ; then
+          sedOption=" -e s/\x0D//g -e s/$/\x0D/"
+        fi
         if ((isDryRun)); then
           if ((isConvertEncoding)); then
             $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
