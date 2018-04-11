@@ -437,6 +437,9 @@ patchFile()
       elif (( patchRevision == 718 )); then
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
+        if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
+          $runCmd dos2unix "$dstFile" 2>/dev/null
+        fi
         local catCmd
         if (( isConvertEncoding )); then
           catCmd="iconv -f utf-8 -t $moduleGendocEncoding"
@@ -467,7 +470,7 @@ patchFile()
      sub("\r","")
     }
     ORS=RS
-    
+
     if ( index( $0, "FAILED") == 0 \
       && index( $0, "Skipping patch") == 0 \
       && index( $0, "saving rejects") == 0) {
