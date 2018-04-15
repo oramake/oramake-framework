@@ -86,6 +86,51 @@ procedure refreshByCompare(
 
 
 
+/* group: Обновление с использованием первичного ключа */
+
+/* pproc: appendData
+  Догрузка данных в таблицу(ы) в удалённой БД по первичному ключу.
+
+  Параметры:
+  targetDbLink                - линк к БД назначения
+  tableName                   - таблица для догрузки
+  idTableName                 - наименование исходной таблицы для поиска
+                                значений первичного ключа (по-умолчанию
+                                tableName)
+  addonTableName              - дополнительная таблица для догрузки
+  useSourceViewFlag           - использовать представления в качестве исходынх данных
+  (имя представления
+  toDate                      - дата, до которой доливаются данные
+                                ( rq_find_request.date_ins < toDate, по
+                                  умолчанию до начала предыдущего часа)
+  maxExecTime                 - максимальное время выполнения процедуры ( в
+                                случае, если время превышено и остались данные
+                                для обработки, процедура завершает работу
+                                с выводом предпреждения в лог, по умолчанию
+                                без ограничений)
+
+  Возврат:
+  - число добавленных записей;
+
+  Замечания:
+  - функция выполняется в автономной транзакции и делает commit после выгрузки
+    существенного числа записей;
+
+  ( <body::appendData>)
+*/
+function appendData(
+  targetDbLink                varchar2
+, tableName                   varchar2
+, idTableName                 varchar2 := null
+, addonTableName              varchar2 := null
+, useViewFlag                 boolean := null
+, toDate                      date := null
+, maxExecTime                 interval day to second := null
+)
+return integer;
+
+
+
 /* group: Обновление с помощью материализованного представления */
 
 /* pproc: createMLog

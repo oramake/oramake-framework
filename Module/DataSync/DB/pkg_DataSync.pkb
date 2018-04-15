@@ -530,6 +530,635 @@ end refreshByCompare;
 
 
 
+/* group: Обновление с использованием первичного ключа */
+
+/* ifunc: substituteColumnList
+  Возвращает текст SQL-запроса, подставляя вместо макросов список колонок
+  из указанной таблицы ( представления).
+
+  Параметры:
+  baseSql                     - базовый текст SQL
+  tableName                   - имя таблицы ( представления) для получения
+                                списка колонок
+
+  Возврат:
+  текст SQL с подстановкой списка колонок вместо макросов
+
+  Подставляемые значения макросов вида $(NAME):
+  insertColumnList            - список колонк вида
+                                "<column1>[, <column2>[...]]"
+  selectColumnList            - список колонк вида
+                                "t.<column1>[, t.<column2>[...]]"
+*/
+function substituteColumnList(
+  baseSql varchar2
+  , tableName varchar2
+)
+return varchar2
+is
+
+  -- Колонки таблицы
+  cursor tableColumnCur is
+    select
+      tc.column_name
+    from
+      all_tab_columns tc
+    where
+      tc.table_name = upper( tableName)
+      and (
+        tc.owner = sys_context( 'userenv', 'current_user')
+        -- Таблица другого пользователя, на которую создан одноименный
+        -- личный синоним
+        or tc.owner =
+          (
+          select
+            sn.table_owner
+          from
+            all_synonyms sn
+          where
+            sn.synonym_name = tc.table_name
+            and sn.table_name = tc.table_name
+            and sn.owner = sys_context( 'userenv', 'current_user')
+          )
+      )
+    order by
+      tc.column_id
+  ;
+
+  -- Список колонок таблицы ( через запятую и пробел)
+  columnList varchar2(32000);
+
+-- substituteColumnList
+begin
+  for rec in tableColumnCur loop
+    columnList :=
+      columnList
+      || case when columnList is not null then ', ' end
+      || rec.column_name
+    ;
+  end loop;
+  if columnList is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Таблица не найдена.'
+    );
+  end if;
+  return
+    replace( replace(
+      baseSql
+      , '$(insertColumnList)', columnList)
+      , '$(selectColumnList)', 't.' || replace( columnList, ', ', ', t.'))
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при формировании текста SQL-запроса ('
+        || ' tableName="' || tableName || '"'
+        || ').'
+      )
+    , true
+  );
+end substituteColumnList;
+
+/* proc: appendData
+  Догрузка данных в таблицу(ы) в удалённой БД по первичному ключу.
+
+  Параметры:
+  targetDbLink                - линк к БД назначения
+  tableName                   - таблица для догрузки
+  idTableName                 - наименование исходной таблицы для поиска
+                                значений первичного ключа (по-умолчанию
+                                tableName)
+  addonTableName              - дополнительная таблица для догрузки
+  useSourceViewFlag           - использовать представления в качестве исходынх данных
+  (имя представления
+  toDate                      - дата, до которой доливаются данные
+                                ( rq_find_request.date_ins < toDate, по
+                                  умолчанию до начала предыдущего часа)
+  maxExecTime                 - максимальное время выполнения процедуры ( в
+                                случае, если время превышено и остались данные
+                                для обработки, процедура завершает работу
+                                с выводом предпреждения в лог, по умолчанию
+                                без ограничений)
+
+  Возврат:
+  - число добавленных записей;
+
+  Замечания:
+  - функция выполняется в автономной транзакции и делает commit после выгрузки
+    существенного числа записей;
+*/
+function appendData(
+  targetDbLink                varchar2
+, tableName                   varchar2
+, idTableName                 varchar2 := null
+, addonTableName              varchar2 := null
+, useViewFlag                 boolean := null
+, toDate                      date := null
+, maxExecTime                 interval day to second := null
+)
+return integer
+is
+  -- Число обработанных записей
+  nProcessed integer := 0;
+
+  -- Максимальный Id выгруженных записей
+  maxProcessedId integer;
+
+  -- Максимальный Id записи для выгрузки
+  maxUnloadId integer;
+
+  -- Число записей, после выгрузки которых в процедуре <unloadData>
+  -- выполняется фиксация автономной транзакции.
+  UnloadCheckReq_CommitRowCount constant integer := 100000;
+
+  -- Число записей, обрабатываемых в одном блоке в процедуре
+  -- <unloadCheckRequest>.
+  UnloadCheckReq_BlockRowCount constant integer := 10000;
+
+  -- Время прекращения обработки (case предотвращает ошибку при отсутствии
+  -- ограничения)
+  stopProcessDate date :=
+    case when maxExecTime is not null then current_date + maxExecTime end
+  ;
+
+  -- наиенование id колонки
+  idColumnName varchar2(30);
+
+
+  /*
+    Получение наименования исходной таблицы
+  */
+  function getSourceTable(tableName varchar2)
+  return varchar2
+  is
+  begin
+    return
+      case when
+        useViewFlag
+      then
+        'v_' || tableName
+      else
+        tableName
+      end
+    ;
+  end getSourceTable;
+
+
+  /*
+    Получение наименования колонки первичного ключа.
+  */
+  procedure getIdColumn
+  is
+    idColumnTableName varchar2(30);
+  begin
+    idColumnTableName :=
+      coalesce(idTableName, getSourceTable(tableName));
+    select
+      cols.column_name
+    into
+      idColumnName
+    from
+      all_constraints cons
+    inner join
+      all_cons_columns cols
+    on
+      cons.constraint_type = 'P'
+      and cons.constraint_name = cols.constraint_name
+      and cons.owner = cols.owner
+    where
+      cols.table_name = upper(idColumnTableName)
+    ;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка получения наименования колонки первичного ключа ('
+        || 'idColumnTableName="' || idColumnTableName || '"'
+        || ')'
+        )
+      , true
+    );
+  end getIdColumn;
+
+
+
+  /*
+    Выполняет подготовительные действия.
+  */
+  procedure initialize is
+  begin
+    pkg_TaskHandler.initTask(
+      moduleName  => pkg_RequestBase.Module_Name
+    , processName => 'unloadData'
+    );
+    getIdColumn();
+  end initialize;
+
+
+
+  /*
+    Выполняет очистку перед завершением работы.
+  */
+  procedure clean is
+  begin
+    pkg_TaskHandler.cleanTask();
+  end clean;
+
+
+
+  /*
+    Возвращает максимальный Id выгруженных записей.
+  */
+  function getMaxUnloadedId
+  return integer
+  is
+
+    -- Максимальный Id выгруженных записей.
+    maxId integer;
+
+  begin
+    execute immediate
+      'select max(t.' || idColumnName || ') from '
+      || tableName || '@' || targetDbLink || ' t'
+    into
+      maxId
+    ;
+    return maxId;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id выгруженных записей'
+          || ' записей ('
+          || ' targetDbLink="' || targetDbLink || '"'
+          || ', tableName="' || tableName || '"'
+          || ', idColumnName="' || idColumnName || '"'
+          || ').'
+        )
+      , true
+    );
+  end getMaxUnloadedId;
+
+
+
+  /*
+    Определяет максимальный Id обработанных записей.
+  */
+  procedure setMaxProcessedId
+  is
+  begin
+    logger.trace( 'setMaxProcessedId: start...');
+    maxProcessedId := coalesce( getMaxUnloadedId(), 0);
+    logger.debug(
+      'setMaxProcessedId: maxProcessedId=' || maxProcessedId
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id обработанных записей.'
+        )
+      , true
+    );
+  end setMaxProcessedId;
+
+
+
+  /*
+    Определяет максимальный Id записи для выгрузки.
+  */
+  procedure setMaxUnloadId
+  is
+
+    -- (для избежания влияния часового пояса сессии)
+    toUnloadTime timestamp with time zone;
+
+  begin
+    logger.trace( 'setMaxUnloadId: start...');
+    toUnloadTime :=
+      cast(
+        coalesce( toDate, trunc(current_date, 'hh24') - 1/24)
+        as timestamp with time zone
+      )
+    ;
+    -- допустимо взять максимальное значение из таблицы, поэтому делаем
+    -- это для ускорения выполнения запроса
+    execute immediate
+    '
+    select
+      case when b.max_period_id is not null then
+        b.max_period_id
+      else
+        (
+        select
+          max(t.' || idColumnName || ') as max_id
+        from
+          ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
+        )
+      end
+      as max_log_id
+    from
+      (
+      select
+        min(a.' || idColumnName || ') - 1 as max_period_id
+      from
+        (
+        select /*+ first_rows */
+          t.' || idColumnName || '
+        from
+          ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
+        where
+          t.date_ins > :toUnloadTime
+        order by
+          t.date_ins
+        ) a
+      where
+        rownum <= 1000
+      ) b
+    '
+    into
+      maxUnloadId
+    using
+      toUnloadTime
+    ;
+    logger.debug( 'setMaxUnloadId: maxUnloadId=' || maxUnloadId);
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id записи для выгрузки.'
+        )
+      , true
+    );
+  end setMaxUnloadId;
+
+
+
+  /*
+    Выгружает данные в основную таблицу.
+
+    Параметры:
+    beforeStartId             - Id записи, начиная с которой ( не включая ее)
+                                выполняется выгрузка
+    maxId                     - максимальный Id записи, до которой
+                                ( включительно) выполняется выгрузка
+    maxRowCount               - максимальное число выгружаемых записей
+
+    Возврат:
+    число выгруженных записей.
+  */
+  function unloadData(
+    beforeStartId integer
+    , maxId integer
+    , maxRowCount integer
+  )
+  return integer
+  is
+
+    -- Число выгруженных записей
+    nUnload integer;
+    -- Текст SQL для выгрузки данных в главную таблицу
+    unloadSql varchar2(32000);
+
+  begin
+    if unloadSql is null then
+      unloadSql := substituteColumnList( '
+insert into
+  ' || tableName || '@' || targetDbLink || '
+(
+  $(insertColumnList)
+)
+select
+  $(selectColumnList)
+from
+  (
+  select
+    b.*
+  from
+    (
+    select
+      a.*
+    from
+      ' || getSourceTable(tableName) || ' a
+    where
+      a.' || idColumnName || ' > :beforeStartId
+      and a.' || idColumnName || ' <= :maxId
+    order by
+      a.' || idColumnName || '
+    ) b
+  where
+    rownum >= 1
+  ) t
+where
+  rownum <= :maxRowCount
+'
+        , getSourceTable(tableName)
+      );
+    end if;
+    execute immediate
+      unloadSql
+    using
+      beforeStartId
+      , maxId
+      , maxRowCount
+    ;
+    nUnload := sql%rowcount;
+    logger.trace( 'unloadData: выгружено записей: ' || nUnload);
+    return nUnload;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных в таблицу rq_check_request ('
+          || ' beforeStartId=' || beforeStartId
+          || ', maxId=' || maxId
+          || ', maxRowCount=' || maxRowCount
+          || ').'
+        )
+      , true
+    );
+  end unloadData;
+
+
+
+  /*
+    Выгружает данные в дополнительную таблицу.
+
+    Параметры:
+    beforeStartId             - Id записи, начиная с которой ( не включая ее)
+                                выполняется выгрузка
+    maxId                     - максимальный Id записи, до которой
+                                ( включительно) выполняется выгрузка
+
+    Возврат:
+    число выгруженных записей.
+  */
+  procedure unloadAddonData(
+    beforeStartId integer
+    , maxId integer
+  )
+  is
+    -- Текст SQL для выгрузки данных в дополнительную таблицу
+    unloadAddonSql varchar2(32000);
+  begin
+    if unloadAddonSql is null then
+      unloadAddonSql := substituteColumnList( '
+insert into
+  ' || addonTableName || '@' || targetDbLink || '
+(
+  $(insertColumnList)
+)
+select
+  $(selectColumnList)
+from
+  ' || getSourceTable(addonTableName) || ' t
+where
+  t.' || idColumnName || ' > :beforeStartId
+  and t.' || idColumnName || ' <= :maxId
+'
+        , getSourceTable(addonTableName)
+      );
+    end if;
+    execute immediate
+      unloadAddonSql
+    using
+      beforeStartId
+      , maxId
+    ;
+    logger.trace( 'unloadAddonData: выгружено записей: ' || sql%rowcount);
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных ('
+          || ' tableName=' || tableName
+          || ', beforeStartId=' || beforeStartId
+          || ', maxId=' || maxId
+          || ').'
+        )
+      , true
+    );
+  end unloadAddonData;
+
+
+
+  /*
+    Выполняет выгрузку данных.
+  */
+  procedure unloadData
+  is
+
+    pragma autonomous_transaction;
+
+    -- Признак завершения выгрузки
+    isFinish boolean := false;
+
+    -- Число выгруженных в текущей транзакции записей
+    nTransactionUnload integer;
+
+    -- Число выгруженных в текущем блоке записей
+    nBlockUnload integer;
+
+    -- Максимальный Id выгруженных в предыдущем блоке записей
+    prevMaxId integer := maxProcessedId;
+
+    -- Максимальный Id выгруженных в текущем блоке записей
+    maxId integer;
+
+  -- unloadData
+  begin
+    while not isFinish loop
+      nTransactionUnload := 0;
+      while not isFinish
+            and nTransactionUnload < UnloadCheckReq_CommitRowCount
+          loop
+        logger.trace(
+          'unloadData: start unload block: prevMaxId=' || prevMaxId
+        );
+        nBlockUnload := unloadData(
+          beforeStartId  => prevMaxId
+          , maxId        => maxUnloadId
+          , maxRowCount  => UnloadCheckReq_BlockRowCount
+        );
+        if nBlockUnload > 0 then
+          maxId := getMaxUnloadedId();
+          if addonTableName is not null then
+            unloadAddonData(
+              beforeStartId  => prevMaxId
+              , maxId        => maxId
+            );
+          end if;
+          prevMaxId := maxId;
+          nTransactionUnload := nTransactionUnload + nBlockUnload;
+          if stopProcessDate is not null then
+            if current_date >= stopProcessDate then
+              isFinish := true;
+              logger.info(
+                'Выгрузка прекращена в связи с достижением лимита времени.'
+              );
+            end if;
+          end if;
+        else
+          isFinish := true;
+        end if;
+      end loop;
+      commit;
+      nProcessed := nProcessed + nTransactionUnload;
+      maxProcessedId := prevMaxId;
+      logger.debug(
+        'unloadData: commit transaction: nTransactionUnload='
+        || nTransactionUnload
+        || ', maxProcessedId=' || maxProcessedId
+      );
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных ('
+          || ' nProcessed=' || nProcessed
+          || ', maxProcessedId=' || maxProcessedId
+          || ', maxUnloadId=' || maxUnloadId
+          || ').'
+        )
+      , true
+    );
+  end unloadData;
+
+
+
+-- unloadData
+begin
+  initialize();
+  setMaxProcessedId();
+  setMaxUnloadId();
+  if maxProcessedId < maxUnloadId then
+    unloadData();
+  end if;
+  clean();
+  return nProcessed;
+exception when others then
+  clean();
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при догрузке данных ('
+      || 'targetDbLink="' || targetDbLink || '"'
+      || ', tableName="' || tableName || '"'
+      || ', idTableName="' || idTableName || '"'
+      || ', addonTableName="' || addonTableName || '"'
+      || ', toDate={' || to_char(toDate, 'dd.mm.yyyy hh24:mi:ss') || '}'
+      || ', maxExecTime=' || to_char(maxExecTime)
+      || ').'
+      )
+    , true
+  );
+end appendData;
+
+
+
 /* group: Обновление с помощью материализованного представления */
 
 /* iproc: dropMLog
