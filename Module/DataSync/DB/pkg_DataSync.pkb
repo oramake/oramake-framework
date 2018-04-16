@@ -714,7 +714,7 @@ is
     idColumnTableName varchar2(30);
   begin
     idColumnTableName :=
-      coalesce(idTableName, getSourceTable(tableName));
+      coalesce(idTableName, tableName);
     select
       cols.column_name
     into
