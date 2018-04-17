@@ -19,14 +19,44 @@ Module_Name constant varchar2(30) := 'Common';
 
 
 
+/* group: Настройки БД */
+
+/* pfunc: isProduction
+  Возвращает 1, если функция выполняется в промышленной базе, в других случаях
+  возвращает 0.
+
+  ( <body::isProduction>)
+*/
+function isProduction
+return integer;
+
+
+
 /* group: Параметры сессии */
 
 /* pfunc: getInstanceName
   Возвращает имя текущей базы ( значение параметра INSTANCE_NAME).
 
+  Параметры:
+  ignoreMainInstanceNameFlag  - Игнорировать значение main_instance_name
+                                (1 да, 0 нет (по умолчанию))
+
+  Возврат:
+  имя текущей БД.
+
+  Замечания:
+  - по умолчанию (если ignoreMainInstanceNameFlag не равен 1) в случае задания
+    для текущей БД значения main_instance_name (в таблице
+    <cmn_database_config>) это значение возвращается вместо значения
+    instance_name текущей БД. Эта возможность используется для прозрачного
+    перехода на standby БД даже в случае, если она имеет отличное от основной
+    БД значение instance_name.
+
   ( <body::getInstanceName>)
 */
-function getInstanceName
+function getInstanceName(
+  ignoreMainInstanceNameFlag integer := null
+)
 return varchar2;
 
 /* pfunc: getSessionSid
@@ -60,19 +90,6 @@ return number;
 */
 function getIpAddress
 return varchar2;
-
-
-
-/* group: Настройки БД */
-
-/* pfunc: isProduction
-  Возвращает 1, если функция выполняется в промышленной базе, в других случаях
-  возвращает 0.
-
-  ( <body::isProduction>)
-*/
-function isProduction
-return integer;
 
 
 

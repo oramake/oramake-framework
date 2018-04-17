@@ -50,20 +50,171 @@ nextUpdateLongopsTick number := null;
 
 
 
+/* group: Настройки БД */
+
+/* iproc: getDatabaseConfig
+  Определяет настройки БД, если они не были определены ранее.
+*/
+procedure getDatabaseConfig
+is
+
+  cursor dbConfigCur( instanceName varchar2) is
+    select
+      dc.*
+    from
+      cmn_database_config dc
+    where
+      lower( dc.instance_name) = lower( instanceName)
+  ;
+
+  instanceName cmn_database_config.instance_name%type;
+
+  defaultDatabaseConfig cmn_database_config%rowtype;
+
+  /*
+    Достает конфигурацию по умолчанию
+  */
+  procedure getDefaultDatabaseConfig(
+    isProduction integer
+  )
+  is
+  -- getDefaultDatabaseConfig
+  begin
+    select
+      *
+    into
+      defaultDatabaseConfig
+    from
+      cmn_database_config dc
+    where
+      dc.default_flag = 1
+      and is_production = isProduction
+    ;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , 'Ошибка при определении настроек БД по умолчанию.'
+      , true
+    );
+  end getDefaultDatabaseConfig;
+
+begin
+  if databaseConfig.instance_name is null then
+    instanceName := getInstanceName( ignoreMainInstanceNameFlag => 1);
+    open dbConfigCur( instanceName => instanceName);
+    fetch dbConfigCur into databaseConfig;
+    if dbConfigCur%notfound then
+      databaseConfig.instance_name := instanceName;
+      databaseConfig.is_production := 0;
+    end if;
+    close dbConfigCur;
+
+    -- Считаем БД тестовой, если ip-адрес сервера не совпадает с заданным
+    if databaseConfig.ip_address_production is not null
+        -- условие поставлено перед следующим, чтобы обеспечить выполнение
+        -- функции getIpAddress в тестовой БД ( для тестирования)
+        and nullif( databaseConfig.ip_address_production, getIpAddress())
+          is not null
+        and databaseConfig.is_production = 1
+        then
+      databaseConfig.is_production := 0;
+    end if;
+
+    -- Значения по умолчанию
+    if databaseConfig.smtp_server is null
+      or databaseConfig.notify_email is null
+      or databaseConfig.test_notify_flag is null
+      or databaseConfig.sender_domain is null
+    then
+      getDefaultDatabaseConfig( databaseConfig.is_production);
+      databaseConfig.smtp_server :=
+        coalesce(
+          databaseConfig.smtp_server
+        , defaultDatabaseConfig.smtp_server
+        )
+      ;
+      databaseConfig.notify_email :=
+        coalesce(
+          databaseConfig.notify_email
+        , defaultDatabaseConfig.notify_email
+        )
+      ;
+      databaseConfig.test_notify_flag :=
+        coalesce(
+          databaseConfig.test_notify_flag
+        , defaultDatabaseConfig.test_notify_flag
+        )
+      ;
+      databaseConfig.sender_domain :=
+        coalesce(
+          databaseConfig.sender_domain
+        , defaultDatabaseConfig.sender_domain
+        )
+      ;
+    end if;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при определении настроек БД.'
+    , true
+  );
+end getDatabaseConfig;
+
+/* func: isProduction
+  Возвращает 1, если функция выполняется в промышленной базе, в других случаях
+  возвращает 0.
+*/
+function isProduction
+return integer
+is
+begin
+  getDatabaseConfig();
+  return databaseConfig.is_production;
+end isProduction;
+
+
+
 /* group: Параметры сессии */
 
 /* func: getInstanceName
   Возвращает имя текущей базы ( значение параметра INSTANCE_NAME).
+
+  Параметры:
+  ignoreMainInstanceNameFlag  - Игнорировать значение main_instance_name
+                                (1 да, 0 нет (по умолчанию))
+
+  Возврат:
+  имя текущей БД.
+
+  Замечания:
+  - по умолчанию (если ignoreMainInstanceNameFlag не равен 1) в случае задания
+    для текущей БД значения main_instance_name (в таблице
+    <cmn_database_config>) это значение возвращается вместо значения
+    instance_name текущей БД. Эта возможность используется для прозрачного
+    перехода на standby БД даже в случае, если она имеет отличное от основной
+    БД значение instance_name.
 */
-function getInstanceName
+function getInstanceName(
+  ignoreMainInstanceNameFlag integer := null
+)
 return varchar2
 is
 begin
-  return sys_context( 'USERENV','INSTANCE_NAME');
+  if ignoreMainInstanceNameFlag = 1 then
+    return sys_context( 'USERENV','INSTANCE_NAME');
+  else
+    getDatabaseConfig();
+    return
+      coalesce( databaseConfig.main_instance_name, databaseConfig.instance_name)
+    ;
+  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , 'Ошибка при получении instance_name.'
+    , 'Ошибка при получении instance_name ('
+      || ' ignoreMainInstanceNameFlag=' || ignoreMainInstanceNameFlag
+      || ').'
     , true
   );
 end getInstanceName;
@@ -153,137 +304,6 @@ end getIpAddress;
 
 
 
-/* group: Настройки БД */
-
-/* iproc: getDatabaseConfig
-  Определяет настройки БД, если они не были определены ранее.
-*/
-procedure getDatabaseConfig
-is
-
-  instanceName cmn_database_config.instance_name%type;
-
-  defaultDatabaseConfig cmn_database_config%rowtype;
-
-  /*
-    Достает конфигурацию по умолчанию
-  */
-  procedure getDefaultDatabaseConfig(
-    isProduction integer
-  )
-  is
-  -- getDefaultDatabaseConfig
-  begin
-    select
-      *
-    into
-      defaultDatabaseConfig
-    from
-      cmn_database_config dc
-    where
-      dc.default_flag = 1
-      and is_production = isProduction
-    ;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , 'Ошибка при определении настроек БД по умолчанию.'
-      , true
-    );
-  end getDefaultDatabaseConfig;
-
-begin
-  if databaseConfig.instance_name is null then
-    instanceName := getInstanceName();
-
-    select
-      coalesce( min( dc.instance_name), instanceName)
-        as instance_name
-      , coalesce( min( dc.is_production), 0)
-        as is_production
-      , min( dc.smtp_server) as smtp_server
-      , min( dc.notify_email) as notify_email
-      , min( dc.test_notify_flag) as test_notify_flag
-      , min( dc.sender_domain) as sender_domain
-      , min( dc.ip_address_production) as ip_address_production
-    into
-      databaseConfig.instance_name
-      , databaseConfig.is_production
-      , databaseConfig.smtp_server
-      , databaseConfig.notify_email
-      , databaseConfig.test_notify_flag
-      , databaseConfig.sender_domain
-      , databaseConfig.ip_address_production
-    from
-      cmn_database_config dc
-    where
-      lower( dc.instance_name) = lower( instanceName)
-    ;
-
-    -- Считаем БД тестовой, если ip-адрес сервера не совпадает с заданным
-    if databaseConfig.ip_address_production is not null
-        -- условие поставлено перед следующим, чтобы обеспечить выполнение
-        -- функции getIpAddress в тестовой БД ( для тестирования)
-        and nullif( databaseConfig.ip_address_production, getIpAddress())
-          is not null
-        and databaseConfig.is_production = 1
-        then
-      databaseConfig.is_production := 0;
-    end if;
-
-    -- Значения по умолчанию
-    if databaseConfig.smtp_server is null
-      or databaseConfig.notify_email is null
-      or databaseConfig.test_notify_flag is null
-      or databaseConfig.sender_domain is null
-    then
-      getDefaultDatabaseConfig( databaseConfig.is_production);
-      databaseConfig.smtp_server :=
-        coalesce(
-          databaseConfig.smtp_server
-        , defaultDatabaseConfig.smtp_server
-        )
-      ;
-      databaseConfig.notify_email :=
-        coalesce(
-          databaseConfig.notify_email
-        , defaultDatabaseConfig.notify_email
-        )
-      ;
-      databaseConfig.test_notify_flag :=
-        coalesce(
-          databaseConfig.test_notify_flag
-        , defaultDatabaseConfig.test_notify_flag
-        )
-      ;
-      databaseConfig.sender_domain :=
-        coalesce(
-          databaseConfig.sender_domain
-        , defaultDatabaseConfig.sender_domain
-        )
-      ;
-    end if;
-  end if;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , 'Ошибка при определении настроек БД.'
-    , true
-  );
-end getDatabaseConfig;
-
-/* func: isProduction
-  Возвращает 1, если функция выполняется в промышленной базе, в других случаях
-  возвращает 0.
-*/
-function isProduction
-return integer
-is
-begin
-  getDatabaseConfig();
-  return databaseConfig.is_production;
-end isProduction;
-
 /* group: Нотификация по e-mail */
 
 /* func: getSmtpServer
@@ -316,7 +336,7 @@ begin
     case when systemName is not null then
       systemName || '.'
     end
-    || databaseConfig.instance_name
+    || getInstanceName()
     || '.oracle@' || databaseConfig.sender_domain
   ;
 end getMailAddressSource;

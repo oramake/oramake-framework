@@ -38,15 +38,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.0.0
+OMS_VERSION=2.0.1
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25196065 $'
+fileRevisionValue='$Revision:: 25390855 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2017-11-27 09:25:47 +0300 #$'
+fileChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
 
 
 
@@ -557,6 +557,9 @@ exec_create-module()
           $runCmd mkdir "$dstPath"
         fi
       elif ((isExpand)); then
+        if (( ! isUnixFormat)) ; then
+          sedOption=" -e s/\x0D//g -e s/$/\x0D/"
+        fi
         if ((isDryRun)); then
           if ((isConvertEncoding)); then
             $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
@@ -1249,6 +1252,7 @@ exec_set-version()
     local dstFile="$rootDir/Doc/map.xml"
     $runCmd sed --in-place \
       -e "s|<version>.*</version>|<version>$moduleVersion</version>|" \
+      -e 's/\x0D//g' \
       -e 's/$/\x0D/' \
       "$dstFile" \
       || exitError "error on set version in map file: '$dstFile'"

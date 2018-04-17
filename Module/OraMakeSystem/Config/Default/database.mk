@@ -35,6 +35,25 @@ cspGetProductionDbName_TestDbList = \
 cspGetProductionDbName_ProdDbList = \
   ProdDb ProdDb  ProdDb2
 
+# build var: cspGetProductionDbName_AliasDbList
+# Список синонимов имен промышленных БД для функции <getProductionDbName>.
+# Имена должны указываться в нижнем регистре, при этом в том же по порядку
+# слове переменной <cspGetProductionDbName_MainDbList> должно быть указано
+# имя соответствующей промышленной БД.
+#
+cspGetProductionDbName_AliasDbList = \
+  prodstandbydb
+
+# build var: cspGetProductionDbName_MainDbList
+# Промышленные БД для синонимов имен промышленных БД, указанных в списке
+# <cspGetProductionDbName_AliasDbList>.
+# Имена БД должны быть указаны с учетом регистра символов в соответствии
+# с общепринятым написанием имени конкретной БД ( например, первая буква
+# имени в верхнем регистре и т.д.).
+#
+cspGetProductionDbName_MainDbList = \
+  ProdDb
+
 # build var: cspGetProductionDbName_ExtraDbList
 # Промышленные БД, отсутствующие в списке <cspGetProductionDbName_ProdDbList>
 # ( для которых нет тестовых БД).

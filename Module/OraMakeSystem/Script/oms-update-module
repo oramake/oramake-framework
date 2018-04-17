@@ -47,15 +47,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.0.0
+OMS_VERSION=2.0.1
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25196065 $'
+fileRevisionValue='$Revision:: 25390855 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2017-11-27 09:25:47 +0300 #$'
+fileChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
 
 
 
@@ -437,6 +437,9 @@ patchFile()
       elif (( patchRevision == 718 )); then
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
+        if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
+          $runCmd dos2unix "$dstFile" 2>/dev/null
+        fi
         local catCmd
         if (( isConvertEncoding )); then
           catCmd="iconv -f utf-8 -t $moduleGendocEncoding"
@@ -467,7 +470,7 @@ patchFile()
      sub("\r","")
     }
     ORS=RS
-    
+
     if ( index( $0, "FAILED") == 0 \
       && index( $0, "Skipping patch") == 0 \
       && index( $0, "saving rejects") == 0) {

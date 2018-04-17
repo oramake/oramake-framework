@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Common
-SubTitle: Версия 3.0.0
+SubTitle: Версия 3.1.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -142,6 +142,11 @@ Group: Скрипты  {
             File: str_concat  (no auto-title, Install/Schema/Last/str_concat.sql)
             File: str_concat  (no auto-title, Install/Schema/Last/str_concat.prc)
             }  # Group: Last
+
+         Group: 3.1.0  {
+
+            File: run  (no auto-title, Install/Schema/3.1.0/run.sql)
+            }  # Group: 3.1.0
 
          Group: 2.9.0  {
 

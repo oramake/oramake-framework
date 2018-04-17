@@ -28,11 +28,11 @@
 #
 
 # Версия программы
-OMS_VERSION=2.0.0
+OMS_VERSION=2.0.1
                                         # Информация о версии файла из SVN
 omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 25196065 $'
-fileChangeDateValue='$Date:: 2017-11-27 09:25:47 +0300 #$'
+fileRevisionValue='$Revision:: 25390855 $'
+fileChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
