@@ -98,11 +98,11 @@ procedure refreshByCompare(
                                 значений первичного ключа (по-умолчанию
                                 tableName)
   addonTableName              - дополнительная таблица для догрузки
-  useSourceViewFlag           - использовать представления в качестве исходынх данных
-  (имя представления
+  sourceTableName             - таблица(представление) с исходными данными
+                                (по-умолчанию tableName)
   toDate                      - дата, до которой доливаются данные
-                                ( rq_find_request.date_ins < toDate, по
-                                  умолчанию до начала предыдущего часа)
+                                ( date_ins < toDate, по умолчанию до начала
+                                  предыдущего часа)
   maxExecTime                 - максимальное время выполнения процедуры ( в
                                 случае, если время превышено и остались данные
                                 для обработки, процедура завершает работу
@@ -123,7 +123,7 @@ function appendData(
 , tableName                   varchar2
 , idTableName                 varchar2 := null
 , addonTableName              varchar2 := null
-, useViewFlag                 boolean := null
+, sourceTableName             varchar2 := null
 , toDate                      date := null
 , maxExecTime                 interval day to second := null
 )

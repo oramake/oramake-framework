@@ -631,11 +631,11 @@ end substituteColumnList;
                                 значений первичного ключа (по-умолчанию
                                 tableName)
   addonTableName              - дополнительная таблица для догрузки
-  useSourceViewFlag           - использовать представления в качестве исходынх данных
-  (имя представления
+  sourceTableName             - таблица(представление) с исходными данными
+                                (по-умолчанию tableName)
   toDate                      - дата, до которой доливаются данные
-                                ( rq_find_request.date_ins < toDate, по
-                                  умолчанию до начала предыдущего часа)
+                                ( date_ins < toDate, по умолчанию до начала
+                                  предыдущего часа)
   maxExecTime                 - максимальное время выполнения процедуры ( в
                                 случае, если время превышено и остались данные
                                 для обработки, процедура завершает работу
@@ -654,7 +654,7 @@ function appendData(
 , tableName                   varchar2
 , idTableName                 varchar2 := null
 , addonTableName              varchar2 := null
-, useViewFlag                 boolean := null
+, sourceTableName             varchar2 := null
 , toDate                      date := null
 , maxExecTime                 interval day to second := null
 )
@@ -695,15 +695,10 @@ is
   is
   begin
     return
-      case when
-        useViewFlag
-      then
-        'v_' || tableName
-      else
-        tableName
-      end
+      coalesce(sourceTableName, tableName)
     ;
   end getSourceTable;
+
 
 
   /*
@@ -716,7 +711,8 @@ is
     idColumnTableName :=
       coalesce(idTableName, tableName);
     select
-      cols.column_name
+      -- Исключаем копию таблицы
+      distinct cols.column_name
     into
       idColumnName
     from
@@ -897,6 +893,84 @@ is
 
 
   /*
+    Получает текущий максимальный id для блока записей.
+
+    Параметры:
+    beforeStartId             - Id записи, начиная с которой ( не включая ее)
+                                выполняется выгрузка
+    maxId                     - максимальный Id записи, до которой
+                                ( включительно) выполняется выгрузка
+    maxRowCount               - максимальное число выгружаемых записей
+
+    Возврат:
+    число выгруженных записей.
+  */
+  function getBlockMaxId(
+    beforeStartId integer
+    , maxId integer
+    , maxRowCount integer
+  )
+  return integer
+  is
+
+    -- Текст SQL
+    getSql varchar2(32000);
+
+    -- Результат функции
+    blockMaxId integer;
+
+  begin
+    getSql := '
+select
+  max(' || idColumnName || ') as block_max_id
+from
+  (
+  select
+    b.' || idColumnName || '
+  from
+    (
+    select
+      a.' || idColumnName || '
+    from
+      ' || getSourceTable(tableName) || ' a
+    where
+      a.' || idColumnName || ' > :beforeStartId
+      and a.' || idColumnName || ' <= :maxId
+    order by
+      a.' || idColumnName || '
+    ) b
+  where
+    rownum <= :maxRowCount
+  )
+';
+    logger.trace('getSql="' || getSql || '"');
+    execute immediate
+      getSql
+    into
+      blockMaxId
+    using
+      beforeStartId
+      , maxId
+      , maxRowCount
+    ;
+    return blockMaxId;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных ('
+          || ' beforeStartId=' || beforeStartId
+          || ', maxId=' || maxId
+          || ', maxRowCount=' || maxRowCount
+          || ').'
+        )
+      , true
+    );
+  end getBlockMaxId;
+
+
+
+  /*
     Выгружает данные в основную таблицу.
 
     Параметры:
@@ -909,10 +983,10 @@ is
     Возврат:
     число выгруженных записей.
   */
-  function unloadData(
-    beforeStartId integer
-    , maxId integer
-    , maxRowCount integer
+  function unloadBlock(
+    tableName varchar2
+  , beforeStartId integer
+  , maxId integer
   )
   return integer
   is
@@ -933,114 +1007,37 @@ insert into
 select
   $(selectColumnList)
 from
-  (
-  select
-    b.*
-  from
-    (
-    select
-      a.*
-    from
-      ' || getSourceTable(tableName) || ' a
-    where
-      a.' || idColumnName || ' > :beforeStartId
-      and a.' || idColumnName || ' <= :maxId
-    order by
-      a.' || idColumnName || '
-    ) b
-  where
-    rownum >= 1
-  ) t
+  ' || getSourceTable(tableName) || ' t
 where
-  rownum <= :maxRowCount
+  t.' || idColumnName || ' > :beforeStartId
+  and t.' || idColumnName || ' <= :maxId
 '
         , getSourceTable(tableName)
       );
     end if;
+    logger.trace('unloadSql="' || unloadSql || '"');
     execute immediate
       unloadSql
     using
       beforeStartId
       , maxId
-      , maxRowCount
     ;
     nUnload := sql%rowcount;
-    logger.trace( 'unloadData: выгружено записей: ' || nUnload);
+    logger.trace( 'unloadBlock: выгружено записей: ' || nUnload);
     return nUnload;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
-          'Ошибка при выгрузке данных в таблицу rq_check_request ('
-          || ' beforeStartId=' || beforeStartId
-          || ', maxId=' || maxId
-          || ', maxRowCount=' || maxRowCount
-          || ').'
-        )
-      , true
-    );
-  end unloadData;
-
-
-
-  /*
-    Выгружает данные в дополнительную таблицу.
-
-    Параметры:
-    beforeStartId             - Id записи, начиная с которой ( не включая ее)
-                                выполняется выгрузка
-    maxId                     - максимальный Id записи, до которой
-                                ( включительно) выполняется выгрузка
-
-    Возврат:
-    число выгруженных записей.
-  */
-  procedure unloadAddonData(
-    beforeStartId integer
-    , maxId integer
-  )
-  is
-    -- Текст SQL для выгрузки данных в дополнительную таблицу
-    unloadAddonSql varchar2(32000);
-  begin
-    if unloadAddonSql is null then
-      unloadAddonSql := substituteColumnList( '
-insert into
-  ' || addonTableName || '@' || targetDbLink || '
-(
-  $(insertColumnList)
-)
-select
-  $(selectColumnList)
-from
-  ' || getSourceTable(addonTableName) || ' t
-where
-  t.' || idColumnName || ' > :beforeStartId
-  and t.' || idColumnName || ' <= :maxId
-'
-        , getSourceTable(addonTableName)
-      );
-    end if;
-    execute immediate
-      unloadAddonSql
-    using
-      beforeStartId
-      , maxId
-    ;
-    logger.trace( 'unloadAddonData: выгружено записей: ' || sql%rowcount);
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
           'Ошибка при выгрузке данных ('
-          || ' tableName=' || tableName
+          || 'tableName="' || tableName || '"'
           || ', beforeStartId=' || beforeStartId
           || ', maxId=' || maxId
           || ').'
         )
       , true
     );
-  end unloadAddonData;
+  end unloadBlock;
 
 
 
@@ -1060,12 +1057,13 @@ where
 
     -- Число выгруженных в текущем блоке записей
     nBlockUnload integer;
+    nAddonUnload integer;
 
     -- Максимальный Id выгруженных в предыдущем блоке записей
     prevMaxId integer := maxProcessedId;
 
     -- Максимальный Id выгруженных в текущем блоке записей
-    maxId integer;
+    blockMaxId integer;
 
   -- unloadData
   begin
@@ -1077,20 +1075,26 @@ where
         logger.trace(
           'unloadData: start unload block: prevMaxId=' || prevMaxId
         );
-        nBlockUnload := unloadData(
+        blockMaxId := getBlockMaxId(
           beforeStartId  => prevMaxId
-          , maxId        => maxUnloadId
-          , maxRowCount  => UnloadCheckReq_BlockRowCount
+        , maxId          => maxUnloadId
+        , maxRowCount    => UnloadCheckReq_BlockRowCount
+        );
+        nBlockUnload := unloadBlock(
+          tableName      => tableName
+        , beforeStartId  => prevMaxId
+        , maxId          => blockMaxId
         );
         if nBlockUnload > 0 then
-          maxId := getMaxUnloadedId();
+          blockMaxId := getMaxUnloadedId();
           if addonTableName is not null then
-            unloadAddonData(
-              beforeStartId  => prevMaxId
-              , maxId        => maxId
+            nAddonUnload := unloadBlock(
+              tableName     => addonTableName
+            , beforeStartId => prevMaxId
+            , maxId         => blockMaxId
             );
           end if;
-          prevMaxId := maxId;
+          prevMaxId := blockMaxId;
           nTransactionUnload := nTransactionUnload + nBlockUnload;
           if stopProcessDate is not null then
             if current_date >= stopProcessDate then
@@ -1147,8 +1151,10 @@ exception when others then
         'Ошибка при догрузке данных ('
       || 'targetDbLink="' || targetDbLink || '"'
       || ', tableName="' || tableName || '"'
+      || ', sourceTableName="' || sourceTableName|| '"'
       || ', idTableName="' || idTableName || '"'
       || ', addonTableName="' || addonTableName || '"'
+      || ', sourceTableName="' || sourceTableName || '"'
       || ', toDate={' || to_char(toDate, 'dd.mm.yyyy hh24:mi:ss') || '}'
       || ', maxExecTime=' || to_char(maxExecTime)
       || ').'
