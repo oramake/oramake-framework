@@ -124,6 +124,7 @@ Group: Скрипты  {
 
       File: run  (no auto-title, Test/run.sql)
       File: grant-host-access  (no auto-title, Test/grant-host-access.sql)
+      File: grant-test-host-access.sql  (Test/grant-test-host-access.sql)
       }  # Group: Test
 
    }  # Group: Скрипты

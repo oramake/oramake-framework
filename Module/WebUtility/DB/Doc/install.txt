@@ -109,8 +109,19 @@ $ make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 Remarks:
 - if error "ORA-24247: network access denied by access control list (ACL)"
   occurs during the tests, it is necessary to give the user access to the host;
-  For example, you can use script
-  <Test/grant-host-access.sql>:
+  You can use script <Test/grant-test-host-access.sql> for granting
+  access to all test hosts:
+
+(code)
+
+SQL> @WebUtility/DB/Test/grant-test-host-access.sql scott
+
+(end)
+
+  (grant user "scott" access to all hosts, specified in test parameters)
+
+  Also you can use script <Test/grant-host-access.sql> for granting access
+  to specified host:
 
 (code)
 
@@ -118,4 +129,4 @@ SQL> @WebUtility/DB/Test/grant-host-access.sql *.example.com scott
 
 (end)
 
-  (grant access to *.example.com hosts to scott)
+  (grant user "scott" access to "*.example.com" hosts)
