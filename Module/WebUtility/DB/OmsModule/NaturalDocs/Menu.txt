@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: WebUtility
-SubTitle: Версия 1.0.0
+SubTitle: Версия 1.0.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -124,7 +124,7 @@ Group: Скрипты  {
 
       File: run  (no auto-title, Test/run.sql)
       File: grant-host-access  (no auto-title, Test/grant-host-access.sql)
-      File: grant-test-host-access.sql  (Test/grant-test-host-access.sql)
+      File: grant-test-host-access  (no auto-title, Test/grant-test-host-access.sql)
       }  # Group: Test
 
    }  # Group: Скрипты

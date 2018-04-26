@@ -70,6 +70,20 @@ SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
 
 
 
+/* group: Charsets */
+
+/* const: Utf8_Charset
+  Charset for UTF-8.
+*/
+Utf8_Charset constant varchar2(30) := 'UTF-8';
+
+/* const: Windows1251_Charset
+  Charset for Windows 1251 codepage.
+*/
+Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
+
+
+
 /* group: Functions */
 
 

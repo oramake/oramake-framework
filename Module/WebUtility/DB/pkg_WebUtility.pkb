@@ -377,7 +377,9 @@ is
           end if;
         end if;
 
-        usedBodyCharset := substr( coalesce( bodyCharset, 'UTF-8'), 1, 100);
+        usedBodyCharset :=
+          substr( coalesce( bodyCharset, Utf8_Charset), 1, 100)
+        ;
         if coalesce( disableChunkedEncFlag, 0) != 1
               and not ( isContentLengthUsed or isTransferEncodingUsed)
             then
