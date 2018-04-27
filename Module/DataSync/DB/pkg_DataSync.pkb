@@ -828,20 +828,19 @@ is
   procedure setMaxUnloadId
   is
 
-    -- (для избежания влияния часового пояса сессии)
-    toUnloadTime timestamp with time zone;
+    toUnloadDate date;
+
+    sqlText varchar2(32767);
 
   begin
     logger.trace( 'setMaxUnloadId: start...');
-    toUnloadTime :=
-      cast(
-        coalesce( toDate, trunc(current_date, 'hh24') - 1/24)
-        as timestamp with time zone
-      )
+    toUnloadDate :=
+       coalesce( toDate, trunc(sysdate, 'hh24') - 1/24)
     ;
+    logger.trace('toUnloadDate=' || to_char(toUnloadDate));
     -- допустимо взять максимальное значение из таблицы, поэтому делаем
     -- это для ускорения выполнения запроса
-    execute immediate
+    sqlText :=
     '
     select
       case when b.max_period_id is not null then
@@ -866,20 +865,23 @@ is
         from
           ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
         where
-          t.date_ins > :toUnloadTime
+          t.date_ins > :toUnloadDate
         order by
           t.date_ins
         ) a
       where
         rownum <= 1000
       ) b
-    '
+    ';
+    logger.trace(sqlText);
+    execute immediate
+      sqlText
     into
       maxUnloadId
     using
-      toUnloadTime
+      toUnloadDate
     ;
-    logger.debug( 'setMaxUnloadId: maxUnloadId=' || maxUnloadId);
+    logger.debug('setMaxUnloadId: maxUnloadId=' || maxUnloadId);
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
