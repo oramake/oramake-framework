@@ -68,6 +68,19 @@ Json_ContentType constant varchar2(100) := 'application/json';
 */
 SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
 
+/* const: WwwForm_ContentType
+  Value of "Content-Type" HTTP Header for data in web form format.
+*/
+WwwForm_ContentType constant varchar2(100) :=
+  'application/x-www-form-urlencoded'
+;
+
+/* const: Xml_ContentType
+  Value of "Content-Type" HTTP Header for data in XML format (without
+  specifying a character set).
+*/
+Xml_ContentType constant varchar2(100) := 'text/xml';
+
 
 
 /* group: Charsets */
@@ -135,8 +148,8 @@ Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
     disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
     <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
-    "application/x-www-form-urlencoded" if it is POST request with parameters,
-    with value "text/xml" if request text starts with "<?xml ",
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
     with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);

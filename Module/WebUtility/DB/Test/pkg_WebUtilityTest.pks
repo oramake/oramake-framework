@@ -51,10 +51,11 @@ TestHttpTextPattern_OptSName constant varchar2(30) := 'TestHttpTextPattern';
 
 
 
+/* group: Functions */
 
 
 
-/* group: Функции */
+/* group: For other modules */
 
 /* pfunc: getTestOptionList
   Returns test parameters.
@@ -63,6 +64,45 @@ TestHttpTextPattern_OptSName constant varchar2(30) := 'TestHttpTextPattern';
 */
 function getTestOptionList
 return opt_option_list_t;
+
+/* pproc: setNextResponse
+  Sets response data for next request (works only in test database).
+  Call without parameters (or with null values for statusCode and entityBody)
+  clears the previously set response data.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (default is 200 if entityBody is not null)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (default is "OK" if entityBody is not null)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (with default value if entityBody is not null)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (default is null)
+  execSecond                  - Request execution time
+                                (default is -1)
+
+
+  Remarks:
+  - by default for contentType uses value <pkg_WebUtility.Xml_ContentType> if
+    entityBody starts with "<?xml ", value <pkg_WebUtility.Json_ContentType>
+    if request text starts with "[" or "{", else uses value
+    <pkg_WebUtility.WwwForm_ContentType> if entityBody is not null;
+
+  ( <body::setNextResponse>)
+*/
+procedure setNextResponse(
+  statusCode integer := null
+  , reasonPhrase varchar2 := null
+  , contentType varchar2 := null
+  , entityBody clob := null
+  , execSecond number := null
+);
+
+
+
+/* group: Internal tests */
 
 /* pproc: testGetHttpResponse
   Test data retrieval using an HTTP request at a given URL.

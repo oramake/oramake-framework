@@ -38,7 +38,13 @@ wbu_parameter_list_t.typ.$(lu): \
 
 pkg_WebUtility.pkb.$(lu): \
   pkg_WebUtility.pks.$(lu) \
-	wbu_header_list_t.typ.$(lu) \
-	wbu_parameter_list_t.typ.$(lu) \
+  pkg_WebUtilityBase.pks.$(lu) \
+  wbu_header_list_t.typ.$(lu) \
+  wbu_parameter_list_t.typ.$(lu) \
+
+
+pkg_WebUtilityBase.pkb.$(lu): \
+  pkg_WebUtilityBase.pks.$(lu) \
+  pkg_WebUtility.pks.$(lu) \
 
 

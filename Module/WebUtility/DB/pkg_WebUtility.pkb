@@ -132,8 +132,8 @@ end getTextLength;
     disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
     <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
-    "application/x-www-form-urlencoded" if it is POST request with parameters,
-    with value "text/xml" if request text starts with "<?xml ",
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
     with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);
@@ -366,12 +366,9 @@ is
       if len > 0 then
         if not isContentTypeUsed then
           if reqMethod = Post_HttpMethod and nParameter > 0 then
-            addHeader(
-              ContentType_HttpHeader
-              , 'application/x-www-form-urlencoded'
-            );
+            addHeader( ContentType_HttpHeader, WwwForm_ContentType);
           elsif substr( requestText, 1, 6) = '<?xml ' then
-            addHeader( ContentType_HttpHeader, 'text/xml');
+            addHeader( ContentType_HttpHeader, Xml_ContentType);
           elsif substr( requestText, 1, 1) in ( '{', '[') then
             addHeader( ContentType_HttpHeader, Json_ContentType);
           end if;
@@ -437,7 +434,6 @@ is
 
   -- writeRequest
   begin
-    logger.trace( '*** HTTP request: ' || requestUrl);
     reqMethod := coalesce(
       httpMethod
       , case when
@@ -597,21 +593,39 @@ begin
     );
   end if;
 
-  utl_http.set_transfer_timeout( transferTimeout);
+  logger.trace( '*** HTTP request: ' || requestUrl);
+  if not pkg_WebUtilityBase.getTestResponse(
+          statusCode      => statusCode
+          , reasonPhrase  => reasonPhrase
+          , contentType   => contentType
+          , entityBody    => entityBody
+          , execSecond    => execSecond
+        )
+      then
 
-  startTime := dbms_utility.get_time() / 100;
-  execSecond := -1;
+    utl_http.set_transfer_timeout( transferTimeout);
 
-  writeRequest();
-  readResponse();
+    startTime := dbms_utility.get_time() / 100;
+    execSecond := -1;
 
-  execSecond := coalesce(
-    timeDiff(
-      newTime   => dbms_utility.get_time() / 100
-    , oldTime   => startTime
-    )
-    , -1
-  );
+    writeRequest();
+    readResponse();
+
+    execSecond := coalesce(
+      timeDiff(
+        newTime   => dbms_utility.get_time() / 100
+      , oldTime   => startTime
+      )
+      , -1
+    );
+  else
+    logger.debug( 'Test response data was set (without sending HTTP request).');
+    logger.trace( 'statusCode         : ' || statusCode);
+    logger.trace( 'reasonPhrase       : ' || reasonPhrase);
+    logger.trace( 'contentType        : ' || contentType);
+    logger.trace( 'length(entityBody) : ' || length( entityBody));
+    logger.trace( 'execSecond         : ' || execSecond);
+  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -753,7 +767,8 @@ is
 begin
   return xmltype( entityBody);
 exception when others then
-  if contentType = 'text/xml' or contentType like 'text/xml;%' then
+  if contentType = Xml_ContentType or contentType like Xml_ContentType || ';%'
+      then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(

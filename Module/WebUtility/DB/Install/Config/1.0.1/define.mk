@@ -1,1 +1,1 @@
-LOAD_FILE_MASK = pkg_WebUtility.pk?
+LOAD_FILE_MASK = pkg_WebUtility*.pk?

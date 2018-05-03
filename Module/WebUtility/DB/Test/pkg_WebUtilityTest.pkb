@@ -23,7 +23,11 @@ opt opt_plsql_object_option_t := opt_plsql_object_option_t(
 
 
 
-/* group: Функции */
+/* group: Functions */
+
+
+
+/* group: For other modules */
 
 /* func: getTestOptionList
   Returns test parameters.
@@ -42,6 +46,88 @@ exception when others then
     , true
   );
 end getTestOptionList;
+
+/* proc: setNextResponse
+  Sets response data for next request (works only in test database).
+  Call without parameters (or with null values for statusCode and entityBody)
+  clears the previously set response data.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (default is 200 if entityBody is not null)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (default is "OK" if entityBody is not null)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (with default value if entityBody is not null)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (default is null)
+  execSecond                  - Request execution time
+                                (default is -1)
+
+
+  Remarks:
+  - by default for contentType uses value <pkg_WebUtility.Xml_ContentType> if
+    entityBody starts with "<?xml ", value <pkg_WebUtility.Json_ContentType>
+    if request text starts with "[" or "{", else uses value
+    <pkg_WebUtility.WwwForm_ContentType> if entityBody is not null;
+*/
+procedure setNextResponse(
+  statusCode integer := null
+  , reasonPhrase varchar2 := null
+  , contentType varchar2 := null
+  , entityBody clob := null
+  , execSecond number := null
+)
+is
+begin
+  pkg_WebUtilityBase.setNextTestResponse(
+    statusCode      =>
+        coalesce(
+          statusCode
+          , case when entityBody is not null then 200 end
+        )
+    , reasonPhrase  =>
+        coalesce(
+          reasonPhrase
+          , case when entityBody is not null then 'OK' end
+        )
+    , contentType   =>
+        coalesce(
+          contentType
+          , case when entityBody is not null then
+              case
+                when substr( entityBody, 1, 6) = '<?xml ' then
+                  pkg_WebUtility.Xml_ContentType
+                when substr( entityBody, 1, 1) in ( '{', '[') then
+                  pkg_WebUtility.Json_ContentType
+                else
+                  pkg_WebUtility.WwwForm_ContentType
+              end
+            end
+        )
+    , entityBody    => entityBody
+    , execSecond    => coalesce( execSecond, -1)
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while setting response data for next request ('
+        || ' statusCode=' || statusCode
+        || ', length(entityBody)='
+          || case when entityBody is not null then
+              length(entityBody)
+            end
+        || ').'
+      )
+    , true
+  );
+end setNextResponse;
+
+
+
+/* group: Internal tests */
 
 /* proc: testGetHttpResponse
   Test data retrieval using an HTTP request at a given URL.

@@ -87,6 +87,12 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_WebUtility.pkb)
       }  # Group: pkg_WebUtility
 
+   Group: pkg_WebUtilityBase  {
+
+      File: Спецификация  (no auto-title, pkg_WebUtilityBase.pks)
+      File: Реализация  (no auto-title, pkg_WebUtilityBase.pkb)
+      }  # Group: pkg_WebUtilityBase
+
    Group: Test  {
 
       Group: pkg_WebUtilityTest  {
