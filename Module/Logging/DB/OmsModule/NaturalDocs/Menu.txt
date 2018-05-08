@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Logging
-SubTitle: Версия 1.4.1
+SubTitle: Версия 2.0.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -157,11 +157,15 @@ Group: Скрипты  {
             File: lg_destination  (no auto-title, Install/Schema/Last/lg_destination.tab)
             File: lg_level  (no auto-title, Install/Schema/Last/lg_level.tab)
             File: lg_log  (no auto-title, Install/Schema/Last/lg_log.tab)
-            File: lg_log_ai_save_parent  (no auto-title, Install/Schema/Last/lg_log_ai_save_parent.trg)
             File: lg_log_bi_define  (no auto-title, Install/Schema/Last/lg_log_bi_define.trg)
             File: lg_log_seq  (no auto-title, Install/Schema/Last/lg_log_seq.sqs)
             File: lg_message_type  (no auto-title, Install/Schema/Last/lg_message_type.tab)
             }  # Group: Last
+
+         Group: 2.0.0  {
+
+            File: run  (no auto-title, Install/Schema/2.0.0/run.sql)
+            }  # Group: 2.0.0
 
          }  # Group: Schema
 

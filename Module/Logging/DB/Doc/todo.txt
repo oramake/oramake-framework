@@ -44,7 +44,7 @@ group: Завершение доработок
 [*] Обеспечить поддержку иерархического лога, используемого в модуле Scheduler,
     вместо временного решения по заполнению parent_log_id из предыдущей
     добавленной записи, которое может работать некорректно
-    ( см. <pkg_LoggingInternal.setLastParentLogId>).
+    ( удалить <lg_log_bi_define>, <pkg_LoggingInternal.beforeInsertLogRow>).
 
 [*] Удалить устаревшую константу <pkg_Logging.Warning_LevelCode( DEPRECATED)>
     после прекращения ее использования в прикладных модулях.

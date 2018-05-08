@@ -58,6 +58,3 @@ Install/Schema/Last/run.sql.$(lu):\
 Install/Schema/Last/lg_log_bi_define.trg.$(lu):\
   pkg_LoggingInternal.pks.$(lu)
 
-Install/Schema/Last/lg_log_ai_save_parent.trg.$(lu):\
-  pkg_LoggingInternal.pks.$(lu)
-

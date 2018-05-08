@@ -4,6 +4,8 @@ create table
   lg_log
 (
   log_id                          integer                             not null
+  , sessionid                     number                              not null
+      enable novalidate
   , parent_log_id                 integer
   , message_type_code             varchar2(10)                        not null
   , message_value                 integer
@@ -23,6 +25,9 @@ comment on table lg_log is
 /
 comment on column lg_log.log_id is
   'Id записи лога'
+/
+comment on column lg_log.sessionid is
+  'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
 /
 comment on column lg_log.parent_log_id is
   'Id родительской записи лога'
