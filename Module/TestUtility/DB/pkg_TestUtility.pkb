@@ -69,9 +69,7 @@ procedure beginTest(
   messageText varchar2
 )
 is
--- beginTest
 begin
-  pkg_TaskHandler.setAction( messageText);
   if not logger.isEnabledFor( pkg_Logging.Info_LevelCode) then
     logger.setLevel( pkg_Logging.Info_LevelCode);
   end if;
