@@ -31,5 +31,6 @@ begin
 
   -- Обновляем новые поля
   :new.sessionid            := rec.sessionid;
+  :new.level_code           := rec.level_code;
 end;
 /

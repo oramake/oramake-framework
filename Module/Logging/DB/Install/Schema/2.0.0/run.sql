@@ -2,7 +2,7 @@
 -- Обновление объектов схемы до версии 2.0.0.
 --
 -- Основные изменения:
---  - в таблицу <lg_log> добавлено поле sessionid;
+--  - в таблицу <lg_log> добавлены поля sessionid, level_code;
 --
 
 -- Определяем табличное пространство для индексов
@@ -11,4 +11,4 @@
 @oms-run drop-lg_log_ai_save_parent.sql
 
 @oms-run add-sessionid.sql
-
+@oms-run add-level_code.sql

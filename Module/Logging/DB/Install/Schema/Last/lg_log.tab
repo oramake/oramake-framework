@@ -7,6 +7,8 @@ create table
   , sessionid                     number                              not null
       enable novalidate
   , parent_log_id                 integer
+  , level_code                    varchar2(10)                        not null
+      enable novalidate
   , message_type_code             varchar2(10)                        not null
   , message_value                 integer
   , message_text                  varchar2(4000)                      not null
@@ -15,6 +17,8 @@ create table
   , constraint lg_log_pk primary key
     ( log_id)
     using index tablespace &indexTablespace
+  , constraint lg_log_ck_level_code check
+    (level_code not in ('ALL','OFF'))
 )
 /
 
@@ -31,6 +35,9 @@ comment on column lg_log.sessionid is
 /
 comment on column lg_log.parent_log_id is
   'Id родительской записи лога'
+/
+comment on column lg_log.level_code is
+  'Код уровня логирования'
 /
 comment on column lg_log.message_type_code is
   'Код типа сообщения'

@@ -564,6 +564,7 @@ is
   truncMessageText varchar2(4000);
 
 begin
+  lgr.level_code := levelCode;
   lgr.message_text := substr( messageText, 1, 4000);
 
   prepareLogRow( lgr);
@@ -994,6 +995,21 @@ procedure beforeInsertLogRow(
 )
 is
 begin
+  logRec.level_code :=
+    case logRec.message_type_code
+      when Error_MessageTypeCode then
+        pkg_Logging.Error_LevelCode
+      when Warning_MessageTypeCode then
+        pkg_Logging.Warn_LevelCode
+      when Info_MessageTypeCode then
+        pkg_Logging.Info_LevelCode
+      when Debug_MessageTypeCode then
+        pkg_Logging.Debug_LevelCode
+      else
+        pkg_Logging.Info_LevelCode
+    end
+  ;
+
   prepareLogRow( logRec);
 
   -- Поддержка совместимости с Scheduler

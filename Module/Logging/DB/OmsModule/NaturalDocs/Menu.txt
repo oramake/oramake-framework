@@ -167,6 +167,7 @@ Group: Скрипты  {
             File: run  (no auto-title, Install/Schema/2.0.0/run.sql)
             }  # Group: 2.0.0
 
+         File: add-install-job  (no auto-title, Install/Schema/add-install-job.sql)
          }  # Group: Schema
 
       }  # Group: Install
