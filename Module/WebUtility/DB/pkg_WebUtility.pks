@@ -134,9 +134,7 @@ Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
@@ -237,9 +235,7 @@ return xmltype;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)

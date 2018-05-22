@@ -118,9 +118,7 @@ end getTextLength;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
@@ -187,7 +185,10 @@ is
   procedure writeRequest
   is
 
-    -- Data of request parameters ( joined)
+    -- Character set of the request body (used)
+    usedBodyCharset varchar2(100);
+
+    -- Data of request parameters (joined)
     parameterData clob;
 
     -- HTTP method of current request
@@ -196,7 +197,7 @@ is
     -- Availability of appropriate headers in headerList
     isContentLengthUsed boolean := false;
     isContentTypeUsed boolean := false;
-		isTransferEncodingUsed boolean := false;
+    isTransferEncodingUsed boolean := false;
 
 
 
@@ -208,8 +209,10 @@ is
     )
     is
 
-      -- utl_url.escape can increase the length of the string 3 times
-      Escape_Factor constant pls_integer := 3;
+      -- utl_url.escape can increase the length of the string by 6 times
+      -- ( 3 times due to escaping and 2 times due to encoding of character
+      -- sets)
+      Escape_Factor constant pls_integer := 6;
 
       i pls_integer := parameterList.first();
 
@@ -240,9 +243,17 @@ is
             offset := offset + amount;
             buffer :=
               case when i > 1  then '&' end
-              || utl_url.escape( parameterList( i).parameter_name, true)
+              || utl_url.escape(
+                  url => parameterList( i).parameter_name
+                  , escape_reserved_chars => true
+                  , url_charset => usedBodyCharset
+                )
               || '='
-              || utl_url.escape( buffer, true)
+              || utl_url.escape(
+                  url => buffer
+                  , escape_reserved_chars => true
+                  , url_charset => usedBodyCharset
+                )
             ;
             dbms_lob.writeAppend( parameterData, length( buffer), buffer);
           end loop;
@@ -355,8 +366,6 @@ is
     )
     is
 
-      usedBodyCharset varchar2(100);
-
       len integer := coalesce( length( bodyText), 0);
       offset integer := 1;
 
@@ -373,10 +382,6 @@ is
             addHeader( ContentType_HttpHeader, Json_ContentType);
           end if;
         end if;
-
-        usedBodyCharset :=
-          substr( coalesce( bodyCharset, Utf8_Charset), 1, 100)
-        ;
         if coalesce( disableChunkedEncFlag, 0) != 1
               and not ( isContentLengthUsed or isTransferEncodingUsed)
             then
@@ -434,6 +439,7 @@ is
 
   -- writeRequest
   begin
+    usedBodyCharset := substr( coalesce( bodyCharset, Utf8_Charset), 1, 100);
     reqMethod := coalesce(
       httpMethod
       , case when
@@ -811,9 +817,7 @@ end getResponseXml;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
