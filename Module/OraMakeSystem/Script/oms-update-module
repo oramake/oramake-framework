@@ -425,7 +425,7 @@ patchFile()
   fi
   for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
-    patchRevision="${patchFile:1:7}"
+    patchRevision="${patchFile%%.*}"
     patchRevision="${patchRevision##*-}"
     if (( patchRevision >= fromRevision )); then
       # Спец-патч по замене табуляции на # пробелы в make-файлах
@@ -630,9 +630,6 @@ updateModule()
       else
         if [[ -n "$fromRevision" ]] && [[ -d "$patchConfigDir/$dstFile" ]]; then
           patchFile "$file" "$dstPath" "$patchConfigDir/$dstFile" \
-            "$fromRevision" "$isUnixFormat"
-        elif [[ -n "$fromRevision" ]] && [[ -d "$patchDataDir/$dstFile" ]]; then
-          patchFile "$file" "$dstPath" "$patchDataDir/$dstFile" \
             "$fromRevision" "$isUnixFormat"
         fi
       fi || exitError "Cannot process file \"$dstPath\"."

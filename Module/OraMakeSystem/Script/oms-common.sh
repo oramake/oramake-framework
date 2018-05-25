@@ -165,10 +165,6 @@ templateDir="${installShareDir}/Data/NewModule"
 # Базовое имя ( без расширения) файлов с шаблоном пакета Oracle.
 templatePackageName="pkg_NewModule"
 
-# var: patchDataDir
-# Каталог с патчами для обновления файлов модуля.
-patchDataDir="$dataDir/UpdateModule"
-
 # var: patchConfigDir
 # Настроечный каталог с патчами для обновления файлов модуля.
 patchConfigDir="$configDir/UpdateModule"
