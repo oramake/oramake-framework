@@ -118,9 +118,7 @@ end getTextLength;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
@@ -132,8 +130,8 @@ end getTextLength;
     disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
     <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
-    "application/x-www-form-urlencoded" if it is POST request with parameters,
-    with value "text/xml" if request text starts with "<?xml ",
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
     with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);
@@ -187,7 +185,10 @@ is
   procedure writeRequest
   is
 
-    -- Data of request parameters ( joined)
+    -- Character set of the request body (used)
+    usedBodyCharset varchar2(100);
+
+    -- Data of request parameters (joined)
     parameterData clob;
 
     -- HTTP method of current request
@@ -196,7 +197,7 @@ is
     -- Availability of appropriate headers in headerList
     isContentLengthUsed boolean := false;
     isContentTypeUsed boolean := false;
-		isTransferEncodingUsed boolean := false;
+    isTransferEncodingUsed boolean := false;
 
 
 
@@ -208,8 +209,10 @@ is
     )
     is
 
-      -- utl_url.escape can increase the length of the string 3 times
-      Escape_Factor constant pls_integer := 3;
+      -- utl_url.escape can increase the length of the string by 6 times
+      -- ( 3 times due to escaping and 2 times due to encoding of character
+      -- sets)
+      Escape_Factor constant pls_integer := 6;
 
       i pls_integer := parameterList.first();
 
@@ -240,9 +243,17 @@ is
             offset := offset + amount;
             buffer :=
               case when i > 1  then '&' end
-              || utl_url.escape( parameterList( i).parameter_name, true)
+              || utl_url.escape(
+                  url => parameterList( i).parameter_name
+                  , escape_reserved_chars => true
+                  , url_charset => usedBodyCharset
+                )
               || '='
-              || utl_url.escape( buffer, true)
+              || utl_url.escape(
+                  url => buffer
+                  , escape_reserved_chars => true
+                  , url_charset => usedBodyCharset
+                )
             ;
             dbms_lob.writeAppend( parameterData, length( buffer), buffer);
           end loop;
@@ -355,8 +366,6 @@ is
     )
     is
 
-      usedBodyCharset varchar2(100);
-
       len integer := coalesce( length( bodyText), 0);
       offset integer := 1;
 
@@ -366,18 +375,13 @@ is
       if len > 0 then
         if not isContentTypeUsed then
           if reqMethod = Post_HttpMethod and nParameter > 0 then
-            addHeader(
-              ContentType_HttpHeader
-              , 'application/x-www-form-urlencoded'
-            );
+            addHeader( ContentType_HttpHeader, WwwForm_ContentType);
           elsif substr( requestText, 1, 6) = '<?xml ' then
-            addHeader( ContentType_HttpHeader, 'text/xml');
+            addHeader( ContentType_HttpHeader, Xml_ContentType);
           elsif substr( requestText, 1, 1) in ( '{', '[') then
             addHeader( ContentType_HttpHeader, Json_ContentType);
           end if;
         end if;
-
-        usedBodyCharset := substr( coalesce( bodyCharset, 'UTF-8'), 1, 100);
         if coalesce( disableChunkedEncFlag, 0) != 1
               and not ( isContentLengthUsed or isTransferEncodingUsed)
             then
@@ -435,7 +439,7 @@ is
 
   -- writeRequest
   begin
-    logger.trace( '*** HTTP request: ' || requestUrl);
+    usedBodyCharset := substr( coalesce( bodyCharset, Utf8_Charset), 1, 100);
     reqMethod := coalesce(
       httpMethod
       , case when
@@ -595,21 +599,39 @@ begin
     );
   end if;
 
-  utl_http.set_transfer_timeout( transferTimeout);
+  logger.trace( '*** HTTP request: ' || requestUrl);
+  if not pkg_WebUtilityBase.getTestResponse(
+          statusCode      => statusCode
+          , reasonPhrase  => reasonPhrase
+          , contentType   => contentType
+          , entityBody    => entityBody
+          , execSecond    => execSecond
+        )
+      then
 
-  startTime := dbms_utility.get_time() / 100;
-  execSecond := -1;
+    utl_http.set_transfer_timeout( transferTimeout);
 
-  writeRequest();
-  readResponse();
+    startTime := dbms_utility.get_time() / 100;
+    execSecond := -1;
 
-  execSecond := coalesce(
-    timeDiff(
-      newTime   => dbms_utility.get_time() / 100
-    , oldTime   => startTime
-    )
-    , -1
-  );
+    writeRequest();
+    readResponse();
+
+    execSecond := coalesce(
+      timeDiff(
+        newTime   => dbms_utility.get_time() / 100
+      , oldTime   => startTime
+      )
+      , -1
+    );
+  else
+    logger.debug( 'Test response data was set (without sending HTTP request).');
+    logger.trace( 'statusCode         : ' || statusCode);
+    logger.trace( 'reasonPhrase       : ' || reasonPhrase);
+    logger.trace( 'contentType        : ' || contentType);
+    logger.trace( 'length(entityBody) : ' || length( entityBody));
+    logger.trace( 'execSecond         : ' || execSecond);
+  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -751,7 +773,8 @@ is
 begin
   return xmltype( entityBody);
 exception when others then
-  if contentType = 'text/xml' or contentType like 'text/xml;%' then
+  if contentType = Xml_ContentType or contentType like Xml_ContentType || ';%'
+      then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
@@ -794,9 +817,7 @@ end getResponseXml;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)

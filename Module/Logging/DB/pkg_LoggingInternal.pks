@@ -74,19 +74,6 @@ procedure setDestination(
 
 /* group: Логирование сообщений */
 
-/* pproc: setLastParentLogId
-  Сохраняет значение parent_log_id последней вставленной записи в переменной
-  пакета.
-
-  Параметры:
-  parentLogId                 - Id родительской записи лога
-
-  ( <body::setLastParentLogId>)
-*/
-procedure setLastParentLogId(
-  parentLogId integer
-);
-
 /* pproc: logMessage
   Логирует сообщение.
 
@@ -216,6 +203,24 @@ function isEnabledFor(
   , levelCode varchar2
 )
 return boolean;
+
+
+
+/* group: Совместимость с Scheduler */
+
+/* pproc: beforeInsertLogRow
+  Вызывается при непосредственной вставке записей из других модулей из триггера
+  на таблице <lg_log>.
+
+  Параметры:
+  logRec                      - Данные записи таблицы <lg_log>
+                                (модификация)
+
+  ( <body::beforeInsertLogRow>)
+*/
+procedure beforeInsertLogRow(
+  logRec in out nocopy lg_log%rowtype
+);
 
 end pkg_LoggingInternal;
 /

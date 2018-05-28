@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: WebUtility
-SubTitle: Версия 1.0.0
+SubTitle: Версия 1.0.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -87,6 +87,12 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_WebUtility.pkb)
       }  # Group: pkg_WebUtility
 
+   Group: pkg_WebUtilityBase  {
+
+      File: Спецификация  (no auto-title, pkg_WebUtilityBase.pks)
+      File: Реализация  (no auto-title, pkg_WebUtilityBase.pkb)
+      }  # Group: pkg_WebUtilityBase
+
    Group: Test  {
 
       Group: pkg_WebUtilityTest  {
@@ -124,6 +130,7 @@ Group: Скрипты  {
 
       File: run  (no auto-title, Test/run.sql)
       File: grant-host-access  (no auto-title, Test/grant-host-access.sql)
+      File: grant-test-host-access  (no auto-title, Test/grant-test-host-access.sql)
       }  # Group: Test
 
    }  # Group: Скрипты

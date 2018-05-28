@@ -68,6 +68,33 @@ Json_ContentType constant varchar2(100) := 'application/json';
 */
 SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
 
+/* const: WwwForm_ContentType
+  Value of "Content-Type" HTTP Header for data in web form format.
+*/
+WwwForm_ContentType constant varchar2(100) :=
+  'application/x-www-form-urlencoded'
+;
+
+/* const: Xml_ContentType
+  Value of "Content-Type" HTTP Header for data in XML format (without
+  specifying a character set).
+*/
+Xml_ContentType constant varchar2(100) := 'text/xml';
+
+
+
+/* group: Charsets */
+
+/* const: Utf8_Charset
+  Charset for UTF-8.
+*/
+Utf8_Charset constant varchar2(30) := 'UTF-8';
+
+/* const: Windows1251_Charset
+  Charset for Windows 1251 codepage.
+*/
+Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
+
 
 
 /* group: Functions */
@@ -107,9 +134,7 @@ SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)
@@ -121,8 +146,8 @@ SoapMessage_ContentType constant varchar2(100) := 'text/xml; charset="utf-8"';
     disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
     <TransferEncoding_HttpHeader> in headerList);
   - by default, request sends <ContentType_HttpHeader> header with value
-    "application/x-www-form-urlencoded" if it is POST request with parameters,
-    with value "text/xml" if request text starts with "<?xml ",
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
     with value <Json_ContentType> if request text starts with "[" or "{"
     ( this will be disabled if you use <ContentType_HttpHeader> in
     headerList);
@@ -210,9 +235,7 @@ return xmltype;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
-  bodyCharset                 - Sets the character set of the request body when
-                                the media type is text but the character set
-                                is not specified in the Content-Type header
+  bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
                                 (in seconds, default 60 seconds)

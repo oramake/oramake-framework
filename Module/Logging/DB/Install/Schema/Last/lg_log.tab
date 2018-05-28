@@ -4,7 +4,11 @@ create table
   lg_log
 (
   log_id                          integer                             not null
+  , sessionid                     number                              not null
+      enable novalidate
   , parent_log_id                 integer
+  , level_code                    varchar2(10)                        not null
+      enable novalidate
   , message_type_code             varchar2(10)                        not null
   , message_value                 integer
   , message_text                  varchar2(4000)                      not null
@@ -13,6 +17,8 @@ create table
   , constraint lg_log_pk primary key
     ( log_id)
     using index tablespace &indexTablespace
+  , constraint lg_log_ck_level_code check
+    (level_code not in ('ALL','OFF'))
 )
 /
 
@@ -24,8 +30,14 @@ comment on table lg_log is
 comment on column lg_log.log_id is
   'Id записи лога'
 /
+comment on column lg_log.sessionid is
+  '»дентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
+/
 comment on column lg_log.parent_log_id is
   'Id родительской записи лога'
+/
+comment on column lg_log.level_code is
+  ' од уровн€ логировани€'
 /
 comment on column lg_log.message_type_code is
   ' од типа сообщени€'

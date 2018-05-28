@@ -92,6 +92,12 @@ colLevelOrder TColLevelOrder;
 */
 lastParentLogId integer := null;
 
+/* ivar: lastSessionid
+  Значение поля sessionid последней вставленной в таблицу <lg_log>
+  записи
+*/
+lastSessionid number := null;
+
 
 
 
@@ -382,21 +388,6 @@ end setDestination;
 
 /* group: Логирование сообщений */
 
-/* proc: setLastParentLogId
-  Сохраняет значение parent_log_id последней вставленной записи в переменной
-  пакета.
-
-  Параметры:
-  parentLogId                 - Id родительской записи лога
-*/
-procedure setLastParentLogId(
-  parentLogId integer
-)
-is
-begin
-  lastParentLogId := parentLogId;
-end setLastParentLogId;
-
 /* ifunc: logDbOut
   Выводит сообщение через dbms_output.
   Строки сообщения, длина которых больше 255 символов, при выводе автоматически
@@ -516,6 +507,43 @@ begin
   previousDebugTimeStamp := curTime;
 end logDebugDbOut;
 
+/* iproc: prepareLogRow
+  Заполняет служебные поля записи таблицы <lg_log> перед вставкой.
+
+  Параметры:
+  logRec                      - Данные записи таблицы <lg_log>
+                                (модификация)
+*/
+procedure prepareLogRow(
+  logRec in out nocopy lg_log%rowtype
+)
+is
+begin
+  if logRec.log_id is null then
+    logRec.log_id := lg_log_seq.nextval;
+  end if;
+  if logRec.operator_id is null then
+    logRec.operator_id := getCurrentOperatorId();
+  end if;
+  if logRec.date_ins is null then
+    logRec.date_ins := sysdate;
+  end if;
+
+  if lastSessionid is null then
+    lastSessionid := sys_context('USERENV','SESSIONID');
+    if nullif( lastSessionid, 0) is null then
+      lastSessionid := - logRec.log_id;
+    end if;
+  end if;
+  logRec.sessionid := lastSessionid;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при заполнении служебных полей записи.'
+    , true
+  );
+end prepareLogRow;
+
 /* ifunc: logTable
   Добавляет сообщение в таблицу лога.
 
@@ -531,41 +559,40 @@ is
 
   pragma autonomous_transaction;
 
+  lgr lg_log%rowtype;
+
   truncMessageText varchar2(4000);
 
 begin
-  -- обрезание текста до 4000 символов в отдельную переменную во избежании
-  -- ошибки
-  -- ORA-01461: can bind a LONG value only for insert into a LONG column
-  truncMessageText := substr( messageText, 1, 4000);
+  lgr.level_code := levelCode;
+  lgr.message_text := substr( messageText, 1, 4000);
+
+  prepareLogRow( lgr);
+
+  -- Поддержка совместимости с Scheduler
+  lgr.parent_log_id := lastParentLogId;
+  lgr.message_type_code :=
+    case levelCode
+      when pkg_Logging.Fatal_LevelCode then
+        Error_MessageTypeCode
+      when pkg_Logging.Error_LevelCode then
+        Error_MessageTypeCode
+      when pkg_Logging.Warn_LevelCode then
+        Warning_MessageTypeCode
+      when pkg_Logging.Info_LevelCode then
+        Info_MessageTypeCode
+      when pkg_Logging.Debug_LevelCode then
+        Debug_MessageTypeCode
+      when pkg_Logging.Trace_LevelCode then
+        Debug_MessageTypeCode
+    end
+  ;
+
   insert into
     lg_log
-  (
-    parent_log_id
-    , message_type_code
-    , message_text
-  )
   values
-  (
-    -- временное решение для более-менее корректной поддержки использования
-    -- иерархического лога в модуле Scheduler
-    lastParentLogId
-    , case levelCode
-        when pkg_Logging.Fatal_LevelCode then
-          Error_MessageTypeCode
-        when pkg_Logging.Error_LevelCode then
-          Error_MessageTypeCode
-        when pkg_Logging.Warn_LevelCode then
-          Warning_MessageTypeCode
-        when pkg_Logging.Info_LevelCode then
-          Info_MessageTypeCode
-        when pkg_Logging.Debug_LevelCode then
-          Debug_MessageTypeCode
-        when pkg_Logging.Trace_LevelCode then
-          Debug_MessageTypeCode
-      end
-    , truncMessageText
-  );
+    lgr
+  ;
   commit;
 exception when others then
   raise_application_error(
@@ -949,6 +976,56 @@ exception when others then
     , true
   );
 end isEnabledFor;
+
+
+
+
+/* group: Совместимость с Scheduler */
+
+/* proc: beforeInsertLogRow
+  Вызывается при непосредственной вставке записей из других модулей из триггера
+  на таблице <lg_log>.
+
+  Параметры:
+  logRec                      - Данные записи таблицы <lg_log>
+                                (модификация)
+*/
+procedure beforeInsertLogRow(
+  logRec in out nocopy lg_log%rowtype
+)
+is
+begin
+  logRec.level_code :=
+    case logRec.message_type_code
+      when Error_MessageTypeCode then
+        pkg_Logging.Error_LevelCode
+      when Warning_MessageTypeCode then
+        pkg_Logging.Warn_LevelCode
+      when Info_MessageTypeCode then
+        pkg_Logging.Info_LevelCode
+      when Debug_MessageTypeCode then
+        pkg_Logging.Debug_LevelCode
+      else
+        pkg_Logging.Info_LevelCode
+    end
+  ;
+
+  prepareLogRow( logRec);
+
+  -- Поддержка совместимости с Scheduler
+  lastParentLogId :=
+    case
+      when logRec.message_type_code in (
+            'BSTART'
+            , 'JSTART'
+          )
+          then
+        logRec.log_id
+      else
+        logRec.parent_log_id
+    end
+  ;
+end beforeInsertLogRow;
 
 
 
