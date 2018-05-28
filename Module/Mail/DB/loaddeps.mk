@@ -49,9 +49,6 @@ Mail.jav.$(lu):                     \
   OraUtil.jav.$(lu)                  \
   $(JAVAMAIL_DIR)/mail.jar.$(lu)
 
-$(JAVAMAIL_DIR)/mail.jar.$(lu):      \
-  $(JAF_DIR)/activation.jar.$(lu)
-
 Data/ml_message_state.sql.$(lu):          \
   pkg_Mail.pks.$(lu)
 

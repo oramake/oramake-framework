@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: 2.2.0 ( 2018-05-28)
+
+[-] Delete obsolete library activation.jar (the classes are included in
+    Java SE 6). Installation caused errors in Oracle 12.2.0.1.
+
+
+
 group: 2.1.0 ( 2017-08-03)
 
 [*] Замена SQLJ на JDBC.

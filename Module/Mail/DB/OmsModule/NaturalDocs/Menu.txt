@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Mail
-SubTitle: Версия 2.1.0
+SubTitle: Версия 2.2.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -107,11 +107,6 @@ Group: Java-исходники  {
 Group: Java  {
 
    Group: Библиотеки  {
-
-      Group: JAF  {
-
-         File: JAF  (Java/UsedLib/JAF/readme.txt)
-         }  # Group: JAF
 
       Group: JavaMail  {
 
