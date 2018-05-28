@@ -5,13 +5,13 @@ declare
   fileData blob;
 begin
   pkg_Subversion.openConnection(
-    repositoryUrl => 'svn://msk-dit-20532/Scoring'
+    repositoryUrl => '&repoPath'
     , login => 'guest'
     , password => '&password'
   );
   pkg_Subversion.getSvnFile(
     fileData => fileData
-    , fileSvnPath => 'Module/AccessOperator/Trunk/DB/Doc/readme.txt'
+    , fileSvnPath => '&filePath'
   );
   pkg_Subversion.closeConnection();
   fileText := pkg_TextCreate.convertToClob( fileData);

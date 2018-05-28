@@ -3,13 +3,13 @@ declare
   fileData blob;
 begin
   pkg_SvnSearcherTest.openConnection(
-    repositoryUrl => 'svn://srvbl08/Exchange'
-    , login => 'LysyonokE'
+    repositoryUrl => '&repositoryUrl'
+    , login => '&login'
     , password => '&password'
   );
   pkg_SvnSearcherTest.getSvnFile(
     fileData => fileData
-    , fileSvnPath => 'Module/COLA/Trunk/Doc/P026.T0376 Загрузка данных в Debt Manager.doc'
+    , fileSvnPath => '&binaryFilePath'
   );
   pkg_SvnSearcherTest.closeConnection();
 --  fileText := pkg_EmailTemplate.convertToClob( fileData);

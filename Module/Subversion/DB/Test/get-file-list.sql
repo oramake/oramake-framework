@@ -2,12 +2,12 @@
 -- Получение списка файлов.
 begin
   pkg_SubVersion.openConnection(
-    repositoryUrl => 'svn://srvbl08/Scoring'
+    repositoryUrl => '&repositoryUrl'
     , login => '&login'
     , password => '&password'
   );
   pkg_SubVersion.getFileTree(
-    dirSvnPath => 'Module/Anketa/Trunk/DB/Install/Schema/Last'
+    dirSvnPath => '&dirSvnPath'
     , maxRecursiveLevel => 1
   );
   pkg_SubVersion.closeConnection();

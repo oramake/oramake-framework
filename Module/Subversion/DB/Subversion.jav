@@ -20,6 +20,11 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import java.sql.*;
+import oracle.jdbc.*;
+import oracle.jdbc.driver.*;
+import oracle.sql.*;
+
 
 /* class: Subversion
  * SVN root: Exchange/Module/Subversion
@@ -35,6 +40,12 @@ public class Subversion {
   final private static java.util.logging.Logger logger =
     java.util.logging.Logger.getLogger( LOGGER_NAME)
   ;
+
+  /* ivar: internalServerConnection
+   * Current own DB connection. Initialized in static initialization
+   * block.
+   */
+  private static Connection internalServerConnection = null;
 
   /** var: svnRepository
    * Репозиторий.
@@ -187,29 +198,38 @@ public static void getFileTree(
       directoryFlag == 0
       || ( directoryRecordFlag == null ? false : directoryRecordFlag.intValue() == 1)
     ) {
-      #sql {
-         insert into svn_file_tmp(
-           file_tmp_id
-           , svn_path
-           , file_name
-           , directory_flag
-           , revision
-           , author
-           , last_modification
-           , file_size
-         )
-         values(
-           svn_file_tmp_seq.nextval
-           , :svnPath
-           , :fileName
-           , :directoryFlag
-           , :revision
-           , :author
-           , TIMESTAMP '1970-01-01 00:00:00 +00:00'
-              + NumToDSInterval( :lastModified / 1000, 'SECOND')
-           , :fileSize
-         )
-      };
+      PreparedStatement statement = internalServerConnection.prepareStatement(
+      "  insert into svn_file_tmp(\n"
+    + "    file_tmp_id\n"
+    + "    , svn_path\n"
+    + "    , file_name\n"
+    + "    , directory_flag\n"
+    + "    , revision\n"
+    + "    , author\n"
+    + "    , last_modification\n"
+    + "    , file_size\n"
+    + "  )\n"
+    + "  values(\n"
+    + "    svn_file_tmp_seq.nextval\n"
+    + "    , :svnPath\n"
+    + "    , :fileName\n"
+    + "    , :directoryFlag\n"
+    + "    , :revision\n"
+    + "    , :author\n"
+    + "    , TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
+    + "       + NumToDSInterval( :lastModified / 1000, 'SECOND')\n"
+    + "    , :fileSize\n"
+    + "  )"
+      );
+      statement.setString(1, svnPath);
+      statement.setString(2, fileName);
+      statement.setInt(3, directoryFlag);
+      statement.setLong(4, revision);
+      statement.setString(5, author);
+      statement.setLong(6, lastModified);
+      statement.setLong(7, fileSize);
+      statement.executeUpdate();
+      statement.close();
     }
     if ( directoryFlag == 1
      && ( maxRecursiveLevel == null ? true : 1 < maxRecursiveLevel.intValue())) {
@@ -222,7 +242,18 @@ public static void getFileTree(
   }
 }
 
+static {
+  try {
+    OracleDriver ora = new OracleDriver();
+    internalServerConnection = ora.defaultConnection();
+  }
+  catch( SQLException e) {
+    throw new RuntimeException(
+      "Error while opening internal server connection"
+      + "\n" + e
+    );
+  }
+}
+
 }
 /
-
-

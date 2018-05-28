@@ -15,6 +15,21 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
+group: 1.0.1
+(<Версии::1.0.1 ( 2018-05-28)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: Первоначальная установка
 ( <Версии::1.0.0>)
 
@@ -54,8 +69,7 @@ group: Установка тестовых объектов
 
 Предварительные требования:
 
-- установка модуля TestUtility
-  ( <http://srvsvn/repo/Oracle/Module/TestUtility/Trunk/Doc/DB/AutoGen/index.html>);
+- установка модуля TestUtility;
 
 Порядок установки:
 
