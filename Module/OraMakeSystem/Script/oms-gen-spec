@@ -69,7 +69,7 @@ source oms-common.sh || exit 11
 
 # const: FUNCTION_GROUP_EXPR
 # Регулярное выражения ( gawk) для начала части функций
-FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<Функции\>[[:blank:]]*\*\/'
+FUNCTION_GROUP_EXPR='\/\*[[:blank:]]*\<group\>:[[:blank:]]*\<(Functions|Функции)\>[[:blank:]]*\*\/'
 
 # const: END_OBJECT_EXPR
 # Регулярное выражения для конца sql-скрипта для создания plsql-объекта
