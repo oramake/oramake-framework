@@ -5,5 +5,6 @@ LOAD_FILE_MASK = \
 
 override SKIP_FILE_MASK += \
   Install/Data/Last/* \
+  */oms-check-install-version.sql \
 
 
