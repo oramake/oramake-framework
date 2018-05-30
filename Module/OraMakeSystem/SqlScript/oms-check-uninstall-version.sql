@@ -1,6 +1,5 @@
--- script: oms-save-uninstall-info.sql
--- Сохраняет в БД информацию об отмене установки версии модуля ( цель
--- uninstall).
+-- script: oms-check-uninstall-version.sql
+-- Проверяет возможность отмены установки версии модуля (цель uninstall).
 --
 -- Параметры:
 -- modulePartNumberList       - список номеров частей модулей в виде строки с
@@ -14,4 +13,4 @@
 --    <OmsInternal/install-version-operation.sql>
 --
 
-@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "" OBJ "" 1 "&2" "" "" 0
+@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "" OBJ "" 1 "&2" "" "" 1

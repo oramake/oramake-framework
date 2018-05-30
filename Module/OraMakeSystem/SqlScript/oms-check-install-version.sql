@@ -1,5 +1,5 @@
--- script: oms-save-install-info.sql
--- Сохраняет в БД информацию об установке модуля ( цель install).
+-- script: oms-check-install-version.sql
+-- Проверяет возможность установки версии модуля (цель install).
 --
 -- Параметры:
 -- modulePartNumberList       - список номеров частей модулей в виде строки с
@@ -11,4 +11,4 @@
 --    <OmsInternal/install-version-operation.sql>
 --
 
-@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "" OBJ "" 0 "" "" "" 0
+@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "" OBJ "" 0 "" "" "" 1

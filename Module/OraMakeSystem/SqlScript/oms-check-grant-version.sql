@@ -1,5 +1,6 @@
--- script: oms-save-grant-info.sql
--- Сохраняет в БД информацию о выдаче прав пользователю ( цель grant).
+-- script: oms-check-grant-version.sql
+-- Проверяет возможность выдачи прав согласно указанной версии модуля (цель
+-- grant).
 --
 -- Параметры:
 -- modulePartNumberList       - список номеров частей модулей в виде строки с
@@ -18,4 +19,4 @@
 --    <OmsInternal/install-version-operation.sql>
 --
 
-@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "&2" PRI "&3" 0 "" "&4" "&5" 0
+@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "&2" PRI "&3" 0 "" "&4" "&5" 1
