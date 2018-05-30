@@ -67,5 +67,18 @@ procedure testGetModuleId(
   , exceptionFlag number := null
 );
 
+/* pproc: testCompareVersion
+  Test <pkg_ModuleInfoInternal.compareVersion>.
+
+  Parameters:
+  testCaseNumber              - Number of test case to be tested
+                                (default unlimited)
+
+  ( <body::testCompareVersion>)
+*/
+procedure testCompareVersion(
+  testCaseNumber integer := null
+);
+
 end pkg_ModuleInfoTest;
 /

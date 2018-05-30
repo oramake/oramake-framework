@@ -43,6 +43,31 @@ ProcessError_Error constant integer := -20185;
 
 /* group: Функции */
 
+/* pfunc: compareVersion
+  Сравнивает номера версий.
+
+  Параметры:
+  version1                    - Первый номер версии
+  version2                    - Второй номер версии
+
+  Возврат:
+  -  -1 если version1 < version2
+  -   0 если version1 = version2
+  -   1 если version1 > version2
+  - null если version1 или version2 имеют значение null
+
+  Замечания:
+  - номера версий, отличающиеся лишь нулевыми подномерами, считаются равными,
+    например, "1.0" и "1.00" и "1.0.0" равны;
+
+  ( <body::compareVersion>)
+*/
+function compareVersion(
+  version1 varchar2
+  , version2 varchar2
+)
+return integer;
+
 /* pfunc: getCurrentOperatorId
   Возвращает Id текущего зарегистрированного оператора при доступности модуля
   AccessOperator.

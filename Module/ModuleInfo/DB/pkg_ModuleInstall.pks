@@ -11,10 +11,6 @@ create or replace package pkg_ModuleInstall is
 
 
 
-/* group: Вспомогательные функции */
-
-
-
 /* group: Установка файлов */
 
 /* pfunc: startInstallFile
@@ -180,6 +176,65 @@ procedure finishInstallNestedFile;
 
 
 /* group: Результат установки */
+
+/* pfunc: checkInstallVersion
+  Проверяет возможность установки на основе данных об установленной версии
+  модуля.
+
+  Параметры:
+  moduleSvnRoot               - путь к корневому каталогу устанавливаемого
+                                модуля в Subversion ( начиная с имени
+                                репозитария, например
+                                "Oracle/Module/ModuleInfo")
+  moduleInitialSvnPath        - первоначальный путь к корневому каталогу
+                                устанавливаемого модуля в Subversion ( начиная
+                                с имени репозитария и влючая номер правки, в
+                                которой он был создан, например
+                                "Oracle/Module/ModuleInfo@711")
+  modulePartNumber            - номер устанавливаемой части модуля
+                                ( по умолчанию номер основной части)
+  installVersion              - устанавливаемая версия
+  installTypeCode             - код типа установки
+  isFullInstall               - флаг полной установки ( 1 при полной установке,
+                                0 при установке обновления)
+  isRevertInstall             - флаг выполнения отмены установки версии
+                                ( 1 отмена установки версии, 0 установка версии
+                                ( по умолчанию))
+  installUser                 - имя пользователя, под которым выполнялась
+                                установка ( по умолчанию текущий)
+  objectSchema                - схема, в которой расположены объекты данной
+                                части модуля ( по умолчанию совпадает с
+                                installUser, null если в нем указаны sys или
+                                system)
+  privsUser                   - имя пользователя или роли, для которой
+                                выполнялась настройка прав доступа ( значение
+                                должно быть указано только при установке прав
+                                доступа)
+  installScript               - стартовый установочный скрипт ( может
+                                отсутствовать, если использовался тривиальный
+                                вариант, например run.sql)
+  resultVersion               - версия, получившаяся результате выполнения
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
+
+  ( <body::checkInstallVersion>)
+*/
+procedure checkInstallVersion(
+  moduleSvnRoot varchar2
+  , moduleInitialSvnPath varchar2
+  , modulePartNumber integer
+  , installVersion varchar2
+  , installTypeCode varchar2
+  , isFullInstall integer
+  , isRevertInstall integer := null
+  , installUser varchar2 := null
+  , objectSchema varchar2 := null
+  , privsUser varchar2 := null
+  , installScript varchar2 := null
+  , resultVersion varchar2 := null
+);
 
 /* pfunc: createInstallResult
   Добавляет результат установки для действия по установке модуля.
