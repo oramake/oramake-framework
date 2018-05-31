@@ -40,8 +40,8 @@ begin
       and ts.manage_date < trunc( sysdate) - rec.task_keep_day
       and ts.task_status_code = pkg_TaskProcessorBase.Idle_TaskStatusCode
       and greatest(
-          coalesce( ts.start_date, DATE '0000-01-01')
-          , coalesce( ts.finish_date, DATE '0000-01-01')
+          coalesce( ts.start_date, DATE '0001-01-01')
+          , coalesce( ts.finish_date, DATE '0001-01-01')
         ) < trunc( sysdate) - rec.task_keep_day
     ;
     nDeleted := nDeleted + SQL%ROWCOUNT;

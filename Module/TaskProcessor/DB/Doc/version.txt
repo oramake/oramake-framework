@@ -2,6 +2,14 @@ title: Версии
 
 
 
+group: 2.3.2 ( 2018-05-31)
+(<Установка::2.3.2>)
+
+[*] Use constant DATE '0001-01-01' instead of DATE '0000-01-01' for Oracle
+    12.2.0.1 compatibility.
+
+
+
 group: 2.3.1.2 ( 2018-02-16)
 (<Установка::2.3.1.2>)
 
