@@ -71,6 +71,8 @@ colNestedInstallFileId TColId := TColId();
   Параметры:
   moduleId                    - Id модуля
   partNumber                  - номер части модуля
+  isCreate                    - создать запись в случае отсутствия подходящей
+                                ( 1 да, 0 нет ( по умолчанию))
 
   Возврат:
   Id части модуля
@@ -78,6 +80,7 @@ colNestedInstallFileId TColId := TColId();
 function getModulePart(
   moduleId integer
   , partNumber integer
+  , isCreate integer := null
 )
 return integer
 is
@@ -126,7 +129,7 @@ begin
     mp.module_id = moduleId
     and mp.part_number = coalesce( partNumber, Main_PartNumber)
   ;
-  if modulePartId is null then
+  if modulePartId is null and isCreate = 1 then
     createModulePart();
   end if;
   return modulePartId;
@@ -397,6 +400,7 @@ begin
     modulePartId := getModulePart(
       moduleId      => moduleId
       , partNumber  => modulePartNumber
+      , isCreate    => 1
     );
   end if;
   if sourceFileId is null then
@@ -428,6 +432,45 @@ exception when others then
     , true
   );
 end getSourceFile;
+
+/* iproc: checkUserExists
+  Проверяет наличие пользователя в БД, если указано имя пользователя.
+
+  Параметры:
+  checkUserName             - имя пользователя ( без учета регистра)
+  parameterName             - имя параметра функции ( для указания в
+                              сообщении об ошибке).
+*/
+procedure checkUserExists(
+  checkUserName varchar2
+  , parameterName varchar2
+)
+is
+
+  -- Флаг наличия пользователя
+  isExists integer;
+
+begin
+  if checkUserName is not null then
+    select
+      count(*)
+    into isExists
+    from
+      all_users us
+    where
+      us.username = upper( checkUserName)
+      and rownum <= 1
+    ;
+    if isExists = 0 then
+      raise_application_error(
+        pkg_ModuleInfoInternal.IllegalArgument_Error
+        , 'Указан несуществующий пользователь БД ('
+          || ' ' || parameterName || '="' || checkUserName || '"'
+          || ').'
+      );
+    end if;
+  end if;
+end checkUserExists;
 
 
 
@@ -882,6 +925,316 @@ end finishInstallNestedFile;
 
 /* group: Результат установки */
 
+/* iproc: fillInstallResult
+  Заполняет основные поля записи о результате установки.
+
+  Параметры:
+  rec                         - данные записи
+                                (возврат)
+  moduleSvnRoot               - путь к корневому каталогу устанавливаемого
+                                модуля в Subversion ( начиная с имени
+                                репозитария, например
+                                "Oracle/Module/ModuleInfo")
+  moduleInitialSvnPath        - первоначальный путь к корневому каталогу
+                                устанавливаемого модуля в Subversion ( начиная
+                                с имени репозитария и влючая номер правки, в
+                                которой он был создан, например
+                                "Oracle/Module/ModuleInfo@711")
+  modulePartNumber            - номер устанавливаемой части модуля
+                                ( по умолчанию номер основной части)
+  installVersion              - устанавливаемая версия
+  installTypeCode             - код типа установки
+  isFullInstall               - флаг полной установки ( 1 при полной установке,
+                                0 при установке обновления)
+  isRevertInstall             - флаг выполнения отмены установки версии
+                                ( 1 отмена установки версии, 0 установка версии
+                                ( по умолчанию))
+  installUser                 - имя пользователя, под которым выполнялась
+                                установка ( по умолчанию текущий)
+  objectSchema                - схема, в которой расположены объекты данной
+                                части модуля ( по умолчанию совпадает с
+                                installUser, null если в нем указаны sys или
+                                system)
+  privsUser                   - имя пользователя или роли, для которой
+                                выполнялась настройка прав доступа ( значение
+                                должно быть указано только при установке прав
+                                доступа)
+  installScript               - стартовый установочный скрипт ( может
+                                отсутствовать, если использовался тривиальный
+                                вариант, например run.sql)
+  resultVersion               - версия, получившаяся результате выполнения
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
+  isCreateModule              - создать записи о модуле и части модуля в
+                                случае отсутствия подходящих
+                                ( 1 да, 0 нет ( по умолчанию))
+*/
+procedure fillInstallResult(
+  rec out nocopy mod_install_result%rowtype
+  , moduleSvnRoot varchar2
+  , moduleInitialSvnPath varchar2
+  , modulePartNumber integer
+  , installVersion varchar2
+  , installTypeCode varchar2
+  , isFullInstall integer
+  , isRevertInstall integer
+  , installUser varchar2
+  , objectSchema varchar2
+  , privsUser varchar2
+  , installScript varchar2
+  , resultVersion varchar2
+  , isCreateModule integer := null
+)
+is
+begin
+  checkUserExists(
+    checkUserName => installUser
+    , parameterName => 'installUser'
+  );
+  if nullif( objectSchema, installUser) is not null then
+    checkUserExists(
+      checkUserName => objectSchema
+      , parameterName => 'objectSchema'
+    );
+  end if;
+  rec.install_user := upper( coalesce( installUser, user));
+  rec.install_version := installVersion;
+  rec.install_type_code := installTypeCode;
+  rec.is_full_install := isFullInstall;
+  rec.is_revert_install := coalesce( isRevertInstall, 0);
+  rec.object_schema := coalesce(
+    upper( objectSchema)
+    , nullif( nullif( rec.install_user, 'SYS'), 'SYSTEM')
+  );
+  rec.privs_user := upper( privsUser);
+  rec.install_script := installScript;
+  rec.result_version := coalesce(
+    resultVersion
+    , case when rec.is_revert_install = 0 then rec.install_version end
+  );
+  rec.module_id := pkg_ModuleInfoInternal.getModuleId(
+    svnRoot           => moduleSvnRoot
+    , initialSvnPath  => moduleInitialSvnPath
+    , isCreate        => coalesce( isCreateModule, 0)
+  );
+  if rec.module_id is not null then
+    rec.module_part_id := getModulePart(
+      moduleId      => rec.module_id
+      , partNumber  => modulePartNumber
+      , isCreate    => coalesce( isCreateModule, 0)
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_ModuleInfoInternal.ErrorStackInfo_Error
+    , 'Ошибка при заполнении записи с результатом установки.'
+    , true
+  );
+end fillInstallResult;
+
+/* func: checkInstallVersion
+  Проверяет возможность установки на основе данных об установленной версии
+  модуля.
+
+  Параметры:
+  moduleSvnRoot               - путь к корневому каталогу устанавливаемого
+                                модуля в Subversion ( начиная с имени
+                                репозитария, например
+                                "Oracle/Module/ModuleInfo")
+  moduleInitialSvnPath        - первоначальный путь к корневому каталогу
+                                устанавливаемого модуля в Subversion ( начиная
+                                с имени репозитария и влючая номер правки, в
+                                которой он был создан, например
+                                "Oracle/Module/ModuleInfo@711")
+  modulePartNumber            - номер устанавливаемой части модуля
+                                ( по умолчанию номер основной части)
+  installVersion              - устанавливаемая версия
+  installTypeCode             - код типа установки
+  isFullInstall               - флаг полной установки ( 1 при полной установке,
+                                0 при установке обновления)
+  isRevertInstall             - флаг выполнения отмены установки версии
+                                ( 1 отмена установки версии, 0 установка версии
+                                ( по умолчанию))
+  installUser                 - имя пользователя, под которым выполнялась
+                                установка ( по умолчанию текущий)
+  objectSchema                - схема, в которой расположены объекты данной
+                                части модуля ( по умолчанию совпадает с
+                                installUser, null если в нем указаны sys или
+                                system)
+  privsUser                   - имя пользователя или роли, для которой
+                                выполнялась настройка прав доступа ( значение
+                                должно быть указано только при установке прав
+                                доступа)
+  installScript               - стартовый установочный скрипт ( может
+                                отсутствовать, если использовался тривиальный
+                                вариант, например run.sql)
+  resultVersion               - версия, получившаяся результате выполнения
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
+*/
+procedure checkInstallVersion(
+  moduleSvnRoot varchar2
+  , moduleInitialSvnPath varchar2
+  , modulePartNumber integer
+  , installVersion varchar2
+  , installTypeCode varchar2
+  , isFullInstall integer
+  , isRevertInstall integer := null
+  , installUser varchar2 := null
+  , objectSchema varchar2 := null
+  , privsUser varchar2 := null
+  , installScript varchar2 := null
+  , resultVersion varchar2 := null
+)
+is
+
+  -- Данные версии для установки
+  rec mod_install_result%rowtype;
+
+  -- Текущая версия
+  currentVersion mod_install_result.result_version%type;
+  currentInstallResultId integer;
+
+  -- Сообщение об ошибке
+  erm varchar2(1000);
+
+
+
+  /*
+    Получает информацию о текущей версии.
+  */
+  procedure getCurrentVersionInfo
+  is
+  begin
+    select
+      max(
+          case when
+            ir.install_type_code = rec.install_type_code
+          then
+            ir.result_version
+          end
+        )
+        as current_version
+      , max(
+          case when
+            ir.install_type_code = rec.install_type_code
+          then
+            ir.install_result_id
+          end
+        )
+        as current_install_result_id
+    into currentVersion, currentInstallResultId
+    from
+      mod_install_result ir
+    where
+      ir.is_current_version = 1
+      and ir.module_part_id = rec.module_part_id
+      and ir.install_type_code = rec.install_type_code
+      and (
+        coalesce( ir.object_schema, rec.object_schema) is null
+        or ir.object_schema is not null
+          and rec.object_schema is not null
+          and ir.object_schema = rec.object_schema
+        )
+      and (
+        coalesce( ir.privs_user, rec.privs_user) is null
+        or ir.privs_user is not null
+          and rec.privs_user is not null
+          and ir.privs_user = rec.privs_user
+        )
+    ;
+  exception when others then
+    raise_application_error(
+      pkg_ModuleInfoInternal.ErrorStackInfo_Error
+      , 'Ошибка при получении информации о текущей версии.'
+      , true
+    );
+  end getCurrentVersionInfo;
+
+
+
+-- checkInstallVersion
+begin
+  fillInstallResult(
+    rec                       => rec
+    , moduleSvnRoot           => moduleSvnRoot
+    , moduleInitialSvnPath    => moduleInitialSvnPath
+    , modulePartNumber        => modulePartNumber
+    , installVersion          => installVersion
+    , installTypeCode         => installTypeCode
+    , isFullInstall           => isFullInstall
+    , isRevertInstall         => isRevertInstall
+    , installUser             => installUser
+    , objectSchema            => objectSchema
+    , privsUser               => privsUser
+    , installScript           => installScript
+    , resultVersion           => resultVersion
+    , isCreateModule          => 0
+  );
+  if rec.module_part_id is not null then
+    getCurrentVersionInfo();
+  end if;
+
+  if currentVersion is null then
+    if rec.is_full_install = 0 then
+      erm :=
+        'Нет установленной версии '
+        || case when rec.is_revert_install = 0 then
+            'для обновления'
+          else
+            'для отката'
+          end
+      ;
+    end if;
+  elsif rec.is_revert_install = 1
+        and rec.install_version <> currentVersion
+        -- разрешаем откат к текущей версии
+        and rec.result_version <> currentVersion
+      then
+    erm := 'Отменяемая версия не соответствует установленной';
+  elsif pkg_ModuleInfoInternal.compareVersion(
+          rec.result_version
+          , currentVersion
+        ) < 0
+      then
+    erm := 'Устанавливаемая версия младше чем установленная ранее';
+  end if;
+  if erm is not null then
+    raise_application_error(
+      pkg_ModuleInfoInternal.IllegalArgument_Error
+      , erm || ' ('
+        || 'modulePartNumber=' || modulePartNumber
+        || ', objectSchema="' || rec.object_schema || '"'
+        || case when rec.privs_user is not null then
+            ', privsUser="' || rec.privs_user || '"'
+          end
+        || ', currentVersion="' || currentVersion || '"'
+        || ', installVersion="' || rec.install_version || '"'
+        || ', isRevertInstall=' || rec.is_revert_install
+        || ', isFullInstall=' || rec.is_full_install
+        || case when rec.is_revert_install = 1 then
+            ', resultVersion="' || rec.result_version || '"'
+          end
+        || ', install_result_id=' || currentInstallResultId
+        || ').'
+    );
+  end if;
+exception when others then
+  if sqlcode = pkg_ModuleInfoInternal.IllegalArgument_Error then
+    raise;
+  else
+    raise_application_error(
+      pkg_ModuleInfoInternal.ErrorStackInfo_Error
+      , 'Ошибка при проверке версии для установки.'
+      , true
+    );
+  end if;
+end checkInstallVersion;
+
 /* func: createInstallResult
   Добавляет результат установки для действия по установке модуля.
 
@@ -979,47 +1332,6 @@ is
 
 
   /*
-    Проверяет наличие пользователя в БД, если указано имя пользователя.
-
-    Параметры:
-    checkUserName             - имя пользователя ( без учета регистра)
-    parameterName             - имя параметра функции ( для указания в
-                                сообщении об ошибке).
-  */
-  procedure checkUserExists(
-    checkUserName varchar2
-    , parameterName varchar2
-  )
-  is
-
-    -- Флаг наличия пользователя
-    isExists integer;
-
-  begin
-    if checkUserName is not null then
-      select
-        count(*)
-      into isExists
-      from
-        all_users us
-      where
-        us.username = upper( checkUserName)
-        and rownum <= 1
-      ;
-      if isExists = 0 then
-        raise_application_error(
-          pkg_ModuleInfoInternal.IllegalArgument_Error
-          , 'Указан несуществующий пользователь БД ('
-            || ' ' || parameterName || '="' || checkUserName || '"'
-            || ').'
-        );
-      end if;
-    end if;
-  end checkUserExists;
-
-
-
-  /*
     Сбрасывает флаг текущей версии у ранее установленной версии, при этом
     запись предварительно блокируется с ограничением времени ожидания
     блокировки.
@@ -1069,6 +1381,7 @@ is
   end clearCurrentVersion;
 
 
+
   /*
     Добавляет запись для результата установки.
   */
@@ -1090,35 +1403,25 @@ is
 
 
 
---createInstallResult
+-- createInstallResult
 begin
-  checkUserExists( installUser, 'installUser');
-  checkUserExists( objectSchema, 'objectSchema');
-  rec.module_id := pkg_ModuleInfoInternal.getModuleId(
-    svnRoot           => moduleSvnRoot
-    , initialSvnPath  => moduleInitialSvnPath
-    , isCreate        => 1
+  fillInstallResult(
+    rec                       => rec
+    , moduleSvnRoot           => moduleSvnRoot
+    , moduleInitialSvnPath    => moduleInitialSvnPath
+    , modulePartNumber        => modulePartNumber
+    , installVersion          => installVersion
+    , installTypeCode         => installTypeCode
+    , isFullInstall           => isFullInstall
+    , isRevertInstall         => isRevertInstall
+    , installUser             => installUser
+    , objectSchema            => objectSchema
+    , privsUser               => privsUser
+    , installScript           => installScript
+    , resultVersion           => resultVersion
+    , isCreateModule          => 1
   );
-  rec.module_part_id := getModulePart(
-    moduleId      => rec.module_id
-    , partNumber  => modulePartNumber
-  );
-  rec.install_user := upper( coalesce( installUser, user));
   rec.install_date := coalesce( installDate, sysdate);
-  rec.install_version := installVersion;
-  rec.install_type_code := installTypeCode;
-  rec.is_full_install := isFullInstall;
-  rec.is_revert_install := coalesce( isRevertInstall, 0);
-  rec.object_schema := coalesce(
-    upper( objectSchema)
-    , nullif( nullif( rec.install_user, 'SYS'), 'SYSTEM')
-  );
-  rec.privs_user := upper( privsUser);
-  rec.install_script := installScript;
-  rec.result_version := coalesce(
-    resultVersion
-    , case when rec.is_revert_install = 0 then rec.install_version end
-  );
   rec.is_current_version := 1;
   if hostProcessStartTime is not null or hostProcessId is not null
       or moduleVersion is not null or actionGoalList is not null

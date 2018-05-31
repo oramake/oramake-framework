@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: OraMakeSystem
-SubTitle: Версия 2.0.1
+SubTitle: Версия 2.1.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -87,9 +87,9 @@ Group: SQL-скрипты  {
 
    Group: OmsInternal  {
 
-      File: add-install-result  (no auto-title, SqlScript/OmsInternal/add-install-result.sql)
       File: exec-batch-operation  (no auto-title, SqlScript/OmsInternal/exec-batch-operation.sql)
       File: finish-install-file  (no auto-title, SqlScript/OmsInternal/finish-install-file.sql)
+      File: install-version-operation.sql  (SqlScript/OmsInternal/install-version-operation.sql)
       File: nothing  (no auto-title, SqlScript/OmsInternal/nothing.sql)
       File: set-environment  (no auto-title, SqlScript/OmsInternal/set-environment.sql)
       File: start-install-file  (no auto-title, SqlScript/OmsInternal/start-install-file.sql)
@@ -109,6 +109,9 @@ Group: SQL-скрипты  {
    Group: Прикладные  {
 
       File: oms-activate-batch  (no auto-title, SqlScript/oms-activate-batch.sql)
+      File: oms-check-grant-version.sql  (SqlScript/oms-check-grant-version.sql)
+      File: oms-check-install-version.sql  (SqlScript/oms-check-install-version.sql)
+      File: oms-check-uninstall-version.sql  (SqlScript/oms-check-uninstall-version.sql)
       File: oms-deactivate-batch  (no auto-title, SqlScript/oms-deactivate-batch.sql)
       File: oms-default  (no auto-title, SqlScript/oms-default.sql)
       File: oms-default-with-test  (no auto-title, SqlScript/oms-default-with-test.sql)

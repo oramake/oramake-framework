@@ -162,5 +162,165 @@ begin
   pkg_TestUtility.endTest();
 end testGetModuleId;
 
+/* proc: testCompareVersion
+  Test <pkg_ModuleInfoInternal.compareVersion>.
+
+  Parameters:
+  testCaseNumber              - Number of test case to be tested
+                                (default unlimited)
+*/
+procedure testCompareVersion(
+  testCaseNumber integer := null
+)
+is
+
+  -- Number of current (or last) test case
+  checkCaseNumber integer := 0;
+
+
+
+  /*
+    Checks test case.
+  */
+  procedure checkCase(
+    version1 varchar2
+    , version2 varchar2
+    , resValue integer := null
+    , caseDescription varchar2 := null
+    , execErrorMessageMask varchar2 := null
+    , nextCaseUsedCount pls_integer := null
+  )
+  is
+
+    -- Description of test case
+    cinfo varchar2(200) :=
+      'CASE ' || to_char( checkCaseNumber + 1)
+      || ': "'
+      || coalesce(
+          caseDescription
+          , version1 || '" '
+            || case resValue
+                when -1  then '<'
+                when  0  then '='
+                when  1  then '>'
+                else '?'
+              end
+            || ' "' || version2
+        )
+      || '": '
+    ;
+
+    -- Runtime error message
+    execErrorMessage varchar2(32767);
+
+    -- Result of execution
+    execResult integer;
+
+    i integer;
+
+  -- checkCase
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return;
+    end if;
+    logger.info( '*** ' || rtrim( cinfo, ' :'));
+
+    begin
+      execResult := pkg_ModuleInfoInternal.compareVersion(
+        version1      => version1
+        , version2    => version2
+      );
+      if execErrorMessageMask is not null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Successful execution instead of error'
+        );
+      end if;
+    exception when others then
+      if execErrorMessageMask is not null then
+        execErrorMessage := logger.getErrorStack();
+        if logger.isTraceEnabled() then
+          logger.trace(
+            'execution for test case finished with error:'
+            || chr(10) || execErrorMessage
+          );
+        end if;
+        if execErrorMessage not like execErrorMessageMask then
+          pkg_TestUtility.compareChar(
+            actualString        => execErrorMessage
+            , expectedString    => execErrorMessageMask
+            , failMessageText   =>
+                cinfo || 'Error message does not match pattern'
+          );
+        end if;
+      else
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Execution failed with error:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end if;
+    end;
+
+    -- Checking for a successful result
+    if execErrorMessageMask is null then
+      pkg_TestUtility.compareChar(
+        actualString        => execResult
+        , expectedString    => resValue
+        , failMessageText   =>
+            cinfo || 'Unexpected result of comparison'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Error while running test case ('
+          || 'caseNumber=' || checkCaseNumber
+          || ', cinfo="' || cinfo || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkCase;
+
+
+
+-- testCompareVersion
+begin
+  pkg_TestUtility.beginTest(
+    'compare version'
+  );
+
+  checkCase( '1.0.0', '1.0.0', 0);
+  checkCase( '1.0', '1.00', 0);
+  checkCase( '1.0.0', '1.0', 0);
+  checkCase( '1.00', '1.0.0', 0);
+
+  checkCase( '3.0.0', '4.0.0', -1);
+  checkCase( '4.0.0', '3.0.0', 1);
+  checkCase( '3.0.0', '3.0.1', -1);
+  checkCase( '3.0.2.3', '3.0.1', 1);
+  checkCase( '3.0.2.3', '3.0.15', -1);
+
+  pkg_TestUtility.endTest();
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while testing compareVersion ('
+        || 'testCaseNumber=' || testCaseNumber
+        || ').'
+      )
+    , true
+  );
+end testCompareVersion;
+
 end pkg_ModuleInfoTest;
 /

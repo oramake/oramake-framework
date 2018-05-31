@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=2.0.1
+OMS_VERSION=2.1.0
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 25390855 $'
+commonRevisionValue='$Revision:: 25461251 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
+commonChangeDateValue='$Date:: 2018-05-30 13:11:25 +0300 #$'
 
 
 # var: commonRevision
@@ -164,10 +164,6 @@ templateDir="${installShareDir}/Data/NewModule"
 # var: templatePackageName
 # Базовое имя ( без расширения) файлов с шаблоном пакета Oracle.
 templatePackageName="pkg_NewModule"
-
-# var: patchDataDir
-# Каталог с патчами для обновления файлов модуля.
-patchDataDir="$dataDir/UpdateModule"
 
 # var: patchConfigDir
 # Настроечный каталог с патчами для обновления файлов модуля.

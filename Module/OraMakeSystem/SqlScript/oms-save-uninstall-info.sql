@@ -11,7 +11,7 @@
 -- Замечания:
 --  - скрипт используется внутри OMS;
 --  - для выполнения операции используется скрипт
---    <OmsInternal/add-install-result.sql>
+--    <OmsInternal/install-version-operation.sql>
 --
 
-@&OMS_SCRIPT_DIR/OmsInternal/add-install-result.sql "&1" "" OBJ "" 1 "&2" "" ""
+@&OMS_SCRIPT_DIR/OmsInternal/install-version-operation.sql "&1" "" OBJ "" 1 "&2" "" "" 0

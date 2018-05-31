@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 24409882 $
-# $Date:: 2016-05-30 10:22:40 +0300 #$
+# $Revision:: 25461251 $
+# $Date:: 2018-05-30 13:11:25 +0300 #$
 #
 
 
@@ -130,9 +130,13 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_DATA_DIR
+# build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
+export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
@@ -185,7 +189,7 @@ ifeq ($(MODULE_VERSION),)
       ifeq ($(call compareVersion,$(INSTALL_VERSION),$(moduleVersion)),1)
 
         moduleVersionNew := $(shell \
-          oms-module set-version --directory .. \
+          oms set-version --directory .. \
             --used-only --quiet "$(INSTALL_VERSION)" \
           && echo \
             "OMS: module version changed using INSTALL_VERSION: $(INSTALL_VERSION) ( please, run \"make gendoc\")" >&2 \
@@ -253,7 +257,7 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms-module --directory .. show-svn-info --quiet)
+getSvnInfo := $(shell oms show-svn-info --directory .. --quiet)
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 
@@ -265,7 +269,7 @@ export OMS_ACTION_GOALS = $(MAKECMDGOALS)
 # Устанавливает номер текущей версии модуля.
 
 set-version.oms:
-	@oms-module set-version --directory .. "$(MODULE_VERSION)"
+	@oms set-version --directory .. "$(MODULE_VERSION)"
 
 
 
@@ -274,12 +278,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 24409882 $$
+omsRevisionKeyword    := \$$Revision:: 25461251 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2016-05-30 10:22:40 +0300 #$$
+omsChangeDateKeyword  := \$$Date:: 2018-05-30 13:11:25 +0300 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -344,7 +348,7 @@ gendoc-menu.oms:
 #
 
 # Каталог со стандартными SQL-скриптами
-omsSqlScriptDir  = $(OMS_INSTALL_DATA_DIR)/SqlScript
+omsSqlScriptDir  = $(OMS_INSTALL_SHARE_DIR)/SqlScript
 
 # Каталог с файлами, создаваемыми при загрузке в БД.
 loadDir           = $(omsModuleDir)/Load
@@ -1133,8 +1137,11 @@ load-start-log.oms:
 			&& if [[ "$(OMS_DEBUG_LEVEL)" != "0" ]]; then \
 			   echo "OMS_DEBUG_LEVEL     : $(OMS_DEBUG_LEVEL)"; \
 			   fi \
-			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
-			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			&& if [[ "$(OMS_INSTALL_SHARE_DIR)" != "/usr/local/share/oms" ]]; then \
+			   echo "OMS_INSTALL_SHARE_DIR: $(OMS_INSTALL_SHARE_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \
@@ -1206,6 +1213,98 @@ load-clean.oms:
 # group: Установка модуля в БД
 #
 
+
+
+#
+# Проверка возможности установки в БД версии модуля и сохранение информации об
+# установке версии (подцели %-save-info, %-save-info.oms).
+#
+
+# Возвращает 1 если проверки устанавливаемой версии модуля должна выполняться
+# при текущем запуске make.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+
+# Не выполняем проверки возможности установки версии если не была указана
+# устанавливаемая версия модуля ( кроме цели grant, для которой в этом случае
+# по-умолчанию используется Last)
+#
+isCheckVersionNeed = $(if $(call filterGoals, \
+  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
+    $(1) $(1).oms $(1)-before $(1)-before.oms) \
+),1)
+
+# Возвращает имя цели для сохранения информации о действии по установке в
+# случае, если оно должно выполняться при текущем запуске make.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+
+# Не выполняем сохранение информации о действиях по основым целям ( например,
+# install и uninstall, кроме grant) в случае, если не была указана
+# устанавливаемая версия модуля ( для цели grant в этом случае по-умолчанию
+# используется Last)
+#
+getSaveInfoGoal = $(if $(call filterGoals, \
+  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
+    $(1) $(1).oms) \
+  $(1)-save-info $(1)-save-info.oms \
+),$(1)-save-info.oms)
+
+# Возвращает выполняемые файлы для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+getCheckVersionTarget = \
+  $(addprefix oms-check-$(1)-version.sql, \
+    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
+
+getSaveInfoTarget = \
+  $(addprefix oms-save-$(1)-info.sql, \
+    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
+
+# Возвращает реально выполняемые файлы для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+getCheckVersionTargetReal = \
+  $(sort $(filter-out %.-$(runExt),$(call getCheckVersionTarget,$(1))))
+
+getSaveInfoTargetReal = \
+  $(sort $(filter-out %.-$(runExt),$(call getSaveInfoTarget,$(1))))
+
+
+# Аргументы выполнения файлов для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+# (2)                         - дополнительные аргументы ( передаются скрипту
+#                               начиная со второй позиции)
+#
+getCheckVersionArgumentList = \
+  $(foreach f,$(call getCheckVersionTargetReal,$(1)), \
+    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
+        $(call wordPosition,$(f),$(call getCheckVersionTarget,$(1))) \
+      ))"$(if $(2), $(2))))
+
+getSaveInfoArgumentList = \
+  $(foreach f,$(call getSaveInfoTargetReal,$(1)), \
+    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
+        $(call wordPosition,$(f),$(call getSaveInfoTarget,$(1))) \
+      ))"$(if $(2), $(2))))
+
+
+
+# Передача параметров для проверки устанавливаемой версии
+ifneq ($(call isCheckVersionNeed,install),)
+  loadArgumentList += $(call getCheckVersionArgumentList,install)
+endif
+
 # Настройка передачи параметров скрипту проверки блокировок oms-check-load.sql.
 # Файлы для проверки берутся из installCheckLockTarget ( за исключением файлов,
 # не загружаемых из-за FILE_MASK, LOAD_FILE_MASK и SKIP_FILE_MASK) и
@@ -1261,6 +1360,8 @@ installBeforeTargetReal = $(strip \
 
 install-before.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,install), \
+    $(call getCheckVersionTargetReal,install)) \
   $(installBeforeTargetReal)
 
 
@@ -1322,73 +1423,16 @@ install-after.oms: \
 
 
 
-#
-# Сохранение в БД информации о действиях по установке ( подцели %-save-info)
-#
-
-# Возвращает имя цели для сохранения информации о действии по установке в
-# случае, если оно должно выполняться при текущем запуске make.
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-
-# Не выполняем сохранение информации о действиях по основым целям ( например,
-# install и uninstall, кроме grant) в случае, если не была указана
-# устанавливаемая версия модуля ( для цели grant в этом случае по-умолчанию
-# используется Last)
-#
-getSaveInfoGoal = $(if $(call filterGoals, \
-  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
-    $(1) $(1).oms) \
-  $(1)-save-info $(1)-save-info.oms \
-),$(1)-save-info.oms)
-
-# Возвращает выполняемые файлы для цели %-save-info.
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-getSaveInfoTarget = \
-  $(addprefix oms-save-$(1)-info.sql, \
-    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
-
-# Возвращает реально выполняемые файлы для цели %-save-info
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-getSaveInfoTargetReal = \
-  $(sort $(filter-out %.-$(runExt),$(call getSaveInfoTarget,$(1))))
-
-# Аргументы выполнения файлов для цели %-save-info
-#
-# Параметры:
-# (1)                         - имя основной цели
-# (2)                         - дополнительные аргументы ( передаются скрипту
-#                               начиная со второй позиции)
-#
-getSaveInfoArgumentList = \
-  $(foreach f,$(call getSaveInfoTargetReal,$(1)), \
-    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
-        $(call wordPosition,$(f),$(call getSaveInfoTarget,$(1))) \
-      ))"$(if $(2), $(2))))
-
-
-
 # target: install-save-info.oms
 # Сохраняет в БД информацию об установке модуля.
-
-ifneq ($(call getSaveInfoGoal,install),)
-
-  loadArgumentList += \
-    $(call getSaveInfoArgumentList,install)
-
-endif
 
 install-save-info.oms: \
   load-start-log.oms \
   $(call getSaveInfoTargetReal,install)
+
+ifneq ($(call getSaveInfoGoal,install),)
+  loadArgumentList += $(call getSaveInfoArgumentList,install)
+endif
 
 
 
@@ -1432,6 +1476,12 @@ test.oms: \
 #
 # group: Отмена установки модуля в БД
 #
+
+ifneq ($(call isCheckVersionNeed,uninstall),)
+  loadArgumentList += \
+    $(call getCheckVersionArgumentList,uninstall,"$(UNINSTALL_RESULT_VERSION)")
+endif
+
 
 # Реально загружаемые файлы при отмене установки.
 uninstallLoadTargetReal := \
@@ -1493,6 +1543,8 @@ uninstallBeforeTargetReal = $(strip \
 
 uninstall-before.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,uninstall), \
+    $(call getCheckVersionTargetReal,uninstall)) \
   $(uninstallBeforeTargetReal)
 
 
@@ -1610,12 +1662,19 @@ grant-save-info.oms: \
   $(call getSaveInfoTargetReal,grant)
 
 
+ifneq ($(call isCheckVersionNeed,grant),)
+  loadArgumentList += \
+    $(call getCheckVersionArgumentList,grant,"$(call getInstallVersion,$(grantVersion))" "$(call getIsFullInstall,$(grantVersion))" "$(grantScript)" "$(TO_USERNAME)")
+endif
+
 
 # target: grant.oms
 # Выдает права пользователю БД.
 
 grant.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,grant), \
+    $(call getCheckVersionTargetReal,grant)) \
   grant-exec.oms \
   $(call getSaveInfoGoal,grant) \
 

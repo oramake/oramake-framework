@@ -2,10 +2,10 @@
 
 # script: create-patch
 # Создает файлы для обновления модуля.
-# Файлы для обновления создаются в каталоге Data/UpdateModule с помощью
-# svn diff на основе внесенных изменений в базовые файлы, находящиеся в
-# Data/NewModule ( при этом игнорируются файлы, которые просто копируются
-# при обновлении модуля скриптом <oms-update-module>).
+# Файлы для обновления создаются в каталоге Config/Default/UpdateModule с
+# помощью svn diff на основе внесенных изменений в базовые файлы, находящиеся в
+# Data/NewModule ( при этом игнорируются файлы, которые просто копируются при
+# обновлении модуля скриптом <oms-update-module>).
 #
 #
 # Использование:
@@ -28,11 +28,11 @@
 #
 
 # Версия программы
-OMS_VERSION=2.0.1
+OMS_VERSION=2.1.0
                                         # Информация о версии файла из SVN
 omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 25390855 $'
-fileChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
+fileRevisionValue='$Revision:: 25461251 $'
+fileChangeDateValue='$Date:: 2018-05-30 13:11:25 +0300 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
@@ -61,7 +61,7 @@ tmpFile="/tmp/create-patch.$$"
 templateDir="Data/NewModule"
 
 # Данные для обновления файлов модуля
-updateDir="Data/UpdateModule"
+updateDir="Config/Default/UpdateModule"
 
 # Каталог с файлами OMS
 omsDir="DB/OmsModule"
@@ -193,8 +193,8 @@ createPatch()
                                         # в правке 273 выполнялся unix2dos
   if [[ "$changeRevision" != "273" ]]; then
     local patchDir="$updateDir/$filePath"
-    local patchFileName="p-------"
-    patchFileName="${patchFileName:0:8-${#patchNumber}}${patchNumber}.diff"
+    local patchFileName="p---------"
+    patchFileName="${patchFileName:0:10-${#patchNumber}}${patchNumber}.diff"
     local patchFile="$patchDir/$patchFileName"
     if (( $isOverwrite )) || [[ ! -f "$patchFile" ]]; then
       local diffArg=""
@@ -280,10 +280,8 @@ processTarget()
       else
         if svn status "$templateDir/$file" | grep --quiet "^M"; then
           getRevisionArray revArray "$templateDir/$file"
-          local patchNumber=${revArray[0]}
-          if (( $patchNumber < ${cmnRevArray[0]} )); then
-            patchNumber=${cmnRevArray[0]}
-          fi
+          local sinceSecond=$(date +%s)
+          local patchNumber=$(( sinceSecond / 60 ))
           createPatch "$file" "" "$patchNumber"
         fi
       fi

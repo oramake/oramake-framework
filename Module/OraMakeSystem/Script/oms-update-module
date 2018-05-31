@@ -47,15 +47,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.0.1
+OMS_VERSION=2.1.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25390855 $'
+fileRevisionValue='$Revision:: 25461251 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2018-04-11 15:55:12 +0300 #$'
+fileChangeDateValue='$Date:: 2018-05-30 13:11:25 +0300 #$'
 
 
 
@@ -425,7 +425,7 @@ patchFile()
   fi
   for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
-    patchRevision="${patchFile:1:7}"
+    patchRevision="${patchFile%%.*}"
     patchRevision="${patchRevision##*-}"
     if (( patchRevision >= fromRevision )); then
       # Спец-патч по замене табуляции на # пробелы в make-файлах
@@ -630,9 +630,6 @@ updateModule()
       else
         if [[ -n "$fromRevision" ]] && [[ -d "$patchConfigDir/$dstFile" ]]; then
           patchFile "$file" "$dstPath" "$patchConfigDir/$dstFile" \
-            "$fromRevision" "$isUnixFormat"
-        elif [[ -n "$fromRevision" ]] && [[ -d "$patchDataDir/$dstFile" ]]; then
-          patchFile "$file" "$dstPath" "$patchDataDir/$dstFile" \
             "$fromRevision" "$isUnixFormat"
         fi
       fi || exitError "Cannot process file \"$dstPath\"."

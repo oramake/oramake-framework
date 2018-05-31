@@ -369,8 +369,8 @@ set-oms-version:
 		sed --in-place \
 			-e "s/\$$Revision:: [0-9]\\+ \\+\\$$/\$$Revision:: $$versionRevision \$$/" \
 			-e "s/\$$Date:: [0-9-]\\+ [0-9:]\\+ [0-9+-]\\+ \\#\\$$/\$$Date:: $$versionDate \#\$$/" \
-			-e 's/^OMS_VERSION=[0-9.]*$$/OMS_VERSION=$(OMS_VERSION)/' \
-			-e 's/^set omsVersion=[0-9.]*$$/set omsVersion=$(OMS_VERSION)/' \
+			-e 's/^OMS_VERSION=[0-9.]*\r\?$$/OMS_VERSION=$(OMS_VERSION)/' \
+			-e 's/^set omsVersion=[0-9.]*\r\?$$/set omsVersion=$(OMS_VERSION)/' \
 			$(scriptDir)/*[^~] \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
