@@ -1201,7 +1201,7 @@ begin
           , currentVersion
         ) < 0
       then
-    erm := 'Устанавливаемая версия младше чем установленная ранее';
+    erm := 'Устанавливаемая версия младше, чем установленная ранее';
   end if;
   if erm is not null then
     raise_application_error(
