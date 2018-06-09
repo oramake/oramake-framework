@@ -337,7 +337,7 @@ getLoadJavaUsedLibJar = \
 # Используемые Java-библиотеки.
 # Указываются пути к *.jar файлам загружаемых внешних Java-библиотек.
 loadJavaUsedLibJar  =                    \
-  $(call getLoadJavaUsedLibJar,svnkit-1.3.8)  \
+  $(call getLoadJavaUsedLibJar,svnkit-1.9.3)  \
 
 
 
