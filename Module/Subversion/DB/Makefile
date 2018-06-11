@@ -323,7 +323,7 @@ getLoadJavaUsedLibJar = \
   $(if $(INSTALL_VERSION), \
 	  $(addsuffix .ignore, \
 			$(wildcard \
-				$(addsuffix /$(1)/*.jar, \
+				$(addsuffix /$(1)/lib/*.jar, \
 					$(if $(call nullif, $(call upper,$(INSTALL_VERSION)),LAST), \
 						$(call getVersionDir, Java/UsedLib) \
 						, Java/UsedLib/$(INSTALL_VERSION) \
