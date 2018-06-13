@@ -7,6 +7,8 @@ group: 1.3.1 ( 2018-04-15)
 [+] Add procedure <pkg_DataSync::appendData> for synchronizing tables
     by primary key (record creation date is also needed).
 
+[+] Remote table support in <pkg_DataSync::refreshByCompare>.
+
 
 
 group: 1.3.0 ( 2016-08-26)
