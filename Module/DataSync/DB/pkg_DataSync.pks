@@ -52,8 +52,9 @@ MView_RefreshMethodCode constant varchar2(1) := 'm';
   данных и внесения необходимых изменений командами merge и delete.
 
   Параметры:
-  targetTable                 - таблица для обновления ( имя таблицы, возможно
-                                с указанием схемы, без учета регистра)
+  targetTable                 - таблица для обновления (имя таблицы, возможно
+                                с указанием схемы и DB-линка, без учета
+                                регистра)
   dataSource                  - источник актуальных данных
   tempTableName               - временная таблица для промежуточного сохранения
                                 актуальных данных и использования в командах
@@ -74,6 +75,9 @@ MView_RefreshMethodCode constant varchar2(1) := 'm';
     обновления, за исключением указанных в excludeColumnList;
   - во временной таблице должны быть все колонки, присутствующие в таблице для
     обновления, за исключением указанных в excludeColumnList;
+  - в случае указания удалённой таблицы в качестве targetTable список колонок
+    определяется по dataSource, а первичный ключ по targetTable в БД
+    источнике;
 
   ( <body::refreshByCompare>)
 */
@@ -98,6 +102,7 @@ procedure refreshByCompare(
                                 значений первичного ключа (по-умолчанию
                                 tableName)
   addonTableName              - дополнительная таблица для догрузки
+  addonSourceTableName        - исходная дополнительная таблица для догрузки
   sourceTableName             - таблица(представление) с исходными данными
                                 (по-умолчанию tableName)
   toDate                      - дата, до которой доливаются данные
@@ -123,6 +128,7 @@ function appendData(
 , tableName                   varchar2
 , idTableName                 varchar2 := null
 , addonTableName              varchar2 := null
+, addonSourceTableName        varchar2 := null
 , sourceTableName             varchar2 := null
 , toDate                      date := null
 , maxExecTime                 interval day to second := null
