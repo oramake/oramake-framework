@@ -644,7 +644,7 @@ end execHttpRequest;
 
 /* proc: checkResponseError
   Raises an exception when the Web server returns a status code other than
-  successful code ( HTTP 200).
+  successful code (HTTP 200).
 
   Parameters:
   statusCode                  - Request result code (HTTP Status-Code)
@@ -799,6 +799,49 @@ exception when others then
   end if;
 end getResponseXml;
 
+/* func: getResponseXml(CHECK)
+  Check HTTP response and attempts to return response in XML format.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (default is unknown)
+  entityBody                  - Response to request (HTTP entity-body)
+  soapRequestFlag             - SOAP request was sent
+                                (1 yes (by default), 0 no)
+
+  Return:
+  response in XML format.
+
+  Remarks:
+  - it is wrapper for <checkResponseError> and <getResponseXml> functions;
+*/
+function getResponseXml(
+  statusCode integer
+  , reasonPhrase varchar2
+  , contentType varchar2 := null
+  , entityBody clob
+  , soapRequestFlag integer := null
+)
+return xmltype
+is
+begin
+  checkResponseError(
+    statusCode        => statusCode
+    , reasonPhrase    => reasonPhrase
+    , entityBody      => entityBody
+    , soapRequestFlag => coalesce( soapRequestFlag, 1)
+  );
+  return
+    getResponseXml(
+      entityBody    => entityBody
+      , contentType => contentType
+    )
+  ;
+end getResponseXml;
+
 /* func: getHttpResponse
   Returns data received by using an HTTP request at a given URL.
 
@@ -881,6 +924,81 @@ exception when others then
     , true
   );
 end getHttpResponse;
+
+
+
+/* group: Execute of SOAP HTTP requests  */
+
+/* proc: execSoapRequest
+  Execute of SOAP HTTP request.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (out)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (out, maximum 256 chars)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (out, maximum 1024 chars)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (out)
+  requestUrl                  - URL of web service
+  soapAction                  - Action for request
+  soapMessage                 - Text of SOAP message to web service
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+
+  Remarks:
+  - it is wrapper for <execHttpRequest>;
+*/
+procedure execSoapRequest(
+  statusCode out nocopy integer
+  , reasonPhrase out nocopy varchar2
+  , contentType out nocopy varchar2
+  , entityBody out nocopy clob
+  , requestUrl varchar2
+  , soapAction varchar2
+  , soapMessage clob
+  , disableChunkedEncFlag integer := null
+  , maxWaitSecond integer := null
+)
+is
+
+  execSecond number;
+
+begin
+  execHttpRequest(
+    statusCode                => statusCode
+    , reasonPhrase            => reasonPhrase
+    , contentType             => contentType
+    , entityBody              => entityBody
+    , execSecond              => execSecond
+    , requestUrl              => requestUrl
+    , requestText             => soapMessage
+    , parameterList           => null
+    , disableChunkedEncFlag   => disableChunkedEncFlag
+    , headerList              =>
+        wbu_header_list_t(
+          wbu_header_t( ContentType_HttpHeader, SoapMessage_ContentType)
+          , wbu_header_t( SoapAction_HttpHeader, soapAction)
+        )
+    , maxWaitSecond       => maxWaitSecond
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while executing SOAP HTTP request ('
+        || 'requestUrl="' || requestUrl || '"'
+        || ', soapAction="' || soapAction || '"'
+        || ').'
+      )
+    , true
+  );
+end execSoapRequest;
 
 /* ifunc: getSoapResponse(INTERNAL)
   Returns SOAP message, received by using HTTP request.
