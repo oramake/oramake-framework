@@ -514,12 +514,16 @@ filterOutFileMask = \
 # ( пример: Do/run.sql), а цель $@ представляет собой тот же скрипт с
 # добавлением через точку имени пользователя и БД ( userName@dbName) и
 # произвольного расширения ( пример: Do/run.sql.userName@dbName.load).
-getLoadUser  = $(patsubst $(<F).%,%,$(basename $(@F)))
+getLoadUser  = $(patsubst revert.%,%,$(patsubst $(<F).%,%,$(basename $(@F))))
 
 # Выделяет пользователя с паролем при загрузке из loadUserIdList с
 # использованием функции getLoadUser.
 getLoadUserId  =  \
   $(firstword $(filter $(subst @,/%@,$(getLoadUser)),$(loadUserIdList)))
+
+# Получает флаг выгрузки / деинсталляции файла из $@ (1, либо пусто)
+getRevertFlag = $(if $(filter $(<F).revert.%,$(@F)),1,)
+
 
 # Возвращает номер части модуля, загружаемой в данную схему БД.
 # В случае, если несколько частей модуля одновременно загружаются в одну и
@@ -530,6 +534,7 @@ getLoadModulePart = \
 
 # Возвращает строку параметров, передаваемых загружаемому файлу.
 getLoadArgument = $(shell case "$@" in $(loadArgumentList) esac)
+
 
 # Функция выполнения файла в БД.
 runFunction  = \
@@ -545,6 +550,7 @@ runFunction  = \
 		echo "$$loadFile: -> $$loadUser ..."; \
 		oms-load \
 			--file-module-part "$(firstword $(call getFileModulePart,$<) $(getLoadModulePart))" \
+			$(if $(call getRevertFlag),--revert) \
 			$(if $(call isMakeFlag,i),--force) \
 			$(if $(FILE_MASK),--file-mask "$(subst $(comma),$(space),$(strip $(FILE_MASK)))") \
 			$(if $(SKIP_FILE_MASK),--skip-file-mask "$(subst $(comma),$(space),$(strip $(SKIP_FILE_MASK)))") \
@@ -801,6 +807,10 @@ ifneq ($(LOAD_DB)$(LOAD_USERID),)
   loadUserIdList      += $(loadUserId)
   ru                  := $(loadUser)$(runExt)
   lu                  := $(loadUser)$(loadExt)
+
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
