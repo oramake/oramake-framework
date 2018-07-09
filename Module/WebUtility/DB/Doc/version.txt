@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: 1.0.2 ( 2018-07-06)
+
+[+] Added wrapper functions <pkg_WebUtility.getResponseXml(CHECK)> and
+    <pkg_WebUtility.execSoapRequest>.
+
+
+
 group: 1.0.1 ( 2018-04-26)
 
 [+] Added constants for UTF-8 and Windows-1251 charsets.
