@@ -521,6 +521,9 @@ getLoadUser  = $(patsubst $(<F).%,%,$(basename $(@F)))
 getLoadUserId  =  \
   $(firstword $(filter $(subst @,/%@,$(getLoadUser)),$(loadUserIdList)))
 
+# Получает флаг выгрузки / деинсталляции файла из $@ (1, либо пусто)
+getRevertFlag = $(if $(filter $(<F).revert.%,$(@F)),1,)
+
 # Возвращает номер части модуля, загружаемой в данную схему БД.
 # В случае, если несколько частей модуля одновременно загружаются в одну и
 # ту же схему БД, возвращается минимальный номер.
@@ -545,6 +548,7 @@ runFunction  = \
 		echo "$$loadFile: -> $$loadUser ..."; \
 		oms-load \
 			--file-module-part "$(firstword $(call getFileModulePart,$<) $(getLoadModulePart))" \
+			$(if $(call getRevertFlag),--revert) \
 			$(if $(call isMakeFlag,i),--force) \
 			$(if $(FILE_MASK),--file-mask "$(subst $(comma),$(space),$(strip $(FILE_MASK)))") \
 			$(if $(SKIP_FILE_MASK),--skip-file-mask "$(subst $(comma),$(space),$(strip $(SKIP_FILE_MASK)))") \
@@ -802,6 +806,9 @@ ifneq ($(LOAD_DB)$(LOAD_USERID),)
   ru                  := $(loadUser)$(runExt)
   lu                  := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -824,6 +831,9 @@ ifneq ($(LOAD_DB2)$(LOAD_USERID2),)
   loadUserIdList      += $(loadUserId)
   ru2                 := $(loadUser)$(runExt)
   lu2                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -848,6 +858,9 @@ ifneq ($(LOAD_DB3)$(LOAD_USERID3),)
   ru3                 := $(loadUser)$(runExt)
   lu3                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -870,6 +883,9 @@ ifneq ($(LOAD_DB4)$(LOAD_USERID4),)
   loadUserIdList      += $(loadUserId)
   ru4                 := $(loadUser)$(runExt)
   lu4                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -894,6 +910,9 @@ ifneq ($(LOAD_DB5)$(LOAD_USERID5),)
   ru5                 := $(loadUser)$(runExt)
   lu5                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -916,6 +935,9 @@ ifneq ($(LOAD_DB6)$(LOAD_USERID6),)
   loadUserIdList      += $(loadUserId)
   ru6                 := $(loadUser)$(runExt)
   lu6                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -940,6 +962,9 @@ ifneq ($(LOAD_DB7)$(LOAD_USERID7),)
   ru7                 := $(loadUser)$(runExt)
   lu7                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -963,6 +988,9 @@ ifneq ($(LOAD_DB8)$(LOAD_USERID8),)
   ru8                 := $(loadUser)$(runExt)
   lu8                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -985,6 +1013,9 @@ ifneq ($(LOAD_DB9)$(LOAD_USERID9),)
   loadUserIdList      += $(loadUserId)
   ru9                 := $(loadUser)$(runExt)
   lu9                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)

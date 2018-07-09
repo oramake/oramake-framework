@@ -314,6 +314,10 @@ isForce=0
 #
 isFullModuleInstall=$OMS_IS_FULL_MODULE_INSTALL
 
+# var: isRevert
+# Удаление/деинсталляция вместо установки
+isRevert=0
+
 # var: isSaveInstallInfo
 # Флаг сохранения информации об установке в БД.
 #
@@ -619,9 +623,13 @@ parseOption()
         processStartTime="$2"; shift;
         logDebug3 "Set processStartTime: '$processStartTime'"
         ;;
+      --revert)
+        isRevert=1;
+        logDebug3 "Set isRevert: $isRevert"
+        ;;
       --skip-check-job)
         skipCheckJob=1;
-        logDebug3 "Set isForce: $skipCheckJob"
+        logDebug3 "Set skipCheckJob: $skipCheckJob"
         ;;
       --skip-load-option)
         skipLoadOption=1;
@@ -1281,19 +1289,40 @@ checkLoadJavaOutput()
 #
 loadJava()
 {
-  logDebug "Use loadjava.bat for load: loadFile='$loadFile'"
   # Получаем общий код завершения канала
   set -o pipefail
   # sed используется для обхода бага с  зависанием команды read при наличии
   # двух подряд символов возврата каретки
-  ( loadjava.bat -user "$userId" "$loadFile" 2>&1 \
-  && loadjava.bat -resolve -user "$userId" "$loadFile" 2>&1 ) \
-    | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput
+  ( loadjava.bat -user "$userId" "$loadFile" -resolve \
+    -resolver  "((* ${userId/%\/*/}) (* PUBLIC) (* -))" \
+    2>&1 \
+  ) | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput
   local loadResult=$?
   set +o pipefail
   if [[ $loadResult -ne 0 ]]; then
     exitError "loadjava finished with error ( code $loadResult)."
   fi
+  echo "* Java archive loaded"
+}
+
+
+# func: dropJava
+# Удаляет Java-библиотеку через dropjava.
+#
+dropJava()
+{
+  # Получаем общий код завершения канала
+  set -o pipefail
+  # sed используется для обхода бага с зависанием команды read при наличии
+  # двух подряд символов возврата каретки
+  ( dropjava.bat -user "$userId" "${loadFile}" 2>&1 ) \
+    | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput
+  local loadResult=$?
+  set +o pipefail
+  if [[ $loadResult -ne 0 ]]; then
+    exitError "dropjava finished with error (code $loadResult)."
+  fi
+  echo "* Java archive dropped"
 }
 
 
@@ -1404,7 +1433,11 @@ deleteNulFile
 # Загрузка файла
 case "$loadFile" in
   *.jar)
-    loadJava "${loadArgList[@]}"
+    if ! (( isRevert )); then
+      loadJava "${loadArgList[@]}"
+    else
+      dropJava "${loadArgList[@]}"
+    fi
     ;;
   *.dat)
     loadData "${loadArgList[@]}"

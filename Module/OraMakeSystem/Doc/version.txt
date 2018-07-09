@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: ?.?.? ( ????-??-??)
+
+[+] Add dropjava support. Use consequently current user, public and "-" for
+    resolver in loadjava.
+
+
+
 group: 2.1.0 ( 2018-05-30)
 
 [+] Добавлена проверка возможности установки версии на основе данных об
