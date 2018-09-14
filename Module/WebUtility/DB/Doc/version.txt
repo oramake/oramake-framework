@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: 1.0.3 ( 2018-09-14)
+
+[!] Fixed bug with sending request parameters (parameters with NULL value
+    are ignored, long value sending incorrectly).
+
+
+
 group: 1.0.2 ( 2018-07-06)
 
 [+] Added wrapper functions <pkg_WebUtility.getResponseXml(CHECK)> and

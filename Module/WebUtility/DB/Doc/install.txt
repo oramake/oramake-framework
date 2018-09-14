@@ -19,6 +19,18 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
+group: 1.0.3
+
+Команда для установки обновления:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 1.0.2
 
 Предварительные требования:

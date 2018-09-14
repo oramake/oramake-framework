@@ -228,12 +228,32 @@ is
       );
       while i is not null loop
         len := coalesce( length( parameterList( i).parameter_value), 0);
+        if logger.isTraceEnabled() then
+          logger.trace(
+            'parameter #' || i || ': name="'
+              || parameterList( i).parameter_name || '"'
+            || ', length(value)=' || len
+            || ', value'
+              || case when len > 3800  then
+                  '(first 3800 chars)'
+                end
+              || '="' || substr( parameterList( i).parameter_value, 1, 3800)
+              || '"'
+          );
+        end if;
         if parameterList( i).parameter_name is not null then
-          offset := 1;
-          amount :=
-            floor( Buffer_Size / Escape_Factor)
-            - length( parameterList( i).parameter_name) - 2
+          buffer :=
+            case when i > 1  then '&' end
+            || utl_url.escape(
+                url => parameterList( i).parameter_name
+                , escape_reserved_chars => true
+                , url_charset => usedBodyCharset
+              )
+            || '='
           ;
+          dbms_lob.writeAppend( parameterData, length( buffer), buffer);
+          offset := 1;
+          amount := floor( Buffer_Size / Escape_Factor);
           loop
             exit when offset > len;
             dbms_lob.read(
@@ -241,20 +261,11 @@ is
               , amount, offset, buffer
             );
             offset := offset + amount;
-            buffer :=
-              case when i > 1  then '&' end
-              || utl_url.escape(
-                  url => parameterList( i).parameter_name
-                  , escape_reserved_chars => true
-                  , url_charset => usedBodyCharset
-                )
-              || '='
-              || utl_url.escape(
-                  url => buffer
-                  , escape_reserved_chars => true
-                  , url_charset => usedBodyCharset
-                )
-            ;
+            buffer := utl_url.escape(
+              url => buffer
+              , escape_reserved_chars => true
+              , url_charset => usedBodyCharset
+            );
             dbms_lob.writeAppend( parameterData, length( buffer), buffer);
           end loop;
         elsif len > 0 then

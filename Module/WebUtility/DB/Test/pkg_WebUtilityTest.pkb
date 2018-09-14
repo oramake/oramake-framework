@@ -345,6 +345,36 @@ begin
   );
 
   checkCase(
+    'Parameter with NULL value'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , parameterList           =>
+        wbu_parameter_list_t(
+          wbu_parameter_t( 'param1', '')
+        )
+    , resultPatternList       =>
+        cmn_string_table_t(
+          '%application/x-www-form-urlencoded%'
+          , '%param1%=%'
+        )
+  );
+
+  checkCase(
+    'Parameter with long value'
+    , opt.getString( TestHttpEchoUrl_OptSName)
+    , parameterList           =>
+        wbu_parameter_list_t(
+          wbu_parameter_t( 'param1', rpad( '0', 8000, '0'))
+        )
+    , disableChunkedEncFlag   => 1
+    , resultPatternList       =>
+        cmn_string_table_t(
+          '%application/x-www-form-urlencoded%'
+          -- Content-Length: 8007
+          , '%"8007"%'
+        )
+  );
+
+  checkCase(
     'Empty Transfer-Encoding header value'
     , opt.getString( TestHttpEchoUrl_OptSName)
     , parameterList           =>
