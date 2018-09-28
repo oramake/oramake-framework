@@ -109,6 +109,14 @@ Group: Скрипты  {
 
    Group: Install  {
 
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
+         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         }  # Group: Config
+
       Group: Grant  {
 
          Group: Last  {

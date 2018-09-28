@@ -17,6 +17,44 @@ LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
 LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
 
+Дополнительные параметры:
+STOP_JOB                      - останавливать выполнение заданий в БД на время
+                                установки обновления модуля
+                                (1 да, 0 нет ( по умолчанию))
+BATCH_WAIT                    - ожидание окончания работы батчей в секундах
+                                (по умолчанию 60)
+JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
+                                после завершения установки ( по умолчанию
+                                используется сохранненое перед установкой)
+
+В случае указания STOP_JOB=1 перед установкой обновления модуля
+останавливается выполнение заданий в БД
+( см. <Install/Config/before-action.sql>), а после успешной установки их
+выполнение восстанавливается ( см. <Install/Config/after-action.sql>).  При
+повторном запуске установки возможно появление сообщения
+"Warning. There's a non-zero value saved in view...",
+которое говорит о том, что используется значение параметра
+JOB_QUEUE_PROCESSES, запомненного при предыдущем запуске установки.
+
+В случае ошибки при установке "Batch stop waiting timed out" батчей, можно
+попробовать увеличить BATCH_WAIT.
+Пример запуска установки со временем ожидания 1000 секунд
+
+(code)
+
+make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1 BATCH_WAIT=1000
+
+(end)
+
+В случае невозможности в данный момент выполнить установку можно восстановить
+запуск заданий в БД:
+
+(code)
+
+make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
+
+(end)
+
 
 
 group: 1.0.3
@@ -25,7 +63,7 @@ group: 1.0.3
 
 (code)
 
-$ make install INSTALL_VERSION=1.0.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.0.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -40,7 +78,7 @@ group: 1.0.2
 
 (code)
 
-$ make install INSTALL_VERSION=1.0.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.0.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -53,7 +91,7 @@ group: 1.0.1
 
 (code)
 
-$ make install INSTALL_VERSION=1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -69,7 +107,7 @@ group: Первоначальная установка
 
 (code)
 
-$ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=sys-privs.sql TO_USERNAME=<MAIN_USER>
+make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=sys-privs.sql TO_USERNAME=<MAIN_USER>
 
 (end)
 
@@ -87,7 +125,7 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=sys/???@??? LOAD_OPERATORID=???/??
 
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -95,7 +133,7 @@ $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/
 
 (code)
 
-$ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=grant-objs.sql TO_USERNAME=???
+make grant INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=grant-objs.sql TO_USERNAME=???
 
 (end)
 
@@ -127,7 +165,7 @@ tests:
 
 (code)
 
-$ make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -138,7 +176,7 @@ text data (<pkg_WebUtilityTest.TestHttpTextUrl_OptSName>) to
 
 (code)
 
-$ make -B install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/opt_option.sql SQL_DEFINE=TestHttpTextUrl=http://www.example.com
+make -B install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/opt_option.sql SQL_DEFINE=TestHttpTextUrl=http://www.example.com
 
 (end)
 
@@ -146,7 +184,7 @@ Command for run tests:
 
 (code)
 
-$ make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
