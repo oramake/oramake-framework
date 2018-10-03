@@ -146,8 +146,9 @@ errorStackId integer := 0;
   Интерфейсный объект к модулю Logging
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => pkg_Logging.Module_Name
-  , objectName => 'pkg_LoggingErrorStack'
+  moduleName          => pkg_Logging.Module_Name
+  , objectName        => 'pkg_LoggingErrorStack'
+  , findModuleString  => pkg_Logging.Module_InitialPath
 );
 
 

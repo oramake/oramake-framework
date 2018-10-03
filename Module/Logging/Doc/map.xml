@@ -34,6 +34,7 @@
     <infrastructure></infrastructure>
   </diagram>
   <depend>
+    <module>Oracle/Module/ModuleInfo</module>
     <module>Oracle/Module/Common</module>
     <link></link>
   </depend>

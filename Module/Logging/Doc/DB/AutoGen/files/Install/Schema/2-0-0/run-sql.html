@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Schema/2.0.0/run.sql"></a>Install/<wbr>Schema/<wbr>2.0.<wbr>0/run.sql</h1><div class=CBody><p>Обновление объектов схемы до версии 2.0.0.</p><h4 class=CHeading>Основные изменения</h4><ul><li>в таблицу <a href="../Last/lg_log-tab.html#lg_log" class=LDatabaseTable id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">lg_log</a> добавлены поля sessionid, level_code;</li></ul></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Schema/2.0.0/run.sql"></a>Install/<wbr>Schema/<wbr>2.0.<wbr>0/run.sql</h1><div class=CBody><p>Обновление объектов схемы до версии 2.0.0.</p><h4 class=CHeading>Основные изменения</h4><ul><li>в таблицу <a href="../Last/lg_log-tab.html#lg_log" class=LDatabaseTable id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">lg_log</a> добавлены поля sessionid, level_code, module_name, object_name, module_id;</li></ul></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([19, 20, 21, 24], 29);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<div class=CToolTip id="tt1"><div class=CDatabaseTable><blockquote><table border=0 cellspacing=0 cellpadding=0 class="Prototype"><tr><td><table border=0 cellspacing=0 cellpadding=0><tr><td class=PBeforeParameters colspan=3>create table lg_log (</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>log_id</td><td class=PType nowrap width=100%>&nbsp;integer not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>sessionid</td><td class=PType nowrap width=100%>&nbsp;number not null enable novalidate ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>parent_log_id</td><td class=PType nowrap width=100%>&nbsp;integer ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>level_code</td><td class=PType nowrap width=100%>&nbsp;varchar2(10) not null enable novalidate ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>message_type_code</td><td class=PType nowrap width=100%>&nbsp;varchar2(10) not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>message_value</td><td class=PType nowrap width=100%>&nbsp;integer ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>message_text</td><td class=PType nowrap width=100%>&nbsp;varchar2(4000) not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>date_ins</td><td class=PType nowrap width=100%>&nbsp;date default sysdate not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>operator_id</td><td class=PType nowrap width=100%>&nbsp;integer ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>constraint</td><td class=PType nowrap width=100%>&nbsp;lg_log_pk primary key ( log_id) using index tablespace &amp;indexTablespace ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>constraint</td><td class=PType nowrap width=100%>&nbsp;lg_log_ck_level_code check (level_code not in ('ALL','OFF'))</td></tr><tr><td class=PAfterParameters colspan=3>)</td></tr></table></td></tr></table></blockquote>Лог работы программных модулей.</div></div><!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CDatabaseTable>Лог работы программных модулей.</div></div><!--END_ND_TOOLTIPS-->
 
 
 

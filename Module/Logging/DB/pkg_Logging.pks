@@ -14,6 +14,12 @@ create or replace package pkg_Logging is
 */
 Module_Name constant varchar2(30) := 'Logging';
 
+/* const: Module_InitialPath
+  Первоначальный путь к корневому каталогу модуля
+  (значение тега initialPath из map.xml).
+*/
+Module_InitialPath constant varchar2(150) := 'Oracle/Module/Logging@56';
+
 
 
 /* group: Уровни логирования */

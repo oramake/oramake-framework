@@ -1,7 +1,9 @@
 set feedback off
 
 begin
-  pkg_LoggingTest.testLogger();
+  pkg_LoggingTest.testLogger(
+    testCaseNumber => '&testCaseNumber'
+  );
 end;
 /
 

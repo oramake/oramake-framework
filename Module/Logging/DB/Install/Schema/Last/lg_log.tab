@@ -6,14 +6,18 @@ create table
   log_id                          integer                             not null
   , sessionid                     number                              not null
       enable novalidate
-  , parent_log_id                 integer
   , level_code                    varchar2(10)                        not null
       enable novalidate
-  , message_type_code             varchar2(10)                        not null
   , message_value                 integer
   , message_text                  varchar2(4000)                      not null
+  , module_name                   varchar2(128)
+  , object_name                   varchar2(128)
+  , module_id                     integer
   , date_ins                      date                default sysdate not null
   , operator_id                   integer
+  -- Устаревшие поля
+  , parent_log_id                 integer
+  , message_type_code             varchar2(10)                        not null
   , constraint lg_log_pk primary key
     ( log_id)
     using index tablespace &indexTablespace
@@ -33,14 +37,8 @@ comment on column lg_log.log_id is
 comment on column lg_log.sessionid is
   'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
 /
-comment on column lg_log.parent_log_id is
-  'Id родительской записи лога'
-/
 comment on column lg_log.level_code is
   'Код уровня логирования'
-/
-comment on column lg_log.message_type_code is
-  'Код типа сообщения'
 /
 comment on column lg_log.message_value is
   'Целочисленное значение, связанное с сообщением'
@@ -48,17 +46,32 @@ comment on column lg_log.message_value is
 comment on column lg_log.message_text is
   'Текст сообщения'
 /
+comment on column lg_log.module_name is
+  'Имя модуля, добавившего запись'
+/
+comment on column lg_log.object_name is
+  'Имя объекта модуля (пакета, типа, скрипта), добавившего запись'
+/
+comment on column lg_log.module_id is
+  'Id модуля, добавившего запись (если удалось определить)'
+/
 comment on column lg_log.date_ins is
   'Дата добавления записи'
 /
 comment on column lg_log.operator_id is
   'Id оператора ( из модуля AccessOperator)'
 /
+comment on column lg_log.parent_log_id is
+  'Устаревшее поле: Id родительской записи лога'
+/
+comment on column lg_log.message_type_code is
+  'Устаревшее поле: Код типа сообщения'
+/
 
 
 
 -- index: lg_log_ix_parent_log_id
--- Индекс по
+-- Индекс для внешнего ключа.
 create index
   lg_log_ix_parent_log_id
 on
@@ -69,7 +82,7 @@ tablespace &indexTablespace
 /
 
 -- index: lg_log_ix_date_ins
--- Индекс для внешнего ключа.
+-- Индекс выборке по дате логирования.
 create index
   lg_log_ix_date_ins
 on

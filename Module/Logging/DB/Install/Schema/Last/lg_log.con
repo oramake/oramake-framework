@@ -1,24 +1,38 @@
 alter table
   lg_log
 add constraint
-  lg_log_fk_parent_log_id
-foreign key
-  ( parent_log_id)
-references
-  lg_log (
-    log_id
-  )
-/
-
-alter table
-  lg_log
-add constraint
   lg_log_fk_level_code
 foreign key
   ( level_code)
 references
   lg_level (
     level_code
+  )
+/
+
+alter table
+  lg_log
+add constraint
+  lg_log_fk_module_id
+foreign key
+  ( module_id)
+references
+  mod_module (
+    module_id
+  )
+/
+
+@oms-run Install/Schema/Last/AccessOperatorAddon/lg_log.con
+
+alter table
+  lg_log
+add constraint
+  lg_log_fk_parent_log_id
+foreign key
+  ( parent_log_id)
+references
+  lg_log (
+    log_id
   )
 /
 
@@ -33,5 +47,3 @@ references
     message_type_code
   )
 /
-
-@oms-run Install/Schema/Last/AccessOperatorAddon/lg_log.con

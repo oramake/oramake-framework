@@ -5,6 +5,13 @@ create or replace package body pkg_LoggingInternal is
 
 /* group: Типы */
 
+/* itype: FindModuleStringT
+  Строка для определения Id модуля (тип).
+  Максимальная длина должна быть не меньше, чем у поля module_name таблицы
+  <lg_log>.
+*/
+subtype FindModuleStringT is varchar2(128);
+
 /* itype: TLoggerUid
   Уникальный идентификатор логера.
   Индетификатор соответствует маске ".[<loggerName>.]", где loggerName
@@ -22,8 +29,19 @@ subtype TLoggerUid is varchar2(250);
 */
 type TLogger is record
 (
+  -- Имя модуля, которому относится логер (null для корневого логера)
+  moduleName lg_log.module_name%type
+  -- Имя объекта в модуле, которому относится логер (null для корневого логера)
+  , objectName lg_log.object_name%type
+  -- Id модуля, которому относится логер (если удалось определить)
+  , moduleId integer
+  -- Строка для определения moduleId
+  , findModuleString FindModuleStringT
+  -- Нужно попытаться определить moduleId
+  -- (true - да, false - нет (была попытка), null - не требуется)
+  , isNeedFindModuleId boolean
   -- Код назначенного уровня логирования
-  levelCode lg_level.level_code%type
+  , levelCode lg_level.level_code%type
   -- Признак аддитивности логера
   , additive boolean
   -- Uid родительского логера
@@ -42,6 +60,11 @@ type TColLevelOrder is table of lg_level.level_order%type
   index by lg_level.level_code%type
 ;
 
+/* itype: SetLoggerModuleIdCacheT
+  Кэш результатов определения Id модуля (тип).
+*/
+type SetLoggerModuleIdCacheT is table of integer index by FindModuleStringT;
+
 
 
 /* group: Константы */
@@ -55,10 +78,17 @@ Root_LoggerUid constant varchar2(1) := '.';
 
 /* group: Переменные */
 
-/* ivar: lg
-  Логер пакета.
+/* ivar: logger
+  Внутренний логер пакета (инициализируется в процедуре <initialize>).
 */
-lg lg_logger_t := null;
+logger lg_logger_t := null;
+
+/* ivar: internalLoggerUid
+  Идентификатор внутренного логера пакета (инициализируется в процедуре
+  <initialize>).
+*/
+internalLoggerUid TLoggerUid := null;
+
 
 /* ivar: isAccessOperatorFound
   Признак доступности модуля AccessOperator.
@@ -98,6 +128,10 @@ lastParentLogId integer := null;
 */
 lastSessionid number := null;
 
+/* ivar: setLoggerModuleIdCache
+  Кэш результатов определения Id модуля (тип).
+*/
+setLoggerModuleIdCache SetLoggerModuleIdCacheT;
 
 
 
@@ -126,7 +160,8 @@ begin
       then
     raise_application_error(
       pkg_Error.IllegalArgument
-      , 'Некорректное имя логера ( точка в начале/конце имени либо две точки подряд).'
+      , 'Некорректное имя логера'
+        || ' (точка в начале/конце имени либо две точки подряд).'
     );
   end if;
   return
@@ -233,16 +268,14 @@ is
     После выполнения процедуры можно вызывать функции пакета, использующие
     внутренее логирование.
   */
-  procedure createLogger
+  procedure createInitialLogger
   is
-
-    -- Имя внутреннего логера пакета
-    Package_LoggerName constant varchar2(100)
-      := pkg_Logging.Module_Name || '.' || 'pkg_LoggingInternal'
-    ;
 
     -- Данные логера
     r TLogger;
+
+    -- Имя внутреннего логера пакета
+    loggerName varchar2(200);
 
   begin
 
@@ -253,14 +286,20 @@ is
     colLogger( Root_LoggerUid) := r;
 
     -- Добавляем внутренний логер
+    r.moduleName := pkg_Logging.Module_Name;
+    r.objectName := 'pkg_LoggingInternal';
+    r.findModuleString := pkg_Logging.Module_InitialPath;
+    r.isNeedFindModuleId := true;
     r.levelCode := null;
     r.additive := true;
     r.parentUid := Root_LoggerUid;
-    colLogger( getLoggerUidByName( Package_LoggerName)) := r;
+    loggerName := r.moduleName || '.' || r.objectName;
+    internalLoggerUid := getLoggerUidByName( loggerName);
+    colLogger( internalLoggerUid) := r;
 
     -- Инициализируем внутренний логер ( неявно вызывается getLoggerUid)
-    lg := lg_logger_t.getLogger( Package_LoggerName);
-  end createLogger;
+    logger := lg_logger_t.getLogger( loggerName);
+  end createInitialLogger;
 
 
 
@@ -270,17 +309,20 @@ is
   procedure configLogger is
 
     -- Настраиваемый логер
-    logger lg_logger_t;
+    lgr lg_logger_t;
 
   begin
 
     -- Устанавливаем специальный уровень логирования для модуля по умолчанию
-    logger := lg_logger_t.getLogger( pkg_Logging.Module_Name);
-    logger.setLevel( pkg_Logging.Info_LevelCode);
+    lgr := lg_logger_t.getLogger(
+      moduleName          => pkg_Logging.Module_Name
+      , findModuleString  => pkg_Logging.Module_InitialPath
+    );
+    lgr.setLevel( pkg_Logging.Info_LevelCode);
 
     -- Настраиваем корневой логер
-    logger := lg_logger_t.getRootLogger();
-    logger.setLevel(
+    lgr := lg_logger_t.getRootLogger();
+    lgr.setLevel(
       case when pkg_Common.isProduction = 1 then
         pkg_Logging.Info_LevelCode
       else
@@ -297,12 +339,73 @@ begin
   -- Загружаем порядок уровней
   loadLevelOrder;
 
-  -- Создаем логеры
-  createLogger;
+  -- Создаем начальные логеры (корневой и внутренний пакета)
+  createInitialLogger;
 
   -- Настройка логеров
   configLogger;
 end initialize;
+
+/* iproc: setLoggerModuleId
+  Пытается заполнить Id модуля, к которому относится логер
+  (поле moduleId данных логера <TLogger>).
+
+  Параметры:
+  loggerUid                   - Идентификатор используемого логера
+*/
+procedure setLoggerModuleId(
+  loggerUid varchar2
+)
+is
+
+  findModuleString FindModuleStringT;
+
+  moduleId integer;
+
+begin
+  if colLogger( loggerUid).isNeedFindModuleId then
+
+    -- Делаем только одну попытку
+    colLogger( loggerUid).isNeedFindModuleId := false;
+
+    findModuleString := coalesce(
+      colLogger( loggerUid).findModuleString
+      , colLogger( loggerUid).moduleName
+    );
+
+    -- Трассировка после сброса isNeedFindModuleId чтобы избежать зацикливания
+    -- внутренного логера
+    logger.trace(
+      'setLoggerModuleId: loggerUid="' || loggerUid || '"'
+      || ', for: "' || findModuleString || '"'
+    );
+
+    if setLoggerModuleIdCache.exists( findModuleString) then
+      moduleId := setLoggerModuleIdCache( findModuleString);
+      logger.trace( 'setLoggerModuleId: cached moduleId=' || moduleId);
+    else
+      moduleId := pkg_ModuleInfo.getModuleId(
+        findModuleString      => findModuleString
+          -- Игнорировать если Id модуля не найден (другие исключения возможны)
+        , raiseExceptionFlag  => 0
+      );
+      setLoggerModuleIdCache( findModuleString) := moduleId;
+      logger.trace( 'setLoggerModuleId: found moduleId=' || moduleId);
+    end if;
+
+    colLogger( loggerUid).moduleId := moduleId;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении Id модуля для логера ('
+        || ' loggerUid="' || loggerUid || '"'
+        || ').'
+      )
+    , true
+  );
+end setLoggerModuleId;
 
 
 
@@ -548,12 +651,14 @@ end prepareLogRow;
   Добавляет сообщение в таблицу лога.
 
   Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
+  levelCode                   - Код уровня сообщения
+  messageText                 - Текст сообщения
+  loggerUid                   - Идентификатор используемого логера
 */
 procedure logTable(
   levelCode varchar2
   , messageText varchar2
+  , loggerUid varchar2
 )
 is
 
@@ -566,6 +671,22 @@ is
 begin
   lgr.level_code := levelCode;
   lgr.message_text := substr( messageText, 1, 4000);
+  if loggerUid is not null then
+    lgr.module_name := colLogger( loggerUid).moduleName;
+    lgr.object_name := colLogger( loggerUid).objectName;
+    if colLogger( loggerUid).isNeedFindModuleId then
+      begin
+        setLoggerModuleId( loggerUid => loggerUid);
+      exception when others then
+        logTable(
+          levelCode     => pkg_Logging.Error_LevelCode
+          , messageText => logger.getErrorStack()
+          , loggerUid   => internalLoggerUid
+        );
+      end;
+    end if;
+    lgr.module_id := colLogger( loggerUid).moduleId;
+  end if;
 
   prepareLogRow( lgr);
 
@@ -635,8 +756,9 @@ begin
   if isMessageEnabled( coalesce( loggerUid, Root_LoggerUid), levelCode) then
 
     -- Вывод через dbms_output
+    -- (если явно задано либо явно не задано в тестовой БД)
     if forcedDestinationCode = pkg_Logging.DbmsOutput_DestinationCode
-       or nullif( pkg_Common.isProduction, 0) is null
+      or forcedDestinationCode is null and pkg_Common.isProduction() = 0
     then
       begin
         logDebugDbOut(
@@ -652,17 +774,21 @@ begin
       is null
     then
 
-      -- Если неуспешный вызов logDebugDbOut
+      -- Логируем ошибку выполнения dbms_output
       if dbOutError is not null then
-        logTable( levelCode
-          , 'Ошибка вывода в буфер dbms_output: '
-            || '"'  || dbOutError || '"' || ' Сообщение: '
-            || '"' || messageText || '"'
+        logTable(
+          levelCode     => pkg_Logging.Error_LevelCode
+          , messageText =>
+              'Ошибка вывода в буфер dbms_output: "'  || dbOutError || '".'
+              || ' Сообщение: levelCode="' || levelCode || '"'
+                || ', messageText="' || messageText || '".'
+          , loggerUid   => internalLoggerUid
         );
       end if;
       logTable(
-        levelCode
-        , messageText
+        levelCode       => levelCode
+        , messageText   => messageText
+        , loggerUid     => loggerUid
       );
     end if;
   end if;
@@ -673,17 +799,32 @@ end logMessage;
 /* group: Реализация функций логера */
 
 /* func: getLoggerUid
-  Возвращает уникальный идентификатор логера по имени.
+  Возвращает уникальный идентификатор логера.
   При отсутствии соответствующего логера создает новый.
 
   Параметры:
-  loggerName                  - имя логера ( null соответсвует корневому логеру)
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                objectName)
+  moduleName                  - Имя модуля
+                                (по умолчанию выделяется из loggerName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию выделяется из loggerName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - идентификатор существующего логера
 */
 function getLoggerUid(
   loggerName varchar2
+  , moduleName varchar2
+  , objectName varchar2
+  , findModuleString varchar2
 )
 return varchar2
 is
@@ -694,13 +835,37 @@ is
 
 
   /*
+    Использует logger.errorStack если доступен внутренний логер.
+  */
+  function errorStack(
+    errorMessage varchar2
+  )
+  return varchar2
+  is
+  begin
+    return
+      case when logger is not null then
+        logger.errorStack( errorMessage)
+      else
+        errorMessage
+      end
+    ;
+  end errorStack;
+
+
+
+  /*
     Создает прикладной логер.
   */
   procedure createLogger
   is
 
-    -- Данные логера
+    -- Данные создаваемого логера
     r TLogger;
+
+    -- Позиция разделителя после имени модуля в loggerName
+    -- (может быть за концом строки)
+    sepPos integer;
 
     -- Uid потомка
     childUid TLoggerUid;
@@ -708,6 +873,16 @@ is
   begin
 
     -- Инициализация данных
+    if loggerName is null then
+      r.moduleName := moduleName;
+      r.objectName := objectName;
+    else
+      sepPos := instr( loggerName || '.', '.');
+      r.moduleName := substr( loggerName, 1, sepPos - 1);
+      r.objectName := substr( loggerName, sepPos + 1);
+    end if;
+    r.findModuleString := findModuleString;
+    r.isNeedFindModuleId := true;
     r.levelCode := null;
     r.additive := true;
     colLogger( loggerUid) := r;
@@ -719,7 +894,7 @@ is
       exit when loggerUid like r.parentUid || '%' or r.parentUid is null;
     end loop;
     colLogger( loggerUid).parentUid := r.parentUid;
-    lg.trace( 'getLoggerUid: parentUid="' || r.parentUid || '"');
+    logger.trace( 'getLoggerUid: parentUid="' || r.parentUid || '"');
 
     -- Корректировка родителя у существующих прямых потомков
     childUid := loggerUid;
@@ -728,7 +903,7 @@ is
       exit when childUid is null or childUid not like loggerUid || '%';
       if colLogger( childUid).parentUid = r.parentUid then
         colLogger( childUid).parentUid := loggerUid;
-        lg.trace( 'getLoggerUid: set parent: childUid="' || childUid || '"');
+        logger.trace( 'getLoggerUid: set parent: childUid="' || childUid || '"');
       end if;
     end loop;
   end createLogger;
@@ -739,29 +914,54 @@ is
 begin
 
   -- Внутреннее логирование, если доступно
-  if lg is not null then
-    lg.debug( 'getLoggerUid: loggerName="' || loggerName || '"');
+  if logger is not null and logger.isDebugEnabled() then
+    logger.debug(
+      'getLoggerUid: loggerName="' || loggerName || '"'
+      || ', moduleName="' || moduleName || '"'
+      || ', objectName="' || objectName || '"'
+      || ', findModuleString="' || findModuleString || '"'
+    );
+  end if;
+
+  if loggerName is not null
+        and ( moduleName is not null or objectName is not null)
+      then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Одновременное указание имени логера'
+        || ' и имени модуля/объекта недопустимо.'
+    );
   end if;
 
   -- Определяем Uid
-  loggerUid := getLoggerUidByName( loggerName);
+  loggerUid := getLoggerUidByName( coalesce(
+    loggerName
+    , moduleName
+      || case when objectName is not null then
+          '.' || objectName
+        end
+  ));
 
   -- Создаем логер, если его нет
   if not colLogger.exists( loggerUid) then
-    createLogger;
+    createLogger();
   end if;
 
   -- Внутреннее логирование, если доступно
-  if lg is not null then
-    lg.trace( 'getLoggerUid: return: "' || loggerUid || '"');
+  if logger is not null and logger.isDebugEnabled() then
+    logger.trace( 'getLoggerUid: return: "' || loggerUid || '"');
   end if;
   return loggerUid;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
-        'Ошибка при получении идентификатора логера по имени ('
+      -- Внутренний логер может отсутствовать, поэтому используем errorStack
+    , errorStack(
+        'Ошибка при получении идентификатора логера ('
         || ' loggerName="' || loggerName || '"'
+        || ', moduleName="' || moduleName || '"'
+        || ', objectName="' || objectName || '"'
+        || ', findModuleString="' || findModuleString || '"'
         || ').'
       )
     , true
@@ -782,14 +982,14 @@ is
 
 begin
   additive := colLogger( loggerUid).additive;
-  lg.debug( 'getAdditivity: loggerUid="' || loggerUid || '"' || ', result='
+  logger.debug( 'getAdditivity: loggerUid="' || loggerUid || '"' || ', result='
     || case additive when true then 'true' when false then 'false' end
   );
   return additive;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при получении флага аддитивности ('
         || ' loggerUid="' || loggerUid || '"'
         || ').'
@@ -811,7 +1011,7 @@ procedure setAdditivity(
 )
 is
 begin
-  lg.debug( 'setAdditivity: loggerUid="' || loggerUid || '"' || ', additive='
+  logger.debug( 'setAdditivity: loggerUid="' || loggerUid || '"' || ', additive='
     || case additive when true then 'true' when false then 'false' end
   );
   if loggerUid = Root_LoggerUid then
@@ -824,7 +1024,7 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при установке флага аддитивности ('
         || ' loggerUid="' || loggerUid || '"'
         || ').'
@@ -850,14 +1050,14 @@ is
 
 begin
   levelCode := colLogger( loggerUid).levelCode;
-  lg.debug( 'getLevel: loggerUid="' || loggerUid || '"'
+  logger.debug( 'getLevel: loggerUid="' || loggerUid || '"'
     || ', result="' || levelCode || '"'
   );
   return levelCode;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при получении уровня логирования ('
         || ' loggerUid="' || loggerUid || '"'
         || ').'
@@ -879,7 +1079,7 @@ procedure setLevel(
 )
 is
 begin
-  lg.debug( 'setLevel: loggerUid="' || loggerUid || '"'
+  logger.debug( 'setLevel: loggerUid="' || loggerUid || '"'
     || ', levelCode="' || levelCode || '"'
   );
   if levelCode is not null and not colLevelOrder.exists( levelCode) then
@@ -897,7 +1097,7 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при установке уровня логирования ('
         || ' loggerUid="' || loggerUid || '"'
         || ', levelCode="' || levelCode || '"'
@@ -930,14 +1130,14 @@ is
 
 begin
   levelCode := getLoggerEffectiveLevel( loggerUid);
-  lg.debug( 'getEffectiveLevel: loggerUid="' || loggerUid || '"'
+  logger.debug( 'getEffectiveLevel: loggerUid="' || loggerUid || '"'
     || ', result="' || levelCode || '"'
   );
   return levelCode;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при получении эффективного уровня логирования ('
         || ' loggerUid="' || loggerUid || '"'
         || ').'
@@ -967,7 +1167,7 @@ begin
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , lg.errorStack(
+    , logger.errorStack(
         'Ошибка при проверке логирования сообщений ('
         || ' loggerUid="' || loggerUid || '"'
         || ', levelCode="' || levelCode || '"'

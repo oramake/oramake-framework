@@ -1,9 +1,9 @@
--- script: Test/Error-Stack/remote-db-stack.sql 
+-- script: Test/Error-Stack/remote-db-stack.sql
 -- Пример использования логирования стека ошибок при работе по линку.
--- Перед выполнением на удалённой базе следует выполнить скрипт 
+-- Перед выполнением на удалённой базе следует выполнить скрипт
 -- <Test/Error-Stack/error-stack.sql>.
 declare
-  lg lg_logger_t := lg_logger_t.GetLogger(
+  lg lg_logger_t := lg_logger_t.getLogger(
     moduleName => 'Test'
     , objectName => 'TestBlock'
   );
@@ -13,28 +13,28 @@ declare
   is
     a integer;
   begin
-    execute immediate 
-'begin drop_me_tmp100@' || dblink || ';end;'   
+    execute immediate
+'begin drop_me_tmp100@' || dblink || ';end;'
     ;
   exception when others then
-                                       -- Откатываем возможную созданную 
+                                       -- Откатываем возможную созданную
                                        -- распределённую транзакцию
     rollback;
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , lg.RemoteErrorStack( 
+      , lg.RemoteErrorStack(
           'Ошибка "Internal_"' || lpad( '!', 10000, '_')
           , dblink
         )
       , true
-    );    
+    );
   end Internal;
-   
+
 begin
-  Internal;   
+  Internal;
 exception when others then
-  pkg_Common.OutputMessage( 
+  pkg_Common.OutputMessage(
     lg.GetErrorStack
-  );      
-end;  
+  );
+end;
 

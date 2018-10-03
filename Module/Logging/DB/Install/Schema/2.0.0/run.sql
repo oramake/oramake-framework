@@ -2,7 +2,8 @@
 -- Обновление объектов схемы до версии 2.0.0.
 --
 -- Основные изменения:
---  - в таблицу <lg_log> добавлены поля sessionid, level_code;
+--  - в таблицу <lg_log> добавлены поля sessionid, level_code, module_name,
+--    object_name, module_id;
 --
 
 -- Определяем табличное пространство для индексов
@@ -12,3 +13,6 @@
 
 @oms-run add-sessionid.sql
 @oms-run add-level_code.sql
+
+-- add module_name, object_name, module_id
+@oms-run add-logger-info-cols.sql

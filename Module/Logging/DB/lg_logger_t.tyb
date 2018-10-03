@@ -13,7 +13,19 @@ create or replace type body lg_logger_t is
   Создает логер.
 
   Параметры:
-  loggerName                  - имя логера
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                objectName)
+  moduleName                  - Имя модуля
+                                (по умолчанию выделяется из loggerName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию выделяется из loggerName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - созданный объект
@@ -25,12 +37,18 @@ create or replace type body lg_logger_t is
 */
 constructor function lg_logger_t(
   loggerName varchar2
+  , moduleName varchar2 := null
+  , objectName varchar2 := null
+  , findModuleString varchar2 := null
 )
 return self as result
 is
 begin
   self.loggerUid := pkg_LoggingInternal.getLoggerUid(
-    loggerName => loggerName
+    loggerName          => loggerName
+    , moduleName        => moduleName
+    , objectName        => objectName
+    , findModuleString  => findModuleString
   );
   return;
 end lg_logger_t;
@@ -136,33 +154,12 @@ begin
   return lg_logger_t( loggerName => null);
 end getRootLogger;
 
-/* func: getLogger
-  Возвращает логер по полному имени.
-
-  Параметры:
-  loggerName                  - имя логера
-
-  Возврат:
-  - логер
-
-  Замечания:
-  - если в качестве loggerName передан null, возвращает корневой логер;
-*/
-static function getLogger(
-  loggerName varchar2
-)
-return lg_logger_t
-is
-begin
-  return lg_logger_t( loggerName => loggerName);
-end getLogger;
-
 /* func: getLoggerName
   Возвращает имя логера по имени модуля и объекта в модуле.
 
   Параметры:
-  moduleName                  - имя модуля
-  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+  moduleName                  - Имя модуля
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
 
   Возврат:
   - имя логера
@@ -180,53 +177,74 @@ begin
   ;
 end getLoggerName;
 
-/* func: getLogger( MOD_OBJ)
-  Возвращает логер по имени модуля и объекта в модуле.
+/* func: getLogger
+  Возвращает логер по имени либо по имени модуля и объекта в модуле.
 
   Параметры:
-  moduleName                  - имя модуля
-  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                 objectName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию отсутствует)
+  moduleName                  - Имя модуля
+                                (по умолчанию для совместимости берется из
+                                loggerName если указан objectName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - логер
 
   Замечания:
-  - если в качестве обоих параметров передан null, возвращает корневой логер;
+  - если в качестве значений параметров передан null, возвращает корневой
+    логер (более очевидным в этом случае является использование функции
+    <getRootLogger>);
+  - предпочтительным вариантом является указание moduleName и опционально
+    objectName вместо использования loggerName;
+  - при использовании loggerName часть строки до первой точки считается именем
+    модуля (moduleName), оставшая часть строки (после первой точки) считается
+    именем объекта в модуле (objectName);
   - необязательный параметр packageName присутствует для совместимости и не
-    должен использоваться ( будет в дальнейшем удален);
+    должен использоваться, вместо него следует использовать objectName;
 */
 static function getLogger(
-  moduleName varchar2
+  loggerName varchar2 := null
+  , objectName varchar2 := null
+  , moduleName varchar2 := null
+  , findModuleString varchar2 := null
   , packageName varchar2 := null
-  , objectName varchar2
 )
 return lg_logger_t
 is
-begin
-  return
-    lg_logger_t.getLogger(
-      loggerName => getLoggerName(
-         moduleName => moduleName
-         , objectName => objectName
-      )
-    )
-  ;
-end getLogger;
 
-/* func: getLogger( DEPRECATED)
-  Устаревшая функция, вместо нее нужно использовать <getLogger( MOD_OBJ)>.
-*/
-static function getLogger(
-  moduleName varchar2
-  , packageName varchar2
-)
-return lg_logger_t
-is
+  -- Имя модуля передано в первом параметре
+  -- (поддержка использования позиционной нотации)
+  loggerIsModuleName boolean :=
+    moduleName is null
+    and coalesce( objectName, packageName) is not null
+  ;
+
 begin
   return
-    lg_logger_t.getLogger(
-      moduleName    => moduleName
-      , objectName  => packageName
+    lg_logger_t(
+      -- считаем, что вызов getLogger( s1, s2) соответствует
+      -- вызову getLogger( moduleName => s1, objectName => s2)
+      loggerName          =>
+          case when not loggerIsModuleName then
+            loggerName
+          end
+      , moduleName        =>
+          case when not loggerIsModuleName then
+            moduleName
+          else
+            loggerName
+          end
+      , objectName        => coalesce( objectName, packageName)
+      , findModuleString  => findModuleString
     )
   ;
 end getLogger;

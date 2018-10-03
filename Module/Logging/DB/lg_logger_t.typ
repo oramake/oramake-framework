@@ -30,7 +30,19 @@ loggerUid varchar2(250),
   Создает логер.
 
   Параметры:
-  loggerName                  - имя логера
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                objectName)
+  moduleName                  - Имя модуля
+                                (по умолчанию выделяется из loggerName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию выделяется из loggerName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - созданный объект
@@ -44,6 +56,9 @@ loggerUid varchar2(250),
 */
 constructor function lg_logger_t(
   loggerName varchar2
+  , moduleName varchar2 := null
+  , objectName varchar2 := null
+  , findModuleString varchar2 := null
 )
 return self as result,
 
@@ -130,31 +145,12 @@ return varchar2,
 static function getRootLogger
 return lg_logger_t,
 
-/* pfunc: getLogger
-  Возвращает логер по полному имени.
-
-  Параметры:
-  loggerName                  - имя логера
-
-  Возврат:
-  - логер
-
-  Замечания:
-  - если в качестве loggerName передан null, возвращает корневой логер;
-
-  ( <body::getLogger>)
-*/
-static function getLogger(
-  loggerName varchar2
-)
-return lg_logger_t,
-
 /* pfunc: getLoggerName
   Возвращает имя логера по имени модуля и объекта в модуле.
 
   Параметры:
-  moduleName                  - имя модуля
-  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+  moduleName                  - Имя модуля
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
 
   Возврат:
   - имя логера
@@ -167,38 +163,48 @@ static function getLoggerName(
 )
 return varchar2,
 
-/* pfunc: getLogger( MOD_OBJ)
-  Возвращает логер по имени модуля и объекта в модуле.
+/* pfunc: getLogger
+  Возвращает логер по имени либо по имени модуля и объекта в модуле.
 
   Параметры:
-  moduleName                  - имя модуля
-  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                 objectName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию отсутствует)
+  moduleName                  - Имя модуля
+                                (по умолчанию для совместимости берется из
+                                loggerName если указан objectName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - логер
 
   Замечания:
-  - если в качестве обоих параметров передан null, возвращает корневой логер;
+  - если в качестве значений параметров передан null, возвращает корневой
+    логер (более очевидным в этом случае является использование функции
+    <getRootLogger>);
+  - предпочтительным вариантом является указание moduleName и опционально
+    objectName вместо использования loggerName;
+  - при использовании loggerName часть строки до первой точки считается именем
+    модуля (moduleName), оставшая часть строки (после первой точки) считается
+    именем объекта в модуле (objectName);
   - необязательный параметр packageName присутствует для совместимости и не
-    должен использоваться ( будет в дальнейшем удален);
+    должен использоваться, вместо него следует использовать objectName;
 
-  ( <body::getLogger( MOD_OBJ)>)
+  ( <body::getLogger>)
 */
 static function getLogger(
-  moduleName varchar2
+  loggerName varchar2 := null
+  , objectName varchar2 := null
+  , moduleName varchar2 := null
+  , findModuleString varchar2 := null
   , packageName varchar2 := null
-  , objectName varchar2
-)
-return lg_logger_t,
-
-/* pfunc: getLogger( DEPRECATED)
-  Устаревшая функция, вместо нее нужно использовать <getLogger( MOD_OBJ)>.
-
-  ( <body::getLogger( DEPRECATED)>)
-*/
-static function getLogger(
-  moduleName varchar2
-  , packageName varchar2
 )
 return lg_logger_t,
 

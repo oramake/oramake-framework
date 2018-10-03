@@ -41,7 +41,7 @@ NO_ACCESSOPERATOR             - флаг отсутствия в БД модуля AccessOperator
 
 (code)
 
-make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
+$ make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
 
 (end)
 
@@ -93,6 +93,10 @@ $ make install INSTALL_VERSION=1.4.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???
 
 
 group: Первоначальная установка
+
+Предварительные требования:
+- установка модуля ModuleInfo;
+- установка модуля Common;
 
 Порядок первоначальной установки:
 

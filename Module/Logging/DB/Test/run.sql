@@ -1,11 +1,15 @@
 -- script: Test/run.sql
 -- ¬ыполн€ет все тесты.
 --
--- »спользуемые макромеременные:
--- loggingLevelCode           - уровень логировани€ ( по-умолчанию WARN)
+-- »спользуемые макропеременные:
+-- loggingLevelCode           - ”ровень логировани€
+--                              (по-умолчанию WARN)
+-- testCaseNumber             - Ќомер провер€емого тестового случа€
+--                              (по умолчанию без ограничений)
 --
 
 @oms-default loggingLevelCode WARN
+@oms-default testCaseNumber ""
 
 set feedback off
 

@@ -20,15 +20,15 @@ lastResolvedStack  maxVarchar2;
 /* ivar: logger
   Интерфейсный объект к модулю Logging
 */
-  logger lg_logger_t := lg_logger_t.GetLogger(
+  logger lg_logger_t := lg_logger_t.getLogger(
     moduleName => pkg_Mail.Module_Name
     , objectName => 'pkg_LoggingErrorStack'
   );
-  errorStack varchar2( 32767) := 
-'ORA-20015:' || chr(32) || '   
-ORA-06512: на  line 
+  errorStack varchar2( 32767) :=
+'ORA-20015:' || chr(32) || '
+ORA-06512: на  line
 ORA-20014: Error ____________________________________________________________________________________________________14
-ORA-06512: на  line 
+ORA-06512: на  line
 ORA-20013: Error ____________________________________________________________________________________________________13
 ORA-06512: на  "DOCUMENT.DROP_ME_TMP13", line 5
 ORA-20012: Error ____________________________________________________________________________________________________12
@@ -51,9 +51,9 @@ ORA-20004: Error _______________________________________________________________
 ORA-06512: на  "DOCUMENT.DROP_ME_TMP4", line 5
 ORA-20003: Error _______________________________________
 ';
-  lastErrorStack  varchar2( 32767) := 
+  lastErrorStack  varchar2( 32767) :=
 'ORA-20014: Error ____________________________________________________________________________________________________14
-ORA-06512: на  line 
+ORA-06512: на  line
 ORA-20013: Error ____________________________________________________________________________________________________13
 ORA-06512: на  "DOCUMENT.DROP_ME_TMP13", line 5
 ORA-20012: Error ____________________________________________________________________________________________________12
@@ -74,7 +74,7 @@ ORA-20005: Error _______________________________________________________________
 ORA-06512: на  "DOCUMENT.DROP_ME_TMP5", line 5
 ORA-20004: Error ____________________________________________________________________________________________________4
 ORA-06512: на  "DOCUMENT.DROP_ME_TMP4", line 5
-ORA-20003: Error ________________________________________________________________________';  
+ORA-20003: Error ________________________________________________________________________';
 
 
   procedure ResolveLargeStack
@@ -86,14 +86,14 @@ ORA-20003: Error _______________________________________________________________
                                        -- "Хвост" к предыдущему стеку
                                        -- слева
     leftTag maxVarchar2;
-                                       -- Формируемый новый 
+                                       -- Формируемый новый
                                        -- "хвост" к предыдущему стеку
                                        -- слева
     resolvedLeftTag maxVarchar2;
-    
+
     Ora_Error_Mask varchar2( 50 ) := 'ORA-_____:';
   begin
-                                       -- Ищем начало обрезанного 
+                                       -- Ищем начало обрезанного
                                        -- предыдущего стека
     previousStackStart :=
       instr(
@@ -111,21 +111,21 @@ ORA-20003: Error _______________________________________________________________
     );
     logger.Debug( 'ResolveStack: errorStack='
       || replace( to_char( errorStack), chr(10), '\\10\\')
-    );    
+    );
     logger.Debug( 'ResolveStack: errorStack='
       || errorStack
-    );    
+    );
     if lastErrorStack like substr( errorStack, previousStackStart) || '%' then
       logger.Debug('true');
     end if;
                                        -- Если стек был обрезан справа
                                        -- либо полностью сохранён внутри нового стека
-    if previousStackStart > 0 
-       and lastErrorStack like rtrim( substr( errorStack, previousStackStart),chr(10) || chr(13)) || '%' 
+    if previousStackStart > 0
+       and lastErrorStack like rtrim( substr( errorStack, previousStackStart),chr(10) || chr(13)) || '%'
     then
-                                       -- Получаем левый "хвост" 
+                                       -- Получаем левый "хвост"
                                        -- к предыдущему стеку
-      leftTag := substr( errorStack, 1, previousStackStart-1); 
+      leftTag := substr( errorStack, 1, previousStackStart-1);
       logger.Debug( 'ResolveStack: leftTag='
         || replace( to_char( leftTag), chr(10), '\\10\\')
       );
@@ -135,46 +135,46 @@ ORA-20003: Error _______________________________________________________________
         || Ora_Error_Mask || '%' || 'line' || '%' || chr(10)
           , chr(10) , '\\10\\'
         )
-      );  
-      if leftTag like 
+      );
+      if leftTag like
           Ora_Error_Mask || ' ' || chr(10)
           || Ora_Error_Mask || '%' || 'line' || '%' || chr(10)
-        and length( leftTag) < 50 
+        and length( leftTag) < 50
       then
         outputmessage( 'like true');
-      end if;    
+      end if;
                                        -- сгенерированного исключения,
       if leftTag like '%' || lastRaisedText || '%' then
                                        -- то заменяем её на предыдущее сообщение
-        resolvedLeftTag := 
+        resolvedLeftTag :=
           replace( leftTag, lastRaisedText, lastMessageText);
         outputmessage( 'like 1');
                                        -- Если стек не вырос
       elsif leftTag is null then
         resolvedLeftTag :=
-          case when 
-            sqlErrorMessage like Ora_Error_Mask || '%' 
+          case when
+            sqlErrorMessage like Ora_Error_Mask || '%'
           then
-            substr( sqlErrorMessage, 1, length( Ora_Error_Mask)) 
+            substr( sqlErrorMessage, 1, length( Ora_Error_Mask))
             || ' '
-          end   
+          end
           || lastMessageText || chr(10);
         outputmessage( 'like 2');
-      elsif 
+      elsif
                                        -- Если стек вырос слева
                                        -- на вырожденные сообщения
-        leftTag like 
+        leftTag like
           Ora_Error_Mask || ' ' || chr(10)
           || Ora_Error_Mask || '%' || 'line' || '%' || chr(10)
-        and length( leftTag) < 50 
+        and length( leftTag) < 50
       then
         outputmessage( 'leftTag like');
-        resolvedLeftTag := 
+        resolvedLeftTag :=
           substr( leftTag, 1, length( Ora_Error_Mask)) || ' '
           || lastMessageText || chr(10);
-      else   
-        resolvedLeftTag := null; 
-      end if;  
+      else
+        resolvedLeftTag := null;
+      end if;
                                        -- Если сформировали
                                        -- "хвост" для роста стека
                                        -- слева

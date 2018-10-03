@@ -100,11 +100,23 @@ procedure logMessage(
 /* group: Реализация функций логера */
 
 /* pfunc: getLoggerUid
-  Возвращает уникальный идентификатор логера по имени.
+  Возвращает уникальный идентификатор логера.
   При отсутствии соответствующего логера создает новый.
 
   Параметры:
-  loggerName                  - имя логера ( null соответсвует корневому логеру)
+  loggerName                  - Имя логера
+                                (по умолчанию формируется из moduleName и
+                                objectName)
+  moduleName                  - Имя модуля
+                                (по умолчанию выделяется из loggerName)
+  objectName                  - Имя объекта в модуле (пакета, типа, скрипта)
+                                (по умолчанию выделяется из loggerName)
+  findModuleString            - Строка для определения Id модуля в ModuleInfo
+                                (может совпадать с одним из трех атрибутов
+                                модуля: названием, путем к корневому каталогу,
+                                первоначальным путем к корневому каталогу в
+                                Subversion)
+                                (по умолчанию используется moduleName)
 
   Возврат:
   - идентификатор существующего логера
@@ -113,6 +125,9 @@ procedure logMessage(
 */
 function getLoggerUid(
   loggerName varchar2
+  , moduleName varchar2
+  , objectName varchar2
+  , findModuleString varchar2
 )
 return varchar2;
 
