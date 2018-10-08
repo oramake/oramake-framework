@@ -815,5 +815,262 @@ begin
 end compareRowCount;
 
 
+/* iproc: compareCursorCsv
+  Сравнение курсора с текстом CSV
+
+  Параметры:
+  cursorData    - фактические данные в курсоре
+, expectedCsv   - ожидаемые данные в CSV
+*/
+procedure compareCursorCsv (
+  cursorData in out nocopy sys_refcursor
+, expectedCsv in clob
+)
+is
+
+  -- Формат даты
+  dateFormat constant varchar2( 30) := 'dd.mm.yyyy hh24:mi:ss';
+
+  -- Итератор для разбора данных CSV
+  csvIterator tpr_csv_iterator_t;
+  iteratorRow   boolean;
+
+  -- Переменные для работы с курсором
+  cursorSQL         integer;
+  rowNumber         integer := 1;
+  columnCount       integer;
+  columnList        dbms_sql.desc_tab;
+  tempNumVariable   number;
+  tempDateVariable  date;
+  tempVariable      varchar2( 4000);
+  cursorRow         integer;
+
+  /*
+   Определение колонок
+  */
+  procedure defineCursorColumn
+  is
+  begin
+    dbms_sql.describe_columns(
+      cursorSQL
+    , columnCount
+    , columnList
+    );
+    for columnNumber in 1 .. columnCount
+    loop
+      if columnList(columnNumber).col_type = 12 -- date
+      then
+        dbms_sql.define_column(
+          cursorSQL
+        , columnNumber
+        , tempDateVariable
+        );
+      elsif columnList(columnNumber).col_type = 2 -- number
+      then
+        dbms_sql.define_column(
+          cursorSQL
+        , columnNumber
+        , tempNumVariable
+        );
+      else
+        dbms_sql.define_column(
+          cursorSQL
+        , columnNumber
+        , tempVariable
+        , 4000
+        );
+      end if;
+    end loop;
+  end;
+
+  /*
+   Сравнение поля даты с ожидаемым
+
+   Параметры:
+   columnNumber  - номер строки
+  */
+  procedure compareDateColumn(
+  columnNumber  integer
+  )
+  is
+  begin
+    dbms_sql.column_value( cursorSQL, columnNumber, tempDateVariable);
+    if
+      trunc(tempDateVariable) <>
+      csvIterator.getDate( columnNumber, dateFormat)
+    then
+      pkg_TestUtility.failTest(
+        'Различие в строке ' || rowNumber
+      || ',столбце № ' || columnNumber
+      || ' ( "'
+      || to_char(
+        tempDateVariable
+      , dateFormat
+      )
+      || '"'
+      || ' <> "'
+      || to_char(
+        csvIterator.getDate( columnNumber, dateFormat)
+      , dateFormat
+      )
+      || '"'
+      || ' )'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка сравнения поля даты с ожидаемым ('
+        || ' columnNumber=' || to_char( columnNumber)
+        || ')'
+        )
+      , true
+    );
+  end compareDateColumn;
+
+  /*
+   Сравнение поля числового с ожидаемым
+
+   Параметры:
+   columnNumber  - номер строки
+  */
+  procedure compareNumberColumn(
+  columnNumber  integer
+  )
+  is
+  begin
+    dbms_sql.column_value( cursorSQL, columnNumber, tempNumVariable);
+    if
+      tempNumVariable <>
+      csvIterator.getNumber( columnNumber, '.')
+    then
+      pkg_TestUtility.failTest(
+        'Различие в строке ' || rowNumber
+      || ',столбце № ' || columnNumber
+      || ' ( "' || tempNumVariable || '"'
+      || ' <> "' || csvIterator.getString( columnNumber) || '"'
+      || ' )'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка сравнения числового поля с ожидаемым ('
+        || ' columnNumber=' || to_char( columnNumber)
+        || ')'
+        )
+      , true
+    );
+  end compareNumberColumn;
+
+  /*
+   Сравнение текстового поля с ожидаемым
+
+   Параметры:
+   columnNumber  - номер строки
+  */
+  procedure compareCharColumn(
+  columnNumber  integer
+  )
+  is
+  begin
+    dbms_sql.column_value( cursorSQL, columnNumber, tempVariable);
+    if
+      nvl( trim( tempVariable), 'NULL') <>
+      nvl( trim( csvIterator.getString( columnNumber)), 'NULL')
+    then
+      pkg_TestUtility.failTest(
+        'Различие в строке ' || rowNumber
+      || ',столбце № ' || columnNumber
+      || ' ( "' || trim(tempVariable) || '"'
+      || ' <> "' || csvIterator.getString( columnNumber) || '"'
+      || ' )'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка сравнения текстового поля с ожидаемым ('
+        || ' columnNumber=' || to_char( columnNumber)
+        || ', cursorRow=' || to_char( cursorRow)
+        || ', iteratorRow='
+          || case when
+               iteratorRow then 'true'
+             when
+               not iteratorRow then 'false'
+             end
+        || ')'
+        )
+      , true
+    );
+  end compareCharColumn;
+
+begin
+  csvIterator :=
+    tpr_csv_iterator_t(
+      textData                => expectedCsv
+    , headerRecordNumber      => 2
+    , skipRecordCount         => 2
+    )
+  ;
+  cursorSQL := dbms_sql.to_cursor_number( cursorData);
+  defineCursorColumn();
+  -- заголовки
+  iteratorRow := csvIterator.next();
+  loop
+    cursorRow := dbms_sql.fetch_rows( cursorSQL);
+    iteratorRow := csvIterator.next();
+    if
+      cursorRow = 0 and iteratorRow
+    then
+      dbms_sql.close_cursor( cursorSQL);
+      pkg_TestUtility.failTest( 'Ожидается больше строк  ( >= ' || rowNumber || ')');
+      return;
+    elsif
+      nvl(cursorRow, 1) != 0 and not iteratorRow
+    then
+      dbms_sql.close_cursor( cursorSQL);
+      pkg_TestUtility.failTest( 'Ожидается меньше строк  ( < ' || rowNumber || ')');
+      return;
+    elsif
+      cursorRow = 0 and not iteratorRow
+    then
+      exit;
+    end if;
+    for columnNumber in 1..columnCount
+    loop
+      if columnList(columnNumber).col_type = 12 -- date
+      then
+        compareDateColumn(
+          columnNumber => columnNumber
+        );
+      elsif columnList(columnNumber).col_type = 2 -- number
+      then
+        compareNumberColumn(
+          columnNumber => columnNumber
+        );
+      else
+        compareCharColumn(
+          columnNumber => columnNumber
+        );
+      end if;
+    end loop;
+    rowNumber := rowNumber + 1;
+  end loop;
+  dbms_sql.close_cursor( cursorSQL);
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка сравнения курсора с CSV'
+      )
+    , true
+  );
+end compareCursorCsv;
+
+
 end pkg_TestUtility;
 /
