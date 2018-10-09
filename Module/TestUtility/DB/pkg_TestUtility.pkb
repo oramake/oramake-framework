@@ -224,7 +224,11 @@ is
     minDiffLength :=
       coalesce( greatest( length( actualStringNormalized), length( expectedStringNormalized)), 0)
     ;
-    if actualStringNormalized = expectedStringNormalized then
+    if coalesce(
+          actualStringNormalized = expectedStringNormalized
+          , coalesce( actualStringNormalized, expectedStringNormalized) is null
+        )
+        then
       if coalesce( considerWhitespace, false) = true then
         comparisonResult := 'line ends';
       end if;
