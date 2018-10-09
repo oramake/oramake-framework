@@ -815,25 +815,53 @@ begin
 end compareRowCount;
 
 
-/* iproc: compareCursorCsv
-  Сравнение курсора с текстом CSV
+/* func: compareQueryResult ( func, cursor )
+  Сравнение данных в sys_refcursor с ожидаемыми.
 
   Параметры:
-  cursorData    - фактические данные в курсоре
-, expectedCsv   - ожидаемые данные в CSV
+  rc                          - Фактические данные (sys_refcursor)
+  expectedCsv                 - Ожидаемые данные в CSV
+  idColumnName                - Имя колонки курсора с Id строки для указания в
+                                тексте сообщений (без учета регистра, колонка
+                                игнорируется при сравнении)
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  Возврат:
+  - true в случае совпадения данных или false в противном случае
 */
-procedure compareCursorCsv (
-  cursorData in out nocopy sys_refcursor
-, expectedCsv in clob
+function compareQueryResult (
+  rc in out nocopy sys_refcursor
+, expectedCsv clob
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
 )
+return boolean
 is
 
-  -- Формат даты
-  dateFormat constant varchar2( 30) := 'dd.mm.yyyy hh24:mi:ss';
+  -- Формат даты в данных CSV
+  Date_Format constant varchar2( 30) := 'dd.mm.yyyy hh24:mi:ss';
+
+  -- Возвращаемое значение
+  isOk boolean := true;
 
   -- Итератор для разбора данных CSV
   csvIterator tpr_csv_iterator_t;
   iteratorRow   boolean;
+
+  -- Текущая проверяемая колонка в CSV
+  fieldNumber integer;
+
+  -- Номер колонки с Id строки (заполняется если указан idColumnName)
+  idColumnNumber integer;
+
+  -- Идентификатор проверяемой строки (заполняется если указан idColumnName)
+  idString varchar2(200);
 
   -- Переменные для работы с курсором
   cursorSQL         integer;
@@ -844,6 +872,24 @@ is
   tempDateVariable  date;
   tempVariable      varchar2( 4000);
   cursorRow         integer;
+
+
+
+  /*
+    Устанавливает неуспешное завершение теста.
+  */
+  procedure setFailed(
+    messageText varchar2 := null
+  )
+  is
+  begin
+    if isOk then
+      isOk := false;
+      failTest( failMessageText => failMessagePrefix || messageText);
+    end if;
+  end setFailed;
+
+
 
   /*
    Определение колонок
@@ -880,122 +926,187 @@ is
         , 4000
         );
       end if;
+      if idColumnName is not null
+            and lower( columnList( columnNumber).col_name)
+              = lower( idColumnName)
+          then
+        idColumnNumber := columnNumber;
+      end if;
     end loop;
-  end;
+    if idColumnName is not null and idColumnNumber is null then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'В курсоре отсутствует указанная колонка с Id строки ('
+          || ' idColumnName="' || idColumnName || '"'
+          || ').'
+      );
+    end if;
+  end defineCursorColumn;
+
+
 
   /*
-   Сравнение поля даты с ожидаемым
-
-   Параметры:
-   columnNumber  - номер строки
+    Заполняет idString значением для текущей строки.
   */
-  procedure compareDateColumn(
-  columnNumber  integer
-  )
+  procedure fillIdString
   is
   begin
-    dbms_sql.column_value( cursorSQL, columnNumber, tempDateVariable);
-    if
-      trunc(tempDateVariable) <>
-      csvIterator.getDate( columnNumber, dateFormat)
+    if columnList( idColumnNumber).col_type = 12 -- date
     then
-      pkg_TestUtility.failTest(
-        'Различие в строке ' || rowNumber
-      || ',столбце № ' || columnNumber
-      || ' ( "'
-      || to_char(
-        tempDateVariable
-      , dateFormat
-      )
-      || '"'
-      || ' <> "'
-      || to_char(
-        csvIterator.getDate( columnNumber, dateFormat)
-      , dateFormat
-      )
-      || '"'
-      || ' )'
+      dbms_sql.column_value( cursorSQL, idColumnNumber, tempDateVariable);
+      idString := to_char( tempDateVariable, Date_Format);
+    elsif columnList(idColumnNumber).col_type = 2 -- number
+    then
+      dbms_sql.column_value( cursorSQL, idColumnNumber, tempNumVariable);
+      idString := to_char(
+        tempNumVariable
+        , 'tm9'
+        , 'NLS_NUMERIC_CHARACTERS = ''. '''
       );
+    else
+      dbms_sql.column_value( cursorSQL, idColumnNumber, tempVariable);
+      idString := '"' || tempVariable || '"';
     end if;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
+          'Ошибка при определении Id строки.'
+        )
+      , true
+    );
+  end fillIdString;
+
+
+
+  /*
+    Сравнение значения поля, приведенного к строке
+  */
+  procedure compareColumn(
+    columnNumber integer
+    , columnName varchar2
+    , actualString varchar2
+    , expectedString varchar2
+  )
+  is
+  begin
+    isOk := isOk and compareChar(
+      failMessageText =>
+        failMessagePrefix
+        || 'Различие в строке #' || rowNumber
+          || case when idColumnNumber is not null then
+              ' ('
+              || lower( idColumnName)
+              || '='
+              || idString
+              || ')'
+            end
+          || ', столбце #' || fieldNumber
+          || ' ("' || lower( columnName) || '")'
+      , actualString        => actualString
+      , expectedString      => expectedString
+      , considerWhitespace  => coalesce( considerWhitespace, false)
+    );
+  end compareColumn;
+
+
+
+  /*
+   Сравнение поля даты с ожидаемым
+  */
+  procedure compareDateColumn(
+    columnNumber  integer
+    , columnName varchar2
+  )
+  is
+  begin
+    dbms_sql.column_value( cursorSQL, columnNumber, tempDateVariable);
+    compareColumn(
+      columnNumber      => columnNumber
+      , columnName      => columnName
+      , actualString    =>
+          to_char( tempDateVariable, Date_Format)
+      , expectedString  =>
+          to_char(
+            csvIterator.getString( fieldNumber, Date_Format)
+            , Date_Format
+          )
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
           'Ошибка сравнения поля даты с ожидаемым ('
-        || ' columnNumber=' || to_char( columnNumber)
+        || ' fieldNumber=' || fieldNumber
+        || ', columnNumber=' || columnNumber
+        || ', columnName="' || columnName || '"'
         || ')'
         )
       , true
     );
   end compareDateColumn;
 
+
+
   /*
    Сравнение поля числового с ожидаемым
-
-   Параметры:
-   columnNumber  - номер строки
   */
   procedure compareNumberColumn(
-  columnNumber  integer
+    columnNumber  integer
+    , columnName varchar2
   )
   is
   begin
     dbms_sql.column_value( cursorSQL, columnNumber, tempNumVariable);
-    if
-      tempNumVariable <>
-      csvIterator.getNumber( columnNumber, '.')
-    then
-      pkg_TestUtility.failTest(
-        'Различие в строке ' || rowNumber
-      || ',столбце № ' || columnNumber
-      || ' ( "' || tempNumVariable || '"'
-      || ' <> "' || csvIterator.getString( columnNumber) || '"'
-      || ' )'
-      );
-    end if;
+    compareColumn(
+      columnNumber      => columnNumber
+      , columnName      => columnName
+      , actualString    => to_char( tempNumVariable)
+      , expectedString  =>
+          to_char(
+            csvIterator.getNumber( fieldNumber, decimalCharacter => '.')
+          )
+    );
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка сравнения числового поля с ожидаемым ('
-        || ' columnNumber=' || to_char( columnNumber)
+        || ' fieldNumber=' || fieldNumber
+        || ', columnNumber=' || columnNumber
+        || ', columnName="' || columnName || '"'
         || ')'
         )
       , true
     );
   end compareNumberColumn;
 
+
+
   /*
    Сравнение текстового поля с ожидаемым
-
-   Параметры:
-   columnNumber  - номер строки
   */
   procedure compareCharColumn(
-  columnNumber  integer
+    columnNumber  integer
+    , columnName varchar2
   )
   is
   begin
     dbms_sql.column_value( cursorSQL, columnNumber, tempVariable);
-    if
-      nvl( trim( tempVariable), 'NULL') <>
-      nvl( trim( csvIterator.getString( columnNumber)), 'NULL')
-    then
-      pkg_TestUtility.failTest(
-        'Различие в строке ' || rowNumber
-      || ',столбце № ' || columnNumber
-      || ' ( "' || trim(tempVariable) || '"'
-      || ' <> "' || csvIterator.getString( columnNumber) || '"'
-      || ' )'
-      );
-    end if;
+    compareColumn(
+      columnNumber      => columnNumber
+      , columnName      => columnName
+      , actualString    => tempVariable
+      , expectedString  => csvIterator.getString( fieldNumber)
+    );
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка сравнения текстового поля с ожидаемым ('
-        || ' columnNumber=' || to_char( columnNumber)
-        || ', cursorRow=' || to_char( cursorRow)
+        || ' fieldNumber=' || fieldNumber
+        || ', columnNumber=' || columnNumber
+        || ', columnName="' || columnName || '"'
         || ', iteratorRow='
           || case when
                iteratorRow then 'true'
@@ -1008,69 +1119,294 @@ is
     );
   end compareCharColumn;
 
+
+
+-- compareQueryResult ( func, cursor )
 begin
-  csvIterator :=
-    tpr_csv_iterator_t(
-      textData                => expectedCsv
-    , headerRecordNumber      => 2
-    , skipRecordCount         => 2
-    )
-  ;
-  cursorSQL := dbms_sql.to_cursor_number( cursorData);
+  csvIterator := tpr_csv_iterator_t(
+    -- игнорируем пустые строки в начале
+    textData              => ltrim( expectedCsv, ' ' || chr(13) || chr(10))
+    -- имена полей в 1-й строке
+    , headerRecordNumber  => 1
+    -- 2-я строка незначащая (с разделителями)
+    , skipRecordCount     => 2
+  );
+  cursorSQL := dbms_sql.to_cursor_number( rc);
   defineCursorColumn();
   -- заголовки
-  iteratorRow := csvIterator.next();
   loop
     cursorRow := dbms_sql.fetch_rows( cursorSQL);
+    if idColumnNumber is not null then
+      fillIdString();
+    end if;
     iteratorRow := csvIterator.next();
     if
       cursorRow = 0 and iteratorRow
     then
-      dbms_sql.close_cursor( cursorSQL);
-      pkg_TestUtility.failTest( 'Ожидается больше строк  ( >= ' || rowNumber || ')');
-      return;
+      setFailed( 'Ожидается больше строк  ( >= ' || rowNumber || ')');
+      exit;
     elsif
       nvl(cursorRow, 1) != 0 and not iteratorRow
     then
-      dbms_sql.close_cursor( cursorSQL);
-      pkg_TestUtility.failTest( 'Ожидается меньше строк  ( < ' || rowNumber || ')');
-      return;
+      setFailed( 'Ожидается меньше строк  ( < ' || rowNumber || ')');
+      exit;
     elsif
       cursorRow = 0 and not iteratorRow
     then
       exit;
     end if;
-    for columnNumber in 1..columnCount
-    loop
+    fieldNumber := 1;
+    for columnNumber in 1..columnCount loop
+      continue when columnNumber = idColumnNumber;
       if columnList(columnNumber).col_type = 12 -- date
       then
         compareDateColumn(
           columnNumber => columnNumber
+          , columnName => columnList( columnNumber).col_name
         );
       elsif columnList(columnNumber).col_type = 2 -- number
       then
         compareNumberColumn(
           columnNumber => columnNumber
+          , columnName => columnList( columnNumber).col_name
         );
       else
         compareCharColumn(
           columnNumber => columnNumber
+          , columnName => columnList( columnNumber).col_name
         );
       end if;
+      fieldNumber := fieldNumber + 1;
     end loop;
     rowNumber := rowNumber + 1;
   end loop;
   dbms_sql.close_cursor( cursorSQL);
+  return isOk;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка сравнения курсора с CSV'
+        'Ошибка сравнения данных курсора с CSV ('
+        || ' idColumnName="' || idColumnName || '"'
+        || case when idString is not null then
+            ', idString=' || idString
+          end
+        || ', failMessagePrefix="' || failMessagePrefix || '"'
+        || ').'
       )
     , true
   );
-end compareCursorCsv;
+end compareQueryResult;
 
+/* proc: compareQueryResult ( proc, cursor )
+  Сравнение данных в sys_refcursor с ожидаемыми.
+
+  Параметры:
+  rc                          - Фактические данные (sys_refcursor)
+  expectedCsv                 - Ожидаемые данные в CSV
+  idColumnName                - Имя колонки курсора с Id строки для указания в
+                                тексте сообщений (без учета регистра, колонка
+                                игнорируется при сравнении)
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+*/
+procedure compareQueryResult (
+  rc in out nocopy sys_refcursor
+, expectedCsv clob
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+)
+is
+
+  dummy boolean;
+
+begin
+  dummy := compareQueryResult(
+    rc                  => rc
+  , expectedCsv         => expectedCsv
+  , idColumnName        => idColumnName
+  , considerWhitespace  => considerWhitespace
+  , failMessagePrefix   => failMessagePrefix
+  );
+end compareQueryResult;
+
+/* func: compareQueryResult ( func, table )
+  Сравнение данных в таблице с ожидаемыми.
+
+  Параметры:
+  tableName                   - Имя таблицы
+  filterCondition             - Условия фильтрации строк в таблице
+                                (по умолчанию отсутствует)
+  expectedCsv                 - Ожидаемые данные в CSV
+  orderByExpression           - Выражения для упорядочения отбираемых строк
+                                (по умолчанию отсутствует)
+  idColumnName                - Имя колонки с Id строки для указания в тексте
+                                сообщений
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  Возврат:
+  - true в случае совпадения данных или false в противном случае
+*/
+function compareQueryResult(
+  tableName varchar2
+, filterCondition varchar2 := null
+, expectedCsv clob
+, orderByExpression varchar2 := null
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+)
+return boolean
+is
+
+  rc sys_refcursor;
+
+  -- Текст SQL для извлечения из таблицы проверяемых данных
+  sqlText varchar2(10000);
+
+
+
+  /*
+    Добавляет в sqlText список колонок из CSV.
+  */
+  procedure addColumnList
+  is
+
+    -- Итератор для разбора данных CSV
+    cit tpr_csv_iterator_t;
+
+  begin
+    cit := tpr_csv_iterator_t(
+      -- игнорируем пустые строки в начале
+      textData              => ltrim( expectedCsv, ' ' || chr(13) || chr(10))
+      -- будем получать имена полей из 1-й непустой строки
+      , headerRecordNumber  => 0
+    );
+    if cit.next() then
+      for i in 1 .. cit.getFieldCount() loop
+        sqlText := sqlText
+          || case when i > 1  then ', ' end
+          || lower( trim( cit.getString( fieldNumber => i)))
+        ;
+      end loop;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при добавлении в SQL списка колонок из CSV.'
+        )
+      , true
+    );
+  end addColumnList;
+
+
+
+-- compareQueryResult
+begin
+  sqlText :=
+'select
+  ' || case when idColumnName is not null  then
+      idColumnName || ', '
+    end
+  ;
+  addColumnList();
+  sqlText := sqlText ||
+'
+from
+  ' || tableName
+  || case when filterCondition is not null then
+'
+where
+  ' || filterCondition
+    end
+  || case when orderByExpression is not null then
+'
+order by
+  ' || orderByExpression
+    end
+  ;
+  logger.trace( 'compareQueryResult: sqlText:' || chr(10) || sqlText);
+  open rc for sqlText;
+  return
+    compareQueryResult(
+      rc                  => rc
+    , expectedCsv         => expectedCsv
+    , idColumnName        => idColumnName
+    , considerWhitespace  => considerWhitespace
+    , failMessagePrefix   => failMessagePrefix
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка сравнения данных с CSV ('
+        || ' tableName="' || tableName || '"'
+        || ', filterCondition="' || filterCondition || '"'
+        || ', orderByExpression="' || orderByExpression || '"'
+        || ', idColumnName="' || idColumnName || '"'
+        || ', failMessagePrefix="' || failMessagePrefix || '"'
+        || ', sqlText="' || sqlText || '"'
+        || ').'
+      )
+    , true
+  );
+end compareQueryResult;
+
+/* proc: compareQueryResult ( proc, table )
+  Сравнение данных в таблице с ожидаемыми.
+
+  Параметры:
+  tableName                   - Имя таблицы
+  filterCondition             - Условия фильтрации строк в таблице
+                                (по умолчанию отсутствует)
+  expectedCsv                 - Ожидаемые данные в CSV
+  orderByExpression           - Выражения для упорядочения отбираемых строк
+                                (по умолчанию отсутствует)
+  idColumnName                - Имя колонки с Id строки для указания в тексте
+                                сообщений
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+*/
+procedure compareQueryResult(
+  tableName varchar2
+, filterCondition varchar2 := null
+, expectedCsv clob
+, orderByExpression varchar2 := null
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+)
+is
+
+  dummy boolean;
+
+begin
+  dummy := compareQueryResult(
+      tableName           => tableName
+    , filterCondition     => filterCondition
+    , expectedCsv         => expectedCsv
+    , orderByExpression   => orderByExpression
+    , idColumnName        => idColumnName
+    , considerWhitespace  => considerWhitespace
+    , failMessagePrefix   => failMessagePrefix
+  );
+end compareQueryResult;
 
 end pkg_TestUtility;
 /

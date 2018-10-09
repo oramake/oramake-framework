@@ -120,7 +120,7 @@ procedure compareChar (
     actualString        in varchar2
   , expectedString      in varchar2
   , failMessageText     in varchar2
-  , considerWhitespace in boolean := null
+  , considerWhitespace  in boolean := null
   );
 
 /* pfunc: compareRowCount ( func, table )
@@ -208,6 +208,128 @@ procedure compareRowCount (
   , expectedRowCount     in pls_integer
   , failMessageText      in varchar2 := null
   );
+
+/* pfunc: compareQueryResult ( func, cursor )
+  Сравнение данных в sys_refcursor с ожидаемыми.
+
+  Параметры:
+  rc                          - Фактические данные (sys_refcursor)
+  expectedCsv                 - Ожидаемые данные в CSV
+  idColumnName                - Имя колонки курсора с Id строки для указания в
+                                тексте сообщений (без учета регистра, колонка
+                                игнорируется при сравнении)
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  Возврат:
+  - true в случае совпадения данных или false в противном случае
+
+  ( <body::compareQueryResult ( func, cursor )>)
+*/
+function compareQueryResult (
+  rc in out nocopy sys_refcursor
+, expectedCsv clob
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+)
+return boolean;
+
+/* pproc: compareQueryResult ( proc, cursor )
+  Сравнение данных в sys_refcursor с ожидаемыми.
+
+  Параметры:
+  rc                          - Фактические данные (sys_refcursor)
+  expectedCsv                 - Ожидаемые данные в CSV
+  idColumnName                - Имя колонки курсора с Id строки для указания в
+                                тексте сообщений (без учета регистра, колонка
+                                игнорируется при сравнении)
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  ( <body::compareQueryResult ( proc, cursor )>)
+*/
+procedure compareQueryResult (
+  rc in out nocopy sys_refcursor
+, expectedCsv clob
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+);
+
+/* pfunc: compareQueryResult ( func, table )
+  Сравнение данных в таблице с ожидаемыми.
+
+  Параметры:
+  tableName                   - Имя таблицы
+  filterCondition             - Условия фильтрации строк в таблице
+                                (по умолчанию отсутствует)
+  expectedCsv                 - Ожидаемые данные в CSV
+  orderByExpression           - Выражения для упорядочения отбираемых строк
+                                (по умолчанию отсутствует)
+  idColumnName                - Имя колонки с Id строки для указания в тексте
+                                сообщений
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  Возврат:
+  - true в случае совпадения данных или false в противном случае
+
+  ( <body::compareQueryResult ( func, table )>)
+*/
+function compareQueryResult(
+  tableName varchar2
+, filterCondition varchar2 := null
+, expectedCsv clob
+, orderByExpression varchar2 := null
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+)
+return boolean;
+
+/* pproc: compareQueryResult ( proc, table )
+  Сравнение данных в таблице с ожидаемыми.
+
+  Параметры:
+  tableName                   - Имя таблицы
+  filterCondition             - Условия фильтрации строк в таблице
+                                (по умолчанию отсутствует)
+  expectedCsv                 - Ожидаемые данные в CSV
+  orderByExpression           - Выражения для упорядочения отбираемых строк
+                                (по умолчанию отсутствует)
+  idColumnName                - Имя колонки с Id строки для указания в тексте
+                                сообщений
+                                (по умолчанию отсутствует)
+  considerWhitespace          - Учёт служебных символов при сравнении текстовых
+                                данных
+                                (по умолчанию нет)
+  failMessagePrefix           - Префикс сообщения при несовпадении данных
+                                (по умолчанию отсутствует)
+
+  ( <body::compareQueryResult ( proc, table )>)
+*/
+procedure compareQueryResult(
+  tableName varchar2
+, filterCondition varchar2 := null
+, expectedCsv clob
+, orderByExpression varchar2 := null
+, idColumnName varchar2 := null
+, considerWhitespace boolean := null
+, failMessagePrefix varchar2 := null
+);
 
 end pkg_TestUtility;
 /

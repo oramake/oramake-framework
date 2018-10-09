@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>TestUtility</name>
   <description></description>
-  <version>1.0.3</version>
+  <version>1.1.0</version>
   <prefix></prefix>
   <team>
     <programmerDB></programmerDB>
@@ -33,6 +33,7 @@
   <depend>
     <module>Oracle/Module/Common</module>
     <module>Oracle/Module/Logging</module>
+    <module>Oracle/Module/TextParser</module>
     <link></link>
   </depend>
   <image></image>
