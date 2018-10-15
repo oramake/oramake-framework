@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="BuildDependencyFromSYS">
+  <name>Построение схемы зависимостей по системному представлению all_dependencies</name>
+  <batch_config>
+    <schedule>
+      <name>every 2 hours from 00:01</name>
+      <interval type="hh24">
+        <min_value>1</min_value>
+        <max_value>23</max_value>
+        <step>2</step>
+      </interval>
+    </schedule>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="build_dependency_from_sys">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+</batch>

@@ -1,0 +1,11 @@
+-- script: Install/Schema/Last/run.sql
+-- Выполняет установку последней версии объектов схемы.
+
+-- Устанавливаем табличное пространство для индексов
+@oms-set-indexTablespace.sql
+
+-- Таблицы
+
+@oms-run md_module_dependency.tab
+@oms-run md_object_dependency.tab
+@oms-run md_object_dependency_tmp.tab

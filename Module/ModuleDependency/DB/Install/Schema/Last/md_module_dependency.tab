@@ -1,0 +1,36 @@
+-- table: md_module_dependency
+-- Схема зависимостей модулей.
+--
+create table
+  md_module_dependency
+(
+  svn_root                        varchar2(100)                       not null
+  , referenced_svn_root           varchar2(100)                       not null
+  , source                        varchar2(30)                        not null
+  , last_refresh_date             date                                not null
+  , date_ins                      date                default sysdate not null
+  , constraint md_module_dependency_pk primary key
+    ( svn_root, referenced_svn_root)
+)
+/
+
+
+
+comment on table md_module_dependency is
+  'Схема зависимостей модулей [ SVN root: Oracle/Module/ModuleDependency]'
+/
+comment on column md_module_dependency.svn_root is
+  'Идентификатор модуля. Путь к корневому каталогу модуля в Subversion'
+/
+comment on column md_module_dependency.referenced_svn_root is
+  'Идентификатор модуля, от которого зависит исходный модуль'
+/
+comment on column md_module_dependency.source is
+  'Источник вычисления зависимости'
+/
+comment on column md_module_dependency.last_refresh_date is
+  'Дата последнего обновления данных'
+/
+comment on column md_module_dependency.date_ins is
+  'Дата добавления записи'
+/

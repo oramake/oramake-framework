@@ -1,0 +1,60 @@
+-- table: md_object_dependency
+-- Схема зависимостей объектов БД.
+--
+create table
+  md_object_dependency
+(
+  db                              varchar2(30)                        not null
+  , owner                         varchar2(30)                        not null
+  , name                          varchar2(100)                       not null
+  , type                          varchar2(30)                        not null
+  , referenced_owner              varchar2(30)                        not null
+  , referenced_name               varchar2(100)                       not null
+  , referenced_type               varchar2(30)                        not null
+  , referenced_link_name          varchar2(30)                        
+  , dependency_type               varchar2(30)                        not null
+  , last_refresh_date             date                default sysdate not null
+  , date_ins                      date                default sysdate not null
+  , constraint md_object_dependency_pk primary key
+  ( db, owner, name, type, referenced_owner, referenced_name, referenced_type)
+)
+/
+
+
+
+comment on table md_object_dependency is
+  'Схема зависимостей объетков БД [ SVN root: Oracle/Module/ModuleDependency]'
+/
+comment on column md_object_dependency.db is
+  'БД. Источник данных'
+/
+comment on column md_object_dependency.owner is
+  'Владелец объекта'
+/
+comment on column md_object_dependency.name is
+  'Наименование объекта БД'
+/
+comment on column md_object_dependency.type is
+  'Тип объекта БД'
+/
+comment on column md_object_dependency.referenced_owner is
+  'Владелец объекта, на который ссылка'
+/
+comment on column md_object_dependency.referenced_name is
+  'Наименование объекта БД, на который ссылка'
+/
+comment on column md_object_dependency.referenced_type is
+  'Тип объекта БД, на который ссылка'
+/
+comment on column md_object_dependency.referenced_link_name is
+  'dbLink объекта БД, на который ссылка'
+/
+comment on column md_object_dependency.dependency_type is
+  'Тип ссылки'
+/
+comment on column md_object_dependency.last_refresh_date is
+  'Дата последнего обновления данных'
+/
+comment on column md_object_dependency.date_ins is
+  'Дата добавления записи'
+/
