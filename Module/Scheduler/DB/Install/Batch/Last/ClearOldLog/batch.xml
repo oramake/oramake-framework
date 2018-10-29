@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="ClearOldLog">
+  <name>Очистка старых логов выполнения пакетов</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>every day at 3:00</name>
+      <interval type="hh24">
+        <value>3</value>
+      </interval>
+      <interval type="mi">
+        <value>0</value>
+      </interval>
+    </schedule>
+    <option short_name="SaveDayCount" type="number" name="Число дней, за которые сохраняются логи выполнения пакетов">
+      <value>70</value>
+    </option>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="clear_old_log">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">skip</condition>
+    <condition id="3">error</condition>
+  </content>
+</batch>
