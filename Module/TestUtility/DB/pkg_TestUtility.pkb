@@ -825,6 +825,8 @@ end compareRowCount;
   Параметры:
   rc                          - Фактические данные (sys_refcursor)
   expectedCsv                 - Ожидаемые данные в CSV
+  tableName                   - Имя таблицы  указания в тексте сообщений
+                                (по умолчанию отсутствует)
   idColumnName                - Имя колонки курсора с Id строки для указания в
                                 тексте сообщений (без учета регистра, колонка
                                 игнорируется при сравнении)
@@ -837,10 +839,19 @@ end compareRowCount;
 
   Возврат:
   - true в случае совпадения данных или false в противном случае
+
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
 */
 function compareQueryResult (
   rc in out nocopy sys_refcursor
 , expectedCsv clob
+, tableName varchar2 := null
 , idColumnName varchar2 := null
 , considerWhitespace boolean := null
 , failMessagePrefix varchar2 := null
@@ -865,7 +876,12 @@ is
   idColumnNumber integer;
 
   -- Идентификатор проверяемой строки (заполняется если указан idColumnName)
-  idString varchar2(200);
+  subtype IdStringT is varchar2(200);
+  idString IdStringT;
+
+  -- Идентификаторы проверяемой и предыдущих строк кусора (по rowNumber)
+  type IdColT is table of IdStringT;
+  idCol IdColT := IdColT();
 
   -- Переменные для работы с курсором
   cursorSQL         integer;
@@ -971,6 +987,8 @@ is
       dbms_sql.column_value( cursorSQL, idColumnNumber, tempVariable);
       idString := '"' || tempVariable || '"';
     end if;
+    idCol.extend( 1);
+    idCol( idCol.last()) := idString;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
@@ -984,6 +1002,77 @@ is
 
 
   /*
+    Проверяет что строка является макросом, заполняемым Id строки.
+  */
+  function isRowidMacro(
+    str varchar2
+  )
+  return boolean
+  is
+  begin
+    return
+      coalesce(
+        idColumnName is not null
+        and (
+          str = '$(rowId)'
+          or str like '$(rowId(%))'
+        )
+        , false
+      )
+    ;
+  end isRowidMacro;
+
+
+
+  /*
+    Возвращает значение макроса с Id строки.
+  */
+  function getRowidMacroValue(
+    macroName varchar2
+  )
+  return varchar2
+  is
+
+    i integer;
+    cnt integer;
+    lb integer;
+
+  begin
+    if macroName = '$(rowId)' then
+      i := idCol.count();
+    else
+      i := to_number( substr( macroName, 9, length( macroName) - 10));
+      cnt := idCol.count();
+      lb := - ( cnt - 1);
+      if i < lb or i > cnt then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Указано некорректное смещение в макросе $(rowId(n)) ('
+            || ' n=' || i
+            || ', достимый интервал [' || lb || ';' || cnt || ']'
+            || ').'
+        );
+      end if;
+      if i < 1 then
+        i := cnt + i;
+      end if;
+    end if;
+    return idCol( i);
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении значения макроса с Id строки ('
+          || ' macroName="' || macroName || '"'
+          || ').'
+        )
+      , true
+    );
+  end getRowidMacroValue;
+
+
+
+  /*
     Сравнение значения поля, приведенного к строке
   */
   procedure compareColumn(
@@ -993,22 +1082,41 @@ is
     , expectedString varchar2
   )
   is
+
+    isMacro boolean := false;
+    macroValue IdStringT;
+
   begin
+    if isRowidMacro( expectedString) then
+      isMacro := true;
+      macroValue := getRowidMacroValue( macroName => expectedString);
+    end if;
     isOk := isOk and compareChar(
       failMessageText =>
         failMessagePrefix
-        || 'Различие в строке #' || rowNumber
+        || 'Некорректное значение поля ' || columnName
+        || case when tableName is not null then
+            ' таблицы ' || tableName
+          end
+        || ', строка '
           || case when idColumnNumber is not null then
-              ' ('
-              || lower( idColumnName)
+              lower( idColumnName)
               || '='
               || idString
-              || ')'
+              || ' (#' || rowNumber || ')'
+            else
+              '#' || rowNumber
             end
-          || ', столбце #' || fieldNumber
-          || ' ("' || lower( columnName) || '")'
+        || case when isMacro then
+            ' (макрос "' || expectedString || '")'
+          end
       , actualString        => actualString
-      , expectedString      => expectedString
+      , expectedString      =>
+          case when isMacro then
+            macroValue
+          else
+            expectedString
+          end
       , considerWhitespace  => coalesce( considerWhitespace, false)
     );
   end compareColumn;
@@ -1060,16 +1168,22 @@ is
     , columnName varchar2
   )
   is
+
+    expectedString varchar2(100);
+
   begin
+    expectedString := trim( csvIterator.getString( fieldNumber));
+    if not isRowidMacro( expectedString) then
+      expectedString := to_char(
+        csvIterator.getNumber( fieldNumber, decimalCharacter => '.')
+      );
+    end if;
     dbms_sql.column_value( cursorSQL, columnNumber, tempNumVariable);
     compareColumn(
       columnNumber      => columnNumber
       , columnName      => columnName
       , actualString    => to_char( tempNumVariable)
-      , expectedString  =>
-          to_char(
-            csvIterator.getNumber( fieldNumber, decimalCharacter => '.')
-          )
+      , expectedString  => expectedString
     );
   exception when others then
     raise_application_error(
@@ -1101,7 +1215,7 @@ is
       columnNumber      => columnNumber
       , columnName      => columnName
       , actualString    => tempVariable
-      , expectedString  => csvIterator.getString( fieldNumber)
+      , expectedString  => trim( csvIterator.getString( fieldNumber))
     );
   exception when others then
     raise_application_error(
@@ -1208,6 +1322,8 @@ end compareQueryResult;
   Параметры:
   rc                          - Фактические данные (sys_refcursor)
   expectedCsv                 - Ожидаемые данные в CSV
+  tableName                   - Имя таблицы  указания в тексте сообщений
+                                (по умолчанию отсутствует)
   idColumnName                - Имя колонки курсора с Id строки для указания в
                                 тексте сообщений (без учета регистра, колонка
                                 игнорируется при сравнении)
@@ -1217,10 +1333,19 @@ end compareQueryResult;
                                 (по умолчанию нет)
   failMessagePrefix           - Префикс сообщения при несовпадении данных
                                 (по умолчанию отсутствует)
+
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
 */
 procedure compareQueryResult (
   rc in out nocopy sys_refcursor
 , expectedCsv clob
+, tableName varchar2 := null
 , idColumnName varchar2 := null
 , considerWhitespace boolean := null
 , failMessagePrefix varchar2 := null
@@ -1233,6 +1358,7 @@ begin
   dummy := compareQueryResult(
     rc                  => rc
   , expectedCsv         => expectedCsv
+  , tableName           => tableName
   , idColumnName        => idColumnName
   , considerWhitespace  => considerWhitespace
   , failMessagePrefix   => failMessagePrefix
@@ -1244,6 +1370,10 @@ end compareQueryResult;
 
   Параметры:
   tableName                   - Имя таблицы
+  tableExpression             - Выражение для выборки данных из таблицы, при
+                                отсутствии выборка выполняется непосредственно
+                                из таблицы
+                                (по умолчанию отсутствует)
   filterCondition             - Условия фильтрации строк в таблице
                                 (по умолчанию отсутствует)
   expectedCsv                 - Ожидаемые данные в CSV
@@ -1260,9 +1390,18 @@ end compareQueryResult;
 
   Возврат:
   - true в случае совпадения данных или false в противном случае
+
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
 */
 function compareQueryResult(
   tableName varchar2
+, tableExpression varchar2 := null
 , filterCondition varchar2 := null
 , expectedCsv clob
 , orderByExpression varchar2 := null
@@ -1303,6 +1442,9 @@ is
           || lower( trim( cit.getString( fieldNumber => i)))
         ;
       end loop;
+    else
+      -- нужно добавить хотя бы одно поле для успешного открытия курсора
+      sqlText := sqlText || 'null as c1';
     end if;
   exception when others then
     raise_application_error(
@@ -1328,7 +1470,7 @@ begin
   sqlText := sqlText ||
 '
 from
-  ' || tableName
+  ' || coalesce( tableExpression, tableName)
   || case when filterCondition is not null then
 '
 where
@@ -1346,6 +1488,7 @@ order by
     compareQueryResult(
       rc                  => rc
     , expectedCsv         => expectedCsv
+    , tableName           => tableName
     , idColumnName        => idColumnName
     , considerWhitespace  => considerWhitespace
     , failMessagePrefix   => failMessagePrefix
@@ -1357,6 +1500,7 @@ exception when others then
     , logger.errorStack(
         'Ошибка сравнения данных с CSV ('
         || ' tableName="' || tableName || '"'
+        || ', tableExpression="' || tableExpression || '"'
         || ', filterCondition="' || filterCondition || '"'
         || ', orderByExpression="' || orderByExpression || '"'
         || ', idColumnName="' || idColumnName || '"'
@@ -1373,6 +1517,10 @@ end compareQueryResult;
 
   Параметры:
   tableName                   - Имя таблицы
+  tableExpression             - Выражение для выборки данных из таблицы, при
+                                отсутствии выборка выполняется непосредственно
+                                из таблицы
+                                (по умолчанию отсутствует)
   filterCondition             - Условия фильтрации строк в таблице
                                 (по умолчанию отсутствует)
   expectedCsv                 - Ожидаемые данные в CSV
@@ -1386,9 +1534,18 @@ end compareQueryResult;
                                 (по умолчанию нет)
   failMessagePrefix           - Префикс сообщения при несовпадении данных
                                 (по умолчанию отсутствует)
+
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
 */
 procedure compareQueryResult(
   tableName varchar2
+, tableExpression varchar2 := null
 , filterCondition varchar2 := null
 , expectedCsv clob
 , orderByExpression varchar2 := null
@@ -1403,6 +1560,7 @@ is
 begin
   dummy := compareQueryResult(
       tableName           => tableName
+    , tableExpression     => tableExpression
     , filterCondition     => filterCondition
     , expectedCsv         => expectedCsv
     , orderByExpression   => orderByExpression

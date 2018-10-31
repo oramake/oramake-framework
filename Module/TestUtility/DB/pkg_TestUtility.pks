@@ -215,6 +215,8 @@ procedure compareRowCount (
   Параметры:
   rc                          - Фактические данные (sys_refcursor)
   expectedCsv                 - Ожидаемые данные в CSV
+  tableName                   - Имя таблицы  указания в тексте сообщений
+                                (по умолчанию отсутствует)
   idColumnName                - Имя колонки курсора с Id строки для указания в
                                 тексте сообщений (без учета регистра, колонка
                                 игнорируется при сравнении)
@@ -228,11 +230,20 @@ procedure compareRowCount (
   Возврат:
   - true в случае совпадения данных или false в противном случае
 
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
+
   ( <body::compareQueryResult ( func, cursor )>)
 */
 function compareQueryResult (
   rc in out nocopy sys_refcursor
 , expectedCsv clob
+, tableName varchar2 := null
 , idColumnName varchar2 := null
 , considerWhitespace boolean := null
 , failMessagePrefix varchar2 := null
@@ -245,6 +256,8 @@ return boolean;
   Параметры:
   rc                          - Фактические данные (sys_refcursor)
   expectedCsv                 - Ожидаемые данные в CSV
+  tableName                   - Имя таблицы  указания в тексте сообщений
+                                (по умолчанию отсутствует)
   idColumnName                - Имя колонки курсора с Id строки для указания в
                                 тексте сообщений (без учета регистра, колонка
                                 игнорируется при сравнении)
@@ -255,11 +268,20 @@ return boolean;
   failMessagePrefix           - Префикс сообщения при несовпадении данных
                                 (по умолчанию отсутствует)
 
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
+
   ( <body::compareQueryResult ( proc, cursor )>)
 */
 procedure compareQueryResult (
   rc in out nocopy sys_refcursor
 , expectedCsv clob
+, tableName varchar2 := null
 , idColumnName varchar2 := null
 , considerWhitespace boolean := null
 , failMessagePrefix varchar2 := null
@@ -270,6 +292,10 @@ procedure compareQueryResult (
 
   Параметры:
   tableName                   - Имя таблицы
+  tableExpression             - Выражение для выборки данных из таблицы, при
+                                отсутствии выборка выполняется непосредственно
+                                из таблицы
+                                (по умолчанию отсутствует)
   filterCondition             - Условия фильтрации строк в таблице
                                 (по умолчанию отсутствует)
   expectedCsv                 - Ожидаемые данные в CSV
@@ -287,10 +313,19 @@ procedure compareQueryResult (
   Возврат:
   - true в случае совпадения данных или false в противном случае
 
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
+
   ( <body::compareQueryResult ( func, table )>)
 */
 function compareQueryResult(
   tableName varchar2
+, tableExpression varchar2 := null
 , filterCondition varchar2 := null
 , expectedCsv clob
 , orderByExpression varchar2 := null
@@ -305,6 +340,10 @@ return boolean;
 
   Параметры:
   tableName                   - Имя таблицы
+  tableExpression             - Выражение для выборки данных из таблицы, при
+                                отсутствии выборка выполняется непосредственно
+                                из таблицы
+                                (по умолчанию отсутствует)
   filterCondition             - Условия фильтрации строк в таблице
                                 (по умолчанию отсутствует)
   expectedCsv                 - Ожидаемые данные в CSV
@@ -319,10 +358,19 @@ return boolean;
   failMessagePrefix           - Префикс сообщения при несовпадении данных
                                 (по умолчанию отсутствует)
 
+  Замечания:
+  - в случае задания idColumnName в качестве ожидаемого значения можно
+    указывать макрос $(rowId), равный Id текущей строки, и макрос $(rowId(n)),
+    равный Id предшествующей строки с данными в позиции n (абсолютная позиция
+    если n положительный, иначе относительная позиция), например $(rowId(1))
+    равен Id первой строки с данными, $(rowId(-1)) равен Id предыдущей строки
+    с данными;
+
   ( <body::compareQueryResult ( proc, table )>)
 */
 procedure compareQueryResult(
   tableName varchar2
+, tableExpression varchar2 := null
 , filterCondition varchar2 := null
 , expectedCsv clob
 , orderByExpression varchar2 := null
