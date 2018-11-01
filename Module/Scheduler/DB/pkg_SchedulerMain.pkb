@@ -212,6 +212,9 @@ is
   -- Информация из лога
   lgi sch_batch_log_info_t;
 
+  -- Флаг лога с использованием контекста модуля Logging
+  isContextLog integer;
+
 begin
   if batchId is null and rootLogId is null then
     raise_application_error(
@@ -228,74 +231,64 @@ begin
 
   if lgi.root_log_id is not null then
     select
-      min( lg.date_ins) as min_log_date
-      , max( lg.date_ins) as max_log_date
-      , max(
-          case when lg.message_type_code = 'BFINISH' and level = 2 then
-            lg.message_value
-          end
-        )
-        as batch_result_id
-      , sum(
-          case when lg.message_type_code = 'JFINISH'
-              and lg.message_value in ( 3, 4)
-              then 1 else 0
-          end
-        )
-        as error_job_count
-      , sum(
-          case when lg.message_type_code = 'ERROR'
-            then 1 else 0
-          end
-        )
-        as error_count
-      , sum(
-          case when lg.message_type_code = 'WARNING'
-            then 1 else 0
-          end
-        )
-        as warning_count
-    into
-      lgi.min_log_date
-      , lgi.max_log_date
-      , lgi.batch_result_id
-      , lgi.error_job_count
-      , lgi.error_count
-      , lgi.warning_count
+      count(*)
+    into isContextLog
     from
-      (
+      lg_log lg
+    where
+      lg.log_id = lgi.root_log_id
+      and lg.context_type_id is not null
+    ;
+    if isContextLog = 1 then
       select
-        lg.log_id
-        , case ct.context_type_short_name
-            when pkg_SchedulerMain.Batch_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                'BSTART'
-              else
-                'BFINISH'
-              end
-            when pkg_SchedulerMain.Job_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                'JSTART'
-              else
-                'JFINISH'
-              end
-            else
-              case lg.level_code
-                when pkg_Logging.Fatal_LevelCode then
-                  'ERROR'
-                when pkg_Logging.Error_LevelCode then
-                  'ERROR'
-                when pkg_Logging.Warn_LevelCode then
-                  'WARNING'
-                when pkg_Logging.Info_LevelCode then
-                  'INFO'
-                else
-                  'DEBUG'
-              end
-          end
-          as message_type_code
-        , lg.message_value
-        , lg.date_ins
+        min( lg.date_ins) as min_log_date
+        , max( lg.date_ins) as max_log_date
+        , max(
+            case when
+              ct.context_type_short_name = Batch_CtxTpSName
+              -- результат батча верхнего уровня
+              and lg.log_id = ccl.close_log_id
+            then
+              lg.message_value
+            end
+          )
+          as batch_result_id
+        , sum(
+            case when
+                ct.context_type_short_name = Job_CtxTpSName
+                and lg.open_context_flag = 0
+                and lg.message_value in ( 3, 4)
+              then 1
+              else 0
+            end
+          )
+          as error_job_count
+        , sum(
+            case when
+                lg.level_code in (
+                  pkg_Logging.Fatal_LevelCode
+                  , pkg_Logging.Error_LevelCode
+                )
+              then 1
+              else 0
+            end
+          )
+          as error_count
+        , sum(
+            case when
+                lg.level_code = pkg_Logging.Warn_LevelCode
+              then 1
+              else 0
+            end
+          )
+          as warning_count
+      into
+        lgi.min_log_date
+        , lgi.max_log_date
+        , lgi.batch_result_id
+        , lgi.error_job_count
+        , lgi.error_count
+        , lgi.warning_count
       from
         v_lg_context_change_log ccl
         inner join lg_log lg
@@ -306,21 +299,51 @@ begin
           on ct.context_type_id = lg.context_type_id
       where
         ccl.log_id = lgi.root_log_id
-      union all
+      ;
+    else
       select
-        lg.log_id
-        , lg.message_type_code
-        , lg.message_value
-        , lg.date_ins
+        min( lg.date_ins) as min_log_date
+        , max( lg.date_ins) as max_log_date
+        , max(
+            case when lg.message_type_code = 'BFINISH' and level = 2 then
+              lg.message_value
+            end
+          )
+          as batch_result_id
+        , sum(
+            case when lg.message_type_code = 'JFINISH'
+                and lg.message_value in ( 3, 4)
+                then 1 else 0
+            end
+          )
+          as error_job_count
+        , sum(
+            case when lg.message_type_code = 'ERROR'
+              then 1 else 0
+            end
+          )
+          as error_count
+        , sum(
+            case when lg.message_type_code = 'WARNING'
+              then 1 else 0
+            end
+          )
+          as warning_count
+      into
+        lgi.min_log_date
+        , lgi.max_log_date
+        , lgi.batch_result_id
+        , lgi.error_job_count
+        , lgi.error_count
+        , lgi.warning_count
       from
         sch_log lg
       start with
         lg.log_id = lgi.root_log_id
-        and lg.message_type_code = 'BSTART'
       connect by
         prior lg.log_id = lg.parent_log_id
-      ) lg
-    ;
+      ;
+    end if;
   end if;
 
   return lgi;

@@ -1528,29 +1528,41 @@ is
   resultSet sys_refcursor;
   -- Объект динамического запроса
   dSql dyn_dynamic_sql_t := dyn_dynamic_sql_t( '
-    select
-        l.log_id
-      , l.batch_id
-      , l.message_type_code
-      , m.message_type_name_rus as message_type_name
-      , l.message_text
-      , l.date_ins
-      , l.operator_id
-      , op.operator_name
-    from v_sch_batch_root_log l
-    inner join sch_message_type m
-      on m.message_type_code = l.message_type_code
-    inner join op_operator op
-      on op.operator_id = l.operator_id
-    where $(condition)
+select
+  a.*
+from
+  (
+  select
+      l.log_id
+    , l.batch_id
+    , l.message_type_code
+    , m.message_type_name_rus as message_type_name
+    , l.message_text
+    , l.date_ins
+    , l.operator_id
+    , op.operator_name
+  from v_sch_batch_root_log l
+  inner join sch_message_type m
+    on m.message_type_code = l.message_type_code
+  inner join op_operator op
+    on op.operator_id = l.operator_id
+  where $(condition)
+  order by
+    1 desc
+  ) a
+where
+  $(rownumCondition)
   ');
 begin
 
   -- формирование параметров запроса
   dSql.addCondition( 'l.log_id =', logId is null);
   dSql.addCondition( 'l.batch_id =', batchId is null);
-  dSql.addCondition( 'rownum <=', maxRowCount is null, 'maxRowCount');
   dSql.useCondition( 'condition');
+  dSql.addCondition(
+    'rownum <= :maxRowCount', maxRowCount is null
+  );
+  dSql.useCondition( 'rownumCondition');
 
   open resultSet for dSql.getSqlText()
   using
@@ -1590,19 +1602,20 @@ is
   -- возвращаемый курсор
   resultSet sys_refcursor;
 
-  isNewLog integer;
+  -- Флаг лога с использованием контекста модуля Logging
+  isContextLog integer;
 
 begin
   select
     count(*)
-  into isNewLog
+  into isContextLog
   from
     lg_log lg
   where
     lg.log_id = parentLogId
     and lg.context_type_id is not null
   ;
-  if isNewLog = 1 then
+  if isContextLog = 1 then
 
   open resultSet for
     select
@@ -1610,7 +1623,7 @@ begin
       , nullif( parentLogId, lg.log_id) as parent_log_id
       , m.message_type_code
       , m.message_type_name_rus as message_type_name
-      , coalesce( lg.context_value_id, lg.message_value) as message_value
+      , coalesce( lg.message_value, lg.context_value_id) as message_value
       , lg.message_text
       , 1 + ( lg.context_level - ccl.open_context_level)
         + case when lg.open_context_flag = 1 then 0 else 1 end
@@ -4748,19 +4761,20 @@ is
       , lg.log_id
   ;
 
-  isNewLog integer;
+  -- Флаг лога с использованием контекста модуля Logging
+  isContextLog integer;
 
 begin
   select
     count(*)
-  into isNewLog
+  into isContextLog
   from
     lg_log lg
   where
     lg.log_id = rootLogId
     and lg.context_type_id is not null
   ;
-  if isNewLog = 1 then
+  if isContextLog = 1 then
     for rec in curLog( rootLogId) loop
       pipe row( rec.log_row);
     end loop;
