@@ -9,10 +9,21 @@ create table
   , level_code                    varchar2(10)                        not null
       enable novalidate
   , message_value                 integer
+  , message_label                 varchar2(128)
   , message_text                  varchar2(4000)                      not null
+  , context_level                 integer
+  , context_type_id               integer
+  , context_value_id              integer
+  , open_context_log_id           integer
+  , open_context_log_time         timestamp with time zone
+  , open_context_flag             number(1)
+  , context_type_level            integer
   , module_name                   varchar2(128)
   , object_name                   varchar2(128)
   , module_id                     integer
+  , log_time                      timestamp with time zone
+                                    default current_timestamp         not null
+      enable novalidate
   , date_ins                      date                default sysdate not null
   , operator_id                   integer
   -- Устаревшие поля
@@ -23,52 +34,93 @@ create table
     using index tablespace &indexTablespace
   , constraint lg_log_ck_level_code check
     (level_code not in ('ALL','OFF'))
+  , constraint lg_log_ck_context_level check
+    (context_level >= 0)
+  , constraint lg_log_ck_open_context_flag check
+    (open_context_flag in (-1,0,1))
+  , constraint lg_log_ck_context_type_level check
+    (context_type_level is null or context_type_level is not null and context_type_level >= 1 and context_level is not null and context_level >= context_type_level)
+  , constraint lg_log_ck_context_change check
+(context_type_id is null
+  and context_value_id is null
+  and open_context_log_id is null
+  and open_context_log_time is null
+  and open_context_flag is null
+  and context_type_level is null
+or context_type_id is not null
+  and open_context_log_id is not null
+  and open_context_log_time is not null
+  and open_context_flag is not null)
 )
 /
 
 
-
-comment on table lg_log is
-  'Лог работы программных модулей [ SVN root: Oracle/Module/Logging]'
-/
-comment on column lg_log.log_id is
-  'Id записи лога'
-/
-comment on column lg_log.sessionid is
-  'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
-/
-comment on column lg_log.level_code is
-  'Код уровня логирования'
-/
-comment on column lg_log.message_value is
-  'Целочисленное значение, связанное с сообщением'
-/
-comment on column lg_log.message_text is
-  'Текст сообщения'
-/
-comment on column lg_log.module_name is
-  'Имя модуля, добавившего запись'
-/
-comment on column lg_log.object_name is
-  'Имя объекта модуля (пакета, типа, скрипта), добавившего запись'
-/
-comment on column lg_log.module_id is
-  'Id модуля, добавившего запись (если удалось определить)'
-/
-comment on column lg_log.date_ins is
-  'Дата добавления записи'
-/
-comment on column lg_log.operator_id is
-  'Id оператора ( из модуля AccessOperator)'
-/
-comment on column lg_log.parent_log_id is
-  'Устаревшее поле: Id родительской записи лога'
-/
-comment on column lg_log.message_type_code is
-  'Устаревшее поле: Код типа сообщения'
-/
+@oms-run lg_log.comment.sql
 
 
+
+-- index: lg_log_ix_context_change
+-- Индекс для отбора записей по изменению контекста выполнения указанного типа
+-- (должен соответствовать выборке в представлении <v_lg_context_change>).
+create index
+  lg_log_ix_context_change
+on
+  lg_log (
+    context_type_id
+    , context_value_id
+    , sys_extract_utc( open_context_log_time)
+    , open_context_log_id
+    , open_context_flag desc
+    , context_type_level
+    , case when context_type_id is not null then
+        sessionid
+      end
+    , case when context_type_id is not null then
+        level_code
+      end
+    , case when context_type_id is not null then
+        message_value
+      end
+    , case when context_type_id is not null then
+        message_label
+      end
+    , case when context_type_id is not null then
+        context_level
+      end
+    , case when open_context_flag = 0 then
+        log_id
+      end
+    , sys_extract_utc(
+        case when open_context_flag = 0 then
+          log_time
+        end
+      )
+  )
+tablespace &indexTablespace
+/
+
+-- index: lg_log_ix_sessionid_logid
+-- Индекс для выборки по идентификатору сессии и Id лога.
+create index
+  lg_log_ix_sessionid_logid
+on
+  lg_log (
+    sessionid
+    , log_id
+  )
+tablespace &indexTablespace
+/
+
+-- index: lg_log_ix_log_time
+-- Индекс для выборки по времени логирования.
+create index
+  lg_log_ix_log_time
+on
+  lg_log (
+    log_time
+  )
+tablespace &indexTablespace
+/
 
 -- index: lg_log_ix_parent_log_id
 -- Индекс для внешнего ключа.
@@ -77,17 +129,6 @@ create index
 on
   lg_log (
     parent_log_id
-  )
-tablespace &indexTablespace
-/
-
--- index: lg_log_ix_date_ins
--- Индекс выборке по дате логирования.
-create index
-  lg_log_ix_date_ins
-on
-  lg_log (
-    date_ins
   )
 tablespace &indexTablespace
 /

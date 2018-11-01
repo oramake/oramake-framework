@@ -1,0 +1,9 @@
+alter table
+  lg_context_type
+add constraint
+  lg_context_type_fk_module_id
+foreign key
+  ( module_id)
+references
+  mod_module ( module_id)
+/

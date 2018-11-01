@@ -54,6 +54,181 @@ language java name
      , java.math.BigDecimal
    )';
 
+/* iproc: execLoggerMethod
+  Выполняет вызовы методов логера.
+
+  Параметры:
+  usedLogger                  - Логгер для выполнения вызовов
+  execListCsv                 - CSV параметрами вызовов
+*/
+procedure execLoggerMethod(
+  usedLogger lg_logger_t
+  , execListCsv cmn_string_table_t
+)
+is
+
+  ci tpr_csv_iterator_t;
+  methodName varchar2(100);
+
+
+
+  /*
+    Возвращает значение строкового поля с игнорированием пробелов.
+  */
+  function getStr(
+    fieldName varchar2
+    , isNotFoundRaised integer := null
+  )
+  return varchar2
+  is
+  begin
+    return
+      trim(
+        ci.getString(
+          fieldName           => fieldName
+          , isNotFoundRaised  => isNotFoundRaised
+        )
+      )
+    ;
+  end getStr;
+
+
+
+  /*
+    Возвращает значение числового поля.
+  */
+  function getNum(
+    fieldName varchar2
+    , isNotFoundRaised integer := null
+  )
+  return number
+  is
+  begin
+    return
+      trim(
+        ci.getNumber(
+          fieldName           => fieldName
+          , isNotFoundRaised  => isNotFoundRaised
+        )
+      )
+    ;
+  end getNum;
+
+
+
+-- execLoggerMethod
+begin
+  for i in 1 .. execListCsv.count() loop
+    ci := tpr_csv_iterator_t(
+      textData              =>
+          ltrim( execListCsv( i), ' ' || chr(13) || chr(10))
+      , headerRecordNumber  => 1
+      , skipRecordCount     => 2
+    );
+    while ci.next() loop
+      methodName := substr( getStr( 'methodName'), 1, 100);
+      case methodName
+        -- Логирование сообщений
+        when 'log' then
+          usedLogger.log(
+            levelCode               => getStr( 'levelCode')
+            , messageText           => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'fatal' then
+          usedLogger.fatal(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'error' then
+          usedLogger.error(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'warn' then
+          usedLogger.warn(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'info' then
+          usedLogger.info(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'debug' then
+          usedLogger.debug(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'trace' then
+          usedLogger.trace(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        -- Типы контекста выполнения
+        when 'mergeContextType' then
+          usedLogger.mergeContextType(
+            contextTypeShortName      => getStr( 'contextTypeShortName')
+            , contextTypeName         => getStr( 'contextTypeName', 0)
+            , nestedFlag              => getNum( 'nestedFlag', 0)
+            , contextTypeDescription  => getStr( 'contextTypeDescription', 0)
+          );
+        when 'deleteContextType' then
+          usedLogger.deleteContextType(
+            contextTypeShortName      => getStr( 'contextTypeShortName')
+          );
+        else
+          -- Игнорируем комментарии
+          if methodName like '#%' or methodName like '--%' then
+            null;
+          else
+            raise_application_error(
+              pkg_Error.IllegalArgument
+              , 'Указано неизвестное имя метода логера для выполнения ('
+                || ' methodName="' || methodName || '"'
+                || ').'
+            );
+          end if;
+      end case;
+    end loop;
+  end loop;
+end execLoggerMethod;
+
 /* proc: testLogger
   Тестирование логирования с помощью типа <lg_logger_t>.
 
@@ -69,7 +244,10 @@ is
   -- Порядковый номер очередного тестового случая
   checkCaseNumber integer := 0;
 
-  -- Корневой логгер
+  -- Разрешен ли вывод отладочных сообщений
+  isDebugEnabled boolean;
+
+  -- Корневой логер
   rootLogger lg_logger_t;
 
   -- Логгер, используемый в тестах по умолчанию
@@ -130,6 +308,7 @@ is
   begin
     getTestModule();
     rootLogger := lg_logger_t.getRootLogger();
+    isDebugEnabled := rootLogger.isDebugEnabled();
     testObjectName := 'pkg_TestPackage';
     testLogger := lg_logger_t.getLogger(
       moduleName    => testModuleName
@@ -374,6 +553,178 @@ is
 
 
   /*
+    Проверяет тестовый случай работы с контекстом.
+  */
+  procedure checkContextCase(
+    caseDescription varchar2
+    , usedLogger lg_logger_t := testLogger
+    , setLevelCode varchar2 := lg_logger_t.getAllLevelCode()
+    , execLoggerMethodCsv cmn_string_table_t
+    , expectedLogCsv clob := null
+    , errorMessageMask varchar2 := null
+    , nextCaseUsedCount pls_integer := null
+  )
+  is
+
+    -- Описание тестового случая
+    cinfo varchar2(200) :=
+      'CASE ' || to_char( checkCaseNumber + 1)
+      || ' "' || caseDescription || '": '
+    ;
+
+    errorMessage varchar2(32000);
+
+    prevLogId integer;
+
+    oldLevelCode lg_level.level_code%type;
+    oldRootLevelCode lg_level.level_code%type;
+
+    -- Id созданного сообщения
+    logId integer;
+
+    -- Число добавленных сообщений
+    logCount integer;
+
+    lgr lg_log%rowtype;
+
+  -- checkContextCase
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return;
+    end if;
+    logger.info( '*** ' || cinfo);
+
+    select
+      coalesce( max( t.log_id), 0)
+    into prevLogId
+    from
+      lg_log t
+    ;
+    if setLevelCode is not null then
+      oldLevelCode := usedLogger.getLevel();
+    end if;
+    begin
+
+      -- Исключаем одновременный вывод через dbms_output
+      if not isDebugEnabled then
+        pkg_Logging.setDestination(
+          destinationCode => pkg_Logging.Table_DestinationCode
+        );
+      end if;
+
+      if setLevelCode is not null then
+        usedLogger.setLevel( setLevelCode);
+      end if;
+
+      execLoggerMethod(
+        usedLogger      => usedLogger
+        , execListCsv   => execLoggerMethodCsv
+      );
+
+      -- Восстанавливаем значения по умолчанию
+      select
+        max( t.log_id)
+        , count(*)
+      into logId, logCount
+      from
+        lg_log t
+      where
+        t.log_id > prevLogId
+        and t.sessionid = sys_context('USERENV','SESSIONID')
+        -- исключаем отладочные сообщения пакета pkg_LoggingInternal
+        and not (
+          nullif( 'Logging', t.module_name) is null
+          and nullif( 'pkg_LoggingInternal', t.object_name) is null
+        )
+      ;
+      if setLevelCode is not null then
+        usedLogger.setLevel( oldLevelCode);
+      end if;
+      pkg_Logging.setDestination( destinationCode => null);
+      if errorMessageMask is not null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Успешное выполнение вместо ошибки'
+        );
+      end if;
+    exception when others then
+      if setLevelCode is not null then
+        usedLogger.setLevel( oldLevelCode);
+      end if;
+      pkg_Logging.setDestination( destinationCode => null);
+      if errorMessageMask is not null then
+        errorMessage := logger.getErrorStack();
+        if errorMessage not like errorMessageMask then
+          pkg_TestUtility.compareChar(
+            actualString        => errorMessage
+            , expectedString    => errorMessageMask
+            , failMessageText   =>
+                cinfo || 'Сообщение об ошибке не соответствует маске'
+          );
+        end if;
+      else
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Выполнение завершилось с ошибкой:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end if;
+    end;
+
+    -- Проверка успешного результата
+    if errorMessageMask is null then
+      if expectedLogCsv is not null then
+        pkg_TestUtility.compareQueryResult(
+          tableName           => 'lg_log'
+          , tableExpression   =>
+'(select
+  lg.*
+  , ct.context_type_short_name
+from
+  lg_log lg
+  left join lg_context_type ct
+    on ct.context_type_id = lg.context_type_id
+)
+'
+          , filterCondition   =>
+'log_id > ' || coalesce( prevLogId, 0) || '
+and log_id <= ' || coalesce( logId, 0) || '
+and sessionid = sys_context(''USERENV'',''SESSIONID'')
+-- исключаем отладочные сообщения пакета pkg_LoggingInternal
+and not (
+  nullif( ''Logging'', module_name) is null
+  and nullif( ''pkg_LoggingInternal'', object_name) is null
+)
+'
+          , orderByExpression => 'log_id'
+          , idColumnName      => 'log_id'
+          , expectedCsv       => expectedLogCsv
+          , failMessagePrefix => cinfo
+        );
+      end if;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке тестового случая работы с контекстом ('
+          || ' caseNumber=' || checkCaseNumber
+          || ', caseDescription="' || caseDescription || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkContextCase;
+
+
+
+  /*
     Проверка логирования в таблицу.
   */
   procedure checkLogToTable
@@ -557,12 +908,279 @@ is
 
 
 
+  /*
+    Проверка операций с контекстом.
+  */
+  procedure checkContext
+  is
+
+    fileRecCtxExecCsv varchar2(10000) :=
+'
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; file                 ; Обработка файла                       ;          1 ; В context_value_id указывается Id файла (из таблицы tst_file)
+mergeContextType    ; record               ; Обработка записи с данными из файла   ;          1 ; В context_value_id указывается порядковый номер строки файла (используется в контексте обработки файла)
+'
+    ;
+    operEdtCtxExecCsv varchar2(10000) :=
+'
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; operator             ; Авторизация оператора                 ;          0 ; В context_value_id указывается Id оператора (из таблицы tst_operator)
+mergeContextType    ; edition              ; Переключение на определенный edition  ;          0 ; В message_label указывается используемый edition
+'
+    ;
+    fileRecLogExecCsv varchar2(10000) :=
+'
+methodName  ; messageText                       ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; contextTypeModuleId
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; -------------------
+info        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;               15 ;                 1 ;
+debug       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;
+debug       ; Обработка записи завершена        ;               ;               ; record                  ;                1 ;                 0 ;
+debug       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;
+warn        ; Запись загружена ранее            ;               ;               ;                         ;                  ;                   ;
+debug       ; Обработка записи завершена        ;               ;               ; record                  ;                2 ;                 0 ;
+debug       ; Начало обработки записи #3        ;               ;               ; record                  ;                3 ;                 1 ;
+error       ; Ошибка при обработке записи       ;               ;               ; record                  ;                3 ;                 0 ;
+debug       ; Начало обработки записи #4        ;               ;               ; record                  ;                4 ;                 1 ;
+debug       ; Обработка записи завершена        ;               ;               ; record                  ;                4 ;                 0 ;
+debug       ; Начало обработки записи #5        ;               ;               ; record                  ;                5 ;                 1 ;
+debug       ; Обработка записи завершена        ;               ;               ; record                  ;                5 ;                 0 ;
+info        ; Обработка файла завершена.        ;               ;               ; file                    ;               15 ;                 0 ;
+'
+    ;
+    execCsv varchar2(10000);
+
+  begin
+    checkContextCase(
+      'Вызов mergeContextType для корневого логера'
+      , usedLogger          => rootLogger
+      , execLoggerMethodCsv => cmn_string_table_t(
+'
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag
+------------------- ; -------------------- ; ------------------------------------- ; ----------
+mergeContextType    ; file                 ; Обработка файла                       ;          1
+'
+        )
+      , errorMessageMask    =>
+          '%ORA-20195: Невозможно определить Id модуля для корневого логера.%'
+    );
+    checkContextCase(
+      'Вложенный контекст: полный лог'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, fileRecLogExecCsv)
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;               15 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;            $(rowId) ;             2 ;                  1
+DEBUG       ; Обработка записи завершена        ;               ;               ; record                  ;                1 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+DEBUG       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
+WARN        ; Запись загружена ранее            ;               ;               ;                         ;                  ;                   ;                     ;             2 ;
+DEBUG       ; Обработка записи завершена        ;               ;               ; record                  ;                2 ;                 0 ;        $(rowId(-2)) ;             2 ;                  1
+DEBUG       ; Начало обработки записи #3        ;               ;               ; record                  ;                3 ;                 1 ;            $(rowId) ;             2 ;                  1
+ERROR       ; Ошибка при обработке записи       ;               ;               ; record                  ;                3 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+DEBUG       ; Начало обработки записи #4        ;               ;               ; record                  ;                4 ;                 1 ;            $(rowId) ;             2 ;                  1
+DEBUG       ; Обработка записи завершена        ;               ;               ; record                  ;                4 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+DEBUG       ; Начало обработки записи #5        ;               ;               ; record                  ;                5 ;                 1 ;            $(rowId) ;             2 ;                  1
+DEBUG       ; Обработка записи завершена        ;               ;               ; record                  ;                5 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+INFO        ; Обработка файла завершена.        ;               ;               ; file                    ;               15 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+'
+    );
+    checkContextCase(
+      'Вложенный контекст: уровень INFO'
+      , setLevelCode        => 'INFO'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, fileRecLogExecCsv)
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;               15 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
+WARN        ; Запись загружена ранее            ;               ;               ;                         ;                  ;                   ;                     ;             2 ;
+DEBUG       ; Обработка записи завершена        ;               ;               ; record                  ;                2 ;                 0 ;        $(rowId(-2)) ;             2 ;                  1
+DEBUG       ; Начало обработки записи #3        ;               ;               ; record                  ;                3 ;                 1 ;            $(rowId) ;             2 ;                  1
+ERROR       ; Ошибка при обработке записи       ;               ;               ; record                  ;                3 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+INFO        ; Обработка файла завершена.        ;               ;               ; file                    ;               15 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+'
+    );
+    checkContextCase(
+      'Вложенный контекст: уровень ERROR'
+      , setLevelCode        => 'ERROR'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, fileRecLogExecCsv)
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;               15 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #3        ;               ;               ; record                  ;                3 ;                 1 ;            $(rowId) ;             2 ;                  1
+ERROR       ; Ошибка при обработке записи       ;               ;               ; record                  ;                3 ;                 0 ;        $(rowId(-1)) ;             2 ;                  1
+INFO        ; Обработка файла завершена.        ;               ;               ; file                    ;               15 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+'
+    );
+    checkContextCase(
+      'Вложенный контекст: уровень FATAL'
+      , setLevelCode        => 'FATAL'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, fileRecLogExecCsv)
+      , expectedLogCsv      => ' '
+    );
+    checkContextCase(
+      'Вложенный контекст: Автоматическое закрытие'
+      , setLevelCode        => 'WARN'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv,
+'
+methodName  ; messageText                       ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; contextTypeModuleId
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; -------------------
+info        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;                1 ;                 1 ;
+debug       ; Начало обработки записи #1        ;               ;               ; record                  ;                2 ;                 1 ;
+debug       ; Начало обработки файла tmp1_1.txt ;               ; PROCESS       ; file                    ;                3 ;                 1 ;
+debug       ; Начало обработки записи #1        ;               ;               ; record                  ;                4 ;                 1 ;
+warn        ; Запись загружена ранее            ;               ;               ;                         ;                  ;                   ;
+error       ; Обработка файла прервана.         ;               ;               ; file                    ;                1 ;                 0 ;
+'
+          )
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;                1 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #1        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
+DEBUG       ; Начало обработки файла tmp1_1.txt ;               ; PROCESS       ; file                    ;                3 ;                 1 ;            $(rowId) ;             3 ;                  2
+DEBUG       ; Начало обработки записи #1        ;               ;               ; record                  ;                4 ;                 1 ;            $(rowId) ;             4 ;                  2
+WARN        ; Запись загружена ранее            ;               ;               ;                         ;                  ;                   ;                     ;             4 ;
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; record                  ;                4 ;                 0 ;         $(rowId(4)) ;             4 ;                  2
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; file                    ;                3 ;                 0 ;         $(rowId(3)) ;             3 ;                  2
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
+ERROR       ; Обработка файла прервана.         ;               ;               ; file                    ;                1 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+'
+    );
+
+    -- Ассоциативный и вложенный контекст
+    execCsv :=
+'
+methodName  ; messageText                       ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; contextTypeModuleId
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; -------------------
+debug       ; Авторизация оператора PupkinAV    ;               ; LOGIN         ; operator                ;             1511 ;                 1 ;
+debug       ; Переключение на edition           ;               ; Edition1      ; edition                 ;                  ;                 1 ;
+debug       ; Авторизация оператора PetrovDE    ;               ; LOGIN         ; operator                ;             1611 ;                 1 ;
+info        ; Начало обработки файла data1.zip  ;               ; PROCESS       ; file                    ;              201 ;                 1 ;
+debug       ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;                1 ;                 1 ;
+trace       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;
+debug       ; Авторизация оператора IvanovII    ;               ; LOGIN         ; operator                ;             1711 ;                 1 ;
+warn        ; Запись загружена ранее            ;               ;               ; record                  ;                1 ;                 0 ;
+trace       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;
+error       ; Обработка файла прервана.         ;             2 ;               ; file                    ;              201 ;                 0 ;
+debug       ; Отмена авторизация оператора      ;               ; LOGOFF        ; operator                ;                  ;                 0 ;
+debug       ; Сброс edition                     ;               ;               ; edition                 ;                  ;                 0 ;
+'
+    ;
+    checkContextCase(
+      'Ассоциативный и вложенный контекст'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, operEdtCtxExecCsv, execCsv)
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+DEBUG       ; Авторизация оператора PupkinAV    ;               ; LOGIN         ; operator                ;             1511 ;                 1 ;            $(rowId) ;             0 ;
+DEBUG       ; Переключение на edition           ;               ; Edition1      ; edition                 ;                  ;                 1 ;            $(rowId) ;             0 ;
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; operator                ;             1511 ;                 0 ;         $(rowId(1)) ;             0 ;
+DEBUG       ; Авторизация оператора PetrovDE    ;               ; LOGIN         ; operator                ;             1611 ;                 1 ;            $(rowId) ;             0 ;
+INFO        ; Начало обработки файла data1.zip  ;               ; PROCESS       ; file                    ;              201 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;                1 ;                 1 ;            $(rowId) ;             2 ;                  2
+TRACE       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;            $(rowId) ;             3 ;                  1
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; operator                ;             1611 ;                 0 ;         $(rowId(4)) ;             3 ;
+DEBUG       ; Авторизация оператора IvanovII    ;               ; LOGIN         ; operator                ;             1711 ;                 1 ;            $(rowId) ;             3 ;
+WARN        ; Запись загружена ранее            ;               ;               ; record                  ;                1 ;                 0 ;        $(rowId(-3)) ;             3 ;                  1
+TRACE       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             3 ;                  1
+TRACE       ; Автоматическое закрытие контекста ;               ;               ; record                  ;                2 ;                 0 ;        $(rowId(-1)) ;             3 ;                  1
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; file                    ;                1 ;                 0 ;         $(rowId(6)) ;             2 ;                  2
+ERROR       ; Обработка файла прервана.         ;             2 ;               ; file                    ;              201 ;                 0 ;         $(rowId(5)) ;             1 ;                  1
+DEBUG       ; Отмена авторизация оператора      ;               ; LOGOFF        ; operator                ;                  ;                 0 ;         $(rowId(9)) ;             0 ;
+DEBUG       ; Сброс edition                     ;               ;               ; edition                 ;                  ;                 0 ;         $(rowId(2)) ;             0 ;
+'
+    );
+    checkContextCase(
+      'Ассоциативный и вложенный контекст: уровень WARN'
+      , setLevelCode        => 'WARN'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, operEdtCtxExecCsv, execCsv)
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+DEBUG       ; Переключение на edition           ;               ; Edition1      ; edition                 ;                  ;                 1 ;            $(rowId) ;             0 ;
+INFO        ; Начало обработки файла data1.zip  ;               ; PROCESS       ; file                    ;              201 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки файла tmp1.txt   ;               ; PROCESS       ; file                    ;                1 ;                 1 ;            $(rowId) ;             2 ;                  2
+TRACE       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;            $(rowId) ;             3 ;                  1
+DEBUG       ; Авторизация оператора IvanovII    ;               ; LOGIN         ; operator                ;             1711 ;                 1 ;            $(rowId) ;             3 ;
+WARN        ; Запись загружена ранее            ;               ;               ; record                  ;                1 ;                 0 ;        $(rowId(-2)) ;             3 ;                  1
+TRACE       ; Начало обработки записи #2        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             3 ;                  1
+TRACE       ; Автоматическое закрытие контекста ;               ;               ; record                  ;                2 ;                 0 ;        $(rowId(-1)) ;             3 ;                  1
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; file                    ;                1 ;                 0 ;         $(rowId(3)) ;             2 ;                  2
+ERROR       ; Обработка файла прервана.         ;             2 ;               ; file                    ;              201 ;                 0 ;         $(rowId(2)) ;             1 ;                  1
+DEBUG       ; Отмена авторизация оператора      ;               ; LOGOFF        ; operator                ;                  ;                 0 ;         $(rowId(5)) ;             0 ;
+DEBUG       ; Сброс edition                     ;               ;               ; edition                 ;                  ;                 0 ;         $(rowId(1)) ;             0 ;
+'
+    );
+
+    checkContextCase(
+      'Открытие и немедленное закрытие контекста'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv, operEdtCtxExecCsv,
+'
+methodName  ; messageText                       ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; contextTypeModuleId
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; -------------------
+debug       ; Создание edition                  ;               ; Edition1      ; edition                 ;                  ;                -1 ;
+debug       ; Переключение на edition           ;               ; Edition1      ; edition                 ;                  ;                 1 ;
+info        ; Начало обработки файла data1.zip  ;               ; PROCESS       ; file                    ;              201 ;                 1 ;
+debug       ; Пропуск обработки файла tmp1.txt  ;               ; SKIP          ; file                    ;                1 ;                -1 ;
+debug       ; Начало обработки файла tmp2.txt   ;               ; PROCESS       ; file                    ;                2 ;                 1 ;
+trace       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;
+error       ; Обработка файла прервана.         ;               ;               ; file                    ;              201 ;                 0 ;
+debug       ; Сброс edition                     ;               ;               ; edition                 ;                  ;                 0 ;
+'
+          )
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+DEBUG       ; Создание edition                  ;               ; Edition1      ; edition                 ;                  ;                -1 ;            $(rowId) ;             0 ;
+DEBUG       ; Переключение на edition           ;               ; Edition1      ; edition                 ;                  ;                 1 ;            $(rowId) ;             0 ;
+INFO        ; Начало обработки файла data1.zip  ;               ; PROCESS       ; file                    ;              201 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Пропуск обработки файла tmp1.txt  ;               ; SKIP          ; file                    ;                1 ;                -1 ;            $(rowId) ;             2 ;                  2
+DEBUG       ; Начало обработки файла tmp2.txt   ;               ; PROCESS       ; file                    ;                2 ;                 1 ;            $(rowId) ;             2 ;                  2
+TRACE       ; Начало обработки записи #1        ;               ;               ; record                  ;                1 ;                 1 ;            $(rowId) ;             3 ;                  1
+TRACE       ; Автоматическое закрытие контекста ;               ;               ; record                  ;                1 ;                 0 ;        $(rowId(-1)) ;             3 ;                  1
+DEBUG       ; Автоматическое закрытие контекста ;               ;               ; file                    ;                2 ;                 0 ;         $(rowId(5)) ;             2 ;                  2
+ERROR       ; Обработка файла прервана.         ;               ;               ; file                    ;              201 ;                 0 ;         $(rowId(3)) ;             1 ;                  1
+DEBUG       ; Сброс edition                     ;               ;               ; edition                 ;                  ;                 0 ;         $(rowId(2)) ;             0 ;
+'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке операций с контекстом.'
+        )
+      , true
+    );
+  end checkContext;
+
+
+
 -- testLogger
 begin
   prepareTestData();
   pkg_TestUtility.beginTest( 'logger');
   checkLogToTable();
   checkGetLogger();
+  checkContext();
   pkg_TestUtility.endTest();
 exception when others then
   raise_application_error(

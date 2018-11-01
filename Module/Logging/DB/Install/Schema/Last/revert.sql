@@ -49,8 +49,17 @@ drop package pkg_LoggingInternal
 @oms-drop-type lg_logger_t
 
 
+-- Представления
+
+drop view v_lg_context_change
+/
+drop view v_lg_context_change_log
+/
+
+
 -- Внешние ключи
 
+@oms-drop-foreign-key lg_context_type
 @oms-drop-foreign-key lg_destination
 @oms-drop-foreign-key lg_level
 @oms-drop-foreign-key lg_log
@@ -59,6 +68,8 @@ drop package pkg_LoggingInternal
 
 -- Таблицы
 
+drop table lg_context_type
+/
 drop table lg_destination
 /
 drop table lg_level
@@ -71,5 +82,7 @@ drop table lg_message_type
 
 -- Последовательности
 
+drop sequence lg_context_type_seq
+/
 drop sequence lg_log_seq
 /

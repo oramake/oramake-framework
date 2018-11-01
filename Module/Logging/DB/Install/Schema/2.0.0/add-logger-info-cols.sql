@@ -7,22 +7,6 @@ add (
 )
 /
 
-comment on column lg_log.module_name is
-  'Имя модуля, добавившего запись'
-/
-comment on column lg_log.object_name is
-  'Имя объекта модуля (пакета, типа, скрипта), добавившего запись'
-/
-comment on column lg_log.module_id is
-  'Id модуля, добавившего запись (если удалось определить)'
-/
-comment on column lg_log.parent_log_id is
-  'Устаревшее поле: Id родительской записи лога'
-/
-comment on column lg_log.message_type_code is
-  'Устаревшее поле: Код типа сообщения'
-/
-
 
 
 alter table

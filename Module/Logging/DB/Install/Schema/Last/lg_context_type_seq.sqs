@@ -1,0 +1,7 @@
+-- sequence: lg_context_type_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <lg_context_type>.
+create sequence
+  lg_context_type_seq
+nocache
+/

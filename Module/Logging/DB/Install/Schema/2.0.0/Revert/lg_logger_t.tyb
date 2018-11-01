@@ -1,0 +1,642 @@
+create or replace type body lg_logger_t is
+/* db object type body: lg_logger_t::body */
+
+
+
+/* group: Функции */
+
+
+
+/* group: Закрытые объявления */
+
+/* func: lg_logger_t
+  Создает логер.
+
+  Параметры:
+  loggerName                  - имя логера
+
+  Возврат:
+  - созданный объект
+
+  Замечания:
+  - функция не должна вызываться явно, более адекватно использовать функции
+    getLogger;
+  - вызывает функцию <pkg_LoggingInternal.getLoggerUid>;
+*/
+constructor function lg_logger_t(
+  loggerName varchar2
+)
+return self as result
+is
+begin
+  self.loggerUid := pkg_LoggingInternal.getLoggerUid(
+    loggerName => loggerName
+  );
+  return;
+end lg_logger_t;
+
+
+
+/* group: Открытые объявления */
+
+/* func: getOffLevelCode
+  Возвращает код уровня логирования "Логирование отключено".
+*/
+static function getOffLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Off_LevelCode;
+end getOffLevelCode;
+
+/* func: getFatalLevelCode
+  Возвращает код уровня логирования "Фатальная ошибка".
+*/
+static function getFatalLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Fatal_LevelCode;
+end getFatalLevelCode;
+
+/* func: getErrorLevelCode
+  Возвращает код уровня логирования "Ошибка".
+*/
+static function getErrorLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Error_LevelCode;
+end getErrorLevelCode;
+
+/* func: getWarnLevelCode
+  Возвращает код уровня логирования "Предупреждение".
+*/
+static function getWarnLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Warn_LevelCode;
+end getWarnLevelCode;
+
+/* func: getInfoLevelCode
+  Возвращает код уровня логирования "Информация".
+*/
+static function getInfoLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Info_LevelCode;
+end getInfoLevelCode;
+
+/* func: getDebugLevelCode
+  Возвращает код уровня логирования "Отладка".
+*/
+static function getDebugLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Debug_LevelCode;
+end getDebugLevelCode;
+
+/* func: getTraceLevelCode
+  Возвращает код уровня логирования "Трассировка".
+*/
+static function getTraceLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Trace_LevelCode;
+end getTraceLevelCode;
+
+/* func: getAllLevelCode
+  Возвращает код уровня логирования "Максимальный уровень логирования".
+*/
+static function getAllLevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.All_LevelCode;
+end getAllLevelCode;
+
+
+
+/* group: Получение логера */
+
+/* func: getRootLogger
+  Возвращает корневой логер.
+
+  Возврат:
+  - корневой логер
+*/
+static function getRootLogger
+return lg_logger_t
+is
+begin
+  return lg_logger_t( loggerName => null);
+end getRootLogger;
+
+/* func: getLogger
+  Возвращает логер по полному имени.
+
+  Параметры:
+  loggerName                  - имя логера
+
+  Возврат:
+  - логер
+
+  Замечания:
+  - если в качестве loggerName передан null, возвращает корневой логер;
+*/
+static function getLogger(
+  loggerName varchar2
+)
+return lg_logger_t
+is
+begin
+  return lg_logger_t( loggerName => loggerName);
+end getLogger;
+
+/* func: getLoggerName
+  Возвращает имя логера по имени модуля и объекта в модуле.
+
+  Параметры:
+  moduleName                  - имя модуля
+  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+
+  Возврат:
+  - имя логера
+*/
+static function getLoggerName(
+  moduleName varchar2
+  , objectName varchar2
+)
+return varchar2
+is
+begin
+  return
+    moduleName
+    || case when objectName is not null then '.' || objectName end
+  ;
+end getLoggerName;
+
+/* func: getLogger( MOD_OBJ)
+  Возвращает логер по имени модуля и объекта в модуле.
+
+  Параметры:
+  moduleName                  - имя модуля
+  objectName                  - имя объекта в модуле ( пакета, класса и т.д.)
+
+  Возврат:
+  - логер
+
+  Замечания:
+  - если в качестве обоих параметров передан null, возвращает корневой логер;
+  - необязательный параметр packageName присутствует для совместимости и не
+    должен использоваться ( будет в дальнейшем удален);
+*/
+static function getLogger(
+  moduleName varchar2
+  , packageName varchar2 := null
+  , objectName varchar2
+)
+return lg_logger_t
+is
+begin
+  return
+    lg_logger_t.getLogger(
+      loggerName => getLoggerName(
+         moduleName => moduleName
+         , objectName => objectName
+      )
+    )
+  ;
+end getLogger;
+
+/* func: getLogger( DEPRECATED)
+  Устаревшая функция, вместо нее нужно использовать <getLogger( MOD_OBJ)>.
+*/
+static function getLogger(
+  moduleName varchar2
+  , packageName varchar2
+)
+return lg_logger_t
+is
+begin
+  return
+    lg_logger_t.getLogger(
+      moduleName    => moduleName
+      , objectName  => packageName
+    )
+  ;
+end getLogger;
+
+
+
+/* group: Настройка логера */
+
+/* func: getAdditivity
+  Возвращает назначенный флаг аддитивности.
+
+  Замечания:
+  - вызывает функцию <pkg_LoggingInternal.getAdditivity>;
+*/
+member function getAdditivity
+return boolean
+is
+begin
+  return
+    pkg_LoggingInternal.getAdditivity(
+      loggerUid       => loggerUid
+    );
+end getAdditivity;
+
+/* proc: setAdditivity
+  Устанавливает флаг аддитивности.
+
+  Параметры:
+  additive                    - флаг аддитивности
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingInternal.setAdditivity>;
+*/
+member procedure setAdditivity(
+  self in lg_logger_t
+  , additive boolean
+)
+is
+begin
+  pkg_LoggingInternal.setAdditivity(
+    loggerUid       => loggerUid
+    , additive      => additive
+  );
+end setAdditivity;
+
+/* func: getLevel
+  Возвращает назначенный уровень логирования.
+
+  Замечания:
+  - вызывает функцию <pkg_LoggingInternal.getLevel>;
+
+  Возврат:
+  - код уровня логирования
+*/
+member function getLevel
+return varchar2
+is
+begin
+  return
+    pkg_LoggingInternal.getLevel(
+      loggerUid       => loggerUid
+    );
+end getLevel;
+
+/* proc: setLevel
+  Устанавливает уровень логирования.
+
+  Параметры:
+  levelCode                   - код уровня логируемых сообщений
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingInternal.setLevel>;
+*/
+member procedure setLevel(
+  self in lg_logger_t
+  , levelCode varchar2
+)
+is
+begin
+  pkg_LoggingInternal.setLevel(
+    loggerUid         => loggerUid
+    , levelCode       => levelCode
+  );
+end setLevel;
+
+/* func: getEffectiveLevel
+  Возвращает эффективный уровень логирования.
+
+  Замечания:
+  - вызывает функцию <pkg_LoggingInternal.getEffectiveLevel>;
+
+  Возврат:
+  - код уровня логирования
+*/
+member function getEffectiveLevel
+return varchar2
+is
+begin
+  return
+    pkg_LoggingInternal.getEffectiveLevel(
+      loggerUid       => loggerUid
+    );
+end getEffectiveLevel;
+
+/* func: isEnabledFor
+  Возвращает истину, если сообщение данного уровня будет логироваться.
+
+  Параметры:
+  levelCode                   - код уровня логирования
+
+  Замечания:
+  - вызывает функцию <pkg_LoggingInternal.isEnabledFor>;
+*/
+member function isEnabledFor(
+  levelCode varchar2
+)
+return boolean
+is
+begin
+  return
+    pkg_LoggingInternal.isEnabledFor(
+      loggerUid     => loggerUid
+      , levelCode   => levelCode
+    );
+end isEnabledFor;
+
+/* func: isInfoEnabled
+  Возвращает истину, если информационное сообщение будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+*/
+member function isInfoEnabled
+return boolean
+is
+begin
+  return isEnabledFor( pkg_Logging.Info_LevelCode);
+end isInfoEnabled;
+
+/* func: isDebugEnabled
+  Возвращает истину, если отладочное сообщение будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+*/
+member function isDebugEnabled
+return boolean
+is
+begin
+  return isEnabledFor( pkg_Logging.Debug_LevelCode);
+end isDebugEnabled;
+
+/* func: isTraceEnabled
+  Возвращает истину, если трассировочное сообщение будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+*/
+member function isTraceEnabled
+return boolean
+is
+begin
+  return isEnabledFor( pkg_Logging.Trace_LevelCode);
+end isTraceEnabled;
+
+
+
+/* group: Логирование сообщений */
+
+/* proc: log
+  Логирует сообщение с указанным уровнем.
+
+  Параметры:
+  levelCode                   - код уровня сообщения
+  messageText                 - текст сообщения
+*/
+member procedure log(
+  self in lg_logger_t
+  , levelCode varchar2
+  , messageText varchar2
+)
+is
+begin
+  pkg_LoggingInternal.logMessage(
+    levelCode         => levelCode
+    , messageText     => messageText
+    , loggerUid       => loggerUid
+  );
+end log;
+
+/* proc: fatal
+  Логирует сообщение о фатальной ошибке ( уровня <getFatalLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure fatal(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Fatal_LevelCode
+    , messageText => messageText
+  );
+end fatal;
+
+/* proc: error
+  Логирует сообщение об ошибке ( уровня <getErrorLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure error(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Error_LevelCode
+    , messageText => messageText
+  );
+end error;
+
+/* proc: warn
+  Логирует предупреждающее сообщение ( уровня <getWarnLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure warn(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Warn_LevelCode
+    , messageText => messageText
+  );
+end warn;
+
+/* proc: info
+  Логирует информационое сообщение ( уровня <getInfoLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure info(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Info_LevelCode
+    , messageText => messageText
+  );
+end info;
+
+/* proc: debug
+  Логирует отладочное сообщение ( уровня <getDebugLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure debug(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Debug_LevelCode
+    , messageText => messageText
+  );
+end debug;
+
+/* proc: trace
+  Логирует трассировочное сообщение ( уровня <getTraceLevelCode>).
+
+  Параметры:
+  messageText                 - текст сообщения
+*/
+member procedure trace(
+  self in lg_logger_t
+  , messageText varchar2
+)
+is
+begin
+  log(
+    levelCode     => pkg_Logging.Trace_LevelCode
+    , messageText => messageText
+  );
+end trace;
+
+
+
+/* group: Стек ошибок ( исключений) */
+
+/* func: errorStack
+  Сохраняет сообщение в стек ошибок
+  и возвращает строку для генерации исключения.
+
+  Параметры:
+  messageText                 - текст сообщения
+
+  Возврат:
+  - соообщение для генерации исключения
+    ( второй аргумент для raise_application_error).
+    В простейшем случае, то есть в случае
+    достаточно короткого сообщения
+    ( см. <pkg_LoggingErrorStack::body::Stack_Message_Limit>)
+    возвращает messageText
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
+  - см. также <Описание::Логирование стека ошибок>;
+*/
+member function errorStack(
+  messageText varchar2
+)
+return varchar2
+is
+begin
+  return
+    pkg_LoggingErrorStack.processStackElement(
+      messageText => messageText
+    );
+end errorStack;
+
+/* func: remoteErrorStack
+  Сохраняет сообщение в стек ошибок, учитывая
+  возможные данные о стеке на удалённой БД,
+  и возвращает строку для генерации исключения.
+
+  Параметры:
+  messageText                 - текст сообщения
+
+  Возврат:
+  - соообщение для генерации исключения
+    ( второй аргумент для raise_application_error).
+    В простейшем случае, то есть в случае
+    достаточно короткого сообщения
+    ( см. <pkg_LoggingErrorStack::body::Stack_Message_Limit>)
+    возвращает messageText
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingErrorStack.ProcessRemoteStackElement>;
+  - в удалённой базе рекомендуется установить актуальную версию
+    модуля Logging;
+  - перед вызовом рекомендуется откатить распределённую транзакцию;
+  - см. также <Описание::Логирование стека ошибок>;
+*/
+member function remoteErrorStack(
+  messageText varchar2
+  , dbLink varchar2
+)
+return varchar2
+is
+begin
+  return
+    pkg_LoggingErrorStack.processRemoteStackElement(
+      messageText => messageText
+      , dbLink => dbLink
+    );
+end remoteErrorStack;
+
+/* func: getErrorStack
+  Получает строку стека ошибок и очищает информацию о стеке.
+
+  Параметры:
+  isStackPreserved            - оставлять ли данные по стеку. По-умолчанию (
+                                null) не оставлять ( т.е. очищать), таким
+                                образом по-умолчанию после вызова стек не
+                                может быть соединён далее.
+
+  Возврат:
+  - стек ошибок
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingErrorStack.getErrorStack>;
+  - см. также <Описание::Логирование стека ошибок>;
+*/
+member function getErrorStack(
+  isStackPreserved integer := null
+)
+return varchar2
+is
+begin
+  return
+    pkg_LoggingErrorStack.getErrorStack(
+      isStackPreserved => isStackPreserved
+    );
+end getErrorStack;
+
+/* proc: clearErrorStack
+  Очищает (сбрасывает) предыдущую информацию о стеке ошибок.
+
+  Замечания:
+  - вызывает процедуру <pkg_LoggingErrorStack.clearLastStack>;
+  - см. также <Описание::Логирование стека ошибок>;
+*/
+member procedure clearErrorStack
+is
+begin
+  pkg_LoggingErrorStack.clearLastStack();
+end clearErrorStack;
+
+end;
+/

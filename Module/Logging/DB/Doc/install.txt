@@ -64,11 +64,19 @@ group: 2.0.0
 
 (code)
 
-$ make install INSTALL_VERSION=2.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=2.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
 Замечания:
+- при необходимости можно выполнить откат к версии 1.4.1 командой:
+
+(code)
+
+make uninstall INSTALL_VERSION=2.0.0 UNINSTALL_RESULT_VERSION=1.4.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
 - в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
   указывать не надо;
 

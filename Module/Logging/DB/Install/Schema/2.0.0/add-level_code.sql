@@ -16,10 +16,6 @@ modify (
 )
 /
 
-comment on column lg_log.level_code is
-  'Код уровня логирования'
-/
-
 alter table
   lg_log
 add constraint

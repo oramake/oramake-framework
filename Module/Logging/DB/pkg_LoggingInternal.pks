@@ -78,10 +78,34 @@ procedure setDestination(
   Логирует сообщение.
 
   Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-  loggerUid                   - идентификатор логера, через которое пришло
-                                сообщение ( по умолчанию корневой логер)
+  levelCode                   - Код уровня сообщения
+  messageText                 - Текст сообщения
+  messageValue                - Целочисленное значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  messageLabel                - Строковое значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  contextTypeShortName        - Краткое наименование типа
+                                открываемого/закрываемого контекста выполнения
+                                (по умолчанию отсутствует)
+  contextValueId              - Идентификатор, связанный с
+                                открываемым/закрываемым контекстом выполнения
+                                (по умолчанию отсутствует)
+  openContextFlag             - Флаг открытия контекста выполнения
+                                (1 открытие контекста, 0 закрытие контекста,
+                                -1 открытие и немедленное закрытие контекста,
+                                null контекст не меняется)
+                                (по умолчанию -1 если указан
+                                contextTypeShortName, иначе null)
+  contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
+                                открываемый/закрываемый контекст выполнения
+                                (по умолчанию Id модуля, к которому относится
+                                логер)
+  loggerUid                   - Идентификатор логера
+                                (по умолчанию корневой логер)
+  disableDboutFlag            - Запрет вывода сообщений через dbms_output
+                                (в т.ч. порождаемых сообщений об ошибках)
+                                (1 да, 0 нет (по умолчанию))
+
 
   Замечания:
   - текущая реализация по умолчанию выводит сообщения на промышленной БД
@@ -92,12 +116,28 @@ procedure setDestination(
 procedure logMessage(
   levelCode varchar2
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
   , loggerUid varchar2 := null
+  , disableDboutFlag integer := null
 );
 
 
 
 /* group: Реализация функций логера */
+
+/* pfunc: getOpenContextLogId
+  Возвращает Id записи лога открытия текущего (последнего открытого)
+  вложенного контекста (null при отсутствии текущего вложенного контекста).
+
+  ( <body::getOpenContextLogId>)
+*/
+function getOpenContextLogId
+return integer;
 
 /* pfunc: getLoggerUid
   Возвращает уникальный идентификатор логера.
@@ -218,6 +258,48 @@ function isEnabledFor(
   , levelCode varchar2
 )
 return boolean;
+
+/* pfunc: mergeContextType
+  Создает или обновляет тип контекста.
+
+  Параметры:
+  loggerUid                   - Идентификатор логера
+  contextTypeShortName        - Краткое наименование типа контекста
+  contextTypeName             - Наименование типа контекста
+  nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
+  contextTypeDescription      - Описание типа контекста
+
+  Возврат:
+  - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
+
+  ( <body::mergeContextType>)
+*/
+function mergeContextType(
+  loggerUid varchar2
+  , contextTypeShortName varchar2
+  , contextTypeName varchar2
+  , nestedFlag integer
+  , contextTypeDescription varchar2
+)
+return integer;
+
+/* pproc: deleteContextType
+  Удаляет тип контекста.
+
+  Параметры:
+  loggerUid                   - Идентификатор логера
+  contextTypeShortName        - Краткое наименование типа контекста
+
+  Замечания:
+  - при отсутствии использования в логе запись удаляется физически, иначе
+    ставится флаг логического удаления;
+
+  ( <body::deleteContextType>)
+*/
+procedure deleteContextType(
+  loggerUid varchar2
+  , contextTypeShortName varchar2
+);
 
 
 

@@ -5,17 +5,20 @@ add (
 )
 /
 
+create index
+  lg_log_ix_sessionid_logid
+on
+  lg_log (
+    sessionid
+    , log_id
+  )
+tablespace &indexTablespace
+/
+
 alter table
   lg_log
 modify (
   sessionid  not null
       enable novalidate
 )
-/
-
-
-
-
-comment on column lg_log.sessionid is
-  'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
 /

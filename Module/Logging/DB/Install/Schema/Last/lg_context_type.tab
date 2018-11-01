@@ -1,0 +1,56 @@
+-- table: lg_context_type
+-- “ипы контекста выполнени€
+-- (актуальные данные, включа€ логически удаленные записи).
+create table
+  lg_context_type
+(
+  context_type_id                 integer                             not null
+  , module_id                     integer                             not null
+  , context_type_short_name       varchar2(50)                        not null
+  , context_type_name             varchar2(100)                       not null
+  , nested_flag                   number(1)                           not null
+  , context_type_description      varchar2(1000)
+  , deleted                       number(1)           default 0       not null
+  , date_ins                      date                default sysdate not null
+  , constraint lg_context_type_pk primary key
+    ( context_type_id)
+    using index tablespace &indexTablespace
+  , constraint lg_context_type_uk unique
+    ( module_id, context_type_short_name)
+    using index tablespace &indexTablespace
+  , constraint lg_context_type_ck_nested_flag check
+    ( nested_flag in ( 0, 1))
+  , constraint lg_context_type_ck_deleted check
+    ( deleted in ( 0, 1))
+)
+/
+
+
+
+comment on table lg_context_type is
+  '“ипы контекста выполнени€ (актуальные данные, включа€ логически удаленные записи) [SVN root: Oracle/Module/Logging]'
+/
+comment on column lg_context_type.context_type_id is
+  'Id типа контекста выполнени€'
+/
+comment on column lg_context_type.module_id is
+  'Id модул€, к которому относитс€ тип контекста'
+/
+comment on column lg_context_type.context_type_short_name is
+  ' раткое наименование типа контекста (уникальное в рамках модул€)'
+/
+comment on column lg_context_type.context_type_name is
+  'Ќаименование типа контекста'
+/
+comment on column lg_context_type.nested_flag is
+  '‘лаг вложенного контекста (1 да, 0 нет). ƒл€ вложенных контекстов подсчитываетс€ уровень вложенности (значени€ context_level и context_type_level таблицы lg_log), при закрытии вложенного контекста незакрытые вложенные контексты большего уровн€ (открытые позже) закрываютс€ автоматически. ¬ложенный контекст закрываетс€ с учетом св€занного с ним значени€ (context_value_id), невложенный без учета значени€.'
+/
+comment on column lg_context_type.context_type_description is
+  'ќписание типа контекста'
+/
+comment on column lg_context_type.deleted is
+  '‘лаг логического удалени€ записи (0 - существующа€, 1 - удалена)'
+/
+comment on column lg_context_type.date_ins is
+  'ƒата добавлени€ записи'
+/

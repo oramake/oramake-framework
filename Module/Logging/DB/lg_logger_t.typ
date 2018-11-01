@@ -64,7 +64,7 @@ return self as result,
 
 
 
-/* group: Открытые объявления */
+/* group: Уровни логирования */
 
 /* pfunc: getOffLevelCode
   Возвращает код уровня логирования "Логирование отключено".
@@ -129,6 +129,19 @@ return varchar2,
 */
 static function getAllLevelCode
 return varchar2,
+
+
+
+/* group: Вспомогательные функции */
+
+/* pfunc: getOpenContextLogId
+  Возвращает Id записи лога открытия текущего (последнего открытого)
+  вложенного контекста (null при отсутствии текущего вложенного контекста).
+
+  ( <body::getOpenContextLogId>)
+*/
+static function getOpenContextLogId
+return integer,
 
 
 
@@ -340,8 +353,28 @@ return boolean,
   Логирует сообщение с указанным уровнем.
 
   Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
+  levelCode                   - Код уровня сообщения
+  messageText                 - Текст сообщения
+  messageValue                - Целочисленное значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  messageLabel                - Строковое значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  contextTypeShortName        - Краткое наименование типа
+                                открываемого/закрываемого контекста выполнения
+                                (по умолчанию отсутствует)
+  contextValueId              - Идентификатор, связанный с
+                                открываемым/закрываемым контекстом выполнения
+                                (по умолчанию отсутствует)
+  openContextFlag             - Флаг открытия контекста выполнения
+                                (1 открытие контекста, 0 закрытие контекста,
+                                -1 открытие и немедленное закрытие контекста,
+                                null контекст не меняется)
+                                (по умолчанию -1 если указан
+                                contextTypeShortName, иначе null)
+  contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
+                                открываемый/закрываемый контекст выполнения
+                                (по умолчанию Id модуля, к которому относится
+                                логер)
 
   ( <body::log>)
 */
@@ -349,84 +382,138 @@ member procedure log(
   self in lg_logger_t
   , levelCode varchar2
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: fatal
-  Логирует сообщение о фатальной ошибке ( уровня <getFatalLevelCode>).
+  Логирует сообщение о фатальной ошибке (уровня <getFatalLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::fatal>)
 */
 member procedure fatal(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: error
-  Логирует сообщение об ошибке ( уровня <getErrorLevelCode>).
+  Логирует сообщение об ошибке (уровня <getErrorLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::error>)
 */
 member procedure error(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: warn
-  Логирует предупреждающее сообщение ( уровня <getWarnLevelCode>).
+  Логирует предупреждающее сообщение (уровня <getWarnLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::warn>)
 */
 member procedure warn(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: info
-  Логирует информационое сообщение ( уровня <getInfoLevelCode>).
+  Логирует информационое сообщение (уровня <getInfoLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::info>)
 */
 member procedure info(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: debug
-  Логирует отладочное сообщение ( уровня <getDebugLevelCode>).
+  Логирует отладочное сообщение (уровня <getDebugLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::debug>)
 */
 member procedure debug(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 /* pproc: trace
-  Логирует трассировочное сообщение ( уровня <getTraceLevelCode>).
+  Логирует трассировочное сообщение (уровня <getTraceLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 
   ( <body::trace>)
 */
 member procedure trace(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 ),
 
 
@@ -522,7 +609,79 @@ return varchar2,
 
   ( <body::clearErrorStack>)
 */
-member procedure clearErrorStack
+member procedure clearErrorStack,
+
+
+
+/* group: Типы контекста выполнения */
+
+/* pfunc: mergeContextType
+  Создает или обновляет тип контекста выполнения.
+
+  Параметры:
+  contextTypeShortName        - Краткое наименование типа контекста
+  contextTypeName             - Наименование типа контекста
+  nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
+  contextTypeDescription      - Описание типа контекста
+
+  Возврат:
+  - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
+
+  Замечания:
+  - считается, что тип контекста выполнения относится к модулю, к которому
+    относится текущий экземпляр логера;
+  - в случае, если для логера не был определен Id модуля в ModuleInfo
+    (например, для корневого логера) выполнение завершается с ошибкой;
+  - для вложенных контекстов подсчитывается уровень вложенности (значения
+    context_level и context_type_level таблицы lg_log), при закрытии
+    вложенного контекста незакрытые вложенные контексты большего уровня
+    (открытые позже) закрываются автоматически, вложенный контекст закрывается
+    с учетом связанного с ним значения (context_value_id), невложенный без
+    учета значения;
+
+  ( <body::mergeContextType>)
+*/
+member function mergeContextType(
+  contextTypeShortName varchar2
+  , contextTypeName varchar2
+  , nestedFlag integer
+  , contextTypeDescription varchar2
+)
+return integer,
+
+/* pproc: mergeContextType( PROC)
+  Создает или обновляет тип контекста выполнения.
+  Процедура идентична функции <mergeContextType> за исключением отсутствия
+  возвращаемого значения.
+
+  ( <body::mergeContextType( PROC)>)
+*/
+member procedure mergeContextType(
+  self in lg_logger_t
+  , contextTypeShortName varchar2
+  , contextTypeName varchar2
+  , nestedFlag integer
+  , contextTypeDescription varchar2
+),
+
+/* pproc: deleteContextType
+  Удаляет тип контекста выполнения.
+
+  Параметры:
+  contextTypeShortName        - Краткое наименование типа контекста
+
+  Замечания:
+  - считается, что тип контекста выполнения относится к модулю, к которому
+    относится текущий экземпляр логера;
+  - при отсутствии использования в логе запись удаляется физически, иначе
+    ставится флаг логического удаления;
+
+  ( <body::deleteContextType>)
+*/
+member procedure deleteContextType(
+  self in lg_logger_t
+  , contextTypeShortName varchar2
+)
 
 )
 /

@@ -57,6 +57,10 @@ end lg_logger_t;
 
 /* group: Открытые объявления */
 
+
+
+/* group: Уровни логирования */
+
 /* func: getOffLevelCode
   Возвращает код уровня логирования "Логирование отключено".
 */
@@ -136,6 +140,21 @@ is
 begin
   return pkg_Logging.All_LevelCode;
 end getAllLevelCode;
+
+
+
+/* group: Вспомогательные функции */
+
+/* func: getOpenContextLogId
+  Возвращает Id записи лога открытия текущего (последнего открытого)
+  вложенного контекста (null при отсутствии текущего вложенного контекста).
+*/
+static function getOpenContextLogId
+return integer
+is
+begin
+  return pkg_LoggingInternal.getOpenContextLogId();
+end getOpenContextLogId;
 
 
 
@@ -418,128 +437,244 @@ end isTraceEnabled;
   Логирует сообщение с указанным уровнем.
 
   Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
+  levelCode                   - Код уровня сообщения
+  messageText                 - Текст сообщения
+  messageValue                - Целочисленное значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  messageLabel                - Строковое значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  contextTypeShortName        - Краткое наименование типа
+                                открываемого/закрываемого контекста выполнения
+                                (по умолчанию отсутствует)
+  contextValueId              - Идентификатор, связанный с
+                                открываемым/закрываемым контекстом выполнения
+                                (по умолчанию отсутствует)
+  openContextFlag             - Флаг открытия контекста выполнения
+                                (1 открытие контекста, 0 закрытие контекста,
+                                -1 открытие и немедленное закрытие контекста,
+                                null контекст не меняется)
+                                (по умолчанию -1 если указан
+                                contextTypeShortName, иначе null)
+  contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
+                                открываемый/закрываемый контекст выполнения
+                                (по умолчанию Id модуля, к которому относится
+                                логер)
 */
 member procedure log(
   self in lg_logger_t
   , levelCode varchar2
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   pkg_LoggingInternal.logMessage(
-    levelCode         => levelCode
-    , messageText     => messageText
-    , loggerUid       => loggerUid
+    levelCode               => levelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
+    , loggerUid             => loggerUid
   );
 end log;
 
 /* proc: fatal
-  Логирует сообщение о фатальной ошибке ( уровня <getFatalLevelCode>).
+  Логирует сообщение о фатальной ошибке (уровня <getFatalLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure fatal(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Fatal_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Fatal_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end fatal;
 
 /* proc: error
-  Логирует сообщение об ошибке ( уровня <getErrorLevelCode>).
+  Логирует сообщение об ошибке (уровня <getErrorLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure error(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Error_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Error_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end error;
 
 /* proc: warn
-  Логирует предупреждающее сообщение ( уровня <getWarnLevelCode>).
+  Логирует предупреждающее сообщение (уровня <getWarnLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure warn(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Warn_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Warn_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end warn;
 
 /* proc: info
-  Логирует информационое сообщение ( уровня <getInfoLevelCode>).
+  Логирует информационое сообщение (уровня <getInfoLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure info(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Info_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Info_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end info;
 
 /* proc: debug
-  Логирует отладочное сообщение ( уровня <getDebugLevelCode>).
+  Логирует отладочное сообщение (уровня <getDebugLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure debug(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Debug_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Debug_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end debug;
 
 /* proc: trace
-  Логирует трассировочное сообщение ( уровня <getTraceLevelCode>).
+  Логирует трассировочное сообщение (уровня <getTraceLevelCode>).
 
   Параметры:
-  messageText                 - текст сообщения
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
 */
 member procedure trace(
   self in lg_logger_t
   , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
 )
 is
 begin
   log(
-    levelCode     => pkg_Logging.Trace_LevelCode
-    , messageText => messageText
+    levelCode               => pkg_Logging.Trace_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
   );
 end trace;
 
@@ -655,6 +790,104 @@ is
 begin
   pkg_LoggingErrorStack.clearLastStack();
 end clearErrorStack;
+
+
+
+/* group: Типы контекста выполнения */
+
+/* func: mergeContextType
+  Создает или обновляет тип контекста выполнения.
+
+  Параметры:
+  contextTypeShortName        - Краткое наименование типа контекста
+  contextTypeName             - Наименование типа контекста
+  nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
+  contextTypeDescription      - Описание типа контекста
+
+  Возврат:
+  - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
+
+  Замечания:
+  - считается, что тип контекста выполнения относится к модулю, к которому
+    относится текущий экземпляр логера;
+  - в случае, если для логера не был определен Id модуля в ModuleInfo
+    (например, для корневого логера) выполнение завершается с ошибкой;
+  - для вложенных контекстов подсчитывается уровень вложенности (значения
+    context_level и context_type_level таблицы lg_log), при закрытии
+    вложенного контекста незакрытые вложенные контексты большего уровня
+    (открытые позже) закрываются автоматически, вложенный контекст закрывается
+    с учетом связанного с ним значения (context_value_id), невложенный без
+    учета значения;
+*/
+member function mergeContextType(
+  contextTypeShortName varchar2
+  , contextTypeName varchar2
+  , nestedFlag integer
+  , contextTypeDescription varchar2
+)
+return integer
+is
+begin
+  return
+    pkg_LoggingInternal.mergeContextType(
+      loggerUid                 => self.loggerUid
+      , contextTypeShortName    => contextTypeShortName
+      , contextTypeName         => contextTypeName
+      , nestedFlag              => nestedFlag
+      , contextTypeDescription  => contextTypeDescription
+    )
+  ;
+end mergeContextType;
+
+/* proc: mergeContextType( PROC)
+  Создает или обновляет тип контекста выполнения.
+  Процедура идентична функции <mergeContextType> за исключением отсутствия
+  возвращаемого значения.
+*/
+member procedure mergeContextType(
+  self in lg_logger_t
+  , contextTypeShortName varchar2
+  , contextTypeName varchar2
+  , nestedFlag integer
+  , contextTypeDescription varchar2
+)
+is
+
+  changeFlag integer;
+
+begin
+  changeFlag := pkg_LoggingInternal.mergeContextType(
+    loggerUid                 => self.loggerUid
+    , contextTypeShortName    => contextTypeShortName
+    , contextTypeName         => contextTypeName
+    , nestedFlag              => nestedFlag
+    , contextTypeDescription  => contextTypeDescription
+  );
+end mergeContextType;
+
+/* proc: deleteContextType
+  Удаляет тип контекста выполнения.
+
+  Параметры:
+  contextTypeShortName        - Краткое наименование типа контекста
+
+  Замечания:
+  - считается, что тип контекста выполнения относится к модулю, к которому
+    относится текущий экземпляр логера;
+  - при отсутствии использования в логе запись удаляется физически, иначе
+    ставится флаг логического удаления;
+*/
+member procedure deleteContextType(
+  self in lg_logger_t
+  , contextTypeShortName varchar2
+)
+is
+begin
+  pkg_LoggingInternal.deleteContextType(
+    loggerUid                => self.loggerUid
+    , contextTypeShortName   => contextTypeShortName
+  );
+end deleteContextType;
 
 end;
 /

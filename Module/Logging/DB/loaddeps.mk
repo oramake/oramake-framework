@@ -55,6 +55,9 @@ Install/Schema/Last/run.sql.$(lu):\
   pkg_Logging.pks.$(lu) \
   pkg_LoggingErrorStack.pks.$(lu)
 
+Install/Schema/Last/v_lg_context_change_log.vw.$(lu):\
+  Install/Schema/Last/v_lg_context_change.vw.$(lu)
+
 Install/Schema/Last/lg_log_bi_define.trg.$(lu):\
   pkg_LoggingInternal.pks.$(lu)
 
