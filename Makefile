@@ -254,12 +254,12 @@ install:
 				;; \
 			Option) \
 				addonLoadUser=2; \
-				addonOpt=" PRODUCTION_DB_NAME=ProdDb"; \
+				addonOpt=" PRODUCTION_DB_NAME=$(if $(PRODUCTION_DB_NAME),$(PRODUCTION_DB_NAME),ProdDb)"; \
 				;; \
 			Scheduler) \
 				grantSysPrivsFlag=1; \
 				addonLoadUser=2; \
-				addonOpt=" PRODUCTION_DB_NAME=ProdDb"; \
+				addonOpt=" PRODUCTION_DB_NAME=$(if $(PRODUCTION_DB_NAME),$(PRODUCTION_DB_NAME),ProdDb)"; \
 				;; \
 			TaskHandler) \
 				grantSysPrivsFlag=1; \
