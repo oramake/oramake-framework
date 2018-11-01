@@ -70,7 +70,7 @@ on
     , context_value_id
     , sys_extract_utc( open_context_log_time)
     , open_context_log_id
-    , open_context_flag desc
+    , open_context_flag
     , context_type_level
     , case when context_type_id is not null then
         sessionid
