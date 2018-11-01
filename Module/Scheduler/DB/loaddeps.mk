@@ -67,7 +67,11 @@ sch_batch_option_t.tyb.$(lu): \
 
 
 Install/Schema/Last/v_sch_batch_result.vw.$(lu): \
-  Install/Schema/Last/v_sch_batch_root_log.vw.$(lu) \
+  Install/Schema/Last/v_sch_batch_root_log_old.vw.$(lu) \
+
+
+Install/Schema/Last/v_sch_batch_root_log.vw.$(lu): \
+  Install/Schema/Last/v_sch_batch_root_log_old.vw.$(lu) \
 
 
 Install/Schema/Last/v_sch_batch.vw.$(lu): \

@@ -655,7 +655,7 @@ is
       'declare'
       ||  ' batchShortName sch_batch.batch_short_name%type;'
       ||  ' jobResultID sch_result.result_id%type;'
-      ||  ' jobResultMessage sch_log.message_text%type;'
+      ||  ' jobResultMessage varchar2(4000);'
       ||  ' restartBatchFlag integer;'
       ||  ' retryBatchFlag integer;'
       ||' begin '

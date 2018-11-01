@@ -1224,14 +1224,14 @@ function clearLog(
 return integer;
 
 /* pfunc: getLog
-  Возвращает ветку из лога ( таблицы sch_log).
+  Возвращает ветку из лога ( таблицы lg_log).
 
   Параметры:
-  rootLogId                - Id корневой записи из sch_log
+  rootLogId                - Id корневой записи из lg_log
 
   Замечания:
   - функция предназначена для использования в SQL-запросах вида:
-  select lg.* from record( pkg_Scheduler.getLog( :rootLogId)) lg
+  select lg.* from table( pkg_Scheduler.getLog( :rootLogId)) lg
 
   ( <body::getLog>)
 */
@@ -1245,23 +1245,6 @@ pipelined parallel_enable;
 
 
 /* group: Установка флагов выполнения заданий */
-
-/* pfunc: getDebugFlag
-  Возвращает значение флага отладки.
-
-  ( <body::getDebugFlag>)
-*/
-function getDebugFlag
-return integer;
-
-/* pproc: setDebugFlag
-  Устанавливает флаг отладки в указанное значение.
-
-  ( <body::setDebugFlag>)
-*/
-procedure setDebugFlag(
-  flagValue integer := 1
-);
 
 /* pfunc: getSendNotifyFlag
   Возвращает значение флага автоматической рассылки нотификации.
@@ -1499,28 +1482,6 @@ procedure deleteContext(
 
 
 
-/* group: Логирование */
-
-/* pproc: writeLog
-  Записывает сообщение в лог (таблицу sch_log).
-
-  Параметры:
-  MessageTypeCode           - код типа сообщения
-  MessageText               - текст сообщения
-  MessageValue              - целое значение, связанное с сообщением
-  operatorId                - Id оператора
-
-  ( <body::writeLog>)
-*/
-procedure writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-);
-
-
-
 /* group: Выполнение пакетного задания */
 
 /* pproc: execBatch( ORACLE_JOB)
@@ -1551,6 +1512,38 @@ function getContextInteger(
   , riseException integer := 0
 )
 return number;
+
+/* pfunc: getDebugFlag
+  Устаревшая функция, следует использовать isDebugEnabled() логера (тип
+  lg_logger_t).
+
+  ( <body::getDebugFlag>)
+*/
+function getDebugFlag
+return integer;
+
+/* pproc: setDebugFlag
+  Устаревшая функция, следует использовать setLevel() логера (тип
+  lg_logger_t).
+
+  ( <body::setDebugFlag>)
+*/
+procedure setDebugFlag(
+  flagValue integer := 1
+);
+
+/* pproc: writeLog
+  Устаревшая функция, следует использовать логер пакетного задания либо
+  собственный логер (тип lg_logger_t).
+
+  ( <body::writeLog>)
+*/
+procedure writeLog(
+  messageTypeCode varchar2
+  , messageText varchar2
+  , messageValue number := null
+  , operatorId integer := null
+);
 
 end pkg_Scheduler;
 /

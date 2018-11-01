@@ -66,6 +66,63 @@ LocalRoleSuffix_OptSName constant varchar2(50) := 'LocalRoleSuffix';
 
 
 
+/* group: Типы контекста выполнения в логе */
+
+/* const: Batch_CtxTpSName
+  Тип контекста выполнения "Пакетное задание".
+  Операции над пакетным заданием, в context_value_id указывается Id пакетного
+  задания (значение поля batch_id из таблицы sch_batch), в message_label
+  указывается вид операции (см. <Метки сообщений об операциях с пакетным
+  заданием>).
+*/
+Batch_CtxTpSName constant varchar2(10) := 'BATCH';
+
+/* const: Job_CtxTpSName
+  Тип контекста выполнения "Задание".
+  Выполнение задания, в context_value_id указывается Id задания (значение поля
+  job_id из таблицы sch_job).
+*/
+Job_CtxTpSName constant varchar2(10) := 'JOB';
+
+
+
+/* group: Метки сообщений об операциях с пакетным заданием
+  Значения используются для заполнения поля message_label лога в случае
+  открытия контекста <Batch_CtxTpSName>.
+*/
+
+/* const: Abort_BatchMsgLabel
+  Метка сообщения для операции "Прерывание выполнения".
+*/
+Abort_BatchMsgLabel constant varchar2(50) := 'ABORT';
+
+/* const: Activate_BatchMsgLabel
+  Метка сообщения для операции "Активация".
+*/
+Activate_BatchMsgLabel constant varchar2(50) := 'ACTIVATE';
+
+/* const: Deactivate_BatchMsgLabel
+  Метка сообщения для операции "Деактивация".
+*/
+Deactivate_BatchMsgLabel constant varchar2(50) := 'DEACTIVATE';
+
+/* const: Exec_BatchMsgLabel
+  Метка сообщения для операции "Выполнение".
+*/
+Exec_BatchMsgLabel constant varchar2(50) := 'EXEC';
+
+/* const: SetNextDate_BatchMsgLabel
+  Метка сообщения для операции "Установка даты следующего запуска".
+*/
+SetNextDate_BatchMsgLabel constant varchar2(50) := 'SET_NEXT_DATE';
+
+/* const: StopHandler_BatchMsgLabel
+  Метка сообщения для операции "Отправка команды остановки обработчика".
+*/
+StopHandler_BatchMsgLabel constant varchar2(50) := 'STOP_HANDLER';
+
+
+
 /* group: Функции */
 
 /* pfunc: getModuleId

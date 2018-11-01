@@ -263,11 +263,63 @@ begin
       , lgi.error_count
       , lgi.warning_count
     from
-      sch_log lg
-    start with
-      lg.log_id = lgi.root_log_id
-    connect by
-      prior lg.log_id = lg.parent_log_id
+      (
+      select
+        lg.log_id
+        , case ct.context_type_short_name
+            when pkg_SchedulerMain.Batch_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                'BSTART'
+              else
+                'BFINISH'
+              end
+            when pkg_SchedulerMain.Job_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                'JSTART'
+              else
+                'JFINISH'
+              end
+            else
+              case lg.level_code
+                when pkg_Logging.Fatal_LevelCode then
+                  'ERROR'
+                when pkg_Logging.Error_LevelCode then
+                  'ERROR'
+                when pkg_Logging.Warn_LevelCode then
+                  'WARNING'
+                when pkg_Logging.Info_LevelCode then
+                  'INFO'
+                else
+                  'DEBUG'
+              end
+          end
+          as message_type_code
+        , lg.message_value
+        , lg.date_ins
+      from
+        v_lg_context_change_log ccl
+        inner join lg_log lg
+          on lg.sessionid = ccl.sessionid
+            and lg.log_id >= ccl.open_log_id
+            and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+        left join lg_context_type ct
+          on ct.context_type_id = lg.context_type_id
+      where
+        ccl.log_id = lgi.root_log_id
+      union all
+      select
+        lg.log_id
+        , lg.message_type_code
+        , lg.message_value
+        , lg.date_ins
+      from
+        sch_log lg
+      start with
+        lg.log_id = lgi.root_log_id
+        and lg.message_type_code = 'BSTART'
+      connect by
+        prior lg.log_id = lg.parent_log_id
+      ) lg
     ;
   end if;
 

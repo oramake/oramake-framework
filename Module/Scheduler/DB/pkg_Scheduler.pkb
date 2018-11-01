@@ -69,16 +69,6 @@ gBatchLevel pls_integer;
 */
 gVariableCol VariableColT;
 
-/* ivar: gParentLogId
-  Текущее Id родительской записи при вставке сообщения в лог.
-*/
-gParentLogId sch_log.parent_log_id%type := null;
-
-/* ivar: gDebugFlag
-  Флаг вывода отладочных сообщений
-*/
-gDebugFlag integer := 0;
-
 /* ivar: gSendNotifyFlag
   Флаг автоматической рассылки уведомления об ошибках/предупреждениях при
   выполнении пакетов.
@@ -88,27 +78,6 @@ gSendNotifyFlag integer := 1;
 
 
 /* group: Функции */
-
-function writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-  , parentLogId integer := null
-  , isCreateBranch boolean := null
-  , isLeaveBranch boolean := null
-)
-return integer;
-
-procedure writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-  , parentLogId integer
-  , isCreateBranch boolean := null
-  , isLeaveBranch boolean := null
-);
 
 
 
@@ -330,8 +299,8 @@ is
   rec curBatch%rowtype;
 
   -- Имя пакета, выводимое в лог
-  batchLogName sch_log.message_text%type;
-  info sch_log.message_text%type;
+  batchLogName varchar2(500);
+  info varchar2(4000);
   -- Информационное сообщение Новая дата запуска пакета
   newDate date;
 
@@ -500,11 +469,11 @@ begin
   end if;
   -- Пишем информационное сообщение
   if info is not null then
-    writeLog(
-      messageTypeCode => Bmanage_MessageTypeCode
-      , messageText   => info
-      , messageValue  => batchId
-      , operatorId    => operatorId
+    logger.info(
+      messageText             => info
+      , messageLabel          => pkg_SchedulerMain.Activate_BatchMsgLabel
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
     );
   end if;
   close curBatch;
@@ -588,8 +557,8 @@ where
   handlerSerial number;
   stopJob number;
   -- Имя пакета, выводимое в лог
-  batchLogName sch_log.message_text%type;
-  info sch_log.message_text%type;       --Информационное сообщение
+  batchLogName varchar2(500);
+  info varchar2(4000);
 
 --DeactivateBatch
 begin
@@ -637,24 +606,24 @@ begin
   end loop;
   -- Пишем информационное сообщение
   if rec.oracle_job_id is not null then
-    writeLog(
-      messageTypeCode => Bmanage_MessageTypeCode
-      , messageText =>
-        'Деактивирован пакет ' || batchLogName
-        || ' ('
-          || ' oracle_job_id=' || rec.oracle_job_id
-          || case when rec.current_job_id is null then
-            ', на момент деактивации отсутствовало назначенное пакету задание'
-            end
-          || case when stopJob is not null then
-              ', будет выполнена остановка обработчика'
-              || ' sid=' || to_char( handlerSid)
-              || ' serial#=' || to_char( handlerSerial)
-              || ' job=' || to_char( stopJob)
-            end
-        || ').'
-      , messageValue => batchId
-      , operatorId => operatorId
+    logger.info(
+      messageText             =>
+          'Деактивирован пакет ' || batchLogName
+          || ' ('
+            || ' oracle_job_id=' || rec.oracle_job_id
+            || case when rec.current_job_id is null then
+              ', на момент деактивации отсутствовало назначенное пакету задание'
+              end
+            || case when stopJob is not null then
+                ', будет выполнена остановка обработчика'
+                || ' sid=' || to_char( handlerSid)
+                || ' serial#=' || to_char( handlerSerial)
+                || ' job=' || to_char( stopJob)
+              end
+          || ').'
+      , messageLabel          => pkg_SchedulerMain.Deactivate_BatchMsgLabel
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
     );
   end if;
   close curBatch;
@@ -692,7 +661,7 @@ is
   bth sch_batch%rowtype;
 
   -- Имя пакета, выводимое в лог
-  batchLogName sch_log.message_text%type;
+  batchLogName varchar2(500);
 
 begin
   savepoint pkg_Scheduler_SetNextDate;
@@ -708,16 +677,16 @@ begin
     -- Устанавливаем дату запуска
     dbms_job.next_date( bth.oracle_job_id, nextDate);
     -- Пишем информационное сообщение
-    writeLog(
-      messageTypeCode => Bmanage_MessageTypeCode
-      , messageText =>
-        'Дата запуска пакета '
-        || batchLogName
-        || ' изменена на '
-        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
-        || '.'
-      , messageValue => batchId
-      , operatorId => operatorId
+    logger.info(
+      messageText             =>
+          'Дата запуска пакета '
+          || batchLogName
+          || ' изменена на '
+          || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
+          || '.'
+      , messageLabel          => pkg_SchedulerMain.SetNextDate_BatchMsgLabel
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
     );
   else
     raise_application_error(
@@ -787,9 +756,11 @@ is
   rec curBatch%rowtype;
 
   -- Имя пакета, выводимое в лог
-  batchLogName sch_log.message_text%type;
-  info sch_log.message_text%type;       --Информационное сообщение
-  rootLogId sch_log.log_id%type;        --Id корневого лога операции
+  batchLogName varchar2(500);
+  info varchar2(4000);
+
+  -- Признак начала выполнения операции
+  isStarted boolean := false;
 
 --AbortBatch
 begin
@@ -811,16 +782,16 @@ begin
       , 'Пакет в данный момент не выполняется ( сессия не найдена).'
     );
   end if;
-  rootLogId :=
-    writeLog(
-      messageTypeCode => Bmanage_MessageTypeCode
-      , messageText   =>
+  logger.info(
+    messageText             =>
         'Начало прерывания выполнение пакета ' || batchLogName
         || ', сессия sid=' || rec.sid || ', serial#=' || rec.serial# || '.'
-      , messageValue  => batchId
-      , operatorId    => operatorId
-      , isCreateBranch => true
-    );
+    , messageLabel          => pkg_SchedulerMain.Abort_BatchMsgLabel
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , contextValueId        => batchId
+    , openContextFlag       => 1
+  );
+  isStarted := true;
   deactivateBatch( batchId, operatorId);
   activateBatch( batchId, operatorId);
   commit;
@@ -829,15 +800,13 @@ begin
       || rec.sid || ',' || rec.serial#
       || ''' immediate'
   ;
-  -- Пишем информационное сообщение
-  writeLog(
-    messageTypeCode => Info_MessageTypeCode
-    , messageText   => 'Выполнение сессии прервано.'
-    , operatorId    => operatorId
-    , parentLogId   => rootLogId
-    , isLeaveBranch => true
-  );
   close curBatch;
+  logger.info(
+    messageText             => 'Выполнение сессии прервано.'
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , contextValueId        => batchId
+    , openContextFlag       => 0
+  );
 exception when others then
   if curBatch%ISOPEN then
     close curBatch;
@@ -849,14 +818,13 @@ exception when others then
       end
     || '.'
   ;
-  if rootLogId is not null then
-    writeLog(
-      messageTypeCode => Error_MessageTypeCode
-      , messageText   => info || chr(10) || SQLERRM
-      , messageValue  => SQLCODE
-      , operatorId    => operatorId
-      , parentLogId   => rootLogId
-      , isLeaveBranch => true
+  if isStarted then
+    logger.error(
+      messageText             =>
+          info || chr(10) || logger.getErrorStack( isStackPreserved => 1)
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
+      , openContextFlag       => 0
     );
   end if;
   raise_application_error(              --Дополняем информацию об ошибке
@@ -1618,9 +1586,84 @@ function getDetailedLog
   , operatorId  integer
 ) return sys_refcursor
 is
+
   -- возвращаемый курсор
   resultSet sys_refcursor;
+
+  isNewLog integer;
+
 begin
+  select
+    count(*)
+  into isNewLog
+  from
+    lg_log lg
+  where
+    lg.log_id = parentLogId
+    and lg.context_type_id is not null
+  ;
+  if isNewLog = 1 then
+
+  open resultSet for
+    select
+        lg.log_id
+      , nullif( parentLogId, lg.log_id) as parent_log_id
+      , m.message_type_code
+      , m.message_type_name_rus as message_type_name
+      , coalesce( lg.context_value_id, lg.message_value) as message_value
+      , lg.message_text
+      , 1 + ( lg.context_level - ccl.open_context_level)
+        + case when lg.open_context_flag = 1 then 0 else 1 end
+        as log_level
+      , lg.date_ins
+      , lg.operator_id
+      , op.operator_name
+    from
+      v_lg_context_change_log ccl
+      inner join lg_log lg
+        on lg.sessionid = ccl.sessionid
+          and lg.log_id >= ccl.open_log_id
+          and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+      left join op_operator op
+        on op.operator_id = lg.operator_id
+      left join lg_context_type ct
+        on ct.context_type_id = lg.context_type_id
+      left join sch_message_type m
+        on m.message_type_code =
+          case ct.context_type_short_name
+            when pkg_SchedulerMain.Batch_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                Bstart_MessageTypeCode
+              else
+                Bfinish_MessageTypeCode
+              end
+            when pkg_SchedulerMain.Job_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                Jstart_MessageTypeCode
+              else
+                Jfinish_MessageTypeCode
+              end
+            else
+              case lg.level_code
+                when pkg_Logging.Fatal_LevelCode then
+                  Error_MessageTypeCode
+                when pkg_Logging.Error_LevelCode then
+                  Error_MessageTypeCode
+                when pkg_Logging.Warn_LevelCode then
+                  Warning_MessageTypeCode
+                when pkg_Logging.Info_LevelCode then
+                  Info_MessageTypeCode
+                else
+                  Debug_MessageTypeCode
+              end
+          end
+    where
+      ccl.log_id = parentLogId
+    order by
+      1
+  ;
+
+  else
 
   open resultSet for
   select
@@ -1654,6 +1697,8 @@ begin
     on m.message_type_code = l.message_type_code
   inner join op_operator op
     on op.operator_id = l.operator_id;
+
+  end if;
 
   return resultSet;
 
@@ -3277,24 +3322,22 @@ where
 
   -- Результат операции с каналом
   pipeStatus number := null;
-  -- Id корневого лога
-  rootLogId sch_log.log_id%type;
   -- Флаг наличия сессии
   isFound boolean := false;
 
 --StopHandler
 begin
-  rootLogId := writeLog(
-    messageTypeCode => Bmanage_MessageTypeCode
-    , messageText =>
-      'Начало отправки команды остановки обработчика ('
-      || ' batch_id=' || to_char( batchId)
-      || ', sid=' || to_char( sid)
-      || ', serial#=' || to_char( serial#)
-      || ').'
-    , messageValue => batchId
-    , operatorId => operatorId
-    , isCreateBranch => true
+  logger.info(
+    messageText             =>
+        'Начало отправки команды остановки обработчика ('
+        || ' batch_id=' || to_char( batchId)
+        || ', sid=' || to_char( sid)
+        || ', serial#=' || to_char( serial#)
+        || ').'
+    , messageLabel          => pkg_SchedulerMain.StopHandler_BatchMsgLabel
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , contextValueId        => batchId
+    , openContextFlag       => 1
   );
   for rec in curPipe( sid, serial#) loop
     isFound := true;
@@ -3304,53 +3347,50 @@ begin
       pipename  => rec.pipe_name
       , timeout => 0
     );
-    writeLog(
-      messageTypeCode =>
-        case when pipeStatus = 0 then
-          Info_MessageTypeCode
-        else
-          Warning_MessageTypeCode
-        end
-      , messageText =>
-        case when pipeStatus = 0 then
-          'Команда остановки успешно отправлена'
-        else
-          'Ошибка при отправке команды остановки'
-        end
-        || ' ('
-        || ' pipe="' || rec.pipe_name || '"'
-        || case when pipeStatus > 0 then
-          ', status=' || pipeStatus
+    logger.log(
+      levelCode               =>
+          case when pipeStatus = 0 then
+            lg_logger_t.getInfoLevelCode()
+          else
+            lg_logger_t.getWarnLevelCode()
           end
-        || ').'
-      , operatorId => operatorId
-      , parentLogId => rootLogId
-      , isLeaveBranch => true
+      , messageText           =>
+          case when pipeStatus = 0 then
+            'Команда остановки успешно отправлена'
+          else
+            'Ошибка при отправке команды остановки'
+          end
+          || ' ('
+          || ' pipe="' || rec.pipe_name || '"'
+          || case when pipeStatus > 0 then
+            ', status=' || pipeStatus
+            end
+          || ').'
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
+      , openContextFlag       => 0
     );
   end loop;
   if not isFound then
-    writeLog(
-      messageTypeCode => Info_MessageTypeCode
-      , messageText => 'Не найдена сессия/канал для отправки команды остановки.'
-      , operatorId => operatorId
-      , parentLogId => rootLogId
-      , isLeaveBranch => true
+    logger.info(
+      messageText             =>
+          'Не найдена сессия/канал для отправки команды остановки.'
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => batchId
+      , openContextFlag       => 0
     );
   end if;
 exception when others then
-  if rootLogId is not null then
-    writeLog(
-      messageTypeCode => Error_MessageTypeCode
-      , messageText =>
+  logger.error(
+    messageText             =>
         'Ошибка при отправке команды остановки обработчика.'
         || chr( 10)
-        || SQLERRM
-      , messageValue => SQLCODE
-      , operatorId => operatorId
-      , parentLogId => rootLogId
-      , isLeaveBranch => true
-    );
-  end if;
+        || logger.getErrorStack()
+    , messageValue          => SQLCODE
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , contextValueId        => batchId
+    , openContextFlag       => 0
+  );
 end stopHandler;
 
 /* iproc: execBatch
@@ -3380,20 +3420,17 @@ is
   -- Доступно ли получение стека с помощью Logging
   isLoggingStackAvailable boolean := false;
 
-
-
   lIsJob boolean := batchId is null;    --Флаг периодического выполнения (job)
   lBatchId sch_batch.batch_id%type;     --Id исполняемого пакета
   lStartDate date := sysdate;           --Дата начала выполнения пакета
-  lStartLogId sch_log.log_id%type;      --Id лога о запуске пакета
-  -- Id корневого лога на момент запуска пакета
-  parentLogId sch_log.log_id%type := gParentLogId;
+  lStartLogId integer;      --Id лога о запуске пакета
+
   -- Уровень выполняемого пакета (с 1)
   batchLevel pls_integer := nvl( gBatchLevel, 0) + 1;
   -- Id результата выполнения пакета
   batchResultId sch_result.result_id%type := True_ResultId;
   -- Текст сообщения о выполнении пакета
-  batchResultMessage sch_log.message_text%type :=
+  batchResultMessage varchar2(4000) :=
     'Выполнение пакета успешно завершено ( положительный результат).';
 
 
@@ -3569,9 +3606,8 @@ is
         )
     ;
     -- Логгируем начало выполнения пакета
-    writeLog(
-      messageTypeCode         => Bstart_MessageTypeCode
-      , messageText           =>
+    logger.info(
+      messageText             =>
         'Начало'
           || case when lIsJob and batchRetrialNumber is not null
               then ' повторного (N' || batchRetrialNumber || ')'
@@ -3582,9 +3618,12 @@ is
               then ' (oracle_job_id=' || lOracleJobId || ')'
               end
           || '.'
-      , messageValue          => lBatchId
+      , messageLabel          => pkg_SchedulerMain.Exec_BatchMsgLabel
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => coalesce( lBatchId, batchId)
+      , openContextFlag       => 1
     );
-    lStartLogId := gParentLogId;        --Сохраняем Id лога о запуске пакета
+    lStartLogId := lg_logger_t.getOpenContextLogId();
   exception when no_data_found then     --Точное сообщение при отсутствии пакета
     raise_application_error(
       pkg_Error.BatchNotFound
@@ -3668,10 +3707,8 @@ is
         if colResult.exists( contentId) then
           resultId := colResult( contentId);
         else                            --Сообщаем о некорректности в условиях
-          writeLog(
-            messageTypeCode   => Warning_MessageTypeCode
-            , messageText     =>
-              'Условие относится к заданию, которое выполняется позже.'
+          logger.warn(
+            'Условие относится к заданию, которое выполняется позже.'
             , messageValue    => cn.conditionId
           );
           exit;                         --Прекращаем некорректную проверку
@@ -3691,7 +3728,7 @@ is
   procedure ExecJob(
     jobWhat in sch_job.job_what%type
     , jobResultId out sch_result.result_id%type
-    , jobResultMessage out sch_log.message_text%type
+    , jobResultMessage out varchar2
     , restartBatchFlag out integer
     , retryBatchFlag out integer
     ) is
@@ -3720,7 +3757,7 @@ is
 
     -- Выставляем начальные значения результатов выполнения
     lJobResultId sch_result.result_id%type := True_ResultId;
-    lJobResultMessage sch_log.message_text%type := null;
+    lJobResultMessage varchar2(4000) := null;
     -- Флаги перезапуска и повторного запуска
     lIsRestartBatch integer := 0;
     lIsRetryBatch integer := 0;
@@ -3734,7 +3771,7 @@ is
   /* batch: ' || batchShortName || ' */
   batchShortName sch_batch.batch_short_name%type:= :batchShortName;
   jobResultId sch_result.result_id%type := :lJobResult;
-  jobResultMessage sch_log.message_text%type := :lJobResultMessage;
+  jobResultMessage varchar2(4000) := :lJobResultMessage;
   restartBatchFlag integer := :lIsRestartBatch;
   retryBatchFlag integer := :lIsRetryBatch;
 begin
@@ -3772,9 +3809,8 @@ end;'
       Split_Message_Length constant integer := 4000-10;
     begin
       if length( lErrorMessage) < 4000 then
-        writeLog(
-          messageTypeCode       => Error_MessageTypeCode
-          , messageText         => lErrorMessage
+        logger.error(
+          messageText           => lErrorMessage
           , messageValue        => lErrorCode
         );
                                        -- Режем сообщение, если оно
@@ -3783,9 +3819,8 @@ end;'
         for idx in
           1..ceil( length( lErrorMessage) / Split_Message_Length)
         loop
-          writeLog(
-            messageTypeCode       => Error_MessageTypeCode
-            , messageText         => rpad( '#' || to_char( idx), 3) || ':'
+          logger.error(
+            messageText           => rpad( '#' || to_char( idx), 3) || ':'
                                      ||
                                      substr( lErrorMessage
                                        , ( idx-1) * Split_Message_Length + 1
@@ -3795,9 +3830,8 @@ end;'
           );
         end loop;
       else
-        writeLog(
-          messageTypeCode       => Error_MessageTypeCode
-          , messageText         => 'Сообщение об ошибке неизвестно'
+        logger.error(
+          messageText           => 'Сообщение об ошибке неизвестно'
           , messageValue        => lErrorCode
         );
       end if;
@@ -3830,10 +3864,9 @@ end;'
     if lIsRestartBatch = 1
         and lIsRetryBatch = 1 then
       lIsRetryBatch := 0;
-      writeLog(
-        Warning_MessageTypeCode
-        , 'Установка флага повторного запуска пакета была проигнорирована'
-          || ' в связи с установкой флага немедленного перезапуска.'
+      logger.warn(
+        'Установка флага повторного запуска пакета была проигнорирована'
+        || ' в связи с установкой флага немедленного перезапуска.'
       );
 
     end if;
@@ -3867,7 +3900,7 @@ end;'
     -- Результат выполнения задания
     lJobResultId sch_result.result_id%type;
     -- Текст сообщения о выполнении задания
-    lJobResultMessage sch_log.message_text%type;
+    lJobResultMessage varchar2(4000);
 
     restartBatchFlag integer;           --Флаг немедленного перезапуска пакета
     retryBatchFlag integer;             --Флаг повторного выполнения пакета
@@ -3876,17 +3909,18 @@ end;'
   begin
     loop
       exit when i is null;
-      writeLog(                         --Логгируем запуск задания
-        messageTypeCode       => Jstart_MessageTypeCode
-        , messageText         =>
-          'Начало выполнения задания "' || colContent( i).jobName ||'".'
-        , messageValue        => colContent( i).jobId
+      -- Логгируем запуск задания
+      logger.info(
+        messageText             =>
+            'Начало выполнения задания "' || colContent( i).jobName ||'".'
+        , contextTypeShortName  => pkg_SchedulerMain.Job_CtxTpSName
+        , contextValueId        => colContent( i).jobId
+        , openContextFlag       => 1
       );
       -- Сообщаем о недоступности получения стека через модуль Logging
       if not isLoggingStackAvailable then
-        writeLog(
-          Info_MessageTypeCode
-          , 'Получение стека с помощью модуля Logging не доступно'
+        logger.info(
+          'Получение стека с помощью модуля Logging не доступно'
         );
       end if;
       if CheckCondition( i) then
@@ -3896,27 +3930,29 @@ end;'
         lJobResultId := Skip_ResultId;
         lJobResultMessage := 'Задание было пропущено по условию.';
       end if;
-      writeLog(                         --Логгируем завершение задания
-        messageTypeCode       => Jfinish_MessageTypeCode
-        , messageText         => lJobResultMessage
-        , messageValue        => lJobResultId
+      -- Логгируем завершение задания
+      logger.info(
+        messageText             => lJobResultMessage
+        , messageValue          => lJobResultId
+        , contextTypeShortName  => pkg_SchedulerMain.Job_CtxTpSName
+        , contextValueId        => colContent( i).jobId
+        , openContextFlag       => 0
       );
       -- Сохраняем результат выполнения
       colResult( colContent( i).contentId) := lJobResultId;
 
       if restartBatchFlag = 1 then
         -- Сообщаем о перезапуске пакета.
-        writeLog(
-          Info_MessageTypeCode
-          , 'Выполнение заданий начато сначала в связи с установкой флага'
-            || ' немедленного перезапуска пакета.'
+        logger.info(
+          'Выполнение заданий начато сначала в связи с установкой флага'
+          || ' немедленного перезапуска пакета.'
         );
         i := colContent.first;          --Заново начинаем с первого задания.
       elsif retryBatchFlag = 1 then
-        writeLog(                       --Сообщаем о прекращении обработки.
-          Info_MessageTypeCode
-          , 'Выполнение заданий прекращено в связи с установкой флага'
-            || ' повторного выполнения пакета.'
+        -- Сообщаем о прекращении обработки.
+        logger.info(
+          'Выполнение заданий прекращено в связи с установкой флага'
+          || ' повторного выполнения пакета.'
         );
         -- Устанавливаем результат выполнения пакета.
         batchResultId := Retryattempt_ResultId;
@@ -3924,9 +3960,9 @@ end;'
           'Выполнение пакета завершено со статусом "Повторить попытку".';
         exit;                           --Прекращаем выполнение заданий.
       elsif lJobResultId = Runerror_ResultId then
-        writeLog(                       --Сообщаем о прекращении обработки.
-          Info_MessageTypeCode
-          , 'Выполнение пакета прервано в связи с ошибкой при запуске задания.'
+        -- Сообщаем о прекращении обработки.
+        logger.info(
+          'Выполнение пакета прервано в связи с ошибкой при запуске задания.'
         );
         -- Устанавливаем результат выполнения пакета.
         batchResultId := Error_ResultId;
@@ -3952,22 +3988,25 @@ end;'
   --Возвращает результат выполнения (успех/не успех), не вызывает исключений
   begin
     if lStartLogId is null then
-        -- Логгируем начало выполнения пакета если это еще не сделано
-        writeLog(
-          Bstart_MessageTypeCode
-          , 'Начало выполнении процедуры pkg_Scheduler.execBatch'
-            || case
-                when lIsJob then '( oracleJobId => '|| oracleJobId ||').'
-                else '( batchId => ' || batchId ||').'
-              end
-        );
-        lStartLogId := gParentLogId;    --Сохраняем Id лога о запуске пакета
+      -- Логгируем начало выполнения пакета если это еще не сделано
+      logger.info(
+        messageText             =>
+          'Начало выполнении процедуры pkg_Scheduler.execBatch'
+          || case
+              when lIsJob then '( oracleJobId => '|| oracleJobId ||').'
+              else '( batchId => ' || batchId ||').'
+            end
+        , messageLabel          => pkg_SchedulerMain.Exec_BatchMsgLabel
+        , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+        , contextValueId        => coalesce( lBatchId, batchId)
+        , openContextFlag       => 1
+      );
+      lStartLogId := lg_logger_t.getOpenContextLogId();
     end if;
-    writeLog(                           --Логгируем ошибку
-      messageTypeCode         => Error_MessageTypeCode
-      , messageText           => SQLERRM
+    -- Логгируем ошибку
+    logger.error(
+      messageText             => SQLERRM
       , messageValue          => SQLCODE
-      , parentLogId           => lStartLogId
     );
     return true;
   exception when others then
@@ -4040,9 +4079,8 @@ end;'
       if not LogError then
         raise;
       end if;
-      writeLog(
-        Warning_MessageTypeCode
-        , 'Не удалось определить дату запуска пакета по расписанию.'
+      logger.warn(
+        'Не удалось определить дату запуска пакета по расписанию.'
       );
       -- Устанавливаем ошибочный статус
       batchResultId := Error_ResultId;
@@ -4085,9 +4123,10 @@ end;'
       vDate := sysdate;
     end if;
     nextDate := vDate;                  --Присваиваем рассчитанную дату
-    writeLog(                           --Логгируем дату следующего запуска
-      messageTypeCode         => Info_MessageTypeCode
-      , messageText           =>
+
+    -- Логгируем дату следующего запуска
+    logger.info(
+      messageText           =>
         'Дата '
         || case when vRetrialNumber is null
             then 'следующего'
@@ -4095,7 +4134,6 @@ end;'
             end
         || ' запуска пакета установлена в '
         || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
-      , parentLogId           => lStartLogId
     );
   exception when others then            --Дополняем информацию об ошибке
     raise_application_error(
@@ -4117,18 +4155,16 @@ end;'
         if not LogError then
           raise;
         end if;
-        writeLog(
-          Warning_MessageTypeCode
-          , 'Во время выполнения отката (rollback) произошла ошибка.'
-        );
+        logger.warn( 'Во время выполнения отката (rollback) произошла ошибка.');
       end;
       setNextDate;
     end if;
-    writeLog(                           --Логгируем завершение обработки
-      messageTypeCode         => Bfinish_MessageTypeCode
-      , messageText           => batchResultMessage
+    logger.info(
+      messageText             => batchResultMessage
       , messageValue          => batchResultId
-      , parentLogId           => lStartLogId
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , contextValueId        => coalesce( lBatchId, batchId)
+      , openContextFlag       => 0
     );
     if isOperatorLogonDone is null then --Выполнить Logoff, был выполнен Logon
       begin
@@ -4281,22 +4317,32 @@ end;'
         select
           lg.log_id
           , lg.parent_log_id
-          , lg.message_type_code
+          , case lg.level_code
+              when pkg_Logging.Warn_LevelCode then
+                Warning_MessageTypeCode
+              else
+                Error_MessageTypeCode
+            end
+            as message_type_code
           , lg.message_text
         from
-          sch_log lg
+          v_lg_context_change_log ccl
+          inner join lg_log lg
+            on lg.sessionid = ccl.sessionid
+              and lg.log_id >= ccl.open_log_id
+              and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+          left join lg_context_type ct
+            on ct.context_type_id = lg.context_type_id
         where
-          lg.message_type_code in
+          ccl.log_id = lStartLogId
+          and lg.level_code in
             (
-              pkg_Scheduler.Error_MessageTypeCode
-              , pkg_Scheduler.Warning_MessageTypeCode
+              pkg_Logging.Fatal_LevelCode
+              , pkg_Logging.Error_LevelCode
+              , pkg_Logging.Warn_LevelCode
             )
-        start with
-          lg.log_id = lStartLogId
-        connect by
-          prior lg.log_id = lg.parent_log_id
-        order siblings by
-          log_id
+        order by
+          lg.log_id
       ;
 
       nDetail pls_integer := 0;         --Число ошибок и предупреждений
@@ -4305,7 +4351,7 @@ end;'
 
 
 
-      procedure SetExecPath( logId in sch_log.log_id%type)
+      procedure SetExecPath( logId integer)
       --Устанавливает имя задания (и путь к нему) по Id лога.
       is
 
@@ -4385,7 +4431,9 @@ end;'
         else
           nWarning := nWarning + 1;
         end if;
-        SetExecPath( rec.parent_log_id);
+        if rec.parent_log_id is not null then
+          SetExecPath( rec.parent_log_id);
+        end if;
         AddMessageText(                 --Пишем детальное описание
           chr(10) || to_char( nDetail) || '. '
           || case when rec.message_type_code = Error_MessageTypeCode
@@ -4470,12 +4518,10 @@ begin
       , true
     );
   end;
-  gParentLogId := parentLogId;          --Восстанавливаем глобальные переменные
   gBatchLevel := case when batchLevel = 1 then null else batchLevel - 1 end;
   resultId := batchResultId;            --Возвращаем результат выполнения пакета
 exception when others then
   SendNotify( SQLERRM);                 --Отсылаем нотификацию
-  gParentLogId := parentLogId;          --Восстанавливаем глобальные переменные
   gBatchLevel := case when batchLevel = 1 then null else batchLevel - 1 end;
   -- Добавляем информацию по агрументам вызова если не было логгирования
   if lStartLogId is null then
@@ -4565,6 +4611,9 @@ function clearLog(
 )
 return integer
 is
+
+  nDeleted integer := 0;
+
 -- clearLog
 begin
   delete from
@@ -4584,14 +4633,15 @@ begin
           from
             sch_log t2
           where
-            t2.date_ins < toDate
+            t2.log_time < toDate
             and t2.parent_log_id is null
           )
       connect by
         prior t.log_id = t.parent_log_id
       )
   ;
-  return SQL%ROWCOUNT;
+  nDeleted := nDeleted + SQL%ROWCOUNT;
+  return nDeleted;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -4603,14 +4653,14 @@ exception when others then
 end clearLog;
 
 /* func: getLog
-  Возвращает ветку из лога ( таблицы sch_log).
+  Возвращает ветку из лога ( таблицы lg_log).
 
   Параметры:
-  rootLogId                - Id корневой записи из sch_log
+  rootLogId                - Id корневой записи из lg_log
 
   Замечания:
   - функция предназначена для использования в SQL-запросах вида:
-  select lg.* from record( pkg_Scheduler.getLog( :rootLogId)) lg
+  select lg.* from table( pkg_Scheduler.getLog( :rootLogId)) lg
 */
 function getLog(
   rootLogId integer
@@ -4621,6 +4671,60 @@ pipelined parallel_enable
 is
 
   cursor curLog( rootLogId integer) is
+    select
+      sch_log_t(
+        lg.log_id
+        , nullif( rootLogId, lg.log_id)
+        , case ct.context_type_short_name
+            when pkg_SchedulerMain.Batch_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                Bstart_MessageTypeCode
+              else
+                Bfinish_MessageTypeCode
+              end
+            when pkg_SchedulerMain.Job_CtxTpSName then
+              case when lg.open_context_flag != 0 then
+                Jstart_MessageTypeCode
+              else
+                Jfinish_MessageTypeCode
+              end
+            else
+              case lg.level_code
+                when pkg_Logging.Fatal_LevelCode then
+                  Error_MessageTypeCode
+                when pkg_Logging.Error_LevelCode then
+                  Error_MessageTypeCode
+                when pkg_Logging.Warn_LevelCode then
+                  Warning_MessageTypeCode
+                when pkg_Logging.Info_LevelCode then
+                  Info_MessageTypeCode
+                else
+                  Debug_MessageTypeCode
+              end
+          end
+        , coalesce( lg.context_value_id, lg.message_value)
+        , lg.message_text
+        , 1 + ( lg.context_level - ccl.open_context_level)
+          + case when lg.open_context_flag = 1 then 0 else 1 end
+        , lg.date_ins
+        , lg.operator_id
+      )
+      as log_row
+    from
+      v_lg_context_change_log ccl
+      inner join lg_log lg
+        on lg.sessionid = ccl.sessionid
+          and lg.log_id >= ccl.open_log_id
+          and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+      left join lg_context_type ct
+        on ct.context_type_id = lg.context_type_id
+    where
+      ccl.log_id = rootLogId
+    order by
+      lg.log_id
+  ;
+
+  cursor curOldLog( rootLogId integer) is
     select
       sch_log_t(
         lg.log_id
@@ -4644,11 +4748,27 @@ is
       , lg.log_id
   ;
 
---GetLog
+  isNewLog integer;
+
 begin
-  for rec in curLog( rootLogId) loop
-    pipe row( rec.log_row);
-  end loop;
+  select
+    count(*)
+  into isNewLog
+  from
+    lg_log lg
+  where
+    lg.log_id = rootLogId
+    and lg.context_type_id is not null
+  ;
+  if isNewLog = 1 then
+    for rec in curLog( rootLogId) loop
+      pipe row( rec.log_row);
+    end loop;
+  else
+    for rec in curOldLog( rootLogId) loop
+      pipe row( rec.log_row);
+    end loop;
+  end if;
   return;
 end getLog;
 
@@ -4659,27 +4779,6 @@ end getLog;
 
 
 /* group: Установка флагов выполнения заданий */
-
-/* func: getDebugFlag
-  Возвращает значение флага отладки.
-*/
-function getDebugFlag
-return integer
-is
-begin
-  return gDebugFlag;
-end getDebugFlag;
-
-/* proc: setDebugFlag
-  Устанавливает флаг отладки в указанное значение.
-*/
-procedure setDebugFlag(
-  flagValue integer := 1
-)
-is
-begin
-  gDebugFlag := flagValue;
-end setDebugFlag;
 
 /* func: getSendNotifyFlag
   Возвращает значение флага автоматической рассылки нотификации.
@@ -4770,23 +4869,25 @@ begin
   gVariableCol( vName) := v;
 
   -- Логгируем установку значения
-  if gBatchLevel > 0 or gDebugFlag = 1 then
-    pkg_Scheduler.writeLog(
-      case when gBatchLevel > 0 then
-        Info_MessageTypeCode
-      else
-        Debug_MessageTypeCode
-      end
-      , varName
-        || case when valIndex > 1 then
-            '[' || valIndex || ']'
+  if gBatchLevel > 0 or logger.isDebugEnabled() then
+    logger.log(
+      levelCode         =>
+          case when gBatchLevel > 0 then
+            lg_logger_t.getInfoLevelCode()
+          else
+            lg_logger_t.getDebugLevelCode()
           end
-        || ' := ' || stringValue
-        || case
-            when isConstant = 1 then ' (константа)'
-            when isExist then ' (изменена)'
-            else ' (создана)'
-          end
+      , messageText     =>
+          varName
+          || case when valIndex > 1 then
+              '[' || valIndex || ']'
+            end
+          || ' := ' || stringValue
+          || case
+              when isConstant = 1 then ' (константа)'
+              when isExist then ' (изменена)'
+              else ' (создана)'
+            end
     );
   end if;
 end setContext;
@@ -5008,17 +5109,16 @@ is
 begin
   vName := upper( trim( varName));
   isExist := gVariableCol.exists( vName);
-  if gDebugFlag = 1 then
-    pkg_Scheduler.writeLog(
-      Debug_MessageTypeCode
-      , varName
-        || case when valueIndex > 1 then
-            '[' || valueIndex || ']'
-          end
-        || ' - получение значения переменной'
-        || case when not isExist then
-            ' ( не определена)'
-          end
+  if logger.isDebugEnabled() then
+    logger.debug(
+      varName
+      || case when valueIndex > 1 then
+          '[' || valueIndex || ']'
+        end
+      || ' - получение значения переменной'
+      || case when not isExist then
+          ' ( не определена)'
+        end
     );
   end if;
   if isExist then
@@ -5318,14 +5418,16 @@ is
 begin
   vName := upper( trim( varName));
   if gVariableCol.exists( vName) then
-    if gBatchLevel > 0 or gDebugFlag = 1 then
-      pkg_Scheduler.writeLog(
-        case when gBatchLevel > 0 then
-          Info_MessageTypeCode
-        else
-          Debug_MessageTypeCode
-        end
-        , varName || ' - переменная удалена.'
+    if gBatchLevel > 0 or logger.isDebugEnabled() then
+      logger.log(
+        levelCode       =>
+            case when gBatchLevel > 0 then
+              lg_logger_t.getInfoLevelCode()
+            else
+              lg_logger_t.getDebugLevelCode()
+            end
+        , messageText   =>
+            varName || ' - переменная удалена.'
       );
     end if;
     gVariableCol.delete( vName);
@@ -5347,187 +5449,6 @@ exception when others then
     , true
   );
 end deleteContext;
-
-
-
-/* group: Логирование */
-
-/* ifunc: writeLog( INTERNAL)
-  Записывает сообщение в лог (таблицу sch_log).
-
-  Параметры:
-  MessageTypeCode           - код типа сообщения
-  MessageText               - текст сообщения
-  MessageValue              - целое значение, связанное с сообщением
-  operatorId                - Id оператора
-  ParentLogId               - Id родительского сообщения (при отсутствии -
-                              берется из переменной пакета gParentLogId, при
-                              наличии - сохраняется в этой переменной)
-  isCreateBranch            - флаг того, что создаваемая запись становится
-                              родительской для последующих
-  isLeaveBranch             - флаг того, что создаваемая запись является
-                              последней на уровне ( нужно перейти на предыдущий)
-*/
-function writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-  , parentLogId integer := null
-  , isCreateBranch boolean := null
-  , isLeaveBranch boolean := null
-)
-return integer
-is
-
-  pragma autonomous_transaction;        --Используем автономную транзакцию
-
-  lLogId sch_log.log_id%type;           --Id добавленного сообщения
-
-  isSaved boolean := false;             --Сообщение успешно сохранено?
-  tmpMessage varchar2( 4000);           --Временная переменная
-
---WriteLog
-begin
-  -- Выходим, если это отладочное сообщение не в режиме отладки
-  if messageTypeCode = Debug_MessageTypeCode
-      and gDebugFlag != 1
-      then
-    return null;
-  end if;
-  if parentLogId is not null then       --Сохраняем новый Id родительской записи
-    gParentLogId := parentLogId;
-  end if;
-  -- Исключаем ошибку при вставке в случае передачи строки больше 4000 символов
-  tmpMessage := substr( messageText, 1, 4000);
-  insert into sch_log                   --Вставляем сообщение в лог
-  (
-    parent_log_id
-    , message_type_code
-    , message_value
-    , message_text
-    , operator_id
-  )
-  values
-  (
-    gParentLogId
-    , messageTypeCode
-    , messageValue
-    , tmpMessage
-    , operatorId
-  )
-  returning log_id into lLogId;
-  commit;                               --Фиксируем автономную транзакцию
-  isSaved := true;
-  -- Вставленное сообщение становится родительским
-  if messageTypeCode in ( Bstart_MessageTypeCode, Jstart_MessageTypeCode)
-      or isCreateBranch
-      then
-    gParentLogId := lLogId;
-  -- Возвращаемся на предыдущий уровень
-  elsif gParentLogId is not null and (
-      messageTypeCode in ( Bfinish_MessageTypeCode, Jfinish_MessageTypeCode)
-      or isLeaveBranch)
-      then
-    select                              --Выбираем Id родительского сообщения
-      parent_log_id
-    into gParentLogId
-    from
-      sch_log
-    where
-      log_id = gParentLogId
-    ;
-  end if;
-  return lLogId;
-exception when others then
-  tmpMessage :=
-    case
-      when not isSaved then
-        'pkg_Scheduler.writeLog: произошла ошибка при записи в лог сообщения: '
-        || chr( 10)
-          -- Ограничиваем текст сообщения
-          || substr( tmpMessage, 1, 1900)
-        || chr( 10) || '( message_type_code=' || to_char( messageTypeCode)
-          || ', message_value=' || to_char( messageValue)
-          || ', parent_log_id=' || to_char( gParentLogId)
-          || ')'
-      else
-        'pkg_Scheduler.writeLog: при выполнении процедуры произошла ошибка.'
-    end;
-  raise_application_error(
-    pkg_Error.ErrorInfo
-    , tmpMessage
-    , true                              --Сохраняем стек ошибок
-  );
-end writeLog;
-
-/* iproc: writeLog( PROCEDURE)
-  Записывает сообщение в лог (таблицу sch_log).
-
-  Параметры:
-  messageTypeCode           - код типа сообщения
-  messageText               - текст сообщения
-  messageValue              - целое значение, связанное с сообщением
-  operatorId                - Id оператора
-  parentLogId               - Id родительского сообщения (при отсутствии -
-                              берется из переменной пакета gParentLogId, при
-                              наличии - сохраняется в этой переменной)
-  isCreateBranch            - флаг того, что создаваемая запись становится
-                              родительской для последующих
-  isLeaveBranch             - флаг того, что создаваемая запись является
-                              последней на уровне ( нужно перейти на предыдущий)
-*/
-procedure writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-  , parentLogId integer
-  , isCreateBranch boolean := null
-  , isLeaveBranch boolean := null
-)
-is
-  logId sch_log.log_id%type;
--- writeLog
-begin
-  logId := writeLog(
-    messageTypeCode           => messageTypeCode
-    , messageText             => messageText
-    , messageValue            => messageValue
-    , operatorId              => operatorId
-    , parentLogId             => parentLogId
-    , isCreateBranch          => isCreateBranch
-    , isLeaveBranch           => isLeaveBranch
-  );
-end writeLog;
-
-/* proc: writeLog
-  Записывает сообщение в лог (таблицу sch_log).
-
-  Параметры:
-  MessageTypeCode           - код типа сообщения
-  MessageText               - текст сообщения
-  MessageValue              - целое значение, связанное с сообщением
-  operatorId                - Id оператора
-*/
-procedure writeLog(
-  messageTypeCode varchar2
-  , messageText varchar2
-  , messageValue number := null
-  , operatorId integer := null
-)
-is
-  logId sch_log.log_id%type;
-
--- writeLog
-begin
-  logId := writeLog(
-    messageTypeCode           => messageTypeCode
-    , messageText             => messageText
-    , messageValue            => messageValue
-    , operatorId              => operatorId
-  );
-end writeLog;
 
 
 
@@ -5572,6 +5493,73 @@ begin
     )
   ;
 end getContextInteger;
+
+/* func: getDebugFlag
+  Устаревшая функция, следует использовать isDebugEnabled() логера (тип
+  lg_logger_t).
+*/
+function getDebugFlag
+return integer
+is
+begin
+  return
+    case when logger.isDebugEnabled() then
+      1
+    else
+      0
+    end
+  ;
+end getDebugFlag;
+
+/* proc: setDebugFlag
+  Устаревшая функция, следует использовать setLevel() логера (тип
+  lg_logger_t).
+*/
+procedure setDebugFlag(
+  flagValue integer := 1
+)
+is
+begin
+  if coalesce( flagValue = 1, true) then
+    logger.setLevel( levelCode => lg_logger_t.getDebugLevelCode());
+  else
+    logger.setLevel( levelCode => null);
+  end if;
+end setDebugFlag;
+
+/* proc: writeLog
+  Устаревшая функция, следует использовать логер пакетного задания либо
+  собственный логер (тип lg_logger_t).
+*/
+procedure writeLog(
+  messageTypeCode varchar2
+  , messageText varchar2
+  , messageValue number := null
+  , operatorId integer := null
+)
+is
+begin
+  if operatorId is not null then
+    pkg_Operator.setCurrentUserId( operatorId => operatorId);
+  end if;
+  logger.log(
+    levelCode                 =>
+        case messageTypeCode
+          when Error_MessageTypeCode then
+            pkg_Logging.Error_LevelCode
+          when Warning_MessageTypeCode then
+            pkg_Logging.Warn_LevelCode
+          when Info_MessageTypeCode then
+            pkg_Logging.Info_LevelCode
+          when Debug_MessageTypeCode then
+            pkg_Logging.Debug_LevelCode
+          else
+            pkg_Logging.Info_LevelCode
+        end
+    , messageText             => messageText
+    , messageValue            => messageValue
+  );
+end writeLog;
 
 end pkg_Scheduler;
 /

@@ -56,6 +56,8 @@ drop view v_sch_role_privilege
 /
 drop view v_sch_batch_root_log
 /
+drop view v_sch_batch_root_log_old
+/
 drop view v_sch_operator_batch
 /
 
