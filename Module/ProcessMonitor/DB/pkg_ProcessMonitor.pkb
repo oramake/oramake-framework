@@ -1343,17 +1343,23 @@ from
       , (
         select
           max(
-          (
-          select
-            lg.date_ins
-          from
-            sch_log lg
-          where
-            lg.parent_log_id = rl.log_id
-            and lg.message_type_code = 'BFINISH'
+            case when rl.start_time_utc is not null then
+              pkg_TaskHandler.toSecond( rl.finish_time_utc - rl.start_time_utc)
+              / 3600
+            else
+              ((
+              select
+                lg.date_ins
+              from
+                sch_log lg
+              where
+                lg.parent_log_id = rl.log_id
+                and lg.message_type_code = 'BFINISH'
+              )
+              - rl.date_ins)
+              * 24
+            end
           )
-          - rl.date_ins
-          ) * 24
         from
           v_sch_batch_root_log rl
         where
