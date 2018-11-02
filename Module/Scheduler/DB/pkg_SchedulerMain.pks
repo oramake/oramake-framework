@@ -167,41 +167,17 @@ procedure getBatch(
   , batchShortName varchar2
 );
 
-/* pfunc: getLastRootLogId
-  ¬озвращает Id корневого лога последнего запуска пакетного задани€.
-
-  ѕараметры:
-  batchId                     - Id пакетного задани€
-
-  ¬озврат:
-  Id записи или null, если лог отсутствует.
-
-  ( <body::getLastRootLogId>)
-*/
-function getLastRootLogId(
-  batchId integer
-)
-return integer;
-
 /* pfunc: getBatchLogInfo
-  ¬озвращает информацию из лога выполнени€ пакетного задани€.
+  ¬озвращает информацию из лога выполнени€ пакетного задани€, используетс€
+  из <v_sch_batch>.
 
   ѕараметры:
   batchId                     - Id пакетного задани€
-                                ( не используетс€, если указан rootLogId)
-  rootLogId                   - Id корневой записи лога
-                                ( по умолчанию лог последнего запуска
-                                  указанного пакетного задани€)
-
-  «амечани€:
-  - должен быть задан параметр batchId или rootLogId, иначе выбрасываетс€
-    исключение;
 
   ( <body::getBatchLogInfo>)
 */
 function getBatchLogInfo(
-  batchId integer := null
-  , rootLogId integer := null
+  batchId integer
 )
 return sch_batch_log_info_t;
 

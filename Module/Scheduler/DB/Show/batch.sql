@@ -1,8 +1,9 @@
---script: Show/batch.sql
---Показывает пакеты.
+-- script: Show/batch.sql
+-- Показывает пакеты.
 --
---Параметры:
---batchPattern                - маска для имени пакетов ( batch_short_name)
+-- Параметры:
+-- batchPattern               - Маска краткого имени пакетного задания
+--                              (like по полю batch_short_name)
 --
 
 define batchPattern = "&1"

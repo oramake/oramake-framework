@@ -4329,7 +4329,6 @@ end;'
       cursor curDetail is
         select
           lg.log_id
-          , lg.parent_log_id
           , case lg.level_code
               when pkg_Logging.Warn_LevelCode then
                 Warning_MessageTypeCode
@@ -4338,6 +4337,24 @@ end;'
             end
             as message_type_code
           , lg.message_text
+          , (
+            select
+              max( jb.job_name)
+                keep( dense_rank last order by js.log_id)
+            from
+              lg_log js
+              inner join lg_context_type jct
+                on jct.context_type_id = js.context_type_id
+                  and jct.context_type_short_name
+                    = pkg_SchedulerMain.Job_CtxTpSName
+              inner join sch_job jb
+                on jb.job_id = js.context_value_id
+            where
+              js.sessionid = lg.sessionid
+              and js.log_id between lStartLogId + 1 and lg.log_id - 1
+              and js.open_context_flag = 1
+            )
+            as job_name
         from
           v_lg_context_change_log ccl
           inner join lg_log lg
@@ -4359,82 +4376,6 @@ end;'
       ;
 
       nDetail pls_integer := 0;         --Число ошибок и предупреждений
-      execPath varchar2( 4000);         --Строка исполняемого пути
-
-
-
-
-      procedure SetExecPath( logId integer)
-      --Устанавливает имя задания (и путь к нему) по Id лога.
-      is
-
-        -- Выбирает путь к элементу лога (без корневого элемента)
-        cursor curExecPath( pp_log_id sch_log.log_id%type) is
-          select
-            b.batch_short_name
-            , j.job_name
-          from
-            (
-            select
-              lg.log_id
-              , level as level_
-              , min( level) over() as min_level_
-              , case when
-                    lg.message_type_code = pkg_Scheduler.Bstart_MessageTypeCode
-                  then lg.message_value
-                  else null
-                end as batch_id
-              , case when
-                    lg.message_type_code = pkg_Scheduler.Jstart_MessageTypeCode
-                  then lg.message_value
-                  else null
-                end as job_id
-            from
-              sch_log lg
-            where
-              lg.message_type_code in
-                (
-                  pkg_Scheduler.Bstart_MessageTypeCode
-                  , pkg_Scheduler.Jstart_MessageTypeCode
-                )
-              ---- Только промежуточный уровень
-              and parent_log_id is not null
-              ----
-            start with
-              lg.log_id = pp_log_id
-            connect by
-              prior lg.parent_log_id = lg.log_id
-            ) lg
-            left outer join sch_batch b on lg.batch_id = b.batch_id
-            left outer join sch_job j on lg.job_id = j.job_id
-          where
-            --- Только пакеты и задание нижнего уровня
-            ( lg.batch_id is not null or lg.level_ = lg.min_level_)
-            ---
-          order by
-            lg.log_id
-          ;
-
-      begin
-        execPath := '';
-        for rec in curExecPath( logId) loop
-          if rec.batch_short_name is not null then
-            execPath := execPath
-              || case when execPath is not null then '/' end
-              || nvl( rec.batch_short_name, '"' || rec.job_name || '"')
-            ;
-          elsif rec.job_name is not null then
-            execPath :=
-              rec.job_name
-              || case when execPath is not null then
-                  ' (' || execPath || ')'
-                end
-            ;
-          end if;
-        end loop;
-      end SetExecPath;
-
-
 
     begin
       for rec in curDetail loop
@@ -4444,9 +4385,6 @@ end;'
         else
           nWarning := nWarning + 1;
         end if;
-        if rec.parent_log_id is not null then
-          SetExecPath( rec.parent_log_id);
-        end if;
         AddMessageText(                 --Пишем детальное описание
           chr(10) || to_char( nDetail) || '. '
           || case when rec.message_type_code = Error_MessageTypeCode
@@ -4455,8 +4393,9 @@ end;'
             end
             || ' (log_id=' || to_char( rec.log_id) || ')'
             || chr( 10)
-          || case when execPath is not null then
-              chr(10) || 'Задание:' || chr(10) || '  ' || execPath || chr(10)
+          || case when rec.job_name is not null then
+              chr(10) || 'Задание:' || chr(10) || '  '
+              || rec.job_name || chr(10)
             end
           || chr( 10)
           || 'Сообщение:'
@@ -4883,13 +4822,13 @@ begin
   gVariableCol( vName) := v;
 
   -- Логгируем установку значения
-  if gBatchLevel > 0 or logger.isDebugEnabled() then
+  if gBatchLevel > 0 or logger.isTraceEnabled() then
     logger.log(
       levelCode         =>
           case when gBatchLevel > 0 then
             lg_logger_t.getInfoLevelCode()
           else
-            lg_logger_t.getDebugLevelCode()
+            lg_logger_t.getTraceLevelCode()
           end
       , messageText     =>
           varName
@@ -5123,8 +5062,8 @@ is
 begin
   vName := upper( trim( varName));
   isExist := gVariableCol.exists( vName);
-  if logger.isDebugEnabled() then
-    logger.debug(
+  if logger.isTraceEnabled() then
+    logger.trace(
       varName
       || case when valueIndex > 1 then
           '[' || valueIndex || ']'
@@ -5432,13 +5371,13 @@ is
 begin
   vName := upper( trim( varName));
   if gVariableCol.exists( vName) then
-    if gBatchLevel > 0 or logger.isDebugEnabled() then
+    if gBatchLevel > 0 or logger.isTraceEnabled() then
       logger.log(
         levelCode       =>
             case when gBatchLevel > 0 then
               lg_logger_t.getInfoLevelCode()
             else
-              lg_logger_t.getDebugLevelCode()
+              lg_logger_t.getTraceLevelCode()
             end
         , messageText   =>
             varName || ' - переменная удалена.'
@@ -5509,7 +5448,7 @@ begin
 end getContextInteger;
 
 /* func: getDebugFlag
-  Устаревшая функция, следует использовать isDebugEnabled() логера (тип
+  Устаревшая функция, следует использовать isTraceEnabled() логера (тип
   lg_logger_t).
 */
 function getDebugFlag
@@ -5517,7 +5456,7 @@ return integer
 is
 begin
   return
-    case when logger.isDebugEnabled() then
+    case when logger.isTraceEnabled() then
       1
     else
       0
@@ -5535,7 +5474,7 @@ procedure setDebugFlag(
 is
 begin
   if coalesce( flagValue = 1, true) then
-    logger.setLevel( levelCode => lg_logger_t.getDebugLevelCode());
+    logger.setLevel( levelCode => lg_logger_t.getTraceLevelCode());
   else
     logger.setLevel( levelCode => null);
   end if;

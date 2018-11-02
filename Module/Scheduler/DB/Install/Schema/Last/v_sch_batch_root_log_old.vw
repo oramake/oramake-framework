@@ -1,4 +1,7 @@
---view: v_sch_batch_root_log_old
+-- view: v_sch_batch_root_log_old
+-- Корневые записи лога по управлению и выполнению пакетных заданий (по данным
+-- лога, созданным до обновления модуля Scheduler до версии 4.6.0).
+--
 create or replace force view v_sch_batch_root_log_old
 (
   batch_id
@@ -51,6 +54,5 @@ where
 
 
 comment on table v_sch_batch_root_log_old is
-  'Корневые записи лога по управлению и выполнению пакетных заданий (по данным лога, созданным до перехода на модуль Logging версии 2.0.0) [ SVN root: Oracle/Module/Scheduler]'
+  'Корневые записи лога по управлению и выполнению пакетных заданий (по данным лога, созданным до обновления модуля Scheduler до версии 4.6.0) [ SVN root: Oracle/Module/Scheduler]'
 /
-

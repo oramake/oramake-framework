@@ -19,6 +19,12 @@ logger lg_logger_t := lg_logger_t.getLogger(
 */
 schedulerModuleId integer;
 
+/* ivar: jobContextTypeId
+  Id типа контекста выполнения лога для задания
+  ( кэшированное значение).
+*/
+jobContextTypeId integer;
+
 
 
 /* group: Функции */
@@ -135,7 +141,7 @@ exception
     );
 end getBatch;
 
-/* func: getLastRootLogId
+/* ifunc: getLastRootLogId
   Возвращает Id корневого лога последнего запуска пакетного задания.
 
   Параметры:
@@ -162,7 +168,7 @@ begin
     select
       t.log_id as root_log_id
     from
-      v_sch_batch_root_log t
+      v_sch_batch_root_log_old t
     where
       t.message_type_code = 'BSTART'
       and t.batch_id = batchId
@@ -189,22 +195,14 @@ exception when others then
 end getLastRootLogId;
 
 /* func: getBatchLogInfo
-  Возвращает информацию из лога выполнения пакетного задания.
+  Возвращает информацию из лога выполнения пакетного задания, используется
+  из <v_sch_batch>.
 
   Параметры:
   batchId                     - Id пакетного задания
-                                ( не используется, если указан rootLogId)
-  rootLogId                   - Id корневой записи лога
-                                ( по умолчанию лог последнего запуска
-                                  указанного пакетного задания)
-
-  Замечания:
-  - должен быть задан параметр batchId или rootLogId, иначе выбрасывается
-    исключение;
 */
 function getBatchLogInfo(
-  batchId integer := null
-  , rootLogId integer := null
+  batchId integer
 )
 return sch_batch_log_info_t
 is
@@ -212,138 +210,147 @@ is
   -- Информация из лога
   lgi sch_batch_log_info_t;
 
-  -- Флаг лога с использованием контекста модуля Logging
-  isContextLog integer;
-
 begin
-  if batchId is null and rootLogId is null then
+  if batchId is null then
     raise_application_error(
       pkg_Error.IllegalArgument
-      , 'Должен быть указан Id пакетного задания либо Id корневого лога.'
+      , 'Должен быть указан Id пакетного задания.'
     );
   end if;
 
-  lgi := sch_batch_log_info_t();
-  lgi.root_log_id := rootLogId;
-  if lgi.root_log_id is null then
-    lgi.root_log_id := getLastRootLogId( batchId => batchId);
+  if jobContextTypeId is null then
+    -- max для отказоустойчивости (запись должна быть)
+    select
+      max( ct.context_type_id)
+    into jobContextTypeId
+    from
+      v_mod_module md
+      inner join lg_context_type ct
+        on ct.module_id = md.module_id
+    where
+      md.svn_root = Module_SvnRoot
+      and ct.context_type_short_name = Job_CtxTpSName
+    ;
   end if;
 
-  if lgi.root_log_id is not null then
+  lgi := sch_batch_log_info_t();
+
+  -- Предполагаем наличие лога выполнения с использованием контекста
+  select
+    max( a.start_log_id) as root_log_id
+    , min( lg.date_ins) as min_log_date
+    , max( lg.date_ins) as max_log_date
+    , max( a.batch_result_id) as batch_result_id
+    , sum(
+        case when
+            lg.context_type_id = jobContextTypeId
+            and lg.open_context_flag = 0
+            and lg.message_value in ( 3, 4)
+          then 1
+          else 0
+        end
+      )
+      as error_job_count
+    , sum(
+        case when
+            lg.level_code in (
+              pkg_Logging.Fatal_LevelCode
+              , pkg_Logging.Error_LevelCode
+            )
+          then 1
+          else 0
+        end
+      )
+      as error_count
+    , sum(
+        case when
+            lg.level_code = pkg_Logging.Warn_LevelCode
+          then 1
+          else 0
+        end
+      )
+      as warning_count
+  into
+    lgi.root_log_id
+    , lgi.min_log_date
+    , lgi.max_log_date
+    , lgi.batch_result_id
+    , lgi.error_job_count
+    , lgi.error_count
+    , lgi.warning_count
+  from
+    (
     select
-      count(*)
-    into isContextLog
+      max( bo.sessionid)
+          keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+        as sessionid
+      , max( bo.start_log_id)
+          keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+        as start_log_id
+      , max( bo.finish_log_id)
+          keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+        as finish_log_id
+      , max( bo.result_id)
+          keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+        as batch_result_id
     from
-      lg_log lg
+      v_sch_batch_operation bo
     where
+      bo.batch_id = batchId
+      and bo.batch_operation_label = Exec_BatchMsgLabel
+      and bo.execution_level = 1
+    ) a
+    inner join lg_log lg
+      on lg.sessionid = a.sessionid
+        and lg.log_id >= a.start_log_id
+        and lg.log_id <= coalesce( a.finish_log_id, lg.log_id)
+  ;
+
+  -- Ищем в старом логе если не нашли в новом
+  if lgi.root_log_id is null then
+    lgi.root_log_id := getLastRootLogId( batchId => batchId);
+    select
+      min( lg.date_ins) as min_log_date
+      , max( lg.date_ins) as max_log_date
+      , max(
+          case when lg.message_type_code = 'BFINISH' and level = 2 then
+            lg.message_value
+          end
+        )
+        as batch_result_id
+      , sum(
+          case when lg.message_type_code = 'JFINISH'
+              and lg.message_value in ( 3, 4)
+              then 1 else 0
+          end
+        )
+        as error_job_count
+      , sum(
+          case when lg.message_type_code = 'ERROR'
+            then 1 else 0
+          end
+        )
+        as error_count
+      , sum(
+          case when lg.message_type_code = 'WARNING'
+            then 1 else 0
+          end
+        )
+        as warning_count
+    into
+      lgi.min_log_date
+      , lgi.max_log_date
+      , lgi.batch_result_id
+      , lgi.error_job_count
+      , lgi.error_count
+      , lgi.warning_count
+    from
+      sch_log lg
+    start with
       lg.log_id = lgi.root_log_id
-      and lg.context_type_id is not null
+    connect by
+      prior lg.log_id = lg.parent_log_id
     ;
-    if isContextLog = 1 then
-      select
-        min( lg.date_ins) as min_log_date
-        , max( lg.date_ins) as max_log_date
-        , max(
-            case when
-              ct.context_type_short_name = Batch_CtxTpSName
-              -- результат батча верхнего уровня
-              and lg.log_id = ccl.close_log_id
-            then
-              lg.message_value
-            end
-          )
-          as batch_result_id
-        , sum(
-            case when
-                ct.context_type_short_name = Job_CtxTpSName
-                and lg.open_context_flag = 0
-                and lg.message_value in ( 3, 4)
-              then 1
-              else 0
-            end
-          )
-          as error_job_count
-        , sum(
-            case when
-                lg.level_code in (
-                  pkg_Logging.Fatal_LevelCode
-                  , pkg_Logging.Error_LevelCode
-                )
-              then 1
-              else 0
-            end
-          )
-          as error_count
-        , sum(
-            case when
-                lg.level_code = pkg_Logging.Warn_LevelCode
-              then 1
-              else 0
-            end
-          )
-          as warning_count
-      into
-        lgi.min_log_date
-        , lgi.max_log_date
-        , lgi.batch_result_id
-        , lgi.error_job_count
-        , lgi.error_count
-        , lgi.warning_count
-      from
-        v_lg_context_change_log ccl
-        inner join lg_log lg
-          on lg.sessionid = ccl.sessionid
-            and lg.log_id >= ccl.open_log_id
-            and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
-        left join lg_context_type ct
-          on ct.context_type_id = lg.context_type_id
-      where
-        ccl.log_id = lgi.root_log_id
-      ;
-    else
-      select
-        min( lg.date_ins) as min_log_date
-        , max( lg.date_ins) as max_log_date
-        , max(
-            case when lg.message_type_code = 'BFINISH' and level = 2 then
-              lg.message_value
-            end
-          )
-          as batch_result_id
-        , sum(
-            case when lg.message_type_code = 'JFINISH'
-                and lg.message_value in ( 3, 4)
-                then 1 else 0
-            end
-          )
-          as error_job_count
-        , sum(
-            case when lg.message_type_code = 'ERROR'
-              then 1 else 0
-            end
-          )
-          as error_count
-        , sum(
-            case when lg.message_type_code = 'WARNING'
-              then 1 else 0
-            end
-          )
-          as warning_count
-      into
-        lgi.min_log_date
-        , lgi.max_log_date
-        , lgi.batch_result_id
-        , lgi.error_job_count
-        , lgi.error_count
-        , lgi.warning_count
-      from
-        sch_log lg
-      start with
-        lg.log_id = lgi.root_log_id
-      connect by
-        prior lg.log_id = lg.parent_log_id
-      ;
-    end if;
   end if;
 
   return lgi;
@@ -353,7 +360,6 @@ exception when others then
     , logger.errorStack(
         'Ошибка при возврате информации из лога выполнения пакетного задания ('
         || ' batchId=' || batchId
-        || ', rootLogId=' || rootLogId
         || ').'
       )
     , true
