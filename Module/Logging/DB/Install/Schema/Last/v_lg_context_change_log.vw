@@ -51,14 +51,14 @@ from
   lg_log lg
   left join v_lg_context_change cc1
     on cc1.context_type_id = lg.context_type_id
-      and cc1.open_log_time_utc = sys_extract_utc( lg.log_time)
       and cc1.context_value_id = lg.context_value_id
+      and cc1.open_log_time_utc = sys_extract_utc( lg.open_context_log_time)
       and cc1.open_log_id = lg.open_context_log_id
   left join v_lg_context_change cc2
     on cc2.context_type_id = lg.context_type_id
       and cc2.context_value_id is null
         and lg.context_value_id is null
-      and cc2.open_log_time_utc = sys_extract_utc( lg.log_time)
+      and cc2.open_log_time_utc = sys_extract_utc( lg.open_context_log_time)
       and cc2.open_log_id = lg.open_context_log_id
 where
   lg.context_type_id is not null
