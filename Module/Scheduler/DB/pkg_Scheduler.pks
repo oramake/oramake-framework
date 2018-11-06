@@ -1210,11 +1210,15 @@ return integer;
 
 /* group: Другие функции */
 
-/* pproc: clearLog
-  Удаляет старые логи и возвращает число удаленных записей.
+/* pfunc: clearLog
+  Удаляет старые записи лога.
 
   Параметры:
-  toDate                      - дата, до которой надо удалить логи ( не включая)
+  toDate                      - Дата, до которой надо удалить логи
+                                (не включая, в часовом поясе systimestamp)
+
+  Возврат:
+  число удаленных записей.
 
   ( <body::clearLog>)
 */
@@ -1514,7 +1518,7 @@ function getContextInteger(
 return number;
 
 /* pfunc: getDebugFlag
-  Устаревшая функция, следует использовать isDebugEnabled() логера (тип
+  Устаревшая функция, следует использовать isTraceEnabled() логера (тип
   lg_logger_t).
 
   ( <body::getDebugFlag>)

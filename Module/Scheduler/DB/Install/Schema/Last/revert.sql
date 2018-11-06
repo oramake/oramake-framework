@@ -69,6 +69,8 @@ drop view v_sch_operator_batch
 
 drop index sch_log_ix_root_batch_date_log
 /
+drop index sch_log_ix_root_date_ins
+/
 drop synonym sch_log
 /
 

@@ -4552,11 +4552,15 @@ end execBatch;
 
 /* group: Другие функции */
 
-/* proc: clearLog
-  Удаляет старые логи и возвращает число удаленных записей.
+/* func: clearLog
+  Удаляет старые записи лога.
 
   Параметры:
-  toDate                      - дата, до которой надо удалить логи ( не включая)
+  toDate                      - Дата, до которой надо удалить логи
+                                (не включая, в часовом поясе systimestamp)
+
+  Возврат:
+  число удаленных записей.
 */
 function clearLog(
   toDate date
@@ -4564,10 +4568,50 @@ function clearLog(
 return integer
 is
 
+  toTime timestamp with time zone := to_timestamp_tz(
+    to_char( toDate, 'dd.mm.yyyy hh24:mi:ss')
+      || to_char( systimestamp, ' tzh:tzm')
+    , 'dd.mm.yyyy hh24:mi:ss tzh:tzm'
+  );
+
+
   nDeleted integer := 0;
 
 -- clearLog
 begin
+
+  -- Удаляет логи сессий, у которых все записи сформированы до граничной даты
+  delete
+    lg_log lg
+  where
+    lg.sessionid in
+      (
+      select
+        t.sessionid
+      from
+        lg_log t
+      where
+        t.log_time < sys_extract_utc( toTime)
+        and t.sessionid is not null
+      group by
+        t.sessionid
+      having
+        not exists
+          (
+          select
+            null
+          from
+            lg_log tt
+          where
+            tt.sessionid = t.sessionid
+            and tt.log_time >= toTime
+          )
+      )
+  ;
+  nDeleted := nDeleted + sql%rowcount;
+  logger.debug( 'deleted by sessionid: ' || nDeleted);
+
+  -- Удаляет устаревшие записи старого лога (без sessionid)
   delete from
     sch_log lg
   where
@@ -4580,24 +4624,29 @@ begin
       start with
         t.log_id in
           (
-          select
+          select /*+ index(t2 sch_log_ix_root_date_ins) */
             t2.log_id
           from
             sch_log t2
           where
-            t2.log_time < toDate
-            and t2.parent_log_id is null
+            case when
+              t2.parent_log_id is null
+              and t2.sessionid is null
+            then
+              t2.date_ins
+            end < toDate
           )
       connect by
         prior t.log_id = t.parent_log_id
       )
   ;
   nDeleted := nDeleted + SQL%ROWCOUNT;
+
   return nDeleted;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
-    , 'Ошибка при удалении старых логов ('
+    , 'Ошибка при удалении старых записей лога ('
       || ' toDate=' || to_char( toDate, 'dd.mm.yyyy hh24:mi:ss')
       || ').'
     , true

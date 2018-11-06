@@ -2,7 +2,7 @@
 -- Показывает ветку лога выполнения операции над пакетным заданием.
 --
 -- Параметры:
--- startLogId                 - Id начальной записи лога выполнения операции
+-- startLogId                 - Id записи лога выполнения операции
 --                              (по умолчанию лог выполнения последнего
 --                              запускавшегося пакетного задания)
 -- batchPattern               - Маска краткого имени пакетного задания
@@ -14,7 +14,7 @@
 -- - если значение параметра (без учета пробелов) начинается с цифры, то
 --  оно рассматривается как startLogId, иначе как batchPattern;
 -- - в случае, если под batchPattern подходит несколько пакетных заданий,
---  то выбирается задание с максимальным batch_id;
+--  то выбирается задание с минимальным batch_id;
 --
 
 var startLogId number
@@ -23,9 +23,53 @@ set feedback off
 
 declare
   paramStr varchar2(255) := trim( '&1');
+  paramNum integer;
 begin
   if substr( paramStr, 1, 1) between '0' and '9' then
-    :startLogId := to_number( paramStr);
+    paramNum := to_number( paramStr);
+    select
+      min( ccl.log_id)
+    into :startLogId
+    from
+      v_lg_context_change_log ccl
+    where
+      ccl.log_id = paramNum
+      and ccl.context_type_id =
+        (
+        select
+          ct.context_type_id
+        from
+          v_mod_module md
+          inner join lg_context_type ct
+            on ct.module_id = md.module_id
+        where
+          -- pkg_SchedulerMain.Module_SvnRoot
+          md.svn_root = 'Oracle/Module/Scheduler'
+          -- pkg_SchedulerMain.Batch_CtxTpSName
+          and ct.context_type_short_name = 'BATCH'
+        )
+      and ccl.context_type_level = 1
+    ;
+    if :startLogId is null then
+      select
+        min( bo.start_log_id)
+      into :startLogId
+      from
+        v_sch_batch_operation bo
+      where
+        paramNum >= bo.start_log_id
+        and paramNum <= coalesce( bo.finish_log_id, paramNum)
+        and bo.sessionid =
+          (
+          select
+            lg.sessionid
+          from
+            lg_log lg
+          where
+            lg.log_id = paramNum
+          )
+      ;
+    end if;
   elsif paramStr is not null then
     select
       max( bo.start_log_id)
@@ -38,7 +82,7 @@ begin
       and bo.batch_id =
         (
         select
-          max( b.batch_id)
+          min( b.batch_id)
         from
           sch_batch b
         where
@@ -112,7 +156,3 @@ order by
 /
 
 column message_text_ clear
-
-
-
-undefine startLogId

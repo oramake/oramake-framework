@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1251"?>
 <batch short_name="ClearOldLog">
-  <name>Очистка старых логов выполнения пакетов</name>
+  <name>Очистка старых записей лога</name>
   <batch_config>
     <retry_count>3</retry_count>
     <retry_interval>30</retry_interval>
@@ -13,7 +13,7 @@
         <value>0</value>
       </interval>
     </schedule>
-    <option short_name="SaveDayCount" type="number" name="Число дней, за которые сохраняются логи выполнения пакетов">
+    <option short_name="SaveDayCount" type="number" name="Число дней, за которые сохраняеся лог">
       <value>70</value>
     </option>
   </batch_config>
