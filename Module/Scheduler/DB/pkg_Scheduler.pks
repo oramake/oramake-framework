@@ -1170,6 +1170,8 @@ return date;
   sid                         - sid сессии
   serial#                     - serial# сессии
   operatorId                  - Id оператора
+  sessionid                   - audsid сессии
+                                (для логирования, указывать необязательно)
 
   ( <body::stopHandler>)
 */
@@ -1178,6 +1180,7 @@ procedure stopHandler(
   , sid number
   , serial# number
   , operatorId integer
+  , sessionid number := null
 );
 
 /* pproc: execBatch( BATCH_ID)

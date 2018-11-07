@@ -70,6 +70,11 @@ begin
           )
       ;
     end if;
+
+    -- Возможно это Id старого лога sch_log
+    if :startLogId is null then
+      :startLogId := paramNum;
+    end if;
   elsif paramStr is not null then
     select
       max( bo.start_log_id)

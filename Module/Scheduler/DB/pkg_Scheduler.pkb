@@ -528,6 +528,7 @@ is
 select
   ss.sid
   , ss.serial#
+  , ss.audsid as sessionid
 from
   dba_jobs_running jr
   inner join v$session ss
@@ -553,8 +554,8 @@ where
     )
   ;
 
-  handlerSid number;
-  handlerSerial number;
+  hdr curHandler%rowtype;
+
   stopJob number;
   -- Имя пакета, выводимое в лог
   batchLogName varchar2(500);
@@ -590,20 +591,22 @@ begin
     where current of curBatch
     ;
   end if;
-  for h in curHandler( rec.oracle_job_id) loop
-    handlerSid := h.sid;
-    handlerSerial := h.serial#;
+  open curHandler( rec.oracle_job_id);
+  fetch curHandler into hdr;
+  close curHandler;
+  if hdr.sid is not null then
     dbms_job.submit(
       job => stopJob
       , what =>
         'pkg_Scheduler.stopHandler( '
         || ' batchId => ' || to_char( batchId)
-        || ', sid => ' || to_char( h.sid)
-        || ', serial# => ' || to_char( h.serial#)
+        || ', sid => ' || to_char( hdr.sid)
+        || ', serial# => ' || to_char( hdr.serial#)
         || ', operatorId => ' || to_char( operatorId)
+        || ', sessionid => ' || to_char( hdr.sessionid)
         || ');'
     );
-  end loop;
+  end if;
   -- Пишем информационное сообщение
   if rec.oracle_job_id is not null then
     logger.info(
@@ -616,12 +619,14 @@ begin
               end
             || case when stopJob is not null then
                 ', будет выполнена остановка обработчика'
-                || ' sid=' || to_char( handlerSid)
-                || ' serial#=' || to_char( handlerSerial)
+                || ' sid=' || to_char( hdr.sid)
+                || ' serial#=' || to_char( hdr.serial#)
+                || ' sessionid=' || to_char( hdr.sessionid)
                 || ' job=' || to_char( stopJob)
               end
           || ').'
       , messageLabel          => pkg_SchedulerMain.Deactivate_BatchMsgLabel
+      , messageValue          => hdr.sessionid
       , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
       , contextValueId        => batchId
     );
@@ -732,6 +737,7 @@ is
      select
       b.batch_short_name
       , b.batch_name_rus
+      , js.sessionid
       , js.sid
       , js.serial#
     from
@@ -740,6 +746,7 @@ is
         (
         select
           jr.job
+          , ss.audsid as sessionid
           , ss.sid
           , ss.serial#
         from
@@ -787,6 +794,7 @@ begin
         'Начало прерывания выполнение пакета ' || batchLogName
         || ', сессия sid=' || rec.sid || ', serial#=' || rec.serial# || '.'
     , messageLabel          => pkg_SchedulerMain.Abort_BatchMsgLabel
+    , messageValue          => rec.sessionid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 1
@@ -3305,33 +3313,33 @@ end calcNextDate;
   sid                         - sid сессии
   serial#                     - serial# сессии
   operatorId                  - Id оператора
+  sessionid                   - audsid сессии
+                                (для логирования, указывать необязательно)
 */
 procedure stopHandler(
   batchId integer
   , sid number
   , serial# number
   , operatorId integer
+  , sessionid number := null
 )
 is
   cursor curPipe( pSid integer, pSerial integer) is
 select
-  p.name as pipe_name
+  ss.audsid as sessionid
+  , p.name as pipe_name
 from
   v$session ss
-  inner join v$db_pipes p
-    on (
-      p.name like
-        '%.COMMANDPIPE\_' || to_char( ss.sid) || '\_' || to_char( ss.serial#)
-        escape '\'
-      or
-      p.name like
-        '%.COMMANDPIPE\_' || to_char( ss.sid) || to_char( ss.serial#)
-        escape '\'
-      )
+  left join v$db_pipes p
+    on p.name like
+      '%.COMMANDPIPE\_' || to_char( ss.sid) || '\_' || to_char( ss.serial#)
+      escape '\'
 where
   ss.sid = pSid
   and ss.serial# = pSerial
   ;
+
+  ppr curPipe%rowtype;
 
   -- Результат операции с каналом
   pipeStatus number := null;
@@ -3348,16 +3356,19 @@ begin
         || ', serial#=' || to_char( serial#)
         || ').'
     , messageLabel          => pkg_SchedulerMain.StopHandler_BatchMsgLabel
+    , messageValue          => sessionid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 1
   );
-  for rec in curPipe( sid, serial#) loop
-    isFound := true;
+  open curPipe( sid, serial#);
+  fetch curPipe into ppr;
+  close curPipe;
+  if ppr.pipe_name is not null then
     -- Посылаем сообщение
     dbms_pipe.pack_message( 'stop');
     pipeStatus := dbms_pipe.send_message(
-      pipename  => rec.pipe_name
+      pipename  => ppr.pipe_name
       , timeout => 0
     );
     logger.log(
@@ -3374,20 +3385,26 @@ begin
             'Ошибка при отправке команды остановки'
           end
           || ' ('
-          || ' pipe="' || rec.pipe_name || '"'
+          || ' pipe="' || ppr.pipe_name || '"'
           || case when pipeStatus > 0 then
             ', status=' || pipeStatus
             end
           || ').'
+      , messageValue          => ppr.sessionid
       , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
       , contextValueId        => batchId
       , openContextFlag       => 0
     );
-  end loop;
-  if not isFound then
+  else
     logger.info(
       messageText             =>
-          'Не найдена сессия/канал для отправки команды остановки.'
+          case when ppr.sessionid is null then
+              'Не найдена сессия'
+            else
+              'Не найден канал'
+            end
+          || ' для отправки команды остановки.'
+      , messageValue          => ppr.sessionid
       , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
       , contextValueId        => batchId
       , openContextFlag       => 0
@@ -3399,7 +3416,7 @@ exception when others then
         'Ошибка при отправке команды остановки обработчика.'
         || chr( 10)
         || logger.getErrorStack()
-    , messageValue          => SQLCODE
+    , messageValue          => ppr.sessionid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 0

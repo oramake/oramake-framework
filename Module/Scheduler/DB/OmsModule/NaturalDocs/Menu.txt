@@ -240,6 +240,7 @@ Group: Скрипты  {
       File: batch  (no auto-title, Show/batch.sql)
       File: batch-root-log  (no auto-title, Show/batch-root-log.sql)
       File: log  (no auto-title, Show/log.sql)
+      File: operation  (no auto-title, Show/operation.sql)
       File: option  (no auto-title, Show/option.sql)
       }  # Group: Show
 
