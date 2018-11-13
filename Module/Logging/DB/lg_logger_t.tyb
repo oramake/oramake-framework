@@ -272,43 +272,6 @@ end getLogger;
 
 /* group: Настройка логера */
 
-/* func: getAdditivity
-  Возвращает назначенный флаг аддитивности.
-
-  Замечания:
-  - вызывает функцию <pkg_LoggingInternal.getAdditivity>;
-*/
-member function getAdditivity
-return boolean
-is
-begin
-  return
-    pkg_LoggingInternal.getAdditivity(
-      loggerUid       => loggerUid
-    );
-end getAdditivity;
-
-/* proc: setAdditivity
-  Устанавливает флаг аддитивности.
-
-  Параметры:
-  additive                    - флаг аддитивности
-
-  Замечания:
-  - вызывает процедуру <pkg_LoggingInternal.setAdditivity>;
-*/
-member procedure setAdditivity(
-  self in lg_logger_t
-  , additive boolean
-)
-is
-begin
-  pkg_LoggingInternal.setAdditivity(
-    loggerUid       => loggerUid
-    , additive      => additive
-  );
-end setAdditivity;
-
 /* func: getLevel
   Возвращает назначенный уровень логирования.
 

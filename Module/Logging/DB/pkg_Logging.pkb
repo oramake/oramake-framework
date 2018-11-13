@@ -6,13 +6,16 @@ create or replace package body pkg_Logging is
 /* group: Функции */
 
 /* proc: setDestination
-  Устанавливает единственное назначения для вывода.
+  Устанавливает единственное назначение для вывода.
 
   Параметры:
-  destinationCode             - код назначения
+  destinationCode             - Код назначения
+                                (null для возврата к выводу по умолчанию)
 
   Замечания:
-  - вызывает <pkg_LoggingInternal.setDestination>;
+  - по умолчанию (если не задано единственное назначение для вывода)
+    логируемые сообщения добавляются в таблицу <lg_log>, а в тестовых БД
+    дополнительно выводятся через пакет dbms_output;
 */
 procedure setDestination(
   destinationCode varchar2

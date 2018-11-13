@@ -225,33 +225,6 @@ return lg_logger_t,
 
 /* group: Настройка логера */
 
-/* pfunc: getAdditivity
-  Возвращает назначенный флаг аддитивности.
-
-  Замечания:
-  - вызывает функцию <pkg_LoggingInternal.getAdditivity>;
-
-  ( <body::getAdditivity>)
-*/
-member function getAdditivity
-return boolean,
-
-/* pproc: setAdditivity
-  Устанавливает флаг аддитивности.
-
-  Параметры:
-  additive                    - флаг аддитивности
-
-  Замечания:
-  - вызывает процедуру <pkg_LoggingInternal.setAdditivity>;
-
-  ( <body::setAdditivity>)
-*/
-member procedure setAdditivity(
-  self in lg_logger_t
-  , additive boolean
-),
-
 /* pfunc: getLevel
   Возвращает назначенный уровень логирования.
 

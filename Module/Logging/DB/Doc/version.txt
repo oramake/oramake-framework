@@ -24,6 +24,9 @@ group: 2.0.0 ( 2018-05-07)
     (функцией <pkg_Logging.setDestination>) стала отключать вывод через
     dbms_output в тестовых БД.
 
+[-] Удалены неиспользуемые методы setAdditivity и getAdditivity типа
+    <lg_logger_t>.
+
 
 
 group: 1.4.1 ( 2017-02-07)

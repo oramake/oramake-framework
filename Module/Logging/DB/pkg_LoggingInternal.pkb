@@ -52,8 +52,6 @@ type TLogger is record
   , isNeedFindModuleId boolean
   -- Код назначенного уровня логирования
   , levelCode lg_level.level_code%type
-  -- Признак аддитивности логера
-  , additive boolean
   -- Uid родительского логера
   , parentUid TLoggerUid
 );
@@ -411,7 +409,6 @@ is
 
     -- Добавляем корневой логер
     r.levelCode := pkg_Logging.Off_LevelCode;
-    r.additive := null;
     r.parentUid := null;
     colLogger( Root_LoggerUid) := r;
 
@@ -421,7 +418,6 @@ is
     r.findModuleString := pkg_Logging.Module_InitialPath;
     r.isNeedFindModuleId := true;
     r.levelCode := null;
-    r.additive := true;
     r.parentUid := Root_LoggerUid;
     loggerName := r.moduleName || '.' || r.objectName;
     internalLoggerUid := getLoggerUidByName( loggerName);
@@ -709,10 +705,16 @@ end getCurrentOperatorId;
 /* group: Настройки логирования */
 
 /* proc: setDestination
-  Устанавливает единственное назначения для вывода.
+  Устанавливает единственное назначение для вывода.
 
   Параметры:
-  destinationCode             - код назначения
+  destinationCode             - Код назначения
+                                (null для возврата к выводу по умолчанию)
+
+  Замечания:
+  - по умолчанию (если не задано единственное назначение для вывода)
+    логируемые сообщения добавляются в таблицу <lg_log>, а в тестовых БД
+    дополнительно выводятся через пакет dbms_output;
 */
 procedure setDestination(
   destinationCode varchar2
@@ -1827,7 +1829,6 @@ is
     r.findModuleString := findModuleString;
     r.isNeedFindModuleId := true;
     r.levelCode := null;
-    r.additive := true;
     colLogger( loggerUid) := r;
 
     -- Поиск собственного родителя
@@ -1910,71 +1911,6 @@ exception when others then
     , true
   );
 end getLoggerUid;
-
-/* func: getAdditivity
-  Возвращает флаг аддитивности.
-*/
-function getAdditivity(
-  loggerUid varchar2
-)
-return boolean
-is
-
-  -- Флаг аддитивности
-  additive boolean;
-
-begin
-  additive := colLogger( loggerUid).additive;
-  logger.debug( 'getAdditivity: loggerUid="' || loggerUid || '"' || ', result='
-    || case additive when true then 'true' when false then 'false' end
-  );
-  return additive;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении флага аддитивности ('
-        || ' loggerUid="' || loggerUid || '"'
-        || ').'
-      )
-    , true
-  );
-end getAdditivity;
-
-/* proc: setAdditivity
-  Устанавливает флаг аддитивности.
-
-  Параметры:
-  loggerUid                   - идентификатор логера
-  additive                    - флаг аддитивности
-*/
-procedure setAdditivity(
-  loggerUid varchar2
-  , additive boolean
-)
-is
-begin
-  logger.debug( 'setAdditivity: loggerUid="' || loggerUid || '"' || ', additive='
-    || case additive when true then 'true' when false then 'false' end
-  );
-  if loggerUid = Root_LoggerUid then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Флаг аддитивности не применим для корневого логера.'
-    );
-  end if;
-  colLogger( loggerUid).additive := additive;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при установке флага аддитивности ('
-        || ' loggerUid="' || loggerUid || '"'
-        || ').'
-      )
-    , true
-  );
-end setAdditivity;
 
 /* func: getLevel
   Возвращает уровень логирования.

@@ -59,10 +59,16 @@ return integer;
 /* group: Настройки логирования */
 
 /* pproc: setDestination
-  Устанавливает единственное назначения для вывода.
+  Устанавливает единственное назначение для вывода.
 
   Параметры:
-  destinationCode             - код назначения
+  destinationCode             - Код назначения
+                                (null для возврата к выводу по умолчанию)
+
+  Замечания:
+  - по умолчанию (если не задано единственное назначение для вывода)
+    логируемые сообщения добавляются в таблицу <lg_log>, а в тестовых БД
+    дополнительно выводятся через пакет dbms_output;
 
   ( <body::setDestination>)
 */
@@ -170,30 +176,6 @@ function getLoggerUid(
   , findModuleString varchar2
 )
 return varchar2;
-
-/* pfunc: getAdditivity
-  Возвращает флаг аддитивности.
-
-  ( <body::getAdditivity>)
-*/
-function getAdditivity(
-  loggerUid varchar2
-)
-return boolean;
-
-/* pproc: setAdditivity
-  Устанавливает флаг аддитивности.
-
-  Параметры:
-  loggerUid                   - идентификатор логера
-  additive                    - флаг аддитивности
-
-  ( <body::setAdditivity>)
-*/
-procedure setAdditivity(
-  loggerUid varchar2
-  , additive boolean
-);
 
 /* pfunc: getLevel
   Возвращает уровень логирования.
