@@ -394,6 +394,7 @@ begin
   savepoint pkg_Scheduler_ActivateBatch;
   -- Проверяем права доступа
   checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
+  pkg_Operator.setCurrentUserId( operatorId => operatorId);
   open curBatch( batchId);
   fetch curBatch into rec;
   -- Точное сообщение при отсутствии пакета
@@ -566,6 +567,7 @@ begin
   savepoint pkg_Scheduler_DeactivateBatch;
   -- Проверяем права доступа
   checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
+  pkg_Operator.setCurrentUserId( operatorId => operatorId);
   open curBatch( batchId);
   fetch curBatch into rec;
   -- Точное сообщение при отсутствии пакета
@@ -673,6 +675,7 @@ begin
 
   -- Проверяем права доступа
   checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
+  pkg_Operator.setCurrentUserId( operatorId => operatorId);
 
   pkg_SchedulerMain.getBatch( bth, batchId);
   batchLogName :=
@@ -773,6 +776,7 @@ is
 begin
   -- Проверяем права доступа
   checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
+  pkg_Operator.setCurrentUserId( operatorId => operatorId);
   open curBatch( batchId);
   fetch curBatch into rec;
   if curBatch%NOTFOUND then
@@ -1552,7 +1556,7 @@ from
   from v_sch_batch_root_log l
   inner join sch_message_type m
     on m.message_type_code = l.message_type_code
-  inner join op_operator op
+  left join op_operator op
     on op.operator_id = l.operator_id
   where $(condition)
   order by
@@ -1634,7 +1638,7 @@ begin
       , coalesce( lg.message_value, lg.context_value_id) as message_value
       , lg.message_text
       , 1 + ( lg.context_level - ccl.open_context_level)
-        + case when lg.open_context_flag = 1 then 0 else 1 end
+        + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
         as log_level
       , lg.date_ins
       , lg.operator_id
@@ -1716,7 +1720,7 @@ begin
   ) l
   inner join sch_message_type m
     on m.message_type_code = l.message_type_code
-  inner join op_operator op
+  left join op_operator op
     on op.operator_id = l.operator_id;
 
   end if;
@@ -3348,6 +3352,9 @@ where
 
 --StopHandler
 begin
+  if operatorId is not null then
+    pkg_Operator.setCurrentUserId( operatorId => operatorId);
+  end if;
   logger.info(
     messageText             =>
         'Начало отправки команды остановки обработчика ('
@@ -4723,7 +4730,7 @@ is
         , coalesce( lg.context_value_id, lg.message_value)
         , lg.message_text
         , 1 + ( lg.context_level - ccl.open_context_level)
-          + case when lg.open_context_flag = 1 then 0 else 1 end
+          + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
         , lg.date_ins
         , lg.operator_id
       )

@@ -132,7 +132,7 @@ from
   select
     lg.*
     , 1 + ( lg.context_level - ccl.open_context_level)
-      + case when lg.open_context_flag = 1 then 0 else 1 end
+      + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
       as message_level
     , lg.level_code as message_code
   from
