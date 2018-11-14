@@ -1140,7 +1140,7 @@ is
           to_char( tempDateVariable, Date_Format)
       , expectedString  =>
           to_char(
-            csvIterator.getString( fieldNumber, Date_Format)
+            to_date( trim( csvIterator.getString( fieldNumber)), Date_Format)
             , Date_Format
           )
     );
@@ -1261,12 +1261,24 @@ begin
     if
       cursorRow = 0 and iteratorRow
     then
-      setFailed( 'ќжидаетс€ больше строк  ( >= ' || rowNumber || ')');
+      setFailed(
+        'ќжидаетс€ больше строк'
+        || case when tableName is not null then
+            ' в таблице ' || tableName
+          end
+        || ' ( >= ' || rowNumber || ')'
+      );
       exit;
     elsif
       nvl(cursorRow, 1) != 0 and not iteratorRow
     then
-      setFailed( 'ќжидаетс€ меньше строк  ( < ' || rowNumber || ')');
+      setFailed(
+        'ќжидаетс€ меньше строк'
+        || case when tableName is not null then
+            ' в таблице ' || tableName
+          end
+        || ' ( < ' || rowNumber || ')'
+      );
       exit;
     elsif
       cursorRow = 0 and not iteratorRow
