@@ -12,11 +12,6 @@ create or replace package body pkg_DynamicSqlCache is
 */
 subtype IntegerStringT is varchar2(38);
 
-/* itype: SqlTextT
-  Тип для сохранения текста динамического SQL.
-*/
-subtype SqlTextT is varchar2(32767);
-
 /* itype: CursorCacheKeyT
   Тип ключа для кэша открытых курсоров.
   В качестве ключа используется Id курсора в виде строки.
@@ -41,7 +36,7 @@ type CursorCacheItemT is record
   cacheId integer
 
   -- Текст SQL, разобранный в курсоре
-  , sqlText SqlTextT
+  , sqlText clob
 
   -- Id курсора
   , cursorId integer
@@ -305,7 +300,7 @@ end closeUnusedCursor;
 */
 function getCursor(
   cacheId integer
-  , sqlText varchar2
+  , sqlText clob
   , isSave integer := null
 )
 return integer

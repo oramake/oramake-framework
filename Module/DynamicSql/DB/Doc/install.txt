@@ -54,6 +54,18 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 1.1.2
+
+Команда для установки обновления:
+
+(code)
+
+$ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 1.1.1
 
 To upgrade module:

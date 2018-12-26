@@ -32,7 +32,7 @@ end dyn_cursor_cache_t;
   указаного текста SQL.
 */
 member function getCursor(
-  sqlText varchar2
+  sqlText clob
   , isSave integer := null
 )
 return integer
