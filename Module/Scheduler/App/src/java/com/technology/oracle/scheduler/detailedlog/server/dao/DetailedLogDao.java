@@ -43,8 +43,8 @@ public class DetailedLogDao extends JepDao implements DetailedLog {
             messageText += "&nbsp;&nbsp;&nbsp;";
         }
 
-        record.set(LOG_ID, getInteger(rs, LOG_ID));
-        record.set(PARENT_LOG_ID, getInteger(rs, PARENT_LOG_ID));
+        record.set(LOG_ID, rs.getLong(LOG_ID));
+        record.set(PARENT_LOG_ID, rs.getLong(PARENT_LOG_ID));
         record.set(DATE_INS, getTimestamp(rs, DATE_INS));
         record.set(MESSAGE_TEXT, messageText + rs.getString(MESSAGE_TEXT));
         record.set(MESSAGE_VALUE, rs.getString(MESSAGE_VALUE));

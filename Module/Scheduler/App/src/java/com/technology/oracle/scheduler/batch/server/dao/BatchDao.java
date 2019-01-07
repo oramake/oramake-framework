@@ -83,7 +83,7 @@ public class BatchDao extends SchedulerDao implements Batch {
         record.set(IS_JOB_BROKEN, getInteger(rs, IS_JOB_BROKEN));
         record.set(SID, getInteger(rs, SID));
         record.set(SERIAL, getInteger(rs, SERIAL));
-        record.set(ROOT_LOG_ID, getInteger(rs, ROOT_LOG_ID));
+        record.set(ROOT_LOG_ID, rs.getLong(ROOT_LOG_ID));
         record.set(LAST_START_DATE, getTimestamp(rs, LAST_START_DATE));
         record.set(LAST_LOG_DATE, getTimestamp(rs, LAST_LOG_DATE));
         record.set(RESULT_NAME, rs.getString(RESULT_NAME));
