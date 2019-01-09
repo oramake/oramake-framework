@@ -1102,6 +1102,10 @@ is
   -- Сообщение об ошибке
   erm varchar2(1000);
 
+  -- Направление изменения версии в результате установки
+  -- ( 1 - итоговая версия старше текущий, -1 - младше, 0 - та же)
+  resultDirection integer;
+
 
 
   /*
@@ -1196,12 +1200,20 @@ begin
         and rec.result_version <> currentVersion
       then
     erm := 'Отменяемая версия не соответствует установленной';
-  elsif pkg_ModuleInfoInternal.compareVersion(
-          rec.result_version
-          , currentVersion
-        ) < 0
-      then
-    erm := 'Устанавливаемая версия младше, чем установленная ранее';
+  else
+    resultDirection := pkg_ModuleInfoInternal.compareVersion(
+      rec.result_version
+      , currentVersion
+    );
+    erm := case
+      when rec.is_revert_install = 0 and resultDirection = -1 then
+        'Устанавливаемая версия младше, чем установленная ранее'
+      when rec.is_revert_install = 1 and resultDirection = 1 then
+        'После отмены установки версии не можеть остаться более'
+        || ' старшая версия'
+      end
+    ;
+
   end if;
   if erm is not null then
     raise_application_error(
