@@ -44,7 +44,7 @@ public class RootLogDao extends JepDao implements RootLog {
         sqlQuery
         , resultSetMapper
         , templateRecord.get(BATCH_ID)
-        , null
+        , 100
         , operatorId);
   }
 
