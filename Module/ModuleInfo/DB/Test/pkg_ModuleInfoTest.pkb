@@ -577,7 +577,7 @@ begin
     , currentVersion        => null
     , installVersion        => '3.5.0'
     , execErrorMessageMask  =>
-'%ORA-20195: Нет установленной версии для обновления (modulePartNumber=1, objectSchema="TST_OM_BASE", currentVersion="", installVersion="3.5.0", isRevertInstall=0, isFullInstall=0, install_result_id=).%'
+'%ORA-20195: Нет установленной версии для обновления (modulePartNumber=1, objectSchema="%", currentVersion="", installVersion="3.5.0", isRevertInstall=0, isFullInstall=0, install_result_id=).%'
   );
 
   checkCase(
@@ -587,7 +587,7 @@ begin
     , isRevertInstall       => 1
     , resultVersion         => '3.4.0'
     , execErrorMessageMask  =>
-'%ORA-20195: Нет установленной версии для отката (modulePartNumber=1, objectSchema="TST_OM_BASE", currentVersion="", installVersion="3.5.0", isRevertInstall=1, isFullInstall=0, resultVersion="3.4.0", install_result_id=).%'
+'%ORA-20195: Нет установленной версии для отката (modulePartNumber=1, objectSchema="%", currentVersion="", installVersion="3.5.0", isRevertInstall=1, isFullInstall=0, resultVersion="3.4.0", install_result_id=).%'
   );
 
   checkCase(
@@ -625,7 +625,7 @@ begin
     , installVersion        => '3.4.0'
     , isFullInstall         => 1
     , execErrorMessageMask  =>
-'%ORA-20195: Устанавливаемая версия младше, чем установленная ранее (modulePartNumber=1, objectSchema="TST_OM_BASE", currentVersion="3.5.0", installVersion="3.4.0", isRevertInstall=0, isFullInstall=1, install_result_id=%).%'
+'%ORA-20195: Устанавливаемая версия младше, чем установленная ранее (modulePartNumber=1, objectSchema="%", currentVersion="3.5.0", installVersion="3.4.0", isRevertInstall=0, isFullInstall=1, install_result_id=%).%'
   );
 
   checkCase(
@@ -645,7 +645,7 @@ begin
     , currentVersion        => '3.5.0'
     , installVersion        => '3.4.0'
     , execErrorMessageMask  =>
-'%ORA-20195: Устанавливаемая версия младше, чем установленная ранее (modulePartNumber=1, objectSchema="TST_OM_BASE", currentVersion="3.5.0", installVersion="3.4.0", isRevertInstall=0, isFullInstall=0, install_result_id=%).%'
+'%ORA-20195: Устанавливаемая версия младше, чем установленная ранее (modulePartNumber=1, objectSchema="%", currentVersion="3.5.0", installVersion="3.4.0", isRevertInstall=0, isFullInstall=0, install_result_id=%).%'
   );
 
   checkCase(
@@ -671,7 +671,7 @@ begin
     , isRevertInstall       => 1
     , resultVersion         => '3.6.0'
     , execErrorMessageMask  =>
-'%ORA-20195: После отмены установки версии не можеть остаться более старшая версия (modulePartNumber=1, objectSchema="TST_OM_BASE", currentVersion="3.5.0", installVersion="3.5.0", isRevertInstall=1, isFullInstall=0, resultVersion="3.6.0", install_result_id=%).%'
+'%ORA-20195: После отмены установки версии не можеть остаться более старшая версия (modulePartNumber=1, objectSchema="%", currentVersion="3.5.0", installVersion="3.5.0", isRevertInstall=1, isFullInstall=0, resultVersion="3.6.0", install_result_id=%).%'
   );
 
   checkCase(
