@@ -61,6 +61,44 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 
+group: 2.4.0
+(<Версии::2.4.0 ( 2019-01-17)>)
+
+Внимание:
+
+- Данное обновление пересоздает таблицы <ml_message> и <ml_attachment>. На время пересоздания 
+  (ориентировочно три минуты) попытки записи в таблицы *будут
+  завершаться ошибкой*.
+- Для установки необходимо выбрать период *наименее* интенсивной работы с email.
+- Время восстановления записей  об email (перенос из архивных таблиц в рабочие)
+  может составлять до *двух часов*.
+  В течение данного времени снижена скорость отправки email.
+
+
+Порядок установки:
+
+- установка в основную схему:
+
+(code)
+
+make install INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? SKIP_FILE_MASK=Install/Config/2.4.0/after-action.sql,*/copy-*,*/drop-*,Install/Data/*,Install/Batch/*
+
+(end code)
+
+После установки версии 2.4.0 модуля Mail необходимо:
+
+- восстановить записи об email за 60 дней (DaysBefore - количество дней начиная от текущей даты, за которые будут восстановлены СМС)
+
+> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/* SKIP_FILE_MASK=*/drop* SQL_DEFINE=DaysBefore=60
+
+- удалить архивные таблицы
+
+> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/after-action.sql,*/2.4.0/drop-*,*compile*
+
+- если в БД ранее был установлен модуль StartinG (svnroot: Exchange\Module\StartinG), то установить версию 1.3.1 модуля StartinG.
+
+
+
 group: 2.3.0
 
 Порядок установки:
