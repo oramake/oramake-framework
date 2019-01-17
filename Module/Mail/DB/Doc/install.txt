@@ -61,6 +61,21 @@ $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 
+group: 2.5.0
+(<Версии::2.5.0 ( 2019-01-18)>)
+
+Порядок установки:
+
+- установка в основную схему:
+
+(code)
+
+make install INSTALL_VERSION=2.5.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 2.4.0
 (<Версии::2.4.0 ( 2019-01-17)>)
 

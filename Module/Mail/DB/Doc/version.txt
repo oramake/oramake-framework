@@ -2,13 +2,23 @@ title: ¬ерсии
 
 
 
+group: 2.5.0 ( 2019-01-18)
+
+[*] »зменение размера полей таблицы <ml_message>: sender_address varchar2(100), recipient_address varchar2(100).
+
+[*] ѕоле <ml_message.expire_date> удалено значение по умолчанию.
+    ¬ место него значение по умолчанию заполн€етс€ в процедуре pkg_Mail.sendMessage.
+
+[*] ƒл€ записей таблицы <ml_message> заполн€ет незаполненные пол€ <expire_date> значением sysdate+60.
+
+
+
 group: 2.4.0 ( 2019-01-17)
 
 [*] ѕересоздание таблицы <ml_message> и <ml_attachment> (будут сохранены записи за
     последние 60 дней.
 
 {+} ѕоле  <ml_message.expire_date> значение по умолчанию "sysdate + 60"
-
 
 
 
