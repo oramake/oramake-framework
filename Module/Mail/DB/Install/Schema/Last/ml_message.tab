@@ -17,8 +17,8 @@ create table ml_message  (
    message_id                     integer                         not null
    , parent_message_id            integer
    , incoming_flag                number(1)                       not null
-   , sender_address               varchar2(300)
-   , recipient_address            varchar2(50)
+   , sender_address               varchar2(100)
+   , recipient_address            varchar2(100)
    , message_state_code           varchar2(10)
    , smtp_server                  varchar2(255)
    , sender_text                  varchar2(2000)
@@ -35,7 +35,7 @@ create table ml_message  (
    , source_message_id            integer
    , message_text                 clob
    , process_date                 date
-   , expire_date                  date default sysdate + 60 
+   , expire_date                  date
    , retry_send_count             integer
    , error_code                   integer
    , error_message                varchar2(4000)
