@@ -103,7 +103,7 @@ make install INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_O
 
 После установки версии 2.4.0 модуля Mail необходимо:
 
-- восстановить записи об email за 60 дней (DaysBefore - количество дней начиная от текущей даты, за которые будут восстановлены СМС)
+- восстановить записи об email за 60 дней (DaysBefore - количество дней начиная от текущей даты, за которые будут восстановлены email)
 
 > make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/* SKIP_FILE_MASK=*/drop* SQL_DEFINE=DaysBefore=60
 
