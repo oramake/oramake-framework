@@ -81,7 +81,6 @@ group: 2.4.0
 
 ¬нимание:
 
-- ƒанное обновление устанавливаетс€ в Ѕƒ *ExchangeP*.
 - ƒанное обновление пересоздает таблицы <ml_message> и <ml_attachment>. Ќа врем€ пересоздани€ 
   (ориентировочно три минуты) попытки записи в таблицы *будут
   завершатьс€ ошибкой*.
@@ -93,11 +92,11 @@ group: 2.4.0
 
 ѕор€док установки:
 
-- установка в Ѕƒ *ExchangeP* в основную схему:
+- установка в основную схему:
 
 (code)
 
-make install INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? SKIP_FILE_MASK=Install/Config/2.4.0/after-action.sql,*/copy-*,*/drop-*,Install/Data/*,Install/Batch/*
+make install INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? SKIP_FILE_MASK=Install/Config/2.4.0/after-action.sql,*/copy-*,*/drop-*,Install/Data/*,Install/Batch/*
 
 (end code)
 
@@ -105,13 +104,13 @@ make install INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_O
 
 - восстановить записи об email за 60 дней (DaysBefore - количество дней начина€ от текущей даты, за которые будут восстановлены email)
 
-> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/* SKIP_FILE_MASK=*/drop* SQL_DEFINE=DaysBefore=60
+> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/* SKIP_FILE_MASK=*/drop* SQL_DEFINE=DaysBefore=60
 
 - удалить архивные таблицы
 
-> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/after-action.sql,*/2.4.0/drop-*,*compile*
+> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/after-action.sql,*/2.4.0/drop-*,*compile*
 
-- если в Ѕƒ ранее был установлен модуль StartinG (svnroot: Exchange\Module\StartinG), то установить версию 1.3.1 модул€ StartinG.
+- во всех зависимых модул€х пересоздать внешние ограничени€ целостности, ссылающиес€ на таблицы <ml_message> и <ml_attachment>.
 
 
 
