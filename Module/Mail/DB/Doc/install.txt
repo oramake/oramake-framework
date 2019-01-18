@@ -70,7 +70,7 @@ group: 2.5.0
 
 (code)
 
-make install INSTALL_VERSION=2.5.0 LOAD_USERID=exchange/???@<exchangeTns> LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=2.5.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
 
