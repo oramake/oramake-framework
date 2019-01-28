@@ -26,6 +26,7 @@ declare
 
   privsList PrivsListT := PrivsListT(
     'pkg_Mail'
+    , 'pkg_MailUtility'
   );
 
   -- Признак выдачи прав для всех пользователей
