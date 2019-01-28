@@ -52,37 +52,37 @@ from
   (
   select
     d.*
-    , pkg_SchedulerMain.getBatchLogInfo( d.batch_id) as log_data
+    , pkg_SchedulerMain.getBatchLogInfo(d.batch_id) as log_data
   from
     (
     select
       b.*
-      , j.job as job
-      , j.last_date as last_date
-      , j.this_date as this_date
-      , j.next_date as next_date
-      , j.total_time as total_time
-      , j.failures as failures
-      , case when j.broken = 'Y' then 1 end
-        as is_job_broken
+      , to_char(b.batch_id) as job
+      , j.last_start_date as last_date
+      , null as this_date
+      , j.next_run_date as next_date
+      , null as total_time
+      , j.failure_count as failures
+      , null as is_job_broken
       , ss.sid as sid
       , ss.serial# as serial#
     from
       sch_batch b
-      left outer join dba_jobs j
-        on j.job = b.oracle_job_id
+      left outer join user_scheduler_jobs j
+        -- pkg_Scheduler.getOracleJobName
+        on j.job_name = 'Scheduler:' || to_char(batch_id)
       left outer join
         (
         select /*+ordered*/
-          jr.job
+          jr.job_name
           , ss.sid
           , ss.serial#
         from
-          dba_jobs_running jr
+          user_scheduler_job_run_details jr
           inner join v$session ss
-            on jr.sid = ss.sid
+            on jr.session_id = ss.sid
         ) ss
-        on ss.job = b.oracle_job_id
+        on ss.job_name = 'Scheduler:' || to_char(batch_id)
     ) d
   ) d
 /

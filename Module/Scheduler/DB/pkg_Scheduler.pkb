@@ -185,6 +185,22 @@ end checkPrivilege;
 
 /* group: Пакетные задания */
 
+/* func: getOracleJobName
+  Получение имени задания dbms_scheduler.
+
+  Параметры:
+  batchId                     - id батча
+*/
+function getOracleJobName(
+  batchId integer
+)
+return varchar2
+is
+-- getOracleJobName
+begin
+  return 'Scheduler:' || to_char(batchId);
+end getOracleJobName;
+
 /* proc: updateBatch
   Изменяет пакет.
 
@@ -308,6 +324,9 @@ is
   sessionNlsLanguage varchar2(40);
   sessionNlsTerritory varchar2(40);
 
+  -- имя job для dbms_scheduler
+  oracleJobName varchar(1000);
+
   /*
     Сохранение параметров NLS сессии.
   */
@@ -393,7 +412,7 @@ begin
   saveNlsParameter();
   savepoint pkg_Scheduler_ActivateBatch;
   -- Проверяем права доступа
-  checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
+  checkPrivilege(operatorId, batchId, Exec_PrivilegeCode);
   pkg_Operator.setCurrentUserId( operatorId => operatorId);
   open curBatch( batchId);
   fetch curBatch into rec;
@@ -408,7 +427,7 @@ begin
   batchLogName :=
     '"' || rec.batch_name_rus || '" [' || rec.batch_short_name || ']';
   -- Опеределяем дату запуска
-  newDate := calcNextDate( batchId);
+  newDate := calcNextDate(batchId);
   -- Ошибка, если расписание не задано
   if newDate is null then
     raise_application_error(
@@ -416,13 +435,26 @@ begin
       , 'Не задано расписание запуска пакета.'
     );
   end if;
-  -- Добавляем новое задание Oracle
-  if rec.current_job_id is null then
-    dbms_job.submit(
-      rec.current_job_id
-      , 'pkg_Scheduler.execBatch(JOB /* batch: ' || rec.batch_short_name || ' */, NEXT_date);'
-      , newDate
+  oracleJobName := getOracleJobName(batchId => rec.batch_id);
+  if rec.is_job_broken = 1 then
+    dbms_scheduler.drop_job(
+      job_name => oracleJobName
     );
+    rec.current_job_id := null;
+  end if;
+  -- Добавляем новое задание Oracle
+  if rec.current_job_id is null or then
+    dbms_scheduler.create_job(
+      job_name => oracleJobName
+    , job_type => 'PLSQL_BLOCK'
+    , auto_drop => false
+    , job_action =>
+'pkg_Scheduler.execBatch(JOB /* batch: ' || rec.batch_short_name || ' */, next_date);'
+    , start_date => newDate
+    , enabled => true
+    , comments => 'Scheduler: ' || rec.batch_short_name
+    );
+    rec.current_job_id := rec.batch_id;
     -- Связываем пакет с заданием Oracle
     update
       sch_batch
@@ -431,21 +463,27 @@ begin
     where current of curBatch
     ;
     rec.oracle_job_id := rec.current_job_id;
-    info := 'Активирован пакет ' || batchLogName
-      || ' ( oracle_job_id=' || rec.current_job_id
-      || ', дата запуска '
-      || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
-      ;
-  -- Восстанавливаем работоспособность
-  elsif rec.is_job_broken = 1 then
-    dbms_job.broken( rec.oracle_job_id, false, newDate);
-    info := 'Восстановлено периодическое выполнение пакета ' || batchLogName
-      || ' ( дата запуска '
+    if rec.is_job_broken = 1 then
+      info := 'Восстановлено периодическое выполнение пакета ' || batchLogName
+        || ' ( дата запуска '
+          || to_char(newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
+        ;
+    else
+      info := 'Активирован пакет ' || batchLogName
+        || ' ( batch_id=' || rec.batch_id
+        || ', дата запуска '
         || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
-      ;
+        ;
+    end if;
   -- Устанавливаем новую дату запуска
   elsif newDate != rec.next_date then
-    dbms_job.next_date( rec.oracle_job_id, newDate);
+    dbms_scheduler.disable(name => oracleJobName);
+    dbms_scheduler.set_attribute(
+      name => oracleJobName
+    , attribute => 'start_date'
+    , value => newDate
+    );
+    dbms_scheduler.enable(name => oracleJobName);
     info := 'Дата запуска пакета ' || batchLogName
       || ' изменена на '
         || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
@@ -562,6 +600,9 @@ where
   batchLogName varchar2(500);
   info varchar2(4000);
 
+  -- имя job для dbms_scheduler
+  oracleJobName varchar(1000);
+
 --DeactivateBatch
 begin
   savepoint pkg_Scheduler_DeactivateBatch;
@@ -579,9 +620,12 @@ begin
   end if;
   batchLogName :=
     '"' || rec.batch_name_rus || '" [' || rec.batch_short_name || ']';
+  oracleJobName := getOracleJobName(batchId => rec.batch_id);
   -- Удаляем задание Oracle
   if rec.current_job_id is not null then
-    dbms_job.remove( rec.current_job_id);
+    dbms_scheduler.drop_job(
+      job_name => oracleJobName
+    );
   end if;
   -- Отвязываем пакет от задания Oracle
   if rec.oracle_job_id is not null then
@@ -597,9 +641,11 @@ begin
   fetch curHandler into hdr;
   close curHandler;
   if hdr.sid is not null then
-    dbms_job.submit(
-      job => stopJob
-      , what =>
+    dbms_scheduler.submit(
+      job_name   => oracleJobName || ': stop_handler'
+    , job_type   => 'PLSQL_BLOCK'
+    , enabled    => true
+    , job_action =>
         'pkg_Scheduler.stopHandler( '
         || ' batchId => ' || to_char( batchId)
         || ', sid => ' || to_char( hdr.sid)
@@ -683,7 +729,13 @@ begin
   ;
   if bth.oracle_job_id is not null then
     -- Устанавливаем дату запуска
-    dbms_job.next_date( bth.oracle_job_id, nextDate);
+    dbms_scheduler.disable(name => oracleJobName);
+    dbms_scheduler.set_attribute(
+      name      => oracleJobName
+    , attribute => 'start_date'
+    , value     => nextDate
+    );
+    dbms_scheduler.enable(name => oracleJobName);
     -- Пишем информационное сообщение
     logger.info(
       messageText             =>
@@ -869,20 +921,22 @@ end abortBatch;
   module_name                 - название модуля
   retrial_count               - число повторов
   retrial_timeout             - интервал между повторами
-  oracle_job_id               - Id назначенного задания для dbms_job
+  oracle_job_id               - Id назначенного задания (устаревший параметр)
   retrial_number              - номер повторного выполнения
   date_ins                    - дата добавления пакетного задания
   operator_id                 - Id оператора, добавившего пакетное задание
   operator_name               - имя оператора, добавившего пакетное задание
                                 ( анг.)
-  job                         - Id реально существующего задания для dbms_job
+  job                         - Id реально существующего задания (устаревшний
+                                параметр, ревен batch_id, если задание
+                                запущено)
   last_date                   - дата последнего запуска
   this_date                   - дата текущего запуска
   next_date                   - дата следующего запуска
   total_time                  - суммарное время выполнения
   failures                    - число последних последовательных ошибок при
-                                запуске через dbms_job
-  is_job_broken               - признак отключенного задания в dbms_job
+                                запуске через dbms_scheduler
+  is_job_broken               - признак отключенного задания (устаревшее поле)
   root_log_id                 - Id корневого лога последнего выполнения
   last_start_date             - дата последнего запуска из лога
   last_log_date               - дата последней записи в логе
@@ -3434,10 +3488,10 @@ end stopHandler;
   Выполняет указанный пакет заданий
 
   Параметры:
-  batchId              - Id задания
-  oracleJobId          - Id задания Oracle (для определения batch_id)
-  nextDate             - Дата следующего запуска (для dbms_job)
-  resultId             - Id результата выполнения пакета
+  batchId                     - id задания
+  oracleJobId                 - id задания Oracle (для определения batch_id)
+  nextDate                    - дата следующего запуска
+  resultId                    - id результата выполнения пакета
 
   Замечание:
   - 2-й и 3-й параметр используются только если первый параметр не задан (is
@@ -3451,7 +3505,7 @@ procedure execBatch(
 )
 is
 
-  -- Логин для выполнения через dbms_job
+  -- Логин для выполнения через dbms_scheduler
   cServerLoginName constant varchar2(20) := 'ServerSezam';
   isOperatorLogonDone boolean := false; --Признак того, что был выполнен логон
   -- Доступно ли получение стека с помощью Logging
@@ -3460,7 +3514,7 @@ is
   lIsJob boolean := batchId is null;    --Флаг периодического выполнения (job)
   lBatchId sch_batch.batch_id%type;     --Id исполняемого пакета
   lStartDate date := sysdate;           --Дата начала выполнения пакета
-  lStartLogId integer;      --Id лога о запуске пакета
+  lStartLogId integer;                  --Id лога о запуске пакета
 
   -- Уровень выполняемого пакета (с 1)
   batchLevel pls_integer := nvl( gBatchLevel, 0) + 1;
@@ -5485,7 +5539,7 @@ end deleteContext;
 
   Параметры:
   oracleJobId          - Id задания Oracle (для определения batch_id)
-  nextDate             - Дата следующего запуска (для dbms_job)
+  nextDate             - Дата следующего запуска
 */
 procedure execBatch(
   oracleJobId number

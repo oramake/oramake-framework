@@ -161,6 +161,19 @@ Dayofweek_IntervalTypeCode constant varchar2(10) := 'DW';
 
 /* group: Пакетные задания */
 
+/* pfunc: getOracleJobName
+  Получение имени задания dbms_scheduler.
+
+  Параметры:
+  batchId                     - id батча
+
+  ( <body::getOracleJobName>)
+*/
+function getOracleJobName(
+  batchId integer
+)
+return varchar2;
+
 /* pproc: updateBatch
   Изменяет пакет.
 
@@ -268,20 +281,22 @@ procedure abortBatch(
   module_name                 - название модуля
   retrial_count               - число повторов
   retrial_timeout             - интервал между повторами
-  oracle_job_id               - Id назначенного задания для dbms_job
+  oracle_job_id               - Id назначенного задания (устаревший параметр)
   retrial_number              - номер повторного выполнения
   date_ins                    - дата добавления пакетного задания
   operator_id                 - Id оператора, добавившего пакетное задание
   operator_name               - имя оператора, добавившего пакетное задание
                                 ( анг.)
-  job                         - Id реально существующего задания для dbms_job
+  job                         - Id реально существующего задания (устаревшний
+                                параметр, ревен batch_id, если задание
+                                запущено)
   last_date                   - дата последнего запуска
   this_date                   - дата текущего запуска
   next_date                   - дата следующего запуска
   total_time                  - суммарное время выполнения
   failures                    - число последних последовательных ошибок при
-                                запуске через dbms_job
-  is_job_broken               - признак отключенного задания в dbms_job
+                                запуске через dbms_scheduler
+  is_job_broken               - признак отключенного задания (устаревшее поле)
   root_log_id                 - Id корневого лога последнего выполнения
   last_start_date             - дата последнего запуска из лога
   last_log_date               - дата последней записи в логе
@@ -1496,7 +1511,7 @@ procedure deleteContext(
 
   Параметры:
   oracleJobId          - Id задания Oracle (для определения batch_id)
-  nextDate             - Дата следующего запуска (для dbms_job)
+  nextDate             - Дата следующего запуска
 
   ( <body::execBatch( ORACLE_JOB)>)
 */
