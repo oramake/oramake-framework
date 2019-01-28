@@ -17,10 +17,10 @@ create table ml_message  (
    message_id                     integer                         not null
    , parent_message_id            integer
    , incoming_flag                number(1)                       not null
-   , sender_address               varchar2(50)
-   , recipient_address            varchar2(50)
+   , sender_address               varchar2(100)
+   , recipient_address            varchar2(100)
    , message_state_code           varchar2(10)
-   , smtp_server		              varchar2(255)
+   , smtp_server                  varchar2(255)
    , sender_text                  varchar2(2000)
    , recipient_text               varchar2(2000)
    , copy_recipient_text          varchar2(2000)
@@ -36,10 +36,11 @@ create table ml_message  (
    , message_text                 clob
    , process_date                 date
    , expire_date                  date
+   , retry_send_count             integer
    , error_code                   integer
    , error_message                varchar2(4000)
-   , is_html 			                number(1,0)
-   , fetch_request_id	            integer
+   , is_html                      number(1,0)
+   , fetch_request_id             integer
    , mailbox_delete_date          date
    , mailbox_for_delete_flag      number(1)
    , date_ins                     date default sysdate not null
@@ -169,6 +170,9 @@ comment on column ml_message.process_date is
 /
 comment on column ml_message.expire_date is
   'Дата устаревания'
+/
+comment on column ml_message.retry_send_count is
+  'Количество повторных попыток отправки сообщения'
 /
 comment on column ml_message.error_code is
   'Код ошибки'

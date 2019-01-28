@@ -71,7 +71,7 @@ procedure closeCursor(
 */
 function getCursor(
   cacheId integer
-  , sqlText varchar2
+  , sqlText clob
   , isSave integer := null
 )
 return integer;

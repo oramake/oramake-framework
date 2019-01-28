@@ -64,7 +64,7 @@ select
   , lg.operator_id
 from
   (
-  select
+  select /*+ index( lg LG_LOG_IX_SESSIONID_LOGID) */
     lg.*
     , 1 + ( lg.context_level - ccl.open_context_level)
       + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end

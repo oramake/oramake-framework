@@ -58,7 +58,7 @@ return self as result,
   ( <body::getCursor>)
 */
 member function getCursor(
-  sqlText varchar2
+  sqlText clob
   , isSave integer := null
 )
 return integer,

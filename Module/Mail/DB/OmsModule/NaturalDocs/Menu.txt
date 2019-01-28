@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Mail
-SubTitle: Версия 2.2.0
+SubTitle: Версия 2.5.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -129,6 +129,12 @@ Group: Скрипты  {
 
       Group: Config  {
 
+         Group: 2.4.0  {
+
+            File: copy-create-index  (no auto-title, Install/Config/2.4.0/copy-create-index.sql)
+            File: copy-ml_message  (no auto-title, Install/Config/2.4.0/copy-ml_message.sql)
+            }  # Group: 2.4.0
+
          File: after-action  (no auto-title, Install/Config/after-action.sql)
          File: before-action  (no auto-title, Install/Config/before-action.sql)
          File: resume-batch  (no auto-title, Install/Config/resume-batch.sql)
@@ -180,6 +186,22 @@ Group: Скрипты  {
             File: v_ml_fetch_request_wait  (no auto-title, Install/Schema/Last/v_ml_fetch_request_wait.vw)
             File: v_ml_message  (no auto-title, Install/Schema/Last/v_ml_message.vw)
             }  # Group: Last
+
+         Group: 2.5.0  {
+
+            File: run  (no auto-title, Install/Schema/2.5.0/run.sql)
+            }  # Group: 2.5.0
+
+         Group: 2.4.0  {
+
+            File: run  (no auto-title, Install/Schema/2.4.0/run.sql)
+            }  # Group: 2.4.0
+
+         Group: 2.3.0  {
+
+            File: run  (no auto-title, Install/Schema/2.3.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.3.0/revert.sql)
+            }  # Group: 2.3.0
 
          Group: 2.0.0  {
 

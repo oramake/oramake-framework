@@ -80,5 +80,18 @@ procedure testCompareVersion(
   testCaseNumber integer := null
 );
 
+/* pproc: testCheckInstallVersion
+  Test <pkg_ModuleInfoInternal.checkInstallVersion>.
+
+  Parameters:
+  testCaseNumber              - Number of test case to be tested
+                                (default unlimited)
+
+  ( <body::testCheckInstallVersion>)
+*/
+procedure testCheckInstallVersion(
+  testCaseNumber integer := null
+);
+
 end pkg_ModuleInfoTest;
 /

@@ -278,7 +278,7 @@ is
     msg.message_text        := messageText;
     msg.source_message_id   := sourceMessageId;
     msg.smtp_server         := smtpServer;
-    msg.expire_date         := expireDate;
+    msg.expire_date         := coalesce(expireDate, sysdate + 60);
     msg.is_html             := isHtml;
     insert into
       ml_message

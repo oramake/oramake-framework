@@ -37,3 +37,4 @@ end;
 set feedback on
 
 @oms-run Test/AutoTest/compare-version.sql
+@oms-run Test/AutoTest/check-install-version.sql

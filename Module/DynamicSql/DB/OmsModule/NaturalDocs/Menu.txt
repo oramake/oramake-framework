@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: DynamicSql
-SubTitle: Версия 1.1.1
+SubTitle: Версия 1.1.2
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -85,12 +85,25 @@ Group: Скрипты  {
 
    Group: Install  {
 
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
+         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         }  # Group: Config
+
       Group: Grant  {
 
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
             }  # Group: Last
+
+         Group: 1.1.0  {
+
+            File: run  (no auto-title, Install/Grant/1.1.0/run.sql)
+            }  # Group: 1.1.0
 
          }  # Group: Grant
 

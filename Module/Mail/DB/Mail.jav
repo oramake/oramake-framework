@@ -29,6 +29,10 @@ public class Mail
   // Таймаут между попытками отправки сообщения ( в секундах).
   static final long RETRY_SEND_TIMEOUT_SECOND = 180;
 
+  // const: RETRY_SEND_LIMIT
+  // Ограничение на количество повторных попыток отправки сообщения.
+  static final long RETRY_SEND_LIMIT = 10;
+
   // const: PLAIN_TEXT_MIME_TYPE
   // Название MIME-типа для текстовых данных.
   static final String PLAIN_TEXT_MIME_TYPE = "text/plain";
@@ -1978,7 +1982,11 @@ try
   long sendTime = ( sendDate != null ? sendDate.getTime() : -1);
   PreparedStatement statement = internalServerConnection.prepareStatement(
   " declare\n"
-+ "   errorMessage ml_message.error_message%type := ?;"
++ "   errorMessage ml_message.error_message%type := ?;\n"
++ "   messageId ml_message.message_id%type := ?;\n"
++ "   messageUid ml_message.message_uid%type := ?;\n"
++ "   sendDateInterval integer := ?;\n"
++ "   recipient varchar2(4000) := ?;\n"
 + "   messageStateCode ml_message.message_state_code%type;\n"
 + "   sendDate ml_message.send_date%type;\n"
 + "   errorCode ml_message.error_code%type;\n"
@@ -1987,11 +1995,24 @@ try
 + "   if errorMessage is null then\n"
 + "     messageStateCode := pkg_Mail.Send_MessageStateCode;\n"
 + "     sendDate := TIMESTAMP '1970-01-01 00:00:00 +00:00'\n"
-+ "       + NumToDSInterval( nullif( ?, -1) / 1000, 'SECOND')\n"
++ "       + NumToDSInterval( nullif( sendDateInterval, -1) / 1000, 'SECOND')\n"
++ "     ;\n"
++ "     update\n"
++ "       ml_message ms\n"
++ "     set\n"
++ "       ms.message_state_code = messageStateCode\n"
++ "       , ms.send_date = sendDate\n"
++ "       , ms.message_uid = messageUid\n"
++ "       , ms.retry_send_count = coalesce(retry_send_count, 0) + 1\n"
++ "       , ms.error_code = errorCode\n"
++ "       , ms.error_message = errorMessage\n"
++ "       , ms.process_date = sysdate\n"
++ "     where\n"
++ "       ms.message_id = messageId\n"
 + "     ;\n"
 + "   -- Отменяем отправку при некорректном -- адресе\n"
-+ "   elsif errorMessage like '" + MAILBOX_INCORRECT_ERROR_MASK + "'escape '\'\n"
-+ "     or errorMessage like '" + MAILBOX_ROUTED_MAIL_ERROR_MASK + "'escape '\'\n"
++ "   elsif errorMessage like '" + MAILBOX_INCORRECT_ERROR_MASK + "'\n"
++ "     or errorMessage like '" + MAILBOX_ROUTED_MAIL_ERROR_MASK + "'\n"
 + "   then\n"
 + "     messageStateCode := pkg_Mail.SendCanceled_MessageStateCode;\n"
 + "     sendDate := systimestamp;\n"
@@ -1999,28 +2020,57 @@ try
 + "     pkg_MailInternal.logJava(\n"
 + "       levelCode => pkg_Logging.Debug_LevelCode\n"
 + "       , messageText =>\n"
-+ "          'Send canceled: (messageId=' || to_char( ?)\n"
-+ "          || ', recipient=\"' || ? || '\"'\n"
++ "          'Send canceled: (messageId=' || to_char( messageId)\n"
++ "          || ', recipient=\"' || to_char(recipient) || '\"'\n"
 + "          || ')'\n"
 + "     );\n"
++ "     update\n"
++ "       ml_message ms\n"
++ "     set\n"
++ "       ms.message_state_code = messageStateCode\n"
++ "       , ms.send_date = sendDate\n"
++ "       , ms.message_uid = messageUid\n"
++ "       , ms.retry_send_count = coalesce(retry_send_count, 0) + 1\n"
++ "       , ms.error_code = errorCode\n"
++ "       , ms.error_message = errorMessage\n"
++ "       , ms.process_date = sysdate\n"
++ "     where\n"
++ "       ms.message_id = messageId\n"
++ "     ;\n"
 + "   else\n"
-+ "     messageStateCode := pkg_Mail.WaitSend_MessageStateCode;\n"
-+ "     sendDate := systimestamp\n"
-+ "       + NumToDSInterval( '" + RETRY_SEND_TIMEOUT_SECOND + "', 'SECOND');\n"
++ "   -- При наличии ошибки выполним специализированный update\n"
++ "   -- с контролем превышения лимита на количество попыток отправки\n"
 + "     errorCode := pkg_Error.ProcessError;\n"
++ "     update\n"
++ "       ml_message ms\n"
++ "     set\n"
++ "       ms.message_state_code = \n"
++ "         case \n"
++ "           when retry_send_count < " + RETRY_SEND_LIMIT + "\n"
++ "             then 'WS'\n" // pkg_Mail.WaitSend_MessageStateCode
++ "           else \n"
++ "             'SE'\n" //pkg_Mail.SendError_MessageStateCode
++ "         end\n"
++ "       , ms.send_date = systimestamp\n"
++ "         + NumToDSInterval( " + RETRY_SEND_TIMEOUT_SECOND + "\n"
++ "                            * power(2, retry_send_count), 'SECOND')\n"
++ "       , ms.message_uid = messageUid\n"
++ "       , ms.retry_send_count = coalesce(retry_send_count, 0) + 1\n"
++ "       , ms.error_code = errorCode\n"
++ "       , ms.error_message = \n"
++ "         case \n"
++ "           when retry_send_count < " + RETRY_SEND_LIMIT + "\n"
++ "             then errorMessage\n"
++ "           else \n"
++ "             'Превышено максимальное количество попыток отправки сообщения: '\n"
++ "             || retry_send_count || '. '\n"
++ "             || errorMessage\n"
++ "         end\n"
++ "       , ms.process_date = sysdate\n"
++ "     where\n"
++ "       ms.message_id = messageId\n"
++ "     ;\n"
 + "   end if;\n"
-+ "   update\n"
-+ "     ml_message ms\n"
-+ "   set\n"
-+ "     ms.message_state_code = messageStateCode\n"
-+ "     , ms.send_date = sendDate\n"
-+ "     , ms.message_uid = ?\n"
-+ "     , ms.error_code = errorCode\n"
-+ "     , ms.error_message = errorMessage\n"
-+ "     , ms.process_date = sysdate\n"
-+ "   where\n"
-+ "     ms.message_id = ?\n"
-+ "   ;\n"
 + " exception when others then\n"
 + "   raise_application_error(\n"
 + "     pkg_Error.ErrorStackInfo\n"
@@ -2030,11 +2080,10 @@ try
 + " end;\n"
   );
   statement.setString( 1, errorMessage);
-  statement.setBigDecimal( 2, new BigDecimal( sendTime));
-  statement.setBigDecimal( 3, messageId);
-  statement.setString( 4, recipient);
-  statement.setString( 5, messageUId);
-  statement.setBigDecimal( 6, messageId);
+  statement.setBigDecimal( 2, messageId);
+  statement.setString( 3, messageUId);
+  statement.setBigDecimal( 4, new BigDecimal( sendTime));
+  statement.setString( 5, recipient);
   statement.executeUpdate();
   statement.close();
 }
