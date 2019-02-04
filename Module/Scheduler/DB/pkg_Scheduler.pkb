@@ -293,7 +293,8 @@ is
   -- Изменяемый пакет
   cursor curBatch( batchId integer) is
     select
-      b.batch_short_name
+      b.batch_id
+      , b.batch_short_name
       , b.batch_name_rus
       , b.oracle_job_id
       , b.retrial_number
@@ -443,7 +444,7 @@ begin
     rec.current_job_id := null;
   end if;
   -- Добавляем новое задание Oracle
-  if rec.current_job_id is null or then
+  if rec.current_job_id is null then
     dbms_scheduler.create_job(
       job_name => oracleJobName
     , job_type => 'PLSQL_BLOCK'
@@ -548,7 +549,8 @@ is
   -- Изменяемый пакет
   cursor curBatch( batchId integer) is
     select
-      b.batch_short_name
+      b.batch_id
+      , b.batch_short_name
       , b.batch_name_rus
       , b.oracle_job_id
       , j.job as current_job_id
@@ -641,7 +643,7 @@ begin
   fetch curHandler into hdr;
   close curHandler;
   if hdr.sid is not null then
-    dbms_scheduler.submit(
+    dbms_scheduler.create_job(
       job_name   => oracleJobName || ': stop_handler'
     , job_type   => 'PLSQL_BLOCK'
     , enabled    => true
@@ -716,17 +718,20 @@ is
   -- Имя пакета, выводимое в лог
   batchLogName varchar2(500);
 
+  -- имя job для dbms_scheduler
+  oracleJobName varchar(1000);
+
 begin
   savepoint pkg_Scheduler_SetNextDate;
 
   -- Проверяем права доступа
   checkPrivilege( operatorId, batchId, Exec_PrivilegeCode);
   pkg_Operator.setCurrentUserId( operatorId => operatorId);
-
   pkg_SchedulerMain.getBatch( bth, batchId);
   batchLogName :=
     '"' || bth.batch_name_rus || '" [' || bth.batch_short_name || ']'
   ;
+  oracleJobName := getOracleJobName(batchId => batchId);
   if bth.oracle_job_id is not null then
     -- Устанавливаем дату запуска
     dbms_scheduler.disable(name => oracleJobName);
