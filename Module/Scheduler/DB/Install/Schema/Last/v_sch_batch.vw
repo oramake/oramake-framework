@@ -59,7 +59,7 @@ from
       b.*
       , to_char(b.batch_id) as job
       , j.last_start_date as last_date
-      , null as this_date
+      , to_date(null) as this_date
       , j.next_run_date as next_date
       , null as total_time
       , j.failure_count as failures
