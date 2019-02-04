@@ -298,16 +298,21 @@ is
       , b.batch_name_rus
       , b.oracle_job_id
       , b.retrial_number
-      , j.job as current_job_id
-      , j.next_date
-      , case when j.broken = 'Y' then 1 end
-        as is_job_broken
+      , case when
+          j.job_name is not null
+        then
+          b.batch_id
+        end as current_job_id
+      , j.next_run_date as next_date
+      , to_number(null) as is_job_broken
       , b.nls_territory
       , b.nls_language
     from
       sch_batch b
-      left outer join dba_jobs j
-        on j.job = b.oracle_job_id
+    left outer join
+      user_scheduler_jobs j
+    on
+      j.job_name = 'Scheduler:' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.oracle_job_id nowait
@@ -553,11 +558,17 @@ is
       , b.batch_short_name
       , b.batch_name_rus
       , b.oracle_job_id
-      , j.job as current_job_id
+      , case when
+          j.job_name is not null
+        then
+          b.batch_id
+        end as current_job_id
     from
       sch_batch b
-      left outer join dba_jobs j
-        on j.job = b.oracle_job_id
+    left outer join
+      user_scheduler_jobs j
+    on
+      j.job_name = 'Scheduler:' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.oracle_job_id nowait
@@ -565,17 +576,17 @@ is
 
   rec curBatch%rowtype;
 
-  cursor curHandler( oracleJobId integer) is
+  cursor curHandler(batchId integer) is
 select
   ss.sid
   , ss.serial#
   , ss.audsid as sessionid
 from
-  dba_jobs_running jr
+  user_scheduler_job_run_details jr
   inner join v$session ss
-    on jr.sid = ss.sid
+    on jr.session_id = ss.sid
 where
-  jr.job = oracleJobId
+  jr.job_name = 'Scheduler:' || to_char(batchId)
   and exists
     (
     select
@@ -639,7 +650,7 @@ begin
     where current of curBatch
     ;
   end if;
-  open curHandler( rec.oracle_job_id);
+  open curHandler(batchId);
   fetch curHandler into hdr;
   close curHandler;
   if hdr.sid is not null then
@@ -794,27 +805,28 @@ procedure abortBatch(
 is
   -- Изменяемый пакет
   cursor curBatch( batchId integer) is
-     select
+   select
       b.batch_short_name
       , b.batch_name_rus
-      , js.sessionid
-      , js.sid
-      , js.serial#
+      , ss.sessionid
+      , ss.sid
+      , ss.serial#
     from
       sch_batch b
-      left outer join
-        (
-        select
-          jr.job
-          , ss.audsid as sessionid
-          , ss.sid
-          , ss.serial#
-        from
-          dba_jobs_running jr
-          inner join v$session ss
-            on jr.sid = ss.sid
-        ) js
-        on js.job = b.oracle_job_id
+    left join
+      (
+      select /*+ordered*/
+        jr.job_name
+        , ss.audsid as sessionid
+        , ss.sid
+        , ss.serial#
+      from
+        user_scheduler_job_run_details jr
+        inner join v$session ss
+          on jr.session_id = ss.sid
+      ) ss
+    on
+      ss.job_name = 'Scheduler:' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.batch_short_name nowait
@@ -855,7 +867,7 @@ begin
         'Начало прерывания выполнение пакета ' || batchLogName
         || ', сессия sid=' || rec.sid || ', serial#=' || rec.serial# || '.'
     , messageLabel          => pkg_SchedulerMain.Abort_BatchMsgLabel
-    , messageValue          => rec.sessionid
+    , messageValue          => rec.sid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 1
