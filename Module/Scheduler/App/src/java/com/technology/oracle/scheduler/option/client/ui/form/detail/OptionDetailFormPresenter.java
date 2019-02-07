@@ -29,14 +29,17 @@ import java.util.List;
 
 import com.google.gwt.place.shared.Place;
 import com.technology.jep.jepria.client.async.FirstTimeUseAsyncCallback;
+import com.technology.jep.jepria.client.history.place.JepViewListPlace;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormView;
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
 import com.technology.jep.jepria.client.widget.event.JepEventType;
 import com.technology.jep.jepria.shared.field.option.JepOption;
+import com.technology.jep.jepria.shared.load.PagingConfig;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.oracle.scheduler.batch.client.history.scope.BatchScope;
@@ -69,6 +72,21 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     return super.beforeSave(currentRecord);
   }
 
+  @Override
+  protected void afterSave(final JepRecord resultRecord) {
+    JepRecord searchTemplate = new JepRecord();
+    searchTemplate.set(BATCH_ID, resultRecord.get(BATCH_ID));
+    PagingConfig pagingConfig = new PagingConfig(searchTemplate);
+    eventBus.search(pagingConfig);
+    placeController.goTo(new JepViewListPlace());
+  }
+
+  @Override
+  public void onSearch(SearchEvent event) {
+    // Проинициализируем поисковый шаблон (независимо откуда был осуществлен переход: с формы поиска или с главной формы на подчиненную).
+    searchTemplate = event.getPagingConfig().getTemplateRecord();
+    searchTemplate.set(BATCH_ID, BatchScope.instance.getBatchId());
+  }
 
   private void setValueTypeFields() {
 

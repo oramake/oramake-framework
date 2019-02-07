@@ -18,7 +18,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -128,7 +128,7 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoSearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.ListEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SaveEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetCurrentRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetListUIDEvent.Handler</dd>
+<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoSearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.ListEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.RefreshFieldsEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SaveEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetCurrentRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetListUIDEvent.Handler</dd>
 </dl>
 <hr>
 <br>
@@ -151,7 +151,7 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;c
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter</h3>
-<code>currentRecord, fields, listUID, placeController, scopes, searchTemplate, service, view</code></li>
+<code>currentRecord, fields, listUID, placeController, scopes, searchTemplate, service, submitCounter, view</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">
@@ -204,18 +204,26 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;c
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#adjustToWorkstate-com.technology.jep.jepria.client.ui.WorkstateEnum-">adjustToWorkstate</a></span>(com.technology.jep.jepria.client.ui.WorkstateEnum&nbsp;workstate)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#afterSave-com.technology.jep.jepria.shared.record.JepRecord-">afterSave</a></span>(com.technology.jep.jepria.shared.record.JepRecord&nbsp;resultRecord)</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#beforeSave-com.technology.jep.jepria.shared.record.JepRecord-">beforeSave</a></span>(com.technology.jep.jepria.shared.record.JepRecord&nbsp;currentRecord)</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#bind--">bind</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#onDoGetRecord-com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent-">onDoGetRecord</a></span>(com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent&nbsp;event)</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#onSearch-com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent-">onSearch</a></span>(com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent&nbsp;event)</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>private void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html#setValueTypeFields--">setValueTypeFields</a></span>()</code>&nbsp;</td>
 </tr>
@@ -225,7 +233,7 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;c
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter</h3>
-<code>adjustToRecord, afterSave, isAcceptableWorkstate, onChangeWorkstate, onCreateFailure, onCreateSuccess, onDelete, onDeleteConfirmation, onDeleteFailure, onDeleteSuccess, onDoDelete, onDoSearch, onList, onSave, onSaveSuccess, onSearch, onSetCurrentRecord, onSetListUID, onSubmitFailure, onSubmitSuccess, onUpdateFailure, onUpdateSuccess, resetScope, saveOnCreate, saveOnEdit, start, submitSuccessful, updateScope</code></li>
+<code>adjustToRecord, byPrimaryKey, isAcceptableWorkstate, isDataReady, onChangeWorkstate, onCreateFailure, onCreateSuccess, onDelete, onDeleteConfirmation, onDeleteFailure, onDeleteSuccess, onDoDelete, onDoSearch, onList, onRefreshFields, onSave, onSaveSuccess, onSetCurrentRecord, onSetListUID, onSubmitFailure, onSubmitSuccess, onUpdateFailure, onUpdateSuccess, prepareLOBField, resetScope, saveOnCreate, saveOnEdit, start, submitSuccessful, updateScope</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">
@@ -303,6 +311,34 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;c
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
 <dd><code>beforeSave</code>&nbsp;in class&nbsp;<code>com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;com.technology.jep.jepria.client.ui.form.detail.DetailFormView,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>,com.technology.jep.jepria.client.ui.plain.StandardClientFactory&lt;<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>&gt;&gt;</code></dd>
+</dl>
+</li>
+</ul>
+<a name="afterSave-com.technology.jep.jepria.shared.record.JepRecord-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>afterSave</h4>
+<pre>protected&nbsp;void&nbsp;afterSave(com.technology.jep.jepria.shared.record.JepRecord&nbsp;resultRecord)</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
+<dd><code>afterSave</code>&nbsp;in class&nbsp;<code>com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;com.technology.jep.jepria.client.ui.form.detail.DetailFormView,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>,com.technology.jep.jepria.client.ui.plain.StandardClientFactory&lt;<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>&gt;&gt;</code></dd>
+</dl>
+</li>
+</ul>
+<a name="onSearch-com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>onSearch</h4>
+<pre>public&nbsp;void&nbsp;onSearch(com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent&nbsp;event)</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>onSearch</code>&nbsp;in interface&nbsp;<code>com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent.Handler</code></dd>
+<dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
+<dd><code>onSearch</code>&nbsp;in class&nbsp;<code>com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;com.technology.jep.jepria.client.ui.form.detail.DetailFormView,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>,com.technology.jep.jepria.client.ui.plain.StandardClientFactory&lt;<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">E</a> extends com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,<a href="../../../../../../../../../com/technology/oracle/scheduler/option/client/ui/form/detail/OptionDetailFormPresenter.html" title="type parameter in OptionDetailFormPresenter">S</a> extends <a href="../../../../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionServiceAsync.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionServiceAsync</a>&gt;&gt;</code></dd>
 </dl>
 </li>
 </ul>

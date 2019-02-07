@@ -1,5 +1,7 @@
 package com.technology.oracle.scheduler.batch.client;
- 
+
+import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.BATCH_MODULE_ID;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -7,6 +9,7 @@ import com.technology.jep.jepria.client.ui.JepPresenter;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.plain.PlainClientFactory;
 import com.technology.jep.jepria.client.ui.plain.PlainClientFactoryImpl;
+import com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl;
 import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.scheduler.batch.client.ui.eventbus.BatchEventBus;
 import com.technology.oracle.scheduler.batch.client.ui.form.BatchFormContainerPresenter;
@@ -19,43 +22,37 @@ import com.technology.oracle.scheduler.batch.client.ui.toolbar.BatchToolBarViewI
 import com.technology.oracle.scheduler.batch.shared.record.BatchRecordDefinition;
 import com.technology.oracle.scheduler.batch.shared.service.BatchService;
 import com.technology.oracle.scheduler.batch.shared.service.BatchServiceAsync;
- 
-public class BatchClientFactoryImpl<E extends BatchEventBus, S extends BatchServiceAsync>
-    extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
- 
+
+public class BatchClientFactoryImpl
+extends StandardClientFactoryImpl<BatchEventBus, BatchServiceAsync> {
+
   private static final IsWidget batchDetailFormView = new BatchDetailFormViewImpl();
   private static final IsWidget batchToolBarView = new BatchToolBarViewImpl();
   private static final IsWidget batchListFormView = new BatchListFormViewImpl();
- 
+
   public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
-  
-  public BatchClientFactoryImpl() {
-    super(BatchRecordDefinition.instance);
-    initActivityMappers(this);
+
+  private BatchClientFactoryImpl() {
+    super(BATCH_MODULE_ID, BatchRecordDefinition.instance);
   }
- 
+
   static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
     if(instance == null) {
       instance = GWT.create(BatchClientFactoryImpl.class);
     }
     return instance;
   }
-  
-  public S getService() {
-    if(dataService == null) {
-      dataService = (S) GWT.create(BatchService.class);
-    }
-    return dataService;
-  }
-  
+
   @Override
-  public E getEventBus() {
-    if(eventBus == null) {
-      eventBus = new BatchEventBus(this);
-    }
-    return (E) eventBus;
-  }  
-  
+  public BatchServiceAsync createService() {
+    return GWT.create(BatchService.class);
+  }
+
+  @Override
+  public BatchEventBus createEventBus() {
+    return new BatchEventBus();
+  }
+
   public IsWidget getToolBarView() {
     return batchToolBarView;
   }
@@ -69,7 +66,7 @@ public class BatchClientFactoryImpl<E extends BatchEventBus, S extends BatchServ
   public IsWidget getListFormView() {
     return batchListFormView;
   }
-  
+
   @Override
   public JepPresenter createToolBarPresenter(Place place) {
     return new BatchToolBarPresenter(place, this);
