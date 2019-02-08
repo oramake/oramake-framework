@@ -298,21 +298,29 @@ is
       , b.batch_name_rus
       , b.oracle_job_id
       , b.retrial_number
-      , case when
-          j.job_name is not null
-        then
+      , (
+        select
           b.batch_id
-        end as current_job_id
-      , j.next_run_date as next_date
+        from
+          user_scheduler_jobs j
+        where
+          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+        )
+        as current_job_id
+      , (
+        select
+          j.next_run_date
+        from
+          user_scheduler_jobs j
+        where
+          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+        )
+        as next_date
       , to_number(null) as is_job_broken
       , b.nls_territory
       , b.nls_language
     from
       sch_batch b
-    left outer join
-      user_scheduler_jobs j
-    on
-      j.job_name = 'Scheduler:' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.oracle_job_id nowait
@@ -558,17 +566,17 @@ is
       , b.batch_short_name
       , b.batch_name_rus
       , b.oracle_job_id
-      , case when
-          j.job_name is not null
-        then
+      , (
+        select
           b.batch_id
-        end as current_job_id
+        from
+          user_scheduler_jobs j
+        where
+          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+        )
+        as current_job_id
     from
       sch_batch b
-    left outer join
-      user_scheduler_jobs j
-    on
-      j.job_name = 'Scheduler:' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.oracle_job_id nowait
