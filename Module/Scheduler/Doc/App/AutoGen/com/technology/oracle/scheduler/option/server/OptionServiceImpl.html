@@ -18,7 +18,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10};
+var methods = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -239,6 +239,12 @@ implements <a href="../../../../../../com/technology/oracle/scheduler/option/sha
 <td class="colFirst"><code>java.util.List&lt;com.technology.jep.jepria.shared.field.option.JepOption&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/option/server/OptionServiceImpl.html#getValueType--">getValueType</a></span>()</code>&nbsp;</td>
 </tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>com.technology.jep.jepria.shared.record.JepRecord</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/option/server/OptionServiceImpl.html#update-com.technology.jep.jepria.shared.load.FindConfig-">update</a></span>(com.technology.jep.jepria.shared.load.FindConfig&nbsp;updateConfig)</code>
+<div class="block">Перед вызовом стандартного методо подменяем dao.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.oracle.scheduler.main.server.SchedulerServiceImpl">
@@ -252,7 +258,7 @@ implements <a href="../../../../../../com/technology/oracle/scheduler/option/sha
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.oracle.scheduler.main.server.<a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html" title="class in com.technology.oracle.scheduler.main.server">DataSourceServiceImpl</a></h3>
-<code><a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#Z:Z_getCurrentDataSource--">_getCurrentDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#create-com.technology.jep.jepria.shared.load.FindConfig-">create</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#delete-com.technology.jep.jepria.shared.load.FindConfig-">delete</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#find-com.technology.jep.jepria.shared.load.PagingConfig-">find</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getCurrentDataSource--">getCurrentDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getDataSource--">getDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getProxyDao--">getProxyDao</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#init--">init</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#setCurrentDataSource-java.lang.String-">setCurrentDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#update-com.technology.jep.jepria.shared.load.FindConfig-">update</a></code></li>
+<code><a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#Z:Z_getCurrentDataSource--">_getCurrentDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#create-com.technology.jep.jepria.shared.load.FindConfig-">create</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#delete-com.technology.jep.jepria.shared.load.FindConfig-">delete</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#find-com.technology.jep.jepria.shared.load.PagingConfig-">find</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getCurrentDataSource--">getCurrentDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getDataSource--">getDataSource</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#getProxyDao--">getProxyDao</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#init--">init</a>, <a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#setCurrentDataSource-java.lang.String-">setCurrentDataSource</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.server.service.JepDataServiceServlet">
@@ -322,7 +328,7 @@ implements <a href="../../../../../../com/technology/oracle/scheduler/option/sha
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;com.technology.jep.jepria.shared.service.data.JepDataService</h3>
-<code>create, delete, find, isRefreshNeeded, paging, prepareDownload, prepareDownload, prepareExcel, sort, update</code></li>
+<code>create, delete, find, isRefreshNeeded, paging, prepareDownload, prepareDownload, prepareExcel, sort</code></li>
 </ul>
 </li>
 </ul>
@@ -379,7 +385,7 @@ implements <a href="../../../../../../com/technology/oracle/scheduler/option/sha
 <a name="getValueType--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getValueType</h4>
 <pre>public&nbsp;java.util.List&lt;com.technology.jep.jepria.shared.field.option.JepOption&gt;&nbsp;getValueType()
@@ -387,6 +393,27 @@ implements <a href="../../../../../../com/technology/oracle/scheduler/option/sha
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionService.html#getValueType--">getValueType</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../com/technology/oracle/scheduler/option/shared/service/OptionService.html" title="interface in com.technology.oracle.scheduler.option.shared.service">OptionService</a></code></dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code>com.technology.jep.jepria.shared.exceptions.ApplicationException</code></dd>
+</dl>
+</li>
+</ul>
+<a name="update-com.technology.jep.jepria.shared.load.FindConfig-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>update</h4>
+<pre>public&nbsp;com.technology.jep.jepria.shared.record.JepRecord&nbsp;update(com.technology.jep.jepria.shared.load.FindConfig&nbsp;updateConfig)
+                                                         throws com.technology.jep.jepria.shared.exceptions.ApplicationException</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#update-com.technology.jep.jepria.shared.load.FindConfig-">DataSourceServiceImpl</a></code></span></div>
+<div class="block">Перед вызовом стандартного методо подменяем dao. <br/>
+ По аналогии работают другие стандартные методы.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>update</code>&nbsp;in interface&nbsp;<code>com.technology.jep.jepria.shared.service.data.JepDataService</code></dd>
+<dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
+<dd><code><a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html#update-com.technology.jep.jepria.shared.load.FindConfig-">update</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../com/technology/oracle/scheduler/main/server/DataSourceServiceImpl.html" title="class in com.technology.oracle.scheduler.main.server">DataSourceServiceImpl</a>&lt;<a href="../../../../../../com/technology/oracle/scheduler/option/server/dao/Option.html" title="interface in com.technology.oracle.scheduler.option.server.dao">Option</a>&gt;</code></dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code>com.technology.jep.jepria.shared.exceptions.ApplicationException</code></dd>
 </dl>

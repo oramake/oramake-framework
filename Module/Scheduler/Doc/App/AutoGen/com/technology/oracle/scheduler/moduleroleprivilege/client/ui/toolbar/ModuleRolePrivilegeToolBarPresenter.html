@@ -122,7 +122,7 @@
 <li class="blockList">
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.AdjustExitScopeEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetSaveButtonEnabledEvent.Handler</dd>
+<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.AdjustExitScopeEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetCurrentRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetSaveButtonEnabledEvent.Handler</dd>
 </dl>
 <hr>
 <br>
@@ -145,7 +145,7 @@ extends com.technology.jep.jepria.client.ui.toolbar.ToolBarPresenter&lt;V,E,S,F&
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;com.technology.jep.jepria.client.ui.toolbar.ToolBarPresenter</h3>
-<code>placeController, view</code></li>
+<code>currentRecord, placeController, view</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">
@@ -192,14 +192,14 @@ extends com.technology.jep.jepria.client.ui.toolbar.ToolBarPresenter&lt;V,E,S,F&
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.toolbar.ToolBarPresenter</h3>
-<code>add, bind, bindButton, delete, doSearch, edit, excel, getEnabledButtonIds, help, list, onAdjustExitScope, onChangeWorkstate, onSetSaveButtonEnabled, refresh, report, save, search, start, up, viewDetails</code></li>
+<code>add, bind, bindButton, delete, doSearch, edit, excel, getEnabledButtonIds, help, list, onAdjustExitScope, onChangeWorkstate, onSetCurrentRecord, onSetSaveButtonEnabled, refreshList, report, save, search, start, up, viewDetails</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.JepPresenter</h3>
-<code>adjustToWorkstate, changeWorkstate, changeWorkstate, getPlace, isAcceptableWorkstate, setPlace</code></li>
+<code>adjustToWorkstate, changeWorkstate, changeWorkstate, getPlace, isAcceptableWorkstate, isDataReady, setPlace</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.JepActivity">

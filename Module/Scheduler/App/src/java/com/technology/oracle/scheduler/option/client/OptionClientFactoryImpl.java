@@ -1,5 +1,6 @@
 package com.technology.oracle.scheduler.option.client;
 
+import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.*;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.place.shared.Place;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -7,6 +8,7 @@ import com.technology.jep.jepria.client.ui.JepPresenter;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.plain.PlainClientFactory;
 import com.technology.jep.jepria.client.ui.plain.PlainClientFactoryImpl;
+import com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl;
 import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.scheduler.option.client.ui.form.OptionFormContainerPresenter;
 import com.technology.oracle.scheduler.option.client.ui.form.detail.OptionDetailFormPresenter;
@@ -19,8 +21,8 @@ import com.technology.oracle.scheduler.option.shared.record.OptionRecordDefiniti
 import com.technology.oracle.scheduler.option.shared.service.OptionService;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
 
-public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionServiceAsync>
-  extends com.technology.jep.jepria.client.ui.plain.StandardClientFactoryImpl<E, S> {
+public class OptionClientFactoryImpl
+extends StandardClientFactoryImpl<PlainEventBus, OptionServiceAsync> {
 
   private static final IsWidget optionDetailFormView = new OptionDetailFormViewImpl();
   private static final IsWidget optionToolBarView = new OptionToolBarViewImpl();
@@ -28,9 +30,8 @@ public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionSe
 
   public static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
 
-  public OptionClientFactoryImpl() {
-    super(OptionRecordDefinition.instance);
-    initActivityMappers(this);
+  private OptionClientFactoryImpl() {
+    super(OPTION_MODULE_ID, OptionRecordDefinition.instance);
   }
 
   static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
@@ -68,10 +69,8 @@ public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionSe
     return optionListFormView;
   }
 
-  public S getService() {
-    if(dataService == null) {
-      dataService = (S) GWT.create(OptionService.class);
-    }
-    return dataService;
+  @Override
+  public OptionServiceAsync createService() {
+    return GWT.create(OptionService.class);
   }
 }

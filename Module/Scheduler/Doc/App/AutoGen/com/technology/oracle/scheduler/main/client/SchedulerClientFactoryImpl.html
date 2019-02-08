@@ -18,7 +18,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":9,"i2":10};
+var methods = {"i0":10,"i1":9,"i2":10,"i3":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -74,13 +74,13 @@ var activeTableTab = "activeTableTab";
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
@@ -92,7 +92,7 @@ var activeTableTab = "activeTableTab";
 <!-- ======== START OF CLASS DATA ======== -->
 <div class="header">
 <div class="subTitle">com.technology.oracle.scheduler.main.client</div>
-<h2 title="Class SchedulerClientFactoryImpl" class="title">Class SchedulerClientFactoryImpl&lt;E extends com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,S extends com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</h2>
+<h2 title="Class SchedulerClientFactoryImpl" class="title">Class SchedulerClientFactoryImpl</h2>
 </div>
 <div class="contentContainer">
 <ul class="inheritance">
@@ -102,10 +102,10 @@ var activeTableTab = "activeTableTab";
 <li>com.technology.jep.jepria.client.ui.ClientFactoryImpl&lt;E&gt;</li>
 <li>
 <ul class="inheritance">
-<li>com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl&lt;E,S&gt;</li>
+<li>com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</li>
 <li>
 <ul class="inheritance">
-<li>com.technology.oracle.scheduler.main.client.SchedulerClientFactoryImpl&lt;E,S&gt;</li>
+<li>com.technology.oracle.scheduler.main.client.SchedulerClientFactoryImpl</li>
 </ul>
 </li>
 </ul>
@@ -118,13 +118,12 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>com.technology.jep.jepria.client.ui.ClientFactory&lt;E&gt;, com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;</dd>
+<dd>com.technology.jep.jepria.client.ui.ClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus&gt;, com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</dd>
 </dl>
 <hr>
 <br>
-<pre>public class <span class="typeNameLabel">SchedulerClientFactoryImpl&lt;E extends com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,S extends com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</span>
-extends com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl&lt;E,S&gt;
-implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;</pre>
+<pre>public class <span class="typeNameLabel">SchedulerClientFactoryImpl</span>
+extends com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</pre>
 </li>
 </ul>
 </div>
@@ -137,19 +136,30 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <!--   -->
 </a>
 <h3>Field Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>private static com.google.gwt.user.client.ui.IsWidget</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html#mainView">mainView</a></span></code>&nbsp;</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl">
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl</h3>
-<code>instance, mainService, mainView</code></li>
+<code>instance, mainService</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.com.technology.jep.jepria.client.ui.ClientFactoryImpl">
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;com.technology.jep.jepria.client.ui.ClientFactoryImpl</h3>
-<code>eventBus, eventFilter, exceptionManager, logger, messageBox, placeController, uiSecurity</code></li>
+<code>eventBus, exceptionManager, logger, messageBox, placeController</code></li>
 </ul>
 </li>
 </ul>
@@ -185,7 +195,7 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>com.google.gwt.activity.shared.Activity</code></td>
+<td class="colFirst"><code>com.technology.jep.jepria.client.ui.main.MainModulePresenter&lt;? extends com.technology.jep.jepria.client.ui.main.MainView,com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync,? extends com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html#createMainModulePresenter--">createMainModulePresenter</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
@@ -193,6 +203,10 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html#getInstance--">getInstance</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>com.google.gwt.user.client.ui.IsWidget</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html#getMainView--">getMainView</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html#getPlainClientFactory-java.lang.String-com.technology.jep.jepria.client.async.LoadAsyncCallback-">getPlainClientFactory</a></span>(java.lang.String&nbsp;moduleId,
                      com.technology.jep.jepria.client.async.LoadAsyncCallback&lt;com.technology.jep.jepria.client.ui.plain.PlainClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,com.technology.jep.jepria.shared.service.data.JepDataServiceAsync&gt;&gt;&nbsp;callback)</code>&nbsp;</td>
@@ -203,14 +217,14 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl</h3>
-<code>contains, getDefaultPlace, getEventBus, getMainService, getMainView, getModuleItems, getPlaceController, initActivityMappers</code></li>
+<code>createEventBus, createMainService, getDefaultPlace, getMainService, getModuleIds, getPlaceController, initActivityMappers</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.ClientFactoryImpl">
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.ClientFactoryImpl</h3>
-<code>getEventFilter, getExceptionManager, getLogger, getMessageBox, getTexts, getUiSecurity</code></li>
+<code>getEventBus, getExceptionManager, getLogger, getMessageBox, getTexts</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -220,18 +234,11 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></li>
 </ul>
 <ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.main.MainClientFactory">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;com.technology.jep.jepria.client.ui.main.MainClientFactory</h3>
-<code>contains, getDefaultPlace, getMainService, getMainView, getModuleItems, getPlaceController</code></li>
-</ul>
-<ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.ClientFactory">
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;com.technology.jep.jepria.client.ui.ClientFactory</h3>
-<code>getEventBus, getEventFilter, getExceptionManager, getLogger, getMessageBox, getTexts, getUiSecurity</code></li>
+<code>getEventBus, getExceptionManager, getLogger, getMessageBox, getTexts</code></li>
 </ul>
 </li>
 </ul>
@@ -241,6 +248,23 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field.detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="mainView">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>mainView</h4>
+<pre>private static final&nbsp;com.google.gwt.user.client.ui.IsWidget mainView</pre>
+</li>
+</ul>
+</li>
+</ul>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <ul class="blockList">
 <li class="blockList"><a name="constructor.detail">
@@ -279,25 +303,26 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <ul class="blockList">
 <li class="blockList">
 <h4>createMainModulePresenter</h4>
-<pre>public&nbsp;com.google.gwt.activity.shared.Activity&nbsp;createMainModulePresenter()</pre>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code>createMainModulePresenter</code>&nbsp;in interface&nbsp;<code>com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;<a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html" title="type parameter in SchedulerClientFactoryImpl">E</a> extends com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,<a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html" title="type parameter in SchedulerClientFactoryImpl">S</a> extends com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</code></dd>
-</dl>
+<pre>public&nbsp;com.technology.jep.jepria.client.ui.main.MainModulePresenter&lt;? extends com.technology.jep.jepria.client.ui.main.MainView,com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync,? extends com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;&gt;&nbsp;createMainModulePresenter()</pre>
 </li>
 </ul>
 <a name="getPlainClientFactory-java.lang.String-com.technology.jep.jepria.client.async.LoadAsyncCallback-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getPlainClientFactory</h4>
 <pre>public&nbsp;void&nbsp;getPlainClientFactory(java.lang.String&nbsp;moduleId,
                                   com.technology.jep.jepria.client.async.LoadAsyncCallback&lt;com.technology.jep.jepria.client.ui.plain.PlainClientFactory&lt;com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus,com.technology.jep.jepria.shared.service.data.JepDataServiceAsync&gt;&gt;&nbsp;callback)</pre>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code>getPlainClientFactory</code>&nbsp;in interface&nbsp;<code>com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;<a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html" title="type parameter in SchedulerClientFactoryImpl">E</a> extends com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus,<a href="../../../../../../com/technology/oracle/scheduler/main/client/SchedulerClientFactoryImpl.html" title="type parameter in SchedulerClientFactoryImpl">S</a> extends com.technology.jep.jepria.shared.service.JepMainServiceAsync&gt;</code></dd>
-</dl>
+</li>
+</ul>
+<a name="getMainView--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getMainView</h4>
+<pre>public&nbsp;com.google.gwt.user.client.ui.IsWidget&nbsp;getMainView()</pre>
 </li>
 </ul>
 </li>
@@ -353,13 +378,13 @@ implements com.technology.jep.jepria.client.ui.main.MainClientFactory&lt;E,S&gt;
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
