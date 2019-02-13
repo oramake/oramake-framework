@@ -10,14 +10,11 @@ define userName = "&1"
 
 grant scheduler_admin to &userName
 /
+grant create job to &userName
+/
+
 
 grant select on sys.v_$session to &userName with grant option
-/
-
-grant select on user_scheduler_jobs to &userName with grant option
-/
-
-grant select on user_scheduler_job_run_details to &userName with grant option
 /
 
 -- необходимо для работы пакета pkg_Scheduler

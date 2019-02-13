@@ -198,7 +198,7 @@ return varchar2
 is
 -- getOracleJobName
 begin
-  return 'Scheduler:' || to_char(batchId);
+  return 'SCHEDULER_' || to_char(batchId);
 end getOracleJobName;
 
 /* proc: updateBatch
@@ -304,7 +304,8 @@ is
         from
           user_scheduler_jobs j
         where
-          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+          -- getOracleJobName
+          j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
         as current_job_id
       , (
@@ -313,7 +314,8 @@ is
         from
           user_scheduler_jobs j
         where
-          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+          -- getOracleJobName
+          j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
         as next_date
       , to_number(null) as is_job_broken
@@ -458,16 +460,19 @@ begin
   end if;
   -- Добавляем новое задание Oracle
   if rec.current_job_id is null then
+    logger.trace('create_job: ' || oracleJobName);
     dbms_scheduler.create_job(
       job_name => oracleJobName
     , job_type => 'PLSQL_BLOCK'
     , auto_drop => false
     , job_action =>
-'pkg_Scheduler.execBatch(JOB /* batch: ' || rec.batch_short_name || ' */, next_date);'
+'pkg_Scheduler.execBatch(' || to_char(batchId)
+|| ' /* batch: ' || rec.batch_short_name || ' */, next_date);'
     , start_date => newDate
     , enabled => true
     , comments => 'Scheduler: ' || rec.batch_short_name
     );
+    logger.trace('job created: ' || oracleJobName);
     rec.current_job_id := rec.batch_id;
     -- Связываем пакет с заданием Oracle
     update
@@ -572,7 +577,8 @@ is
         from
           user_scheduler_jobs j
         where
-          j.job_name = 'Scheduler:' || to_char(b.batch_id)
+          -- getOracleJobName
+          j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
         as current_job_id
     from
@@ -594,7 +600,8 @@ from
   inner join v$session ss
     on jr.session_id = ss.sid
 where
-  jr.job_name = 'Scheduler:' || to_char(batchId)
+  -- getOracleJobName
+  jr.job_name = 'SCHEDULER_' || to_char(batchId)
   and exists
     (
     select
@@ -644,6 +651,7 @@ begin
   oracleJobName := getOracleJobName(batchId => rec.batch_id);
   -- Удаляем задание Oracle
   if rec.current_job_id is not null then
+    logger.trace('drop job: ' || oracleJobName);
     dbms_scheduler.drop_job(
       job_name => oracleJobName
     );
@@ -834,7 +842,8 @@ is
           on jr.session_id = ss.sid
       ) ss
     on
-      ss.job_name = 'Scheduler:' || to_char(b.batch_id)
+      -- getOracleJobName
+      ss.job_name = 'SCHEDULER_' || to_char(b.batch_id)
     where
       b.batch_id = batchId
     for update of b.batch_short_name nowait

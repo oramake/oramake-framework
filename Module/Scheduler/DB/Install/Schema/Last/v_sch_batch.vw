@@ -70,7 +70,7 @@ from
       sch_batch b
       left outer join user_scheduler_jobs j
         -- pkg_Scheduler.getOracleJobName
-        on j.job_name = 'Scheduler:' || to_char(batch_id)
+        on j.job_name = 'SCHEDULER:' || to_char(batch_id)
       left outer join
         (
         select /*+ordered*/
@@ -82,7 +82,8 @@ from
           inner join v$session ss
             on jr.session_id = ss.sid
         ) ss
-        on ss.job_name = 'Scheduler:' || to_char(batch_id)
+        -- pkg_Scheduler.getOracleJobName
+        on ss.job_name = 'SCHEDULER_' || to_char(batch_id)
     ) d
   ) d
 /
