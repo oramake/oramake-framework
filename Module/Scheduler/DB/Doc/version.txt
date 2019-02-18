@@ -7,6 +7,11 @@ group: 5.0.0 ( 2019-01-22)
 
 [+] Использование модуля dbms_scheduler вместо dbms_job.
 
+Difference from the previous versions:
+
+- you cannot activate batch if the session is still active;
+- after stopping
+
 
 
 group: 4.6.0 ( 2018-10-29)

@@ -1,1 +1,1 @@
-@oms-reactivate-batch %
+@oms-deactivate-batch %
