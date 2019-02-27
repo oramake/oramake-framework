@@ -6,7 +6,10 @@ group: Общие замечания
 INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
                                 первоначальной установке или номер при
                                 обновлении)
-LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего
+                                установку (в случае отсутствия в БД модуля
+                                AccessOperator параметр LOAD_OPERATORID
+                                указывать не надо)
                                 ( формат: login/password)
 LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
@@ -51,6 +54,20 @@ $ make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/?
 (code)
 
 $ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 2.1.0
+
+Порядок установки:
+
+- установка в основную схему
+
+(code)
+
+make install INSTALL_VERSION=2.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
