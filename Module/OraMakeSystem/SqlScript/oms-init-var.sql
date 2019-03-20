@@ -98,6 +98,7 @@ var oms_process_id number
 var oms_process_start_time varchar2(50)
 var oms_svn_file_path varchar2(255)
 var oms_svn_version_info varchar2(50)
+var oms_common_schema varchar2(30)
 
 -- The source file for installation (path relative to the DB directory or
 -- SqlScript for OMS SQL scripts)

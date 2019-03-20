@@ -102,7 +102,8 @@ declare
   begin
     execute immediate '
 begin
-  pkg_ModuleInstall.checkInstallVersion(
+' || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  || 'pkg_ModuleInstall.checkInstallVersion(
     moduleSvnRoot               => :oms_module_svn_root
     , moduleInitialSvnPath      => :oms_module_initial_svn_path
     , modulePartNumber          => :modulePartNumber
@@ -140,7 +141,9 @@ end;
   begin
     execute immediate '
 begin
-  :installResultId := pkg_ModuleInstall.createInstallResult(
+  :installResultId := '
+  || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  || 'pkg_ModuleInstall.createInstallResult(
     moduleSvnRoot               => :oms_module_svn_root
     , moduleInitialSvnPath      => :oms_module_initial_svn_path
     , moduleVersion             => :oms_module_version

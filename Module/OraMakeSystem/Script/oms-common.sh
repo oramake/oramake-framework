@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=2.1.0
+OMS_VERSION=2.2.0
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 25461251 $'
+commonRevisionValue='$Revision:: 25842605 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2018-05-30 13:11:25 +0300 #$'
+commonChangeDateValue='$Date:: 2019-02-19 09:05:41 +0300 #$'
 
 
 # var: commonRevision

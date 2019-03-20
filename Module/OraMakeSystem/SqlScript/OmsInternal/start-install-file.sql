@@ -18,7 +18,9 @@ declare
 begin
   execute immediate '
 begin
-  :installFileId := pkg_ModuleInstall.StartInstallFile(
+  :installFileId := '
+  || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  || 'pkg_ModuleInstall.StartInstallFile(
     moduleSvnRoot               => :oms_module_svn_root
     , moduleInitialSvnPath      => :oms_module_initial_svn_path
     , moduleVersion             => :oms_module_version
