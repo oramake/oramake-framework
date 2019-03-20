@@ -7,12 +7,12 @@
 define userName = "&1"
 
 
--- необходимо для создания и выдачи прав на view V_SCH_BATCH
-grant select on dba_jobs to &userName with grant option
+
+grant scheduler_admin to &userName
+/
+grant create job to &userName
 /
 
-grant select on dba_jobs_running to &userName with grant option
-/
 
 grant select on sys.v_$session to &userName with grant option
 /
@@ -21,11 +21,13 @@ grant select on sys.v_$session to &userName with grant option
 grant select on sys.v_$db_pipes to &userName
 /
 
+-- changing job_queue_proceses
 grant alter system to &userName
 /
 
 grant execute on dbms_pipe to &userName
 /
+
 
 
 

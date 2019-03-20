@@ -128,7 +128,7 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoSearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.ListEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SaveEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetCurrentRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetListUIDEvent.Handler</dd>
+<dd>com.google.gwt.activity.shared.Activity, com.google.gwt.event.shared.EventHandler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.DoSearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.ListEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.RefreshFieldsEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SaveEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetCurrentRecordEvent.Handler, com.technology.jep.jepria.client.ui.eventbus.plain.event.SetListUIDEvent.Handler</dd>
 </dl>
 <hr>
 <br>
@@ -151,7 +151,7 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;<
 <!--   -->
 </a>
 <h3>Fields inherited from class&nbsp;com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter</h3>
-<code>currentRecord, fields, listUID, placeController, scopes, searchTemplate, service, view</code></li>
+<code>currentRecord, fields, listUID, placeController, scopes, searchTemplate, service, submitCounter, view</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">
@@ -213,7 +213,7 @@ extends com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter&lt;<
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter</h3>
-<code>adjustToRecord, afterSave, beforeSave, bind, isAcceptableWorkstate, onChangeWorkstate, onCreateFailure, onCreateSuccess, onDelete, onDeleteConfirmation, onDeleteFailure, onDeleteSuccess, onDoDelete, onDoSearch, onList, onSave, onSaveSuccess, onSearch, onSetCurrentRecord, onSetListUID, onSubmitFailure, onSubmitSuccess, onUpdateFailure, onUpdateSuccess, resetScope, saveOnCreate, saveOnEdit, start, submitSuccessful, updateScope</code></li>
+<code>adjustToRecord, afterSave, beforeSave, bind, byPrimaryKey, isAcceptableWorkstate, isDataReady, onChangeWorkstate, onCreateFailure, onCreateSuccess, onDelete, onDeleteConfirmation, onDeleteFailure, onDeleteSuccess, onDoDelete, onDoSearch, onList, onRefreshFields, onSave, onSaveSuccess, onSearch, onSetCurrentRecord, onSetListUID, onSubmitFailure, onSubmitSuccess, onUpdateFailure, onUpdateSuccess, prepareLOBField, resetScope, saveOnCreate, saveOnEdit, start, submitSuccessful, updateScope</code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.com.technology.jep.jepria.client.ui.JepPresenter">

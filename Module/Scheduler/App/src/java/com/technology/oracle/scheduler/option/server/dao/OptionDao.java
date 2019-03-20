@@ -39,6 +39,7 @@ import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.time.JepTime;
 import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.jep.jepria.shared.util.Mutable;
+import com.technology.oracle.scheduler.batch.client.history.scope.BatchScope;
 import com.technology.oracle.scheduler.main.server.dao.SchedulerDao;
 import com.technology.oracle.scheduler.option.shared.field.ValueTypeOptions;
 

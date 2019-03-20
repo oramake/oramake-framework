@@ -5,23 +5,22 @@
   
   <!-- Значения property - immutable, если BIN_HOME не был задан ранее, то берется из переменной окружения -->
   <property environment="env" />
-  <property name="BIN_HOME" value="${env.BIN_HOME}" />
-
+	<property name="BIN_HOME" value="${env.BIN_HOME}" />
   <!-- Проверка, что BIN_HOME определен, иначе - ошибка -->
   <fail unless="BIN_HOME" message="Binary repository path not specified. Specify it either in environment variable %BIN_HOME% or use -DBIN_HOME=... command line argument." />
 
   <property file="dependency.properties" />
   
-	<taskdef name="include-system-dependency" classname="com.technology.jep.jepriatoolkit.check.IncludeSystemDependency">
-		<classpath>
-	    <pathelement location="${JEPRIA-TOOLKIT_LIB}"/>
-	  </classpath>
-	</taskdef>
-	  
-	<include-system-dependency libPath="${JEPRIA-DEPENDENCY_LIB}"/>
-	
-	<property file="dependency-jepria.properties" />
-	
+  <taskdef name="include-system-dependency" classname="com.technology.jep.jepriatoolkit.check.IncludeSystemDependency">
+    <classpath>
+      <pathelement location="${JEPRIA-TOOLKIT_LIB}"/>
+    </classpath>
+  </taskdef>
+    
+  <include-system-dependency libPath="${JEPRIA-DEPENDENCY_LIB}"/>
+  
+  <property file="dependency-jepria.properties" />
+  
   <taskdef resource="net/sf/antcontrib/antlib.xml">
     <classpath>
       <pathelement location="${ANT-CONTRIB_LIB}"/>
@@ -50,7 +49,7 @@
     <pathelement location="${JEPRIA_LIB}" />
     <pathelement location="${JEPRIA-REPORT_LIB}" />
     <pathelement location="${JEPRIA-TEST_LIB}" />
-  	<pathelement location="${SSO-UTILS_LIB}" />
+    <pathelement location="${SSO-UTILS_LIB}" />
     <pathelement location="${GWT-DEV_LIB}" />
     <pathelement location="${GWT-LOG_LIB}" />
     <pathelement location="${GWT-SERVLET_LIB}" />
@@ -147,38 +146,124 @@
   </fileset>
 
   
-  <!-- Проверка наличия всех используемых библиотек (зависимостей) -->
-  <target name="check-dependencies" >
-  
-    <echo message="Binary repository path: ${BIN_HOME}" />
-  
-    <propertyselector
-        property="pack.list"
-        delimiter=","
-        match="([^\s]+(\_(?i)(lib|jslib))$)"
-        select="\1"
-        casesensitive="false" />
-                 
-    <echo message="Dependency checking..."/>
+  <!-- Проверка наличия всех используемых библиотек (зависимостей) -->      
+
+  <target name="check-build-dependencies">
+
+    <propertyregex property="BIN_HOME_BUILD"
+      input="${BIN_HOME}/build/"
+      regexp="\\"
+      replace="/"
+      global="true" 
+      casesensitive="false" />
+    	
+    <echo message="Binary repository BUILD folder path: ${BIN_HOME_BUILD}" />
+  	
+    <if>
+      <not><isset property="pack.list"/></not>
+      <then>
+        <propertyselector
+          property="pack.list"
+          delimiter=","
+          match="(([\S])+(\_(lib|jslib))$)?"
+          select="\1"
+          casesensitive="false" />
+      </then>
+     <else/>
+    </if>
+
+    <echo message="Build dependency checking..."/>
     <for list="${pack.list}" param="lib-path">
       <sequential>
-        <if> <available file="${@{lib-path}}"/>
-          <then/>
-          <else>
-            <echo>Required library '${@{lib-path}}' is absent</echo>
-            <property name="DEPENDENCY_ABSENCE" value="true" />
-          </else>
+        <propertyregex property="@{lib-path}.name"
+          input="${@{lib-path}}"
+          regexp="\\"
+          replace="/"
+          global="true" 
+          casesensitive="false" />
+        <if> 
+           <contains substring="${BIN_HOME_BUILD}" string="${@{lib-path}.name}"/>
+          <then>
+            <if>
+              <available file="${@{lib-path}}"/>
+              <then/>
+              <else>
+                <echo>Required library '${@{lib-path}.name}' is absent</echo>
+                <property name="DEPENDENCY_ABSENCE" value="true" />
+              </else>
+            </if>
+          </then>
+          <else/>
         </if>
       </sequential>
     </for>
     <if> <equals arg1="${DEPENDENCY_ABSENCE}" arg2="true" />
       <then>
         <echo>Dependency checking failed</echo>
-        <fail message="BINARY REPOSITORY PROBABLY SHOULD BE UPDATED"/>
+        <fail message="BINARY REPOSITORY FOLDER '${BIN_HOME_BUILD}' PROBABLY SHOULD BE UPDATED"/>
       </then>
     </if>
-    <echo message="Dependency checking succeeded"/>
+    <echo message="Build dependency checking succeeded"/>
   </target>
+	
+  <target name="check-deploy-dependencies">
+  	
+  	<propertyregex property="BIN_HOME_DEPLOY"
+  	  input="${BIN_HOME}/deploy/"
+  	  regexp="\\"
+  	  replace="/"
+  	  global="true" 
+  	  casesensitive="false" />
+  	
+    <echo message="Binary repository DEPLOY folder path: ${BIN_HOME_DEPLOY}" />
+  	<if>
+  		<not><isset property="pack.list"/></not>
+  		<then>
+    	  <propertyselector
+          property="pack.list"
+          delimiter=","
+          match="(([\S])+(\_(lib|jslib))$)?"
+          select="\1"
+          casesensitive="false" />
+  		</then>
+  	 <else/>
+  	</if>
+  	
+    <echo message="Deploy dependency checking..."/>
+    <for list="${pack.list}" param="lib-path">
+      <sequential>
+        <propertyregex property="@{lib-path}.name"
+          input="${@{lib-path}}"
+          regexp="\\"
+          replace="/"
+          global="true" 
+          casesensitive="false" />
+        <if> 
+        	 <contains substring="${BIN_HOME_DEPLOY}" string="${@{lib-path}.name}"/>
+          <then>
+          	<if>
+              <available file="${@{lib-path}}"/>
+          		<then/>
+              <else>
+                <echo>Required library '${@{lib-path}.name}' is absent</echo>
+                <property name="DEPENDENCY_ABSENCE" value="true" />
+              </else>
+          	</if>
+          </then>
+          <else/>
+        </if>
+      </sequential>
+    </for>
+    <if> <equals arg1="${DEPENDENCY_ABSENCE}" arg2="true" />
+      <then>
+        <echo>Dependency checking failed</echo>
+        <fail message="BINARY REPOSITORY FOLDER '${BIN_HOME_DEPLOY}' PROBABLY SHOULD BE UPDATED"/>
+      </then>
+    </if>
+    <echo message="Deploy dependency checking succeeded"/>
+  </target>
+  
+  <target name="check-dependencies" depends="check-deploy-dependencies,check-build-dependencies"/>
   
   <target name="define-toolkit-appinstall">
     <taskdef name="startAppInstall" classname="com.technology.jep.jepriatoolkit.version.appinstall.StartAppInstall" classpathref="jepria-toolkit-libs" />
@@ -216,7 +301,7 @@
   </target>
 
   <!-- Инициализация переменных модуля  -->
-  <target name="init" depends="check-dependencies">
+  <target name="init">
     <for param="file">
       <path>
         <fileset dir="src/java" includes="**/main/*.gwt.xml" />
@@ -259,7 +344,7 @@
   <target name="encode-and-compile" depends="all-text-encode, java-compile, all-gwt-compile, jasper-reports-compile" />
 
   <!-- Обработка текстовых ресурсов всех модулей -->
-  <target depends="start-log" name="all-text-encode">
+  <target depends="check-dependencies, start-log" name="all-text-encode">
     <antcall target="for-each-client-module">
       <param name="action" value="client-module-text-encode" />
     </antcall>
@@ -355,7 +440,7 @@
     <javac destdir="build-test" encoding="utf-8" includeantruntime="false" srcdir="auto;${test.src.dir}" verbose="${full-compile}">
         <classpath refid="libs" />
         <classpath refid="selenium-libs" />
-		<!-- TODO разнести компиляцию для обраться с -->
+    <!-- TODO разнести компиляцию для обраться с -->
         <classpath>
             <pathelement location="${GWT-TEST-UTILS_LIB}"/>
             <pathelement location="${OJDBC6_LIB}"/>
@@ -386,32 +471,32 @@
   </target>
   
   <target name="test-services" depends="test-service-compile">
-  	<java dir ="." fork="true" maxmemory="1024m" classname="org.junit.runner.JUnitCore">
-  		<arg value="com.technology.jep.jepriashowcase.feature.server.service.FeatureServiceTest" />
-  		<classpath>
-  			<pathelement location="src/java" />
-  			<pathelement location="${test.conf.dir}" />
-  			<pathelement location="build-test" />
-  			<pathelement location="${JUNIT_LIB}" />
-  			<pathelement location="${HAMCREST-CORE_LIB}" />
-  			<pathelement location="${GWT-TEST-UTILS_LIB}" />
-  			<pathelement location="${SLF4J-API_LIB}" />
-  			<pathelement location="${SLF4J-SIMPLE_LIB}" />
-  			<pathelement location="${JAVASSIST_LIB}" />
-  			<pathelement location="${GWT-DEV_LIB}" />
-  			<pathelement location="${GWT-USER_LIB}" />
-  			<pathelement location="${JEPRIA_LIB}" />
-  			<pathelement location="${JEPRIA-TEST_LIB}" />
-  			<pathelement location="${GWT-LOG_LIB}" />
-  			<pathelement location="${GWT-THEME_LIB}" />
-  			<pathelement location="${SPRING-MOCK_LIB}" />
-  			<pathelement location="${SPRING-CORE_LIB}" />
-  			<pathelement location="${OJDBC6_LIB}" />
-  			<pathelement location="${TOMCAT-CATALINA_LIB}" />
-  			<pathelement location="${TOMCAT-JULI_LIB}" />
-  			<pathelement location="${LOG4J_LIB}" />
-  		</classpath>
-  	</java>	
+    <java dir ="." fork="true" maxmemory="1024m" classname="org.junit.runner.JUnitCore">
+      <arg value="com.technology.jep.jepriashowcase.feature.server.service.FeatureServiceTest" />
+      <classpath>
+        <pathelement location="src/java" />
+        <pathelement location="${test.conf.dir}" />
+        <pathelement location="build-test" />
+        <pathelement location="${JUNIT_LIB}" />
+        <pathelement location="${HAMCREST-CORE_LIB}" />
+        <pathelement location="${GWT-TEST-UTILS_LIB}" />
+        <pathelement location="${SLF4J-API_LIB}" />
+        <pathelement location="${SLF4J-SIMPLE_LIB}" />
+        <pathelement location="${JAVASSIST_LIB}" />
+        <pathelement location="${GWT-DEV_LIB}" />
+        <pathelement location="${GWT-USER_LIB}" />
+        <pathelement location="${JEPRIA_LIB}" />
+        <pathelement location="${JEPRIA-TEST_LIB}" />
+        <pathelement location="${GWT-LOG_LIB}" />
+        <pathelement location="${GWT-THEME_LIB}" />
+        <pathelement location="${SPRING-MOCK_LIB}" />
+        <pathelement location="${SPRING-CORE_LIB}" />
+        <pathelement location="${OJDBC6_LIB}" />
+        <pathelement location="${TOMCAT-CATALINA_LIB}" />
+        <pathelement location="${TOMCAT-JULI_LIB}" />
+        <pathelement location="${LOG4J_LIB}" />
+      </classpath>
+    </java>  
   </target>
 
   <target name="test-dao-compile" depends="check-dependencies">
@@ -501,20 +586,20 @@
            verbose="${full-compile}">
       <classpath refid="libs" />
       <classpath>
-      	<pathelement location="src/java"/>
+        <pathelement location="src/java"/>
         <pathelement location="${MOCKITO-CORE_LIB}"/>
-    	</classpath>
+      </classpath>
     </javac>
   </target>
-	
+  
   <target name="test-unit" depends="test-unit-compile">
     <junit fork="yes" printsummary="yes">
       <classpath>
-      	<pathelement location="${JUNIT_LIB}"/>
-      	<pathelement location="${JEPRIA_LIB}"/>
+        <pathelement location="${JUNIT_LIB}"/>
+        <pathelement location="${JEPRIA_LIB}"/>
         <pathelement location="${MOCKITO-CORE_LIB}"/>
         <pathelement location="${OBJENESIS_LIB}"/>
-      	<pathelement location="${GWT-USER_LIB}"/>
+        <pathelement location="${GWT-USER_LIB}"/>
         <pathelement location="build-test/test-unit" />
       </classpath>
       <formatter type="plain" usefile="false" />
@@ -527,13 +612,13 @@
   <!-- Gwt-компиляция -->
   <!-- Делается сразу для всех клиентских модулей  -->
   <target name="all-gwt-compile" depends="all-text-encode, java-compile">
+    <mkdir dir="mytmp" />
     <outofdate>
       <sourcefiles>
         <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/client/**/*.java" />
         <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/shared/**/*.java" />
         <fileset dir="src/java" includes="**/${MODULE_NAME_IN_PACKAGE}/**/*.gwt.xml" />
         <fileset file="${JEPRIA_LIB}" />
-        <!--fileset file="${OPTIONLIB_LIB}" /-->
       </sourcefiles>
       <!-- В GWT 2.7.0 при компиляции файлу Application.nocache.js выставляется дата изменения,
       совпадающая с датой Application.gwt.xml. Подробнее: https://gwt-review.googlesource.com/#/c/10520/
@@ -568,6 +653,9 @@
               <!-- <arg value="-compileReport" /> -->
               <arg value="-style" />
               <arg value="detailed" />
+              <arg value="-workDir" />
+              <arg value="./mytmp/" />
+              <jvmarg value="-Djava.io.tmpdir=./mytmp/" />
             </java>
           </then>
           <else>
@@ -585,6 +673,9 @@
               <arg value="-compileReport" />
               <arg value="-style" />
               <arg value="obfuscated" />
+              <arg value="-workDir" />
+              <arg value="./mytmp/" />
+              <jvmarg value="-Djava.io.tmpdir=./mytmp/" />
             </java>
           </else>
         </if>
@@ -596,14 +687,14 @@
     <available file="${RESOURCE_HOME}/report" property="reportfile.exists" />
   </target>
 
-  <target name="jasper-reports-compile" depends="check-report-exists, start-log" if="${reportfile.exists}">
+  <target name="jasper-reports-compile" depends="check-report-exists, check-dependencies, start-log" if="${reportfile.exists}">
     <outofdate>
       <sourcefiles>
         <fileset dir="${RESOURCE_HOME}/report" includes="**/*.jrxml" />
       </sourcefiles>
       <mapper from="*.jrxml" to="*.jasper" type="glob" />
       <sequential>
-        <java classname="com.technology.jep.jrcompiler.JRCompiler" fork="true" jvm="${JAVA_HOME}/jdk/bin/java">
+        <java classname="com.technology.jep.jrcompiler.JRCompiler" fork="true">
           <classpath>
             <path location="${GROOVY-ALL_LIB}" />
             <path location="${GWT-SERVLET_LIB}" />
@@ -654,9 +745,6 @@
         <mkdir dir="temp-war" />
         
         <copy todir="temp-war/WEB-INF/lib">
-		<!--
-          <fileset file="${GROOVY-ALL_LIB}" />
-		-->  
           <fileset file="${GWT-LOG_LIB}" />
           <fileset file="${GWT-SERVLET_LIB}" />
           <fileset file="${JAR_TEMP}/${MODULE_NAME_IN_PACKAGE}-web.jar" />
@@ -666,29 +754,30 @@
           <fileset file="${LOG4J_LIB}" />
           <fileset file="${STANDARD_LIB}" />
           <fileset file="${COMMONS-FILEUPLOAD_LIB}" />
+          <fileset file="${COMMONS-IO_LIB}" />
         </copy>
-	<!-- выделяем копирование библиотек для формирования отчетов-->
-	<if>
-		<isset property="reportfile.exists" />
-		<then>
-		<echo message="copy jars for report" />
-		<copy todir="temp-war/WEB-INF/lib">
-                        <fileset file="${COMMONS-BEANUTILS_LIB}" />
-                        <fileset file="${COMMONS-COLLECTIONS_LIB}" />
-                        <fileset file="${COMMONS-DIGESTER_LIB}" />
-                        <fileset file="${COMMONS-IO_LIB}" />
-                        <fileset file="${COMMONS-LOGGING_LIB}" />
-                        <fileset file="${COMMONS-LANG_LIB}" />
-                        <fileset file="${COMMONS-VALIDATOR_LIB}" />
-			<fileset file="${ITEXT_LIB}" />
-			<fileset file="${JASPERREPORTS_LIB}" />
-			<fileset file="${JEPRIA-REPORT_LIB}" />
-			<fileset file="${JFREECHART_LIB}" />
-		        <fileset file="${SPRING-BEANS_LIB}" />
-                        <fileset file="${SPRING-CORE_LIB}" />
-                </copy>
-	        </then>
-	</if>
+        <!-- выделяем копирование библиотек для формирования отчетов-->
+        <if>
+          <isset property="reportfile.exists" />
+          <then>
+            <echo message="copy jars for report" />
+            <copy todir="temp-war/WEB-INF/lib">
+              <fileset file="${COMMONS-BEANUTILS_LIB}" />
+              <fileset file="${COMMONS-COLLECTIONS_LIB}" />
+              <fileset file="${COMMONS-DIGESTER_LIB}" />
+              <fileset file="${COMMONS-LOGGING_LIB}" />
+              <fileset file="${COMMONS-LANG_LIB}" />
+              <fileset file="${COMMONS-VALIDATOR_LIB}" />
+              <fileset file="${ITEXT_LIB}" />
+              <fileset file="${JASPERREPORTS_LIB}" />
+              <fileset file="${JEPRIA-REPORT_LIB}" />
+              <fileset file="${JFREECHART_LIB}" />
+              <fileset file="${SPRING-BEANS_LIB}" />
+              <fileset file="${SPRING-CORE_LIB}" />
+              <fileset file="${GROOVY-ALL_LIB}" />
+            </copy>
+          </then>
+        </if>
         <copy file="${JSTL_TLD_LIB_DEF}" todir="temp-war/WEB-INF/tld" />
         
         <copy file="temp-jepria-resources/html/JepRia.css" todir="temp-war/css" />
@@ -702,7 +791,7 @@
         <copy todir="temp-war/WEB-INF/security">
           <fileset file="temp-jepria-resources/html/security/**/" />
         </copy>
-      	<copy todir="temp-war/META-INF">
+        <copy todir="temp-war/META-INF">
           <fileset file="temp-jepria-resources/resources/tomcat/context.xml" />
         </copy>
         <copy todir="temp-war">
@@ -711,7 +800,7 @@
         
         <copy file="src/resources/${MODULE_PACKAGE}/web/web.xml" todir="temp-war/WEB-INF" />
 
-      	<copy todir="temp-war">
+        <copy todir="temp-war">
           <fileset dir="build-gwt" />
         </copy>
         <copy failonerror="false" todir="temp-war/resources/${MODULE_PACKAGE}/report">
@@ -726,6 +815,7 @@
         <jar basedir="temp-war" destfile="${DISTR_DIR}/${DISTR_NAME}.war" />
         <delete failonerror="false" dir="temp-war" />
         <delete dir="temp-jepria-resources" />
+        <delete dir="mytmp" />
       </sequential>
     </outofdate>
   </target>
@@ -790,7 +880,7 @@
               input="${DEPLOYMENT_PATH}"           
               regexp="(?&lt;=:)[0-9]{2,5}"
               select="\0" 
-              casesensitive="false" />		  
+              casesensitive="false" />      
     <condition property="DEPLOYMENT_PATH" value="http://localhost">
         <not>  
             <isset property="DEPLOYMENT_PATH"/>
@@ -810,15 +900,15 @@
         <echo message="Skipping...." />
       </then>
       <else>
-	    <!-- проверяем соединение с ModuleInfo -->
+      <!-- проверяем соединение с ModuleInfo -->
         <fail message="App ModuleInfo is not available on ${DOMAIN}:${PORT}, please install it and run">
-  	    	<condition> 
-		    	<not>
-			    	<!-- ModuleInfo выдает ошибку 400 если установлен и 404 если нет -->
-                	<http url="${DOMAIN}:${PORT}/ModuleInfo/versionServlet" errorsBeginAt="401"/> 
-				</not>
-        	</condition> 
-		</fail>
+          <condition> 
+          <not>
+            <!-- ModuleInfo выдает ошибку 400 если установлен и 404 если нет -->
+                  <http url="${DOMAIN}:${PORT}/ModuleInfo/versionServlet" errorsBeginAt="401"/> 
+        </not>
+          </condition> 
+    </fail>
         <dirname file="." property="pdir" />
         <basename file="${pdir}" property="VERSION" />
 
@@ -851,7 +941,7 @@
                 ${errorMessage}
             </fail>
         </catch>
-    </trycatch>	  
+    </trycatch>    
     <echo message="OK" />
   </target>
   
@@ -860,7 +950,7 @@
     <taskdef name="tomcat.undeploy" classname="org.apache.catalina.ant.UndeployTask" classpathref="tomcat-libs" />
   </target>
   
-  <target name="tomcat.undeploy" description="Undeploy from Tomcat" depends="start-log, include-deploy-properties, define-tomcat, available-tomcat">
+  <target name="tomcat.undeploy" description="Undeploy from Tomcat" depends="check-deploy-dependencies, start-log, include-deploy-properties, define-tomcat, available-tomcat">
     <tomcat.undeploy 
       failonerror="no"
       url="${DEPLOYMENT_PATH}"
@@ -870,8 +960,8 @@
     />
   </target>
 
-  <target name="tomcat.deploy" description="Deploy to Tomcat" depends="start-log, include-deploy-properties, save-version-application, tomcat.undeploy, define-tomcat, available-tomcat">
-    <echo message="Deploying ${DISTR_DIR}/${DISTR_NAME}.war to:${DEPLOYMENT_PATH}"/>
+  <target name="tomcat.deploy" description="Deploy to Tomcat" depends="check-deploy-dependencies, start-log, include-deploy-properties, save-version-application, tomcat.undeploy, define-tomcat, available-tomcat">
+	<echo message="Deploying ${DISTR_DIR}/${DISTR_NAME}.war to:${DEPLOYMENT_PATH}"/>
     <echo message="Deploy to Tomcat..." />
     <echo message="LOGIN: ${LOGIN}" />
   
@@ -899,13 +989,27 @@
     
   </target>
 
-  <target name="doc" depends="start-log">
-    <javadoc Doctitle="${MODULE_NAME} API Reference" Windowtitle="${MODULE_NAME} JavaDoc" access="private" additionalparam="-notimestamp -Xdoclint:none" charset="UTF-8" destdir="${JAVA_DOC_DIR}" docencoding="UTF-8" encoding="UTF-8" includenosourcepackages="true" overview="src/java/${MODULE_PACKAGE}/overview.html" packagenames="*" sourcepath="src/java">
+  <target name="doc" depends="check-dependencies, start-log">
+    <javadoc 
+      Doctitle="${MODULE_NAME} API Reference"
+      Windowtitle="${MODULE_NAME} JavaDoc" 
+      access="private" 
+      additionalparam="-notimestamp -Xdoclint:none" 
+      charset="UTF-8"
+      destdir="${JAVA_DOC_DIR}"
+      docencoding="UTF-8"
+      encoding="UTF-8" 
+      includenosourcepackages="true" 
+      overview="src/java/${MODULE_PACKAGE}/overview.html" 
+      packagenames="*" 
+      sourcepath="src/java"
+      locale="ru">
       <classpath refid="libs" />
     </javadoc>
   </target>
 
   <target name="release-doc" depends="production-builder-check" if="${productionBuildCheck}">
+    <delete includeemptydirs="true" dir="${JAVA_DOC_DIR}"/>
     <antcall target="doc" />
   </target>
 
@@ -923,7 +1027,7 @@
     </delete>
   </target>
 
-  <target name="clean" depends="start-log">
+  <target name="clean" depends="check-dependencies, start-log">
     <delete includeemptydirs="true" quiet="true">
       <fileset dir="build" />
       <fileset dir="build-gwt" />
@@ -949,7 +1053,7 @@
   </target>
 
   <!-- Применение произвольной конфигурации сборки -->
-  <target name="build-config" depends="start-log">
+  <target name="build-config" depends="check-dependencies, start-log">
     
     <taskdef name="buildconfigswitcher" classname="com.technology.jep.jepriatoolkit.switcher.BuildConfigSwitcher" classpathref="jepria-toolkit-libs" />
     <buildconfigswitcher moduleName="${MODULE_NAME}" packageName="${PROJECT_NAME_IN_PACKAGE}" targetConfig="${BUILD_CONFIG}" />
@@ -957,4 +1061,58 @@
     <!-- Подключаем deploy.properties после применения конфигурации, иначе будут старые значения. -->
     <antcall target="include-deploy-properties" />
   </target>
+  
+	<target name="jeval">
+	    <property url="jar:file:${JEPRIA_VALIDATOR-RULES_LIB}!/version-map.properties" />
+	    <if>
+	      <isset property="RULES_${JEPRIA_VERSION}"/>
+	      <then>
+	        <var name="ruleListKey" value="RULES_${JEPRIA_VERSION}"/>
+	        <echo>Validating the project up to version ${JEPRIA_VERSION} ...</echo>
+	      </then>
+	      <else>
+	        <if>
+	          <isset property="RULES_${LATEST_VERSION}"/>
+	          <then>
+	            <var name="ruleListKey" value="RULES_${LATEST_VERSION}"/>
+	            <echo>No validator rules found for the version ${JEPRIA_VERSION}, validating the project up to version ${LATEST_VERSION} ...</echo>    
+	          </then>
+	          <else>
+	            <echo>No latest or target version of validator rules found</echo>
+	          </else>
+	        </if>
+	      </else>
+	    </if>
+	    <if>
+	      <isset property="ruleListKey"/>
+	      <then>
+	        <macrodef name="cp_property"><!-- макродеф для двойного разыменовывания переменных: ${${a}} -->
+	         <attribute name="name"/>
+	         <attribute name="from"/>
+	         <sequential>
+	          <property name="@{name}" value="${@{from}}"/>
+	         </sequential>
+	        </macrodef>
+	        
+	        <cp_property name="ruleList" from="${ruleListKey}"/>
+	        
+	        <java classname="org.jepria.validator.user.CLI">
+	          <classpath>
+	            <pathelement location="${JEPRIA_VALIDATOR-CORE_LIB}"/>
+	            <pathelement location="${JEPRIA_VALIDATOR-RULES_LIB}"/>
+	            <pathelement location="${JAVAPARSER-CORE-V_LIB}"/>
+	          </classpath>
+	          <arg value="--directories"/>
+	          <arg value="${basedir}"/>
+	          <arg value="--ruleList"/>
+	          <arg value="${ruleList}"/>
+	          <arg value="-t"/>
+	          <!-- Выходная директория для трансформированных ресурсов
+	          <arg value="-o"/>
+	          <arg value="C:\jeval\output"/>
+	          -->
+	        </java>
+	      </then>
+	    </if>
+	  </target>
 </project>

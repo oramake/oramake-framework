@@ -516,22 +516,6 @@ is
     )
   return pls_integer
   is
-    -- TODO: в Oracle 11.2.0.2 необходимо использовать константы из dbms_sql
-    -- идентификатор типа varchar2
-    Varchar2_Type constant pls_integer := 1;
-    -- идентификатор типа number
-    Number_Type   constant pls_integer := 2;
-    -- идентификатор типа date
-    Date_Type     constant pls_integer := 12;
-    -- идентификатор типа varchar2
-    Char_Type constant pls_integer     := 96;
-    -- идентификатор типа clob
-    Clob_Type     constant pls_integer := 112;
-    -- идентификатор типа blob
-    Blob_Type     constant pls_integer := 113;
-    -- идентификатор типа timestamp with local time zone
-    TimestampLocalTz_Type constant pls_integer := 231;
-
     -- ссылка на основной курсор
     sourceRef sys_refcursor;
 
@@ -600,9 +584,9 @@ is
         columnList( columnList.count ).col_name := cols(i).col_name;
         columnList( columnList.count ).col_type :=
           case cols(i).col_type
-            when Varchar2_Type then
+            when dbms_sql.Varchar2_Type then
               'varchar2(' || coalesce( nullif( cols(i).col_max_len, 0 ), 1 ) || ')'
-            when Number_Type then
+            when dbms_sql.Number_Type then
               'number'
                 || case
                      when cols(i).col_precision > 0 then
@@ -610,16 +594,19 @@ is
                      else
                        null
                    end
-            when Date_Type then
+            when dbms_sql.Date_Type then
               'date'
-            when Char_Type then
+            when dbms_sql.Char_Type then
               'char(' || coalesce( nullif( cols(i).col_max_len, 0 ), 1 ) || ')'
-            when Clob_Type then
+            when dbms_sql.Clob_Type then
               'clob'
-            when Blob_Type then
+            when dbms_sql.Blob_Type then
               'blob'
-            when TimestampLocalTz_Type then
+            when dbms_sql.Timestamp_With_Local_TZ_type then
               'timestamp with local time zone'
+            when dbms_sql.Interval_Day_To_Second_Type then
+              'interval day(' || cols(i).col_precision || ')'
+                || ' to second(' || cols(i).col_scale || ')'
             else
               null
           end

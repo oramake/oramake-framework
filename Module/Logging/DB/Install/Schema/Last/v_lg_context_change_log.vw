@@ -12,27 +12,67 @@ select
   , lg.context_type_id
   , lg.context_value_id
   , lg.open_context_flag
-  , coalesce( cc1.open_log_id, cc2.open_log_id) as open_log_id
-  , coalesce( cc1.close_log_id, cc2.close_log_id) as close_log_id
-  , coalesce( cc1.open_log_time_utc, cc2.open_log_time_utc)
-    as open_log_time_utc
-  , coalesce( cc1.close_log_time_utc, cc2.close_log_time_utc)
+  , lg.open_context_log_id as open_log_id
+  , case when lg.open_context_flag in ( 0, -1) then
+      lg.log_id
+    else
+      cc.close_log_id
+    end
+    as close_log_id
+  , sys_extract_utc( lg.open_context_log_time) as open_log_time_utc
+  , case when lg.open_context_flag in ( 0, -1) then
+      sys_extract_utc( lg.log_time)
+    else
+      cc.close_log_time_utc
+    end
     as close_log_time_utc
-  , coalesce( cc1.open_context_level, cc2.open_context_level)
+  , case when lg.open_context_flag in ( 1, -1) then
+      lg.context_level
+    else
+      co.context_level
+    end
     as open_context_level
-  , coalesce( cc1.close_context_level, cc2.close_context_level)
+  , case when lg.open_context_flag in ( 0, -1) then
+      lg.context_level
+    else
+      cc.context_level
+    end
     as close_context_level
-  , coalesce( cc1.open_level_code, cc2.open_level_code)
+  , case when lg.open_context_flag in ( 1, -1) then
+      lg.level_code
+    else
+      co.level_code
+    end
     as open_level_code
-  , coalesce( cc1.open_message_value, cc2.open_message_value)
+  , case when lg.open_context_flag in ( 1, -1) then
+      lg.message_value
+    else
+      co.message_value
+    end
     as open_message_value
-  , coalesce( cc1.open_message_label, cc2.open_message_label)
+  , case when lg.open_context_flag in ( 1, -1) then
+      lg.message_label
+    else
+      co.message_label
+    end
     as open_message_label
-  , coalesce( cc1.close_level_code, cc2.close_level_code)
+  , case when lg.open_context_flag in ( 0, -1) then
+      lg.level_code
+    else
+      cc.level_code
+    end
     as close_level_code
-  , coalesce( cc1.close_message_value, cc2.close_message_value)
+  , case when lg.open_context_flag in ( 0, -1) then
+      lg.message_value
+    else
+      cc.message_value
+    end
     as close_message_value
-  , coalesce( cc1.close_message_label    , cc2.close_message_label)
+  , case when lg.open_context_flag in ( 0, -1) then
+      lg.message_label
+    else
+      cc.message_label
+    end
     as close_message_label
   , lg.level_code
   , lg.message_value
@@ -49,17 +89,118 @@ select
   , lg.operator_id
 from
   lg_log lg
-  left join v_lg_context_change cc1
-    on cc1.context_type_id = lg.context_type_id
-      and cc1.context_value_id = lg.context_value_id
-      and cc1.open_log_time_utc = sys_extract_utc( lg.open_context_log_time)
-      and cc1.open_log_id = lg.open_context_log_id
-  left join v_lg_context_change cc2
-    on cc2.context_type_id = lg.context_type_id
-      and cc2.context_value_id is null
-        and lg.context_value_id is null
-      and cc2.open_log_time_utc = sys_extract_utc( lg.open_context_log_time)
-      and cc2.open_log_id = lg.open_context_log_id
+  left join
+    (
+    select /*+ index( t lg_log_ix_context_change) */
+      t.context_type_id
+      , t.context_value_id
+      , sys_extract_utc( t.open_context_log_time) as open_context_log_time_utc
+      , t.open_context_log_id
+      , t.open_context_flag
+      , t.context_type_level
+      , case when t.context_type_id is not null then
+          t.sessionid
+        end
+        as sessionid
+      , case when t.context_type_id is not null then
+          t.level_code
+        end
+        as level_code
+      , case when t.context_type_id is not null then
+          t.message_value
+        end
+        as message_value
+      , case when t.context_type_id is not null then
+          t.message_label
+        end
+        as message_label
+      , case when t.context_type_id is not null then
+          t.context_level
+        end
+        as context_level
+      , case when t.open_context_flag = 0 then
+          t.log_id
+        end
+        as close_log_id
+      , sys_extract_utc(
+          case when t.open_context_flag = 0 then
+            t.log_time
+          end
+        )
+        as close_log_time_utc
+    from
+      lg_log t
+    where
+      t.context_type_id is not null
+    ) co
+    on co.context_type_id = lg.context_type_id
+      and (
+        lg.context_value_id is not null
+          and co.context_value_id = lg.context_value_id
+        or lg.context_value_id is null
+          and co.context_value_id is null
+      )
+      and co.open_context_log_time_utc
+        = sys_extract_utc( lg.open_context_log_time)
+      and co.open_context_log_id = lg.open_context_log_id
+      and co.open_context_flag = 1
+      and lg.open_context_flag = 0
+  left join
+    (
+    select /*+ index( t lg_log_ix_context_change) */
+      t.context_type_id
+      , t.context_value_id
+      , sys_extract_utc( t.open_context_log_time) as open_context_log_time_utc
+      , t.open_context_log_id
+      , t.open_context_flag
+      , t.context_type_level
+      , case when t.context_type_id is not null then
+          t.sessionid
+        end
+        as sessionid
+      , case when t.context_type_id is not null then
+          t.level_code
+        end
+        as level_code
+      , case when t.context_type_id is not null then
+          t.message_value
+        end
+        as message_value
+      , case when t.context_type_id is not null then
+          t.message_label
+        end
+        as message_label
+      , case when t.context_type_id is not null then
+          t.context_level
+        end
+        as context_level
+      , case when t.open_context_flag = 0 then
+          t.log_id
+        end
+        as close_log_id
+      , sys_extract_utc(
+          case when t.open_context_flag = 0 then
+            t.log_time
+          end
+        )
+        as close_log_time_utc
+    from
+      lg_log t
+    where
+      t.context_type_id is not null
+    ) cc
+    on cc.context_type_id = lg.context_type_id
+      and (
+        lg.context_value_id is not null
+          and cc.context_value_id = lg.context_value_id
+        or lg.context_value_id is null
+          and cc.context_value_id is null
+      )
+      and cc.open_context_log_time_utc
+        = sys_extract_utc( lg.open_context_log_time)
+      and cc.open_context_log_id = lg.open_context_log_id
+      and cc.open_context_flag = 0
+      and lg.open_context_flag in ( 1, -1)
 where
   lg.context_type_id is not null
 /

@@ -51,6 +51,7 @@ com.technology.oracle.scheduler.main.client
 com.technology.oracle.scheduler.main.client.entrance
 com.technology.oracle.scheduler.main.client.history.scope
 com.technology.oracle.scheduler.main.client.ui.form.list
+com.technology.oracle.scheduler.main.client.ui.main
 com.technology.oracle.scheduler.main.client.ui.module
 com.technology.oracle.scheduler.main.client.widget.list.cell
 com.technology.oracle.scheduler.main.server
