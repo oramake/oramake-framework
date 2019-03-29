@@ -10,7 +10,6 @@ group: 5.0.0 ( 2019-01-22)
 Difference from the previous versions:
 
 - you cannot activate batch if the session is still active;
-- after stopping
 
 
 

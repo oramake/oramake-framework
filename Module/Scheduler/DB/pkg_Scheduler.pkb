@@ -469,9 +469,28 @@ begin
     , job_action =>
 'pkg_Scheduler.execBatch(' || to_char(batchId)
 || ' /* batch: ' || rec.batch_short_name || ' */, next_date);'
-    , start_date => newDate
+--    , start_date => newDate
     , enabled => true
     , comments => 'Scheduler: ' || rec.batch_short_name
+    , repeat_interval => 'sysdate + 1000000'
+    );
+    dbms_scheduler.set_attribute(
+      name => oracleJobName
+    , attribute => 'RESTARTABLE'
+    , value => true
+    );
+    dbms_scheduler.set_attribute(
+      name => oracleJobName
+    , attribute => 'STOP_ON_WINDOW_CLOSE'
+    , value => false
+    );
+    dbms_scheduler.set_attribute_null(
+      name => oracleJobName
+    , attribute => 'MAX_FAILURES'
+    );
+    dbms_scheduler.set_attribute_null(
+      name => oracleJobName
+    , attribute => 'MAX_RUNS'
     );
     logger.trace('job created: ' || oracleJobName);
     rec.current_job_id := rec.batch_id;
@@ -500,7 +519,7 @@ begin
     dbms_scheduler.disable(name => oracleJobName);
     dbms_scheduler.set_attribute(
       name => oracleJobName
-    , attribute => 'start_date'
+    , attribute => 'START_DATE'
     , value => newDate
     );
     dbms_scheduler.enable(name => oracleJobName);
@@ -766,7 +785,7 @@ begin
     dbms_scheduler.disable(name => oracleJobName);
     dbms_scheduler.set_attribute(
       name      => oracleJobName
-    , attribute => 'start_date'
+    , attribute => 'START_DATE'
     , value     => nextDate
     );
     dbms_scheduler.enable(name => oracleJobName);
