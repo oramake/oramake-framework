@@ -318,7 +318,6 @@ is
           j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
         as next_date
-      , to_number(null) as is_job_broken
       , b.nls_territory
       , b.nls_language
     from
@@ -452,13 +451,6 @@ begin
     );
   end if;
   oracleJobName := getOracleJobName(batchId => rec.batch_id);
-  if rec.is_job_broken = 1 then
-    dbms_scheduler.drop_job(
-      job_name => oracleJobName
-    , defer    => true
-    );
-    rec.current_job_id := null;
-  end if;
   -- Добавляем новое задание Oracle
   if rec.current_job_id is null then
     logger.trace('create_job: ' || oracleJobName);
@@ -502,18 +494,11 @@ begin
     where current of curBatch
     ;
     rec.oracle_job_id := rec.current_job_id;
-    if rec.is_job_broken = 1 then
-      info := 'Восстановлено периодическое выполнение пакета ' || batchLogName
-        || ' ( дата запуска '
-          || to_char(newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
-        ;
-    else
-      info := 'Активирован пакет ' || batchLogName
-        || ' ( batch_id=' || rec.batch_id
-        || ', дата запуска '
-        || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
-        ;
-    end if;
+    info := 'Активирован пакет ' || batchLogName
+      || ' ( batch_id=' || rec.batch_id
+      || ', дата запуска '
+      || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
+      ;
   -- Устанавливаем новую дату запуска
   elsif newDate != rec.next_date then
     dbms_scheduler.disable(name => oracleJobName);
@@ -988,7 +973,7 @@ end abortBatch;
   last_date                   - дата последнего запуска
   this_date                   - дата текущего запуска
   next_date                   - дата следующего запуска
-  total_time                  - суммарное время выполнения
+  total_time                  - суммарное время выполнения (устаревшее поле)
   failures                    - число последних последовательных ошибок при
                                 запуске через dbms_scheduler
   is_job_broken               - признак отключенного задания (устаревшее поле)
@@ -1055,9 +1040,9 @@ from
     , vb.last_date
     , vb.this_date
     , vb.next_date
-    , vb.total_time
+    , cast(null as integer) as vb.total_time
     , vb.failures
-    , vb.is_job_broken
+    , cast(null as integer) as is_job_broken
     , vb.root_log_id
     , vb.last_start_date
     , vb.last_log_date

@@ -28,9 +28,7 @@ select
   , d.last_date
   , d.this_date
   , d.next_date
-  , d.total_time
   , d.failures
-  , d.is_job_broken
   , d.sid
   , d.serial#
   , d.log_data.root_log_id as root_log_id
@@ -40,14 +38,15 @@ select
   , d.log_data.error_job_count as error_job_count
   , d.log_data.error_count as error_count
   , d.log_data.warning_count as warning_count
-  , (
-      case when d.sid is not null then
-        sysdate - d.this_date
-      else
-        d.log_data.max_log_date - d.log_data.min_log_date
-      end
-    ) * 86400
-    as duration_second
+  , case when d.sid is not null then
+      extract( SECOND   from d.elapsed_time)
+      + extract( MINUTE from d.elapsed_time) * 60
+      + extract( HOUR   from d.elapsed_time) * 60 * 60
+      + extract( DAY    from d.elapsed_time) * 60 * 60 * 24
+    else
+      (d.log_data.max_log_date - d.log_data.min_log_date)
+      * 86400
+    end as duration_second
 from
   (
   select
@@ -59,24 +58,24 @@ from
       b.*
       , to_char(b.batch_id) as job
       , j.last_start_date as last_date
-      , to_date(null) as this_date
+      , systimestamp - ss.elapsed_time as this_date
+      , ss.elapsed_time
       , j.next_run_date as next_date
-      , null as total_time
       , j.failure_count as failures
-      , null as is_job_broken
       , ss.sid as sid
       , ss.serial# as serial#
     from
       sch_batch b
       left outer join user_scheduler_jobs j
         -- pkg_Scheduler.getOracleJobName
-        on j.job_name = 'SCHEDULER:' || to_char(batch_id)
+        on j.job_name = 'SCHEDULER_' || to_char(batch_id)
       left outer join
         (
         select /*+ordered*/
           jr.job_name
           , ss.sid
           , ss.serial#
+          , jr.elapsed_time
         from
           user_scheduler_running_jobs jr
           inner join v$session ss
@@ -142,13 +141,8 @@ comment on column v_sch_batch.this_date is 'ƒата текущего запуска задани€ Oracle
 comment on column v_sch_batch.next_date is 'ƒата следующего запуска задани€ Oracle'
 /
 
-comment on column v_sch_batch.total_time is '—уммарное врем€ выполнени€ задани€ Oracle (в секундах)'
-/
 
 comment on column v_sch_batch.failures is '„исло неудачных попыток запуска задани€ Oracle'
-/
-
-comment on column v_sch_batch.is_job_broken is '‘лаг того, что назначенное задание Oracle неработоспособно или не существует (1 или null)'
 /
 
 comment on column v_sch_batch.root_log_id is 'ID корневого сообщени€ лога дл€ последнего запуска пакета'
