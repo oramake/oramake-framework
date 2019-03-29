@@ -334,7 +334,9 @@ declare
     end if;
     execute immediate '
 begin
-  :installFileId := pkg_ModuleInstall.StartInstallNestedFile(
+  :installFileId := ' 
+  || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  ||' pkg_ModuleInstall.StartInstallNestedFile(
     filePath                    => :scriptSourceFile
     , fileModuleSvnRoot         => :fileModuleSvnRoot
     , fileModuleInitialSvnPath  => :fileModuleInitialSvnPath
@@ -432,7 +434,9 @@ declare
   begin
     execute immediate '
 begin
-  pkg_ModuleInstall.FinishInstallNestedFile;
+  '
+  || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  || 'pkg_ModuleInstall.FinishInstallNestedFile;
 end;
 '
     ;

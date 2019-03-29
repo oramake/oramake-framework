@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 25461251 $
-# $Date:: 2018-05-30 13:11:25 +0300 #$
+# $Revision:: 25842605 $
+# $Date:: 2019-02-19 09:05:41 +0300 #$
 #
 
 
@@ -278,12 +278,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 25461251 $$
+omsRevisionKeyword    := \$$Revision:: 25842605 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2018-05-30 13:11:25 +0300 #$$
+omsChangeDateKeyword  := \$$Date:: 2019-02-19 09:05:41 +0300 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -559,6 +559,7 @@ runFunction  = \
 			$(if $(subst 0,,$(UPDATE_SCHEDULE)), --update-schedule,) \
 			--userid "$${loadUserId:-$$loadUser}" \
 			--operatorid "$$loadOperatorId" \
+			$(if $(COMMON_SCHEMA),--common-schema $(COMMON_SCHEMA)) \
 			--log-path-prefix "$(loadLogDir)/$$loadUser" \
 			"$$loadFile" $(getLoadArgument); \
 		} $(copyToLoadLogCmd); \
@@ -1131,6 +1132,9 @@ load-start-log.oms:
 			&& echo "INSTALL_VERSION     : $(INSTALL_VERSION)" \
 			&& echo "loadUserList        :$(loadUserList)" \
 			&& echo "loadOperator        : $(loadOperatorName)" \
+			&& if [[ -n "$(COMMON_SCHEMA)" ]]; then \
+			   echo "COMMON_SCHEMA       : $(COMMON_SCHEMA)"; \
+			   fi \
 			&& if [[ -n "$(grantGoals)" ]]; then \
 			   echo "GRANT_SCRIPT        : $(GRANT_SCRIPT)" \
 			&& echo "TO_USERNAME         : $(TO_USERNAME)"; \
@@ -1616,6 +1620,14 @@ uninstall-after.oms: \
 
 
 
+# target: uninstall-clean.oms
+# Удаляет временные файлы, созданные при загрузке в БД.
+
+uninstall-clean.oms: 
+  -@rm -rf $(loadDir)/State/*
+
+
+
 # target: uninstall-save-info.oms
 # Сохраняет в БД информацию об отмене установки модуля.
 
@@ -1642,6 +1654,7 @@ uninstall.oms:                            \
     uninstall-load.oms                    \
     uninstall-data.oms                    \
     uninstall-after.oms                   \
+    uninstall-clean.oms                   \
     $(call getSaveInfoGoal,uninstall)     \
 
 	@echo -e "\nuninstall: finished" $(toLoadLogCmd)

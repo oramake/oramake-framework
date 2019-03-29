@@ -67,6 +67,8 @@
 #                                 из переменной окружения OMS_MODULE_VERSION)
 #       --operatorid STR        - задает оператора для регистрации после
 #                                 подключения ( формат: operatorName[/passwd])
+#       --common-schema         - наименование схемы БД, в которой размещены
+#                                 общие модули.                          
 #       --plsql-warnings  STR   - задаёт параметр Oracle сессии PLSQL_WARNINGS
 #                                 ( уровень предупреждений компилятора PLSQL,
 #                                 по-умолчанию из переменной окрузения
@@ -215,15 +217,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.1.0
+OMS_VERSION=2.2.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25461251 $'
+fileRevisionValue='$Revision:: 25842605 $'
 
 # var: fileChangeDate
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2018-05-30 13:11:25 +0300 #$'
+fileChangeDateValue='$Date:: 2019-02-19 09:05:41 +0300 #$'
 
 
 
@@ -253,7 +255,7 @@ declare
 begin
   execute immediate '
 begin
-  :userName := pkg_Operator.Login(
+  :userName := \$(commonSchema)pkg_Operator.Login(
     operatorLogin => :operatorName
     , password    => :operatorPassword
   );
@@ -368,6 +370,10 @@ operatorName=""
 # var: operatorPassword
 # Пароль оператора ( определяется по <operatorId>).
 operatorPassword=""
+
+# var: commonSchema
+# Наименование схемы БД, в которой размещены общие модули.
+commonSchema=""
 
 # var: fileMask
 # Список масок скриптов для выполнения при загрузке через SQL*Plus
@@ -528,6 +534,8 @@ Options:
   --module-version STR            current module version
   --operatorid STR                operator for registration
                                   ( operatorName[/passwd])
+  --common-schema STR             Database scheme of common modules 
+                                  (AccessOperator, ModuleInfo, etc)
   --plsql-warnings STR            PLSQL_WARNINGS compilation Oracle parameter
   --process-id N                  main host process ID
   --process-start-time STR        main host process start time
@@ -610,6 +618,10 @@ parseOption()
       --operatorid)
         operatorId="$2"; shift;
         logDebug3 "Set operatorId: '$operatorId'"
+        ;;
+      --common-schema)
+        commonSchema="$2"; shift;
+        logDebug3 "Set commonSchema: '$commonSchema'"
         ;;
       --plsql-warnings)
         plsqlWarnings="$2"; shift;
@@ -1071,6 +1083,11 @@ outSqlCommon()
     loginString="$operatorLoginScript";
     loginString="${loginString//\$(operatorName)/$operatorName}"
     loginString="${loginString//\$(operatorPassword)/$operatorPassword}"
+    if [[ -n "$commonSchema" ]]; then
+      loginString="${loginString//\$(commonSchema)/$commonSchema.}"
+    else
+      loginString="${loginString//\$(commonSchema)/$space}"
+    fi
     echo "$loginString"
   fi
   # Путь к каталогу с собственными SQL-скриптами ( mixed-формат)
@@ -1122,6 +1139,7 @@ begin
   :oms_run_file_stack             := '$loadFileMixed';
   :oms_file_mask                  := '$fileMask';
   :oms_skip_file_mask             := '$skipFileMask';
+  :oms_common_schema              := '$commonSchema';
 end;
 /
 "

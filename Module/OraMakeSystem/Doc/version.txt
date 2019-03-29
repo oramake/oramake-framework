@@ -2,10 +2,14 @@ title: Версии
 
 
 
-group: ?.?.? ( ????-??-??)
+group: 2.2.0 ( 2019-02-06)
 
 [+] Add dropjava support. Use consequently current user, public and "-" for
     resolver in loadjava.
+
+[+] Add COMMON_SCHENA option.
+
+[+] Add clean operation into uninstall target.
 
 
 

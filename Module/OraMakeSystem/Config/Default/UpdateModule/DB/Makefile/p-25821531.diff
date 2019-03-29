@@ -1,0 +1,18 @@
+Index: Data/NewModule/DB/Makefile
+===================================================================
+--- Data/NewModule/DB/Makefile	(revision 3473)
++++ Data/NewModule/DB/Makefile	(working copy)
+@@ -304,8 +304,13 @@
+ # ( если есть).
+ LOAD_OPERATORID := $(ORACLE_OPERATOR)
+ 
++# build var: COMMON_SCHEMA
++# Наименование схемы БД, в которой размещены общие модули.
++# (AccessOperator, ModuleInfo, etc)
++COMMON_SCHEMA := 
+ 
+ 
++
+ # build var: LOCAL_DB_DIR
+ # Имя подкаталога для загрузки локальных скриптов, относящихся к определенной
+ # БД.

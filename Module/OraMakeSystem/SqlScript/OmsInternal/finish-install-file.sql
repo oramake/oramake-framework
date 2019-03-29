@@ -18,7 +18,8 @@ set feedback off
 begin
   execute immediate '
 begin
-  pkg_ModuleInstall.FinishInstallFile;
+' || case when :oms_common_schema is not null then :oms_common_schema || '.' end
+  || 'pkg_ModuleInstall.FinishInstallFile;
 end;
 '
   ;
