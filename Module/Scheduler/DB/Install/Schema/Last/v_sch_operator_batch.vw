@@ -23,9 +23,9 @@ select
   , d.last_date
   , d.this_date
   , d.next_date
-  , d.total_time
+  , to_number(null) as total_time
   , d.failures
-  , d.is_job_broken
+  , to_number(null) as is_job_broken
   , d.sid
   , d.serial#
   , d.root_log_id
