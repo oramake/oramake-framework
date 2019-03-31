@@ -461,7 +461,7 @@ begin
     , job_action =>
 'pkg_Scheduler.execBatch(' || to_char(batchId)
 || ' /* batch: ' || rec.batch_short_name || ' */, next_date);'
---    , start_date => newDate
+    , start_date => newDate
     , enabled => true
     , comments => 'Scheduler: ' || rec.batch_short_name
     , repeat_interval => 'sysdate + 1000000'
