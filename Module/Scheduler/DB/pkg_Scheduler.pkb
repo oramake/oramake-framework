@@ -1030,7 +1030,7 @@ from
     , vb.module_id
     , md.module_name
     , vb.retrial_count
-    , to_char( vb.retrial_timeout) as retrial_timeout
+    , to_char(vb.retrial_timeout) as retrial_timeout
     , vb.oracle_job_id
     , vb.retrial_number
     , vb.date_ins
@@ -1040,7 +1040,7 @@ from
     , vb.last_date
     , vb.this_date
     , vb.next_date
-    , cast(null as integer) as vb.total_time
+    , cast(null as integer) as total_time
     , vb.failures
     , cast(null as integer) as is_job_broken
     , vb.root_log_id
