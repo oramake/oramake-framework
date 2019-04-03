@@ -890,20 +890,20 @@ begin
         'Начало прерывания выполнение пакета ' || batchLogName
         || ', сессия sid=' || rec.sid || ', serial#=' || rec.serial# || '.'
     , messageLabel          => pkg_SchedulerMain.Abort_BatchMsgLabel
-    , messageValue          => rec.sid
+    , messageValue          => rec.sessionid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 1
   );
   isStarted := true;
+  deactivateBatch(batchId, operatorId);
+  activateBatch(batchId, operatorId);
+  commit;
   execute immediate
     'alter system kill session '''
       || rec.sid || ',' || rec.serial#
       || ''' immediate'
   ;
-  deactivateBatch(batchId, operatorId);
-  activateBatch(batchId, operatorId);
-  commit;
   close curBatch;
   logger.info(
     messageText             => 'Выполнение сессии прервано.'
