@@ -31,6 +31,7 @@ select
   , d.failures
   , d.sid
   , d.serial#
+  , d.session_status
   , d.log_data.root_log_id as root_log_id
   , d.log_data.min_log_date as last_start_date
   , d.log_data.max_log_date as last_log_date
@@ -64,6 +65,7 @@ from
       , j.failure_count as failures
       , ss.sid as sid
       , ss.serial# as serial#
+      , ss.session_status
     from
       sch_batch b
       left outer join user_scheduler_jobs j
@@ -73,9 +75,10 @@ from
         (
         select /*+ordered*/
           jr.job_name
+          , jr.elapsed_time
           , ss.sid
           , ss.serial#
-          , jr.elapsed_time
+          , ss.status as session_status
         from
           user_scheduler_running_jobs jr
           inner join v$session ss
@@ -141,8 +144,11 @@ comment on column v_sch_batch.this_date is 'Дата текущего запуска задания Oracle
 comment on column v_sch_batch.next_date is 'Дата следующего запуска задания Oracle'
 /
 
-
 comment on column v_sch_batch.failures is 'Число неудачных попыток запуска задания Oracle'
+/
+
+comment on column v_sch_batch.session_status is
+  'Статус сессии выполнения батча'
 /
 
 comment on column v_sch_batch.root_log_id is 'ID корневого сообщения лога для последнего запуска пакета'
