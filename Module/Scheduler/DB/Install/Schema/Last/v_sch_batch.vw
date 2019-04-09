@@ -24,7 +24,6 @@ select
   , d.retrial_number
   , d.date_ins
   , d.operator_id
-  , d.job
   , d.last_date
   , d.this_date
   , d.next_date
@@ -130,9 +129,6 @@ comment on column v_sch_batch.date_ins is 'ƒата создани€ пакета'
 /
 
 comment on column v_sch_batch.operator_id is 'ID оператора, создавшего пакет'
-/
-
-comment on column v_sch_batch.job is 'ID существующего задани€ Oracle (dba_jobs.job), используемого дл€ выполнени€ пакета'
 /
 
 comment on column v_sch_batch.last_date is 'ƒата предыдущего запуска задани€ Oracle'

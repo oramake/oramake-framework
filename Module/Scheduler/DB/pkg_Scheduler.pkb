@@ -896,8 +896,12 @@ begin
     , openContextFlag       => 1
   );
   isStarted := true;
-  deactivateBatch(batchId, operatorId);
-  activateBatch(batchId, operatorId);
+  -- Устанавливаем дату запуска
+  dbms_scheduler.set_attribute(
+    name      => getOracleJobName(batchId => batchId)
+  , attribute => 'START_DATE'
+  , value     => calcNextDate(batchId)
+  );
   commit;
   execute immediate
     'alter system kill session '''
@@ -1036,7 +1040,7 @@ from
     , vb.date_ins
     , vb.operator_id
     , op.operator_name
-    , vb.job
+    , vb.oracle_job_id as job
     , vb.last_date
     , vb.this_date
     , vb.next_date
