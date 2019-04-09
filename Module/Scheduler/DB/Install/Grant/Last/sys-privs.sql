@@ -8,8 +8,6 @@ define userName = "&1"
 
 
 
-grant scheduler_admin to &userName
-/
 grant create job to &userName
 /
 
