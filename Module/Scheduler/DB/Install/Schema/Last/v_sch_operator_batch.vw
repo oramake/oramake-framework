@@ -19,7 +19,6 @@ select
   , d.retrial_number
   , d.date_ins
   , d.operator_id
-  , d.job
   , d.last_date
   , d.this_date
   , d.next_date
