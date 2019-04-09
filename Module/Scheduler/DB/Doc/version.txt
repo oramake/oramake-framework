@@ -11,6 +11,8 @@ Difference from the previous versions:
 
 - you cannot activate batch if the session is still active;
 
+- after aborting batch it needs deactivation;
+
 
 
 group: 4.6.0 ( 2018-10-29)
