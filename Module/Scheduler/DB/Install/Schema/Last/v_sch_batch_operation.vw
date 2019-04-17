@@ -1,6 +1,5 @@
 -- view: v_sch_batch_operation
--- ќперации по управлению и выполнению пакетных заданий (по данным
--- лога, созданным после обновлени€ модул€ Scheduler до версии 4.6.0).
+-- ќперации по управлению и выполнению пакетных заданий.
 --
 create or replace force view
   v_sch_batch_operation
@@ -35,6 +34,22 @@ select
   , cc.sessionid
   , cc.close_log_id as finish_log_id
   , case when
+      cc.close_level_code != 'ERROR'
+    then
+      case when
+        cc.open_message_label in (
+          'ACTIVATE_ALL'      -- pkg_SchedulerMain.ActivateAll_BatchMsgLabel
+          , 'DEACTIVATE_ALL'  -- pkg_SchedulerMain.DeactivateAll_BatchMsgLabel
+        )
+        -- pkg_Logging.Info_LevelCode
+      then
+        cc.close_message_value
+      else
+        1
+      end
+    end
+    as processed_count
+  , case when
       -- pkg_SchedulerMain.Exec_BatchMsgLabel
       cc.open_message_label = 'EXEC'
       -- pkg_Logging.Info_LevelCode
@@ -43,6 +58,7 @@ select
       cc.close_message_value
     end
     as result_id
+  , cc.context_type_id as batch_context_type_id
 from
   v_lg_context_change cc
 where
@@ -65,7 +81,7 @@ where
 
 
 comment on table v_sch_batch_operation is
-  'ќперации по управлению и выполнению пакетных заданий (по данным лога, созданным после обновлени€ модул€ Scheduler до версии 4.6.0) [SVN root: Oracle/Module/Scheduler]'
+  'ќперации по управлению и выполнению пакетных заданий [SVN root: Oracle/Module/Scheduler]'
 /
 comment on column v_sch_batch_operation.start_log_id is
   'Id записи лога начала выполнени€ операции'
@@ -74,7 +90,7 @@ comment on column v_sch_batch_operation.batch_id is
   'Id пакетного задани€'
 /
 comment on column v_sch_batch_operation.batch_operation_label is
-  'ћетка операции ("ABORT" - ѕрерывание выполнени€; "ACTIVATE" - јктиваци€; "DEACTIVATE" - ƒеактиваци€; "EXEC" - ¬ыполнение; "SET_NEXT_DATE" - ”становка даты следующего запуска; "STOP_HANDLER" - ќтправка команды остановки обработчика)'
+  'ћетка операции ("ABORT" - ѕрерывание выполнени€; "ACTIVATE" - јктиваци€; "ACTIVATE_ALL" - ћассова€ активаци€; "DEACTIVATE" - ƒеактиваци€; "DEACTIVATE_ALL" - ћассова€ деактиваци€; "EXEC" - ¬ыполнение; "SET_NEXT_DATE" - ”становка даты следующего запуска; "STOP_HANDLER" - ќтправка команды остановки обработчика)'
 /
 comment on column v_sch_batch_operation.batch_sessionid is
   '»дентификатор сессии пакетного задани€, с которой св€зана операци€ (значение v$session.audsid)'
@@ -94,6 +110,13 @@ comment on column v_sch_batch_operation.sessionid is
 comment on column v_sch_batch_operation.finish_log_id is
   'Id записи лога завершени€ выполнени€ операции'
 /
+comment on column v_sch_batch_operation.processed_count is
+  '„исло обработанных пакетных заданий (null в случае ошибки при выполнении)'
+/
 comment on column v_sch_batch_operation.result_id is
   'Id результата выполнени€ пакетного задани€ (в случае операции по выполнению пакетного задани€)'
 /
+comment on column v_sch_batch_operation.batch_context_type_id is
+  'Id типа контекста выполнени€ дл€ логировани€ операций над пакетными задани€ми (одинаковое значение дл€ всех записей представлени€, добавлено дл€ дальнейшего использовани€ в выборках)'
+/
+

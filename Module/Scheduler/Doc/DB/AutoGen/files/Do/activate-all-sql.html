@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Do/activate-all.sql"></a>Do/<wbr>activate-all.sql</h1><div class=CBody><p>Активирует пакеты все пакеты, остановленные deactivate-all.sql usedDayCount                - только пакеты, которые останавливались deactivate-all.sql в последние usedDayCount дней ( 0 текущий день, по умолчанию null ( без ограничения ) )</p></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Do/activate-all.sql"></a>Do/<wbr>activate-all.sql</h1><div class=CBody><p>Активирует пакетные задания.</p><h4 class=CHeading>Параметры</h4><table border=0 cellspacing=0 cellpadding=0 class=CDescriptionList><tr><td class=CDLEntry>usedDayCount</td><td class=CDLDescription>только пакеты, которые останавливались скриптом <a href="deactivate-all-sql.html#Do/deactivate-all.sql" class=LFile id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">Do/deactivate-all.sql</a> в последние usedDayCount дней (0 текущий день, null без ограничения (по умолчанию))</td></tr></table></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([13, 30], 35);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CFile>Деактивирует все активные батчи и записывает сообщение об остановке в лог.</div></div><!--END_ND_TOOLTIPS-->
 
 
 

@@ -18,7 +18,9 @@ begin
 'Операции над пакетным заданием, в context_value_id указывается Id пакетного задания (значение поля batch_id из таблицы sch_batch), в message_label указывается вид операции:
 "' || pkg_SchedulerMain.Abort_BatchMsgLabel || '" - Прерывание выполнения;
 "' || pkg_SchedulerMain.Activate_BatchMsgLabel || '" - Активация;
+"' || pkg_SchedulerMain.ActivateAll_BatchMsgLabel || '" - Массовая активация;
 "' || pkg_SchedulerMain.Deactivate_BatchMsgLabel || '" - Деактивация;
+"' || pkg_SchedulerMain.DeactivateAll_BatchMsgLabel || '" - Массовая деактивация;
 "' || pkg_SchedulerMain.Exec_BatchMsgLabel || '" - Выполнение;
 "' || pkg_SchedulerMain.SetNextDate_BatchMsgLabel || '" - Установка даты следующего запуска;
 "' || pkg_SchedulerMain.StopHandler_BatchMsgLabel || '" - Отправка команды остановки обработчика;

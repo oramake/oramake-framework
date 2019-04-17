@@ -1,68 +1,136 @@
---script: Do/activate-all.sql
---јктивирует пакеты все пакеты, остановленные deactivate-all.sql
---usedDayCount                - только пакеты, которые останавливались deactivate-all.sql
---					  в последние usedDayCount дней
---                              ( 0 текущий день, по умолчанию null ( без
---                              ограничени€ ) )
+-- script: Do/activate-all.sql
+-- јктивирует пакетные задани€.
+--
+-- ѕараметры:
+-- usedDayCount               - только пакеты, которые останавливались
+--                              скриптом <Do/deactivate-all.sql> в последние
+--                              usedDayCount дней
+--                              (0 текущий день, null без ограничени€
+--                                (по умолчанию))
+--
 
 
 declare
 
-  Message varchar2( 100 ) := 'ќстановка всех батчей';
+  usedDayCount number := to_number( '&1');
+
+  -- Ћогер скрипта
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => pkg_Scheduler.Module_Name
+    , objectName  => 'Do/activate-all.sql'
+  );
 
   cursor curBatch is
     select
       b.batch_id
+      , b.batch_name_rus
       , b.batch_short_name
+      , b.oracle_job_id
+      , b.next_date
     from
-      sch_batch b
-    where
-      (
-           case when &usedDayCount is not null then
-            (
-            select
-              max( brl.date_ins)
-            from
-              v_sch_batch_root_log brl
-            where
-              brl.batch_id = b.batch_id
-              and brl.message_type_code in (
-                  pkg_Scheduler.BManage_MessageTypeCode
-                )
-		  and brl.message_text = message
+      v_sch_batch b
+      left join
+        (
+        select distinct
+          lg.context_value_id as batch_id
+        from
+          v_sch_batch_operation bo
+          inner join lg_log lg
+            on lg.sessionid = bo.sessionid
+              and lg.log_id between bo.start_log_id and bo.finish_log_id
+              and lg.context_type_id = bo.batch_context_type_id
+              and lg.context_type_level = bo.execution_level + 1
+              and lg.message_label
+                = pkg_SchedulerMain.Deactivate_BatchMsgLabel
+              and lg.context_value_id is not null
+        where
+          bo.batch_id is null
+          and bo.batch_operation_label
+            = pkg_SchedulerMain.DeactivateAll_BatchMsgLabel
+          and bo.processed_count > 0
+          and bo.start_time_utc >=
+            sys_extract_utc(
+              to_timestamp_tz(
+                to_char( systimestamp, 'dd.mm.yyyy tzh:tzm')
+                , 'dd.mm.yyyy tzh:tzm'
+              )
+              - numtodsinterval( usedDayCount, 'DAY')
             )
-            + &usedDayCount
-          else
-            sysdate
-          end
-          >= trunc( sysdate)
-      )
+        ) d
+        on d.batch_id = b.batch_id
+    where
+      (usedDayCount is null or d.batch_id is not null)
     order by
       b.batch_short_name
-  ;  
-  
+  ;
+
+  -- Id оператора, от имени которого выполн€етс€ операци€
+  operatorId integer;
+
+  nChecked integer := 0;
+
   nDone integer := 0;
 
-
 begin
-  for rec in curBatch loop
-    pkg_Scheduler.ActivateBatch( 
-      batchID => rec.batch_id
-      , operatorID => pkg_Operator.GetCurrentUserID()
+  operatorId := pkg_Operator.getCurrentUserId();
+
+  logger.info(
+    'Ќачало массовой активации пакетных заданий ('
+      || 'usedDayCount=' || usedDayCount
+      || ') ...'
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , messageLabel          => pkg_SchedulerMain.ActivateAll_BatchMsgLabel
+    , openContextFlag       => 1
+  );
+  begin
+    for rec in curBatch loop
+      nChecked := nChecked + 1;
+      if rec.oracle_job_id is null then
+        pkg_Scheduler.activateBatch(
+          batchId       => rec.batch_id
+          , operatorId  => operatorId
+        );
+        nDone := nDone + 1;
+      else
+        logger.info(
+          'ѕакетное задание уже было активировано: "'
+          || rec.batch_name_rus || '" [' || rec.batch_short_name ||  ']'
+          || ' ( batch_id=' || rec.batch_id
+          || ', дата запуска '
+            || to_char( rec.next_date, 'dd.mm.yyyy hh24:mi:ss')
+          || ').'
+        );
+      end if;
+    end loop;
+    if nChecked = 0 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Ќе найдены пакетные задани€ дл€ активации ('
+          || ' usedDayCount=' || usedDayCount
+          || ').'
+      );
+    end if;
+    commit;
+    logger.info(
+      'јктивировано пакетных заданий: ' || nDone
+      , messageValue          => nDone
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
     );
-    dbms_output.put_line( 
-      rpad( rec.batch_short_name, 30)
-      || ' ( batch_id =' || lpad( rec.batch_id, 3)
-      || ')   - activated');
-    nDone := nDone + 1;
-  end loop;
-  if nDone = 0 then
-    raise_application_error( 
-      pkg_Error.IllegalArgument
-      , 'Ќе найдены пакеты дл€ активации.'
+  exception when others then
+    logger.error(
+      'ќшибка при массовой активации пакетных заданий:'
+        || chr(10) || logger.getErrorStack()
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
     );
-  end if;
-  commit;
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'ќшибка при массовой активации пакетных заданий.'
+        )
+      , true
+    );
+  end;
 end;
 /
-

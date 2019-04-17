@@ -78,6 +78,20 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 5.1.0
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=5.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 5.0.0
 (<Версии::5.0.0 ( 2019-01-22)>)
 
