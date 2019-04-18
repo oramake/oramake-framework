@@ -163,6 +163,11 @@ Group: Скрипты  {
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
+         Group: 5.0.0  {
+
+            File: sys-privs  (no auto-title, Install/Grant/5.0.0/sys-privs.sql)
+            }  # Group: 5.0.0
+
          }  # Group: Grant
 
       Group: Schema  {
