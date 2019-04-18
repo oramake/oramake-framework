@@ -890,20 +890,24 @@ begin
         'Начало прерывания выполнение пакета ' || batchLogName
         || ', сессия sid=' || rec.sid || ', serial#=' || rec.serial# || '.'
     , messageLabel          => pkg_SchedulerMain.Abort_BatchMsgLabel
-    , messageValue          => rec.sid
+    , messageValue          => rec.sessionid
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
     , openContextFlag       => 1
   );
   isStarted := true;
+  -- Устанавливаем дату запуска
+  dbms_scheduler.set_attribute(
+    name      => getOracleJobName(batchId => batchId)
+  , attribute => 'START_DATE'
+  , value     => calcNextDate(batchId)
+  );
+  commit;
   execute immediate
     'alter system kill session '''
       || rec.sid || ',' || rec.serial#
       || ''' immediate'
   ;
-  deactivateBatch(batchId, operatorId);
-  activateBatch(batchId, operatorId);
-  commit;
   close curBatch;
   logger.info(
     messageText             => 'Выполнение сессии прервано.'
@@ -1036,7 +1040,7 @@ from
     , vb.date_ins
     , vb.operator_id
     , op.operator_name
-    , vb.job
+    , vb.oracle_job_id as job
     , vb.last_date
     , vb.this_date
     , vb.next_date
