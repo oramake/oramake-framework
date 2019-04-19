@@ -602,6 +602,10 @@ is
               'clob'
             when dbms_sql.Blob_Type then
               'blob'
+            when dbms_sql.Timestamp_Type then
+              'timestamp'
+            when dbms_sql.Timestamp_With_TZ_Type then
+              'timestamp with time zone'
             when dbms_sql.Timestamp_With_Local_TZ_type then
               'timestamp with local time zone'
             when dbms_sql.Interval_Day_To_Second_Type then
