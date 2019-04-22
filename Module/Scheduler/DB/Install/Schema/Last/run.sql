@@ -53,9 +53,3 @@
 @oms-run sch_module_role_privilege_seq.sqs
 @oms-run sch_result_seq.sqs
 @oms-run sch_schedule_seq.sqs
-
-
-
--- Синоним и индекс
-
-@oms-run sch_log.sql

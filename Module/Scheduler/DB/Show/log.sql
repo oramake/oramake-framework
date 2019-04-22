@@ -11,7 +11,7 @@
 --                              задания
 --
 -- Замечания:
--- - если значение параметра (без учета пробелов) начинается с цифры, то
+-- - если значение параметра (без учета пробелов) состоит из цифр, то
 --  оно рассматривается как startLogId, иначе как batchPattern;
 -- - в случае, если под batchPattern подходит несколько пакетных заданий,
 --  то выбирается задание с минимальным batch_id;
@@ -25,7 +25,7 @@ declare
   paramStr varchar2(255) := trim( '&1');
   paramNum integer;
 begin
-  if substr( paramStr, 1, 1) between '0' and '9' then
+  if paramStr is not null and ltrim( paramStr, '0123456789') is null then
     paramNum := to_number( paramStr);
     select
       min( ccl.log_id)
@@ -122,7 +122,7 @@ select
     -- исключаем ошибку из-за строки длиной больше 4000 символов
     || substr( lg.message_text, 1, 4000 - (lg.message_level - 1) * 2)
     as message_text_
-  , lg.message_code
+  , lg.level_code
   , lg.message_value
   , lg.context_value_id
   , lg.date_ins
@@ -134,7 +134,6 @@ from
     , 1 + ( lg.context_level - ccl.open_context_level)
       + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
       as message_level
-    , lg.level_code as message_code
   from
     v_lg_context_change_log ccl
     inner join lg_log lg
@@ -143,18 +142,6 @@ from
         and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
   where
     ccl.log_id = :startLogId
-  union all
-  select
-    lg.*
-    , LEVEL as message_level
-    , lg.message_type_code as message_code
-  from
-    lg_log lg
-  start with
-    lg.log_id = :startLogId
-    and lg.message_type_code in ( 'BSTART', 'BMANAGE')
-  connect by
-    prior lg.log_id = lg.parent_log_id
   ) lg
 order by
   lg.log_id

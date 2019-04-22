@@ -50,24 +50,4 @@ for
 /
 
 
-prompt grant select on v_sch_batch_root_log to &toUserName
-
-grant
-  select
-on
-  v_sch_batch_root_log
-to
-  &toUserName
-/
-
-
-prompt create synonym &toUserName..v_sch_batch_root_log for v_sch_batch_root_log
-
-create or replace synonym
-  &toUserName..v_sch_batch_root_log
-for
-  v_sch_batch_root_log
-/
-
-
 undefine toUserName

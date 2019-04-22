@@ -93,7 +93,7 @@ begin
         nDone := nDone + 1;
       else
         logger.info(
-          'Пакетное задание уже было активировано: "'
+          'Пакет уже был активирован: "'
           || rec.batch_name_rus || '" [' || rec.batch_short_name ||  ']'
           || ' ( batch_id=' || rec.batch_id
           || ', дата запуска '

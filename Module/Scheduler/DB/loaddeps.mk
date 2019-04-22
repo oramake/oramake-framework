@@ -54,7 +54,6 @@ pkg_SchedulerMain.pks.$(lu): \
 pkg_SchedulerMain.pkb.$(lu): \
   pkg_SchedulerMain.pks.$(lu) \
   Install/Schema/Last/v_sch_batch_operation.vw.$(lu) \
-  Install/Schema/Last/v_sch_batch_root_log_old.vw.$(lu) \
 
 
 pkg_SchedulerLoad.pkb.$(lu): \
@@ -68,18 +67,7 @@ sch_batch_option_t.tyb.$(lu): \
   pkg_SchedulerMain.pks.$(lu) \
 
 
-Install/Schema/Last/v_sch_batch_result.vw.$(lu): \
-  Install/Schema/Last/v_sch_batch_operation.vw.$(lu) \
-  Install/Schema/Last/v_sch_batch_root_log_old.vw.$(lu) \
-
-
-Install/Schema/Last/v_sch_batch_root_log.vw.$(lu): \
-  Install/Schema/Last/v_sch_batch_operation.vw.$(lu) \
-  Install/Schema/Last/v_sch_batch_root_log_old.vw.$(lu) \
-
-
 Install/Schema/Last/v_sch_batch.vw.$(lu): \
-  Install/Schema/Last/v_sch_batch_root_log.vw.$(lu) \
   pkg_SchedulerMain.pks.$(lu) \
 
 
