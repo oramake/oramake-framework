@@ -739,13 +739,14 @@ procedure deleteOption(
   option_description          - Описание параметра
 
   Замечания:
+  - обязательно должно быть указано значение параметра batchId либо optionId;
   - в возвращаемом курсоре также присутствуют другие недокументированные выше
     поля, которые не должны использоваться в интерфейсе;
 
   ( <body::findOption>)
 */
 function findOption(
-  batchId integer
+  batchId integer := null
   , optionId integer := null
   , maxRowCount integer := null
   , operatorId integer := null

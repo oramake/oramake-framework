@@ -2079,11 +2079,12 @@ end deleteOption;
   option_description          - Описание параметра
 
   Замечания:
+  - обязательно должно быть указано значение параметра batchId либо optionId;
   - в возвращаемом курсоре также присутствуют другие недокументированные выше
     поля, которые не должны использоваться в интерфейсе;
 */
 function findOption(
-  batchId integer
+  batchId integer := null
   , optionId integer := null
   , maxRowCount integer := null
   , operatorId integer := null
@@ -2095,7 +2096,9 @@ is
   bth sch_batch%rowtype;
 
 begin
-  pkg_SchedulerMain.getBatch( bth, batchId);
+  if batchId is not null or optionId is null then
+    pkg_SchedulerMain.getBatch( bth, batchId);
+  end if;
   return
     pkg_Option.findOption(
       optionId                  => optionId

@@ -1620,7 +1620,20 @@ is
       rc                      => rc
       , expectedRowCount      => 1 + 1
       , failMessageText       =>
-          'findOption: Ќеожиданное число записей в курсоре'
+          'findOption(batchId): Ќеожиданное число записей в курсоре'
+    );
+
+    rc := pkg_Scheduler.findOption(
+      batchId                 => null
+      , optionId              => optionId
+      , maxRowCount           => 5
+      , operatorId            => testOperatorId
+    );
+    pkg_TestUtility.compareRowCount(
+      rc                      => rc
+      , expectedRowCount      => 1
+      , failMessageText       =>
+          'findOption(optionId): Ќеожиданное число записей в курсоре'
     );
 
     -- ƒобавл€ем второе значение другого типа
