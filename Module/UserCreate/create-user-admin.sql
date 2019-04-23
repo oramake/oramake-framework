@@ -118,6 +118,7 @@ grant execute on sys.dbms_crypto to &userName with grant option
 -- Module: TaskHandler
 grant select on sys.v_$db_pipes to &userName with grant option
 /
+-- also used in Mail and autotests (usage dbms_lock.sleep)
 grant execute on dbms_lock to &userName with grant option
 /
 grant execute on dbms_pipe to &userName with grant option

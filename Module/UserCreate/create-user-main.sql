@@ -68,6 +68,15 @@ grant select on dba_objects to &userName
 grant select on dba_jobs_running to &userName
 /
 
+-- Module: TaskHandler
+grant select on sys.v_$db_pipes to &userName
+/
+-- also used in Mail and autotests (usage dbms_lock.sleep)
+grant execute on dbms_lock to &userName
+/
+grant execute on dbms_pipe to &userName
+/
+
 -- Explore running sql
 grant select on sys.v_$sqltext_with_newlines to &userName
 /
