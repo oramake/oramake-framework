@@ -12,7 +12,6 @@
 @oms-run lg_destination.tab
 @oms-run lg_level.tab
 @oms-run lg_log.tab
-@oms-run lg_message_type.tab
 
 
 -- Outline-ограничения целостности

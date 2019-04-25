@@ -5,9 +5,7 @@ create table
 (
   log_id                          integer                             not null
   , sessionid                     number                              not null
-      enable novalidate
   , level_code                    varchar2(10)                        not null
-      enable novalidate
   , message_value                 integer
   , message_label                 varchar2(128)
   , message_text                  varchar2(4000)                      not null
@@ -23,12 +21,8 @@ create table
   , module_id                     integer
   , log_time                      timestamp with time zone
                                     default current_timestamp         not null
-      enable novalidate
   , date_ins                      date                default sysdate not null
   , operator_id                   integer
-  -- Устаревшие поля
-  , parent_log_id                 integer
-  , message_type_code             varchar2(10)                        not null
   , constraint lg_log_pk primary key
     ( log_id)
     using index tablespace &indexTablespace
@@ -118,17 +112,6 @@ create index
 on
   lg_log (
     log_time
-  )
-tablespace &indexTablespace
-/
-
--- index: lg_log_ix_parent_log_id
--- Индекс для внешнего ключа.
-create index
-  lg_log_ix_parent_log_id
-on
-  lg_log (
-    parent_log_id
   )
 tablespace &indexTablespace
 /

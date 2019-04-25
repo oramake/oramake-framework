@@ -63,7 +63,6 @@ drop view v_lg_context_change_log
 @oms-drop-foreign-key lg_destination
 @oms-drop-foreign-key lg_level
 @oms-drop-foreign-key lg_log
-@oms-drop-foreign-key lg_message_type
 
 
 -- Таблицы
@@ -75,8 +74,6 @@ drop table lg_destination
 drop table lg_level
 /
 drop table lg_log
-/
-drop table lg_message_type
 /
 
 

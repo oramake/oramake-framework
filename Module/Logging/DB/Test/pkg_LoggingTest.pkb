@@ -483,26 +483,6 @@ is
           , failMessageText   =>
               cinfo || 'Некорректное значение level_code'
         );
-        pkg_TestUtility.compareChar(
-          actualString        => lgr.message_type_code
-          , expectedString    =>
-              case levelCode
-                when pkg_Logging.Fatal_LevelCode then
-                  pkg_LoggingInternal.Error_MessageTypeCode
-                when pkg_Logging.Error_LevelCode then
-                  pkg_LoggingInternal.Error_MessageTypeCode
-                when pkg_Logging.Warn_LevelCode then
-                  pkg_LoggingInternal.Warning_MessageTypeCode
-                when pkg_Logging.Info_LevelCode then
-                  pkg_LoggingInternal.Info_MessageTypeCode
-                when pkg_Logging.Debug_LevelCode then
-                  pkg_LoggingInternal.Debug_MessageTypeCode
-                when pkg_Logging.Trace_LevelCode then
-                  pkg_LoggingInternal.Debug_MessageTypeCode
-              end
-          , failMessageText   =>
-              cinfo || 'Некорректное значение message_type_code'
-        );
       end if;
       if length( messageText) <= 4000 then
         pkg_TestUtility.compareChar(

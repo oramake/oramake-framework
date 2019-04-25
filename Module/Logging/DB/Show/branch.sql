@@ -9,7 +9,7 @@
 --
 -- logId                      - Id записи лога открытия (закрытия) контекста
 -- maxRowCount                - Максимальное число выводимых записей
---                              (по умолчанию 30)
+--                              (по умолчанию 1000)
 --
 -- Замечания:
 -- - для повышения читабельности при выводе ветки лога перед текстом сообщения
@@ -28,7 +28,7 @@ declare
 begin
   d1 := instr( paramStr || ':', ':');
   :logId := to_number( substr( paramStr, 1, d1 - 1));
-  :maxRowCount := coalesce( to_number( substr( paramStr, d1 + 1)), 30);
+  :maxRowCount := coalesce( to_number( substr( paramStr, d1 + 1)), 1000);
 end;
 /
 

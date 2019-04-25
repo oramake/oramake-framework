@@ -124,12 +124,6 @@ colLogger TColLogger;
 */
 colLevelOrder TColLevelOrder;
 
-/* ivar: lastParentLogId
-  Значение поля parent_log_id последней вставленной в таблицу <lg_log>
-  записи
-*/
-lastParentLogId integer := null;
-
 /* ivar: lastSessionid
   Значение поля sessionid последней вставленной в таблицу <lg_log>
   записи
@@ -906,25 +900,6 @@ begin
     end if;
     logRec.module_id := colLogger( loggerUid).moduleId;
   end if;
-
-  -- Поддержка совместимости с Scheduler
-  logRec.parent_log_id := lastParentLogId;
-  logRec.message_type_code :=
-    case levelCode
-      when pkg_Logging.Fatal_LevelCode then
-        Error_MessageTypeCode
-      when pkg_Logging.Error_LevelCode then
-        Error_MessageTypeCode
-      when pkg_Logging.Warn_LevelCode then
-        Warning_MessageTypeCode
-      when pkg_Logging.Info_LevelCode then
-        Info_MessageTypeCode
-      when pkg_Logging.Debug_LevelCode then
-        Debug_MessageTypeCode
-      when pkg_Logging.Trace_LevelCode then
-        Debug_MessageTypeCode
-    end
-  ;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -1018,7 +993,6 @@ exception when others then
       || ', open_context_flag=' || logRec.open_context_flag
       || ', context_type_level=' || logRec.context_type_level
       || ', module_id=' || logRec.module_id
-      || ', parent_log_id=' || logRec.parent_log_id
       || ').'
     , true
   );
@@ -2258,59 +2232,6 @@ exception when others then
     , true
   );
 end deleteContextType;
-
-
-
-/* group: Совместимость с Scheduler */
-
-/* proc: beforeInsertLogRow
-  Вызывается при непосредственной вставке записей из других модулей из триггера
-  на таблице <lg_log>.
-
-  Параметры:
-  logRec                      - Данные записи таблицы <lg_log>
-                                (модификация)
-*/
-procedure beforeInsertLogRow(
-  logRec in out nocopy lg_log%rowtype
-)
-is
-begin
-  logRec.level_code :=
-    case logRec.message_type_code
-      when Error_MessageTypeCode then
-        pkg_Logging.Error_LevelCode
-      when Warning_MessageTypeCode then
-        pkg_Logging.Warn_LevelCode
-      when Info_MessageTypeCode then
-        pkg_Logging.Info_LevelCode
-      when Debug_MessageTypeCode then
-        pkg_Logging.Debug_LevelCode
-      else
-        pkg_Logging.Info_LevelCode
-    end
-  ;
-
-  prepareLogRow( logRec);
-
-  if logRec.date_ins is null then
-    logRec.date_ins := sysdate;
-  end if;
-
-  -- Поддержка совместимости с Scheduler
-  lastParentLogId :=
-    case
-      when logRec.message_type_code in (
-            'BSTART'
-            , 'JSTART'
-          )
-          then
-        logRec.log_id
-      else
-        logRec.parent_log_id
-    end
-  ;
-end beforeInsertLogRow;
 
 
 

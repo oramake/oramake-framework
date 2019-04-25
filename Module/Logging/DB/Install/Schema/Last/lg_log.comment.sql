@@ -62,9 +62,3 @@ comment on column lg_log.date_ins is
 comment on column lg_log.operator_id is
   'Id оператора ( из модуля AccessOperator)'
 /
-comment on column lg_log.parent_log_id is
-  'Устаревшее поле: Id родительской записи лога'
-/
-comment on column lg_log.message_type_code is
-  'Устаревшее поле: Код типа сообщения'
-/
