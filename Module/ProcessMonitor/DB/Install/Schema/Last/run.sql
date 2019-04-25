@@ -1,9 +1,18 @@
 -- script: Install/Schema/Last/run.sql
--- Установка последней версии объектов схемы
-@oms-set-indexTablespace
+-- Выполняет установку последней версии объектов схемы.
 
+
+-- Определяем табличное пространство для индексов
+@oms-set-indexTablespace.sql
+
+
+-- Таблицы
+
+@oms-run prm_batch_config.tab
 @oms-run prm_registered_session.tab
 @oms-run prm_session_action.tab
-@oms-run prm_batch_config.tab
+
+
+-- Outline-ограничения целостности
 
 @oms-run prm_session_action.con
