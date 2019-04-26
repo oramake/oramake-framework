@@ -170,6 +170,7 @@ Group: Скрипты  {
          Group: 2.1.0  {
 
             File: run  (no auto-title, Install/Schema/2.1.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.1.0/revert.sql)
             }  # Group: 2.1.0
 
          Group: 2.0.0  {
