@@ -412,10 +412,9 @@ is
         , count(*)
       into logId, logCount
       from
-        lg_log t
+        v_lg_current_log t
       where
         t.log_id > prevLogId
-        and t.sessionid = sys_context('USERENV','SESSIONID')
         -- исключаем отладочные сообщения пакета pkg_LoggingInternal
         and not (
           nullif( 'Logging', t.module_name) is null
@@ -613,10 +612,9 @@ is
         , count(*)
       into logId, logCount
       from
-        lg_log t
+        v_lg_current_log t
       where
         t.log_id > prevLogId
-        and t.sessionid = sys_context('USERENV','SESSIONID')
         -- исключаем отладочные сообщения пакета pkg_LoggingInternal
         and not (
           nullif( 'Logging', t.module_name) is null
@@ -667,7 +665,7 @@ is
   lg.*
   , ct.context_type_short_name
 from
-  lg_log lg
+  v_lg_current_log lg
   left join lg_context_type ct
     on ct.context_type_id = lg.context_type_id
 )
@@ -675,7 +673,6 @@ from
           , filterCondition   =>
 'log_id > ' || coalesce( prevLogId, 0) || '
 and log_id <= ' || coalesce( logId, 0) || '
-and sessionid = sys_context(''USERENV'',''SESSIONID'')
 -- исключаем отладочные сообщения пакета pkg_LoggingInternal
 and not (
   nullif( ''Logging'', module_name) is null

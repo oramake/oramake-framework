@@ -49,7 +49,12 @@ or context_type_id is not null
 /
 
 
-@oms-run lg_log.comment.sql
+
+comment on table lg_log is
+  'Лог работы программных модулей [ SVN root: Oracle/Module/Logging]'
+/
+-- Устанавливает комментарии к полям
+@oms-run Install/Schema/Last/set-log-comment.sql lg_log
 
 
 

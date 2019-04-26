@@ -214,7 +214,7 @@ comment on column v_lg_context_change_log.log_id is
   'Id записи лога'
 /
 comment on column v_lg_context_change_log.sessionid is
-  'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
+  'Идентификатор сессии (значение v$session.audsid)'
 /
 comment on column v_lg_context_change_log.log_time is
   'Время формирования записи лога'

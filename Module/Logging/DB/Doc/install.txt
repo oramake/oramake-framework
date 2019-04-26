@@ -69,15 +69,17 @@ group: 2.1.0
 
 - установка в основную схему
 
-(code)
+> make install INSTALL_VERSION=2.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
-make install INSTALL_VERSION=2.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(в случае отсутствия в БД модуля AccessOperator вместо параметра
+LOAD_OPERATORID нужно указать "NO_ACCESSOPERATOR=1")
 
-(end)
+- повторная выдача прав пользователям, которым ранее были выданы права на
+  использование модуля
 
-Замечания:
-- в случае отсутствия в БД модуля AccessOperator вместо параметра
-  LOAD_OPERATORID нужно указать "NO_ACCESSOPERATOR=1";
+> make grant LOAD_USERID=???/???@??? TO_USERNAME=??? LOAD_OPERATORID=???/???
+
+(в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID указывать не нужно)
 
 
 

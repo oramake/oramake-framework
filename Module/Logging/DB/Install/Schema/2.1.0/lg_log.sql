@@ -48,7 +48,7 @@ or context_type_id is not null
 )
 /
 
-@oms-run Install/Schema/Last/lg_log.comment.sql
+@oms-run Install/Schema/Last/set-log-comment.sql lg_log
 
 @oms-run copy-log.sql
 

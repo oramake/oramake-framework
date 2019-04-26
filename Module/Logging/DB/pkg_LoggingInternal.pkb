@@ -942,9 +942,6 @@ begin
 
   if lastSessionid is null then
     lastSessionid := sys_context('USERENV','SESSIONID');
-    if nullif( lastSessionid, 0) is null then
-      lastSessionid := - logRec.log_id;
-    end if;
   end if;
   logRec.sessionid := lastSessionid;
 exception when others then

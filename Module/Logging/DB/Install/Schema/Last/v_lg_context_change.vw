@@ -114,7 +114,7 @@ comment on column v_lg_context_change.context_type_level is
   'Уровень самовложенности типа контекста выполнения (начиная с 1, null для ассоциативного контекста)'
 /
 comment on column v_lg_context_change.sessionid is
-  'Идентификатор сессии (значение v$session.audsid либо уникальное отрицательное значение если v$session.audsid равно 0)'
+  'Идентификатор сессии (значение v$session.audsid)'
 /
 comment on column v_lg_context_change.open_log_id is
   'Id записи лога открытия контекста'
