@@ -2,6 +2,12 @@ title: Версии
 
 
 
+group: 1.0.4 ( 2019-05-03)
+
+[!] Grant rights to object types when issuing rights to use module.
+
+
+
 group: 1.0.3 ( 2018-09-14)
 
 [!] Fixed bug with sending request parameters (parameters with NULL value

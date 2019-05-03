@@ -1,8 +1,11 @@
--- script: Install/Grant/Last/grant-objs.sql
--- Выдает права на использование модуля
+-- script: Install/Grant/Last/run.sql
+-- Выдает права на использование модуля.
 --
 -- Параметры:
--- toUserName                 - имя пользователя, которому выдаются права
+-- toUserName                  - имя пользователя, которому выдаются права
+--
+-- Замечания:
+--  - скрипт запускается под пользователем, которому принадлежат объекты модуля;
 --
 
 declare
@@ -14,6 +17,10 @@ declare
 
   objectList ObjectListT := ObjectListT(
     'pkg_WebUtility'
+    , 'wbu_header_list_t'
+    , 'wbu_header_t'
+    , 'wbu_parameter_list_t'
+    , 'wbu_parameter_t'
   );
 
   -- Признак выдачи прав для всех пользователей
@@ -46,7 +53,9 @@ declare
 begin
   while i is not null loop
     begin
-      if objectList( i) like 'pkg_%' then
+      if objectList( i) like 'pkg\_%' escape '\'
+            or objectList( i) like '%\_t' escape '\'
+          then
         execSql(
           'grant execute on ' || objectList( i) || ' to ' || toUserName
         );
