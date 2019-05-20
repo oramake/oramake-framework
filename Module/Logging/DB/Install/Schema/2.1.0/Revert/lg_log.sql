@@ -93,3 +93,21 @@ references
     message_type_code
   )
 /
+
+alter table
+  lg_log
+drop constraint
+  lg_log_fk_level_code
+/
+
+alter table
+  lg_log
+add constraint
+  lg_log_fk_level_code
+foreign key
+  ( level_code)
+references
+  lg_level (
+    level_code
+  )
+/

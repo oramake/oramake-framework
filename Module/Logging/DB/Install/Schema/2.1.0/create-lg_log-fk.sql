@@ -6,7 +6,7 @@ foreign key
   ( level_code)
 references
   lg_level (
-    level_code
+    message_level_code
   )
 enable novalidate
 /

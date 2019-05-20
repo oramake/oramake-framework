@@ -11,5 +11,6 @@
 -- ќпредел€ем табличное пространство дл€ индексов
 @oms-set-indexTablespace.sql
 
+@oms-run lg_level.sql
 @oms-run lg_log.sql
 @oms-run drop-lg_message_type.sql
