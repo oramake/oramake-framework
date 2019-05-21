@@ -141,59 +141,6 @@ exception
     );
 end getBatch;
 
-/* ifunc: getLastRootLogId
-  ¬озвращает Id корневого лога последнего запуска пакетного задани€.
-
-  ѕараметры:
-  batchId                     - Id пакетного задани€
-
-  ¬озврат:
-  Id записи или null, если лог отсутствует.
-*/
-function getLastRootLogId(
-  batchId integer
-)
-return integer
-is
-
-  -- Id коренвой записи лога
-  rootLogId integer;
-
-begin
-  select
-    max( a.root_log_id)
-  into rootLogId
-  from
-    (
-    select
-      t.log_id as root_log_id
-    from
-      v_sch_batch_root_log_old t
-    where
-      t.message_type_code = 'BSTART'
-      and t.batch_id = batchId
-    order by
-      -- соответствует пор€дку сортировки в индексе
-      -- sch_log_ix_root_batch_date_log
-      t.date_ins desc
-      , t.log_id desc
-    ) a
-  where
-    rownum <= 1
-  ;
-  return rootLogId;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'ќшибка при возврате Id корневого лога запуска пакетного задани€ ('
-        || ' batchId=' || batchId
-        || ').'
-      )
-    , true
-  );
-end getLastRootLogId;
-
 /* func: getBatchLogInfo
   ¬озвращает информацию из лога выполнени€ пакетного задани€, используетс€
   из <v_sch_batch>.
@@ -305,54 +252,6 @@ begin
         and lg.log_id >= a.start_log_id
         and lg.log_id <= coalesce( a.finish_log_id, lg.log_id)
   ;
-
-  -- »щем в старом логе если не нашли в новом
-  if lgi.root_log_id is null then
-    lgi.root_log_id := getLastRootLogId( batchId => batchId);
-    select
-      min( lg.date_ins) as min_log_date
-      , max( lg.date_ins) as max_log_date
-      , max(
-          case when lg.message_type_code = 'BFINISH' and level = 2 then
-            lg.message_value
-          end
-        )
-        as batch_result_id
-      , sum(
-          case when lg.message_type_code = 'JFINISH'
-              and lg.message_value in ( 3, 4)
-              then 1 else 0
-          end
-        )
-        as error_job_count
-      , sum(
-          case when lg.message_type_code = 'ERROR'
-            then 1 else 0
-          end
-        )
-        as error_count
-      , sum(
-          case when lg.message_type_code = 'WARNING'
-            then 1 else 0
-          end
-        )
-        as warning_count
-    into
-      lgi.min_log_date
-      , lgi.max_log_date
-      , lgi.batch_result_id
-      , lgi.error_job_count
-      , lgi.error_count
-      , lgi.warning_count
-    from
-      sch_log lg
-    start with
-      lg.log_id = lgi.root_log_id
-    connect by
-      prior lg.log_id = lg.parent_log_id
-    ;
-  end if;
-
   return lgi;
 exception when others then
   raise_application_error(

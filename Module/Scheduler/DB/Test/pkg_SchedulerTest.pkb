@@ -80,27 +80,54 @@ is
 
   cursor parentLogCur is
     select
-      log_id
-      , date_ins
-      , operator_id
+      a.start_log_id
+      , lg.date_ins
+      , lg.operator_id
     from
       (
       select
-        *
+        max( bo.start_log_id) as start_log_id
       from
-        v_sch_batch_root_log brl
+        v_sch_batch_operation bo
       where
-        brl.batch_id = batchId
-         and brl.message_type_code = pkg_Scheduler.BStart_MessageTypeCode
-      order by
-        brl.date_ins desc
-         , brl.log_id desc
-      )
-    where
-      rownum = 1
+        bo.batch_id = batchId
+        and bo.batch_operation_label = pkg_SchedulerMain.Exec_BatchMsgLabel
+      ) a
+      inner join lg_log lg
+        on lg.log_id = a.start_log_id
   ;
 
   parentLog parentLogCur%rowtype;
+
+  cursor logCur( startLogId integer) is
+    select
+      ' ' || to_char( lg.date_ins, 'hh24:mi:ss') || ' '
+      || decode( lg.message_level
+          , 1, ''
+          , lpad( '  ', (lg.message_level - 1) * 2, ' ')
+        )
+        -- исключаем ошибку из-за строки длиной больше 4000 символов
+        || substr( lg.message_text, 1, 3900 - (lg.message_level - 1) * 2)
+        as message_line
+    from
+      (
+      select
+        lg.*
+        , 1 + ( lg.context_level - ccl.open_context_level)
+          + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
+          as message_level
+      from
+        v_lg_context_change_log ccl
+        inner join lg_log lg
+          on lg.sessionid = ccl.sessionid
+            and lg.log_id >= ccl.open_log_id
+            and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+      where
+        ccl.log_id = startLogId
+      ) lg
+    order by
+      lg.log_id
+  ;
 
   /*
     Получение родительской ветки.
@@ -119,7 +146,7 @@ is
     ;
     close parentLogCur;
     outputMessage(
-      'root log_id: ' || to_char( parentLog.log_id)
+      'root log_id: ' || to_char( parentLog.start_log_id)
       || ', dateBegin={' || to_char( parentLog.date_ins, 'dd.mm.yyyy hh24:mi:ss') || '}'
       || ', operator_id=' || to_char( parentLog.operator_id)
     );
@@ -128,26 +155,7 @@ is
 begin
   getParentLog();
   outputMessage( '>');
-  for logMessage in
-  (
-  select
-    ' ' || to_char( lg.date_ins, 'hh24:mi:ss') || ' '
-    || decode( LEVEL
-        , 1, ''
-        , lpad( '  ', (LEVEL - 1) * 2, ' ')
-       )
-       -- исключаем ошибку из-за строки длиной больше 4000 символов
-    || substr( lg.message_text, 1, 3900 - (LEVEL - 1) * 2) as message_line
-  from
-    sch_log lg
-  start with
-    lg.log_id = parentLog.log_id
-  connect by
-    prior lg.log_id = lg.parent_log_id
-  order siblings by
-    lg.date_ins
-    , lg.log_id
-  ) loop
+  for logMessage in logCur( parentLog.start_log_id) loop
     outputMessage(
       logMessage.message_line
     );
@@ -246,7 +254,7 @@ is
     select
       batch_short_name
       , batch_id
-      , oracle_job_id
+      , active_flag
       , last_start_date
       , sid
       , batch_result_id
@@ -296,7 +304,6 @@ begin
         )
         ||  rpad( batch.batch_short_name, 30)
         || ' ( batch_id =' || lpad( batch.batch_id, 5)
-        || ', job =' || lpad( batch.oracle_job_id, 6)
         || ')'
       );
     end if;
@@ -305,7 +312,7 @@ begin
     when
       Activate_OperCode
     then
-      if batch.oracle_job_id is null then
+      if batch.active_flag = 0 then
         pkg_Scheduler.activateBatch(
           batchId => batch.batch_id
           , operatorId => operatorId
@@ -315,7 +322,7 @@ begin
     when
       Deactivate_OperCode
     then
-      if batch.oracle_job_id is not null then
+      if batch.active_flag = 1 then
         pkg_Scheduler.deactivateBatch(
           batchId => batch.batch_id
           , operatorId => operatorId
@@ -1612,7 +1619,20 @@ is
       rc                      => rc
       , expectedRowCount      => 1 + 1
       , failMessageText       =>
-          'findOption: Неожиданное число записей в курсоре'
+          'findOption(batchId): Неожиданное число записей в курсоре'
+    );
+
+    rc := pkg_Scheduler.findOption(
+      batchId                 => null
+      , optionId              => optionId
+      , maxRowCount           => 5
+      , operatorId            => testOperatorId
+    );
+    pkg_TestUtility.compareRowCount(
+      rc                      => rc
+      , expectedRowCount      => 1
+      , failMessageText       =>
+          'findOption(optionId): Неожиданное число записей в курсоре'
     );
 
     -- Добавляем второе значение другого типа

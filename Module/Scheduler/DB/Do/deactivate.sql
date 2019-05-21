@@ -35,29 +35,29 @@ declare
           bt.batch_type_name_rus like &batchTypePattern
         )
       and (
-        oracle_job_id is not null
+        active_flag = 1
         and batch_short_name like &batchPattern
       )
     order by
       b.batch_short_name
-  ;  
-  
+  ;
+
   nDone integer := 0;
 
 begin
   for rec in curBatch loop
-    pkg_Scheduler.DeactivateBatch( 
+    pkg_Scheduler.DeactivateBatch(
       batchID => rec.batch_id
       , operatorID => pkg_Operator.GetCurrentUserID()
     );
-    dbms_output.put_line( 
+    dbms_output.put_line(
       rpad( rec.batch_short_name, 30)
       || ' ( batch_id =' || lpad( rec.batch_id, 3)
       || ')   - deactivated');
     nDone := nDone + 1;
   end loop;
   if nDone = 0 then
-    raise_application_error( 
+    raise_application_error(
       pkg_Error.IllegalArgument
       , 'Не найдены пакеты для деактивации.'
     );

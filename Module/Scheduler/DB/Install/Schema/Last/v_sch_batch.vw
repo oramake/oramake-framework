@@ -18,7 +18,7 @@ select
   , d.batch_type_id
   , d.retrial_count
   , d.retrial_timeout
-  , d.oracle_job_id
+  , d.active_flag
   , d.nls_language
   , d.nls_territory
   , d.retrial_number
@@ -47,6 +47,12 @@ select
       (d.log_data.max_log_date - d.log_data.min_log_date)
       * 86400
     end as duration_second
+  -- TODO: for backward compatability
+  , case when
+      active_flag = 1
+    then
+      batch_id
+    end as oracle_job_id
 from
   (
   select
@@ -112,7 +118,8 @@ comment on column v_sch_batch.retrial_count is 'Число попыток повторного выполне
 comment on column v_sch_batch.retrial_timeout is 'Интервал между попытками повторного выполнения (в минутах)'
 /
 
-comment on column v_sch_batch.oracle_job_id is 'ID задания Oracle (dba_jobs.job), созданного для выполнения пакета'
+comment on column v_sch_batch.active_flag is
+  'Флаг активности пакетного задания (1 - активированное, 0 - неактивированное)'
 /
 
 comment on column v_sch_batch.nls_language is

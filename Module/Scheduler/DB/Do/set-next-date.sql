@@ -4,7 +4,7 @@
 --Параметры:
 --batchPattern                - маска для имени пакетов ( batch_short_name),
 --                              по умолчанию любые ( "%")
---nextDate                    - дата следующего запуска ( null по умолчанию 
+--nextDate                    - дата следующего запуска ( null по умолчанию
 --                              немедленно)
 --
 --Замечание:
@@ -24,24 +24,24 @@ declare
     from
       sch_batch b
     where
-      b.oracle_job_id is not null
+      b.active_flag = 1
       and b.batch_short_name like &batchPattern
     order by
       b.batch_short_name
-  ;  
-  
+  ;
+
   nextDate date := &nextDate;
-  
+
   nDone integer := 0;
 
 begin
   for rec in curBatch loop
-    pkg_Scheduler.SetNextDate( 
+    pkg_Scheduler.SetNextDate(
       batchID => rec.batch_id
       , nextDate => nextDate
       , operatorID => pkg_Operator.GetCurrentUserID()
     );
-    dbms_output.put_line( 
+    dbms_output.put_line(
       rpad( rec.batch_short_name, 30)
       || ' ( batch_id =' || lpad( rec.batch_id, 3)
       || ')   - set date '
@@ -50,7 +50,7 @@ begin
     nDone := nDone + 1;
   end loop;
   if nDone = 0 then
-    raise_application_error( 
+    raise_application_error(
       pkg_Error.IllegalArgument
       , 'Пакеты не найдены.'
     );

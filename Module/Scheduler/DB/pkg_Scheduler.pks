@@ -79,31 +79,6 @@ WriteOption_PrivilegeCode constant varchar2(10) := 'WRITE_OPT';
 
 /* group: Типы сообщений */
 
-/* const: Bmanage_MessageTypeCode
-  Код типа сообщения "Управление пакетом".
-*/
-Bmanage_MessageTypeCode constant varchar2(10) := 'BMANAGE';
-
-/* const: Bstart_MessageTypeCode
-  Код типа сообщений "Старт пакета".
-*/
-Bstart_MessageTypeCode constant varchar2(10) := 'BSTART';
-
-/* const: Bfinish_MessageTypeCode
-  Код типа сообщений "Завершение пакета".
-*/
-Bfinish_MessageTypeCode constant varchar2(10) := 'BFINISH';
-
-/* const: Jstart_MessageTypeCode
-  Код типа сообщений "Старт задания".
-*/
-Jstart_MessageTypeCode constant varchar2(10) := 'JSTART';
-
-/* const: Jfinish_MessageTypeCode
-  Код типа сообщения "Завершение задания".
-*/
-Jfinish_MessageTypeCode constant varchar2(10) := 'JFINISH';
-
 /* const: Error_MessageTypeCode
   Код типа сообщений "Ошибка".
 */
@@ -311,6 +286,8 @@ procedure abortBatch(
                                 задание
   serial                      - serial# сессии, в которой выполняется пакетное
                                 задание
+
+  (сортировка по batch_short_name)
 
   Замечания:
   - показываются только пакетные задания, доступные указанному оператору по
@@ -522,12 +499,14 @@ function findInterval
   Возврат (курсор):
     log_id                  - Уникальный идентификатор
     batch_id                - Идентификатор батча
-    message_type_code       - Код типа сообщения
-    message_type_name       - Наименование типа сообщения
+    level_code              - Код уровня сообщения
+    level_name              - Наименование уровня сообщения
     message_text            - Текст сообщения
     date_ins                - Дата создания
     operator_id             - Идентификатор оператора
     operator_name           - Оператор
+    message_type_code       - Устаревшее поле (следует использовать level_code)
+    message_type_name       - Устаревшее поле (следует использовать level_name)
 
   ( <body::findRootLog>)
 */
@@ -548,14 +527,16 @@ function findRootLog
   Возврат (курсор):
     log_id                  - Уникальный идентификатор
     parent_log_id           - Идентификатор родительского лога
-    message_type_code       - Код типа сообщения
-    message_type_name       - Наименование типа сообщения
+    level_code              - Код уровня сообщения
+    level_name              - Наименование уровня сообщения
     message_text            - Текст сообщения
     message_value           - Значение сообщения
     log_level               - Уровень иерархии
     date_ins                - Дата создания
     operator_id             - Идентификатор оператора
     operator_name           - Оператор
+    message_type_code       - Устаревшее поле (следует использовать level_code)
+    message_type_name       - Устаревшее поле (следует использовать level_name)
 
   ( <body::getDetailedLog>)
 */
@@ -758,13 +739,14 @@ procedure deleteOption(
   option_description          - Описание параметра
 
   Замечания:
+  - обязательно должно быть указано значение параметра batchId либо optionId;
   - в возвращаемом курсоре также присутствуют другие недокументированные выше
     поля, которые не должны использоваться в интерфейсе;
 
   ( <body::findOption>)
 */
 function findOption(
-  batchId integer
+  batchId integer := null
   , optionId integer := null
   , maxRowCount integer := null
   , operatorId integer := null

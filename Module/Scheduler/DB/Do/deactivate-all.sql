@@ -9,6 +9,12 @@
 
 declare
 
+  -- Логер скрипта
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => pkg_Scheduler.Module_Name
+    , objectName  => 'Do/deactivate-all.sql'
+  );
+
   cursor curBatch is
     select
       b.batch_id
@@ -16,14 +22,12 @@ declare
     from
       sch_batch b
     where
-      oracle_job_id is not null
+      active_flag = 1
     order by
       b.batch_short_name
   ;
 
-  message varchar2( 100) := 'Остановка всех батчей';
-
-  -- Id оператора, от имени которого выполняется деактивация
+  -- Id оператора, от имени которого выполняется операция
   operatorId integer;
 
   nDone integer := 0;
@@ -38,25 +42,43 @@ begin
     );
   end;
 
-  for rec in curBatch loop
-    pkg_Scheduler.deactivateBatch(
-      batchId       => rec.batch_id
-      , operatorId  => operatorId
+  logger.info(
+    'Deactivate all batches: ...'
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , messageLabel          => pkg_SchedulerMain.DeactivateAll_BatchMsgLabel
+    , openContextFlag       => 1
+  );
+  begin
+
+    for rec in curBatch loop
+      pkg_Scheduler.deactivateBatch(
+        batchId       => rec.batch_id
+        , operatorId  => operatorId
+      );
+      nDone := nDone + 1;
+    end loop;
+
+    commit;
+
+    logger.info(
+      'Batches deactivated: ' || nDone
+      , messageValue          => nDone
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
     );
-    dbms_output.put_line(
-      rpad( rec.batch_short_name, 30)
-      || ' ( batch_id =' || lpad( rec.batch_id, 3)
-      || ')   - deactivated'
+  exception when others then
+    logger.error(
+      'Error on deactivate all batches:' || chr(10) || logger.getErrorStack()
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
     );
-    pkg_Scheduler.writeLog(
-      messageTypeCode => pkg_Scheduler.BManage_MessageTypeCode
-      , messageText   => message
-      , messageValue  => rec.batch_Id
-      , operatorId    => operatorId
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Error on deactivate all batches.'
+        )
+      , true
     );
-    nDone := nDone + 1;
-  end loop;
-  dbms_output.put_line( 'Batches deactivated: ' || nDone);
-  commit;
+  end;
 end;
 /

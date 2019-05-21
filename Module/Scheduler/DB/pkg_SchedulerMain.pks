@@ -101,10 +101,20 @@ Abort_BatchMsgLabel constant varchar2(50) := 'ABORT';
 */
 Activate_BatchMsgLabel constant varchar2(50) := 'ACTIVATE';
 
+/* const: Activate_BatchMsgLabel
+  Метка сообщения для операции "Массовая активация".
+*/
+ActivateAll_BatchMsgLabel constant varchar2(50) := 'ACTIVATE_ALL';
+
 /* const: Deactivate_BatchMsgLabel
   Метка сообщения для операции "Деактивация".
 */
 Deactivate_BatchMsgLabel constant varchar2(50) := 'DEACTIVATE';
+
+/* const: Deactivate_BatchMsgLabel
+  Метка сообщения для операции "Массовая деактивация".
+*/
+DeactivateAll_BatchMsgLabel constant varchar2(50) := 'DEACTIVATE_ALL';
 
 /* const: Exec_BatchMsgLabel
   Метка сообщения для операции "Выполнение".

@@ -3624,7 +3624,7 @@ is
       sch_batch t
     where
       t.batch_id = batchId
-      and t.oracle_job_id is null
+      and t.active_flag = 0
     ;
     if sql%rowcount = 0 then
       raise_application_error(

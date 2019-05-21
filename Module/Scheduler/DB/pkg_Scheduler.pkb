@@ -296,18 +296,18 @@ is
       b.batch_id
       , b.batch_short_name
       , b.batch_name_rus
-      , b.oracle_job_id
+      , b.active_flag
       , b.retrial_number
       , (
         select
-          b.batch_id
+          1
         from
           user_scheduler_jobs j
         where
           -- getOracleJobName
           j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
-        as current_job_id
+        as current_job_flag
       , (
         select
           j.next_run_date
@@ -324,7 +324,7 @@ is
       sch_batch b
     where
       b.batch_id = batchId
-    for update of b.oracle_job_id nowait
+    for update of b.active_flag nowait
   ;
 
   rec curBatch%rowtype;
@@ -452,7 +452,7 @@ begin
   end if;
   oracleJobName := getOracleJobName(batchId => rec.batch_id);
   -- Добавляем новое задание Oracle
-  if rec.current_job_id is null then
+  if rec.current_job_flag is null then
     logger.trace('create_job: ' || oracleJobName);
     dbms_scheduler.create_job(
       job_name => oracleJobName
@@ -485,15 +485,15 @@ begin
     , attribute => 'MAX_RUNS'
     );
     logger.trace('job created: ' || oracleJobName);
-    rec.current_job_id := rec.batch_id;
+    rec.current_job_flag := 1;
     -- Связываем пакет с заданием Oracle
     update
       sch_batch
     set
-      oracle_job_id = rec.current_job_id
+      active_flag = 1
     where current of curBatch
     ;
-    rec.oracle_job_id := rec.current_job_id;
+    rec.active_flag := rec.current_job_flag;
     info := 'Активирован пакет ' || batchLogName
       || ' ( batch_id=' || rec.batch_id
       || ', дата запуска '
@@ -575,22 +575,22 @@ is
       b.batch_id
       , b.batch_short_name
       , b.batch_name_rus
-      , b.oracle_job_id
+      , b.active_flag
       , (
         select
-          b.batch_id
+          1
         from
           user_scheduler_jobs j
         where
           -- getOracleJobName
           j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
-        as current_job_id
+        as current_job_flag
     from
       sch_batch b
     where
       b.batch_id = batchId
-    for update of b.oracle_job_id nowait
+    for update of b.active_flag nowait
   ;
 
   rec curBatch%rowtype;
@@ -674,7 +674,7 @@ begin
   oracleJobName := getOracleJobName(batchId => rec.batch_id);
   checkStopHandler();
   -- Удаляем задание Oracle
-  if rec.current_job_id is not null then
+  if rec.current_job_flag = 1 then
     logger.trace('drop job: ' || oracleJobName);
     dbms_scheduler.drop_job(
       job_name => oracleJobName
@@ -682,23 +682,22 @@ begin
     );
   end if;
   -- Отвязываем пакет от задания Oracle
-  if rec.oracle_job_id is not null then
+  if rec.active_flag = 1 then
     update
       sch_batch
     set
-      oracle_job_id = null
+      active_flag = 0
       , retrial_number = null
     where current of curBatch
     ;
   end if;
   -- Пишем информационное сообщение
-  if rec.oracle_job_id is not null then
+  if rec.active_flag = 1 then
     logger.info(
       messageText             =>
           'Деактивирован пакет ' || batchLogName
           || ' ('
-            || ' oracle_job_id=' || rec.oracle_job_id
-            || case when rec.current_job_id is null then
+            || case when rec.current_job_flag = 0 then
               ', на момент деактивации отсутствовало назначенное пакету задание'
               end
             || case when hdr.sid is not null then
@@ -765,7 +764,7 @@ begin
     '"' || bth.batch_name_rus || '" [' || bth.batch_short_name || ']'
   ;
   oracleJobName := getOracleJobName(batchId => batchId);
-  if bth.oracle_job_id is not null then
+  if bth.active_flag = 1 then
     -- Устанавливаем дату запуска
     dbms_scheduler.disable(name => oracleJobName);
     dbms_scheduler.set_attribute(
@@ -996,6 +995,8 @@ end abortBatch;
   serial                      - serial# сессии, в которой выполняется пакетное
                                 задание
 
+  (сортировка по batch_short_name)
+
   Замечания:
   - показываются только пакетные задания, доступные указанному оператору по
     чтению;
@@ -1024,53 +1025,70 @@ is
   -- SQL-запрос
   dSql dyn_dynamic_sql_t := dyn_dynamic_sql_t( '
 select
-  a.*
+  b.*
 from
   (
   select
-    batch_id
-    , batch_short_name
-    , batch_name_rus as batch_name
-    , vb.module_id
-    , md.module_name
-    , vb.retrial_count
-    , to_char(vb.retrial_timeout) as retrial_timeout
-    , vb.oracle_job_id
-    , vb.retrial_number
-    , vb.date_ins
-    , vb.operator_id
-    , op.operator_name
-    , vb.oracle_job_id as job
-    , vb.last_date
-    , vb.this_date
-    , vb.next_date
-    , cast(null as integer) as total_time
-    , vb.failures
-    , cast(null as integer) as is_job_broken
-    , vb.root_log_id
-    , vb.last_start_date
-    , vb.last_log_date
-    , vb.batch_result_id
-    , sr.result_name_rus as result_name
-    , vb.error_job_count
-    , vb.error_count
-    , vb.warning_count
-    , vb.duration_second
-    , vb.sid
-    , vb.serial# as serial
+    a.*
   from
-    v_sch_operator_batch vb
-    inner join v_mod_module md
-      on md.module_id = vb.module_id
-    left outer join op_operator op
-      on vb.operator_id = op.operator_id
-    left outer join sch_result sr
-      on vb.batch_result_id = sr.result_id
+    (
+    select
+      batch_id
+      , batch_short_name
+      , batch_name_rus as batch_name
+      , vb.module_id
+      , md.module_name
+      , vb.retrial_count
+      , to_char(vb.retrial_timeout) as retrial_timeout
+      , case when
+          vb.active_flag = 1
+        then
+          vb.batch_id
+        end as oracle_job_id
+      , vb.retrial_number
+      , vb.date_ins
+      , vb.operator_id
+      , op.operator_name
+      , case when
+          vb.active_flag = 1
+        then
+          vb.batch_id
+        end as job
+      , vb.last_date
+      , vb.this_date
+      , vb.next_date
+      , cast(null as integer) as total_time
+      , vb.failures
+      , cast(null as integer) as is_job_broken
+      , vb.root_log_id
+      , vb.last_start_date
+      , vb.last_log_date
+      , vb.batch_result_id
+      , sr.result_name_rus as result_name
+      , vb.error_job_count
+      , vb.error_count
+      , vb.warning_count
+      , vb.duration_second
+      , vb.sid
+      , vb.serial# as serial
+    from
+      v_sch_operator_batch vb
+      inner join v_mod_module md
+        on md.module_id = vb.module_id
+      left outer join op_operator op
+        on vb.operator_id = op.operator_id
+      left outer join sch_result sr
+        on vb.batch_result_id = sr.result_id
+    where
+      vb.read_operator_id = :readOperatorId
+    ) a
   where
-    vb.read_operator_id = :readOperatorId
-  ) a
+    $(condition)
+  order by
+    a.batch_short_name
+  ) b
 where
-  $(condition)
+  $(rownumCondition)
 ')
   ;
 
@@ -1091,8 +1109,9 @@ begin
   dSql.addCondition( 'a.retrial_count =', retrialCount is null);
   dSql.addCondition( 'a.last_date >=', lastDateFrom is null, 'lastDateFrom');
   dSql.addCondition( 'a.last_date <=', lastDateTo is null, 'lastDateTo');
-  dSql.addCondition( 'rownum <=', rowCount is null, 'rowCount');
   dSql.useCondition( 'condition');
+  dSql.addCondition( 'rownum <=', rowCount is null, 'rowCount');
+  dSql.useCondition( 'rownumCondition');
   -- Открытие курсора
   open rc for
     dSql.getSqlText()
@@ -1619,12 +1638,14 @@ end findInterval;
   Возврат (курсор):
     log_id                  - Уникальный идентификатор
     batch_id                - Идентификатор батча
-    message_type_code       - Код типа сообщения
-    message_type_name       - Наименование типа сообщения
+    level_code              - Код уровня сообщения
+    level_name              - Наименование уровня сообщения
     message_text            - Текст сообщения
     date_ins                - Дата создания
     operator_id             - Идентификатор оператора
     operator_name           - Оператор
+    message_type_code       - Устаревшее поле (следует использовать level_code)
+    message_type_name       - Устаревшее поле (следует использовать level_name)
 */
 function findRootLog
 (
@@ -1643,20 +1664,35 @@ select
 from
   (
   select
-      l.log_id
-    , l.batch_id
-    , l.message_type_code
-    , m.message_type_name_rus as message_type_name
-    , l.message_text
-    , l.date_ins
-    , l.operator_id
+    bo.start_log_id as log_id
+    , bo.batch_id
+    , lg.level_code
+    , lv.level_description as level_name
+    , lg.message_text
+    , lg.date_ins
+    , lg.operator_id
     , op.operator_name
-  from v_sch_batch_root_log l
-  inner join sch_message_type m
-    on m.message_type_code = l.message_type_code
-  left join op_operator op
-    on op.operator_id = l.operator_id
-  where $(condition)
+    -- deprecated columns
+    , lg.level_code as message_type_code
+    , lv.level_description as message_type_name
+  from
+    v_sch_batch_operation bo
+    inner join lg_log lg
+      on lg.log_id = bo.start_log_id
+    inner join lg_level lv
+      on lv.level_code = lg.level_code
+    left join op_operator op
+      on op.operator_id = lg.operator_id
+  where
+    (bo.execution_level = 1
+      or bo.batch_operation_label in (
+        ''' || pkg_SchedulerMain.Activate_BatchMsgLabel || '''
+        , ''' || pkg_SchedulerMain.Deactivate_BatchMsgLabel || '''
+      )
+    )
+    and (
+      $(condition)
+    )
   order by
     1 desc
   ) a
@@ -1666,8 +1702,8 @@ where
 begin
 
   -- формирование параметров запроса
-  dSql.addCondition( 'l.log_id =', logId is null);
-  dSql.addCondition( 'l.batch_id =', batchId is null);
+  dSql.addCondition( 'bo.log_id =', logId is null);
+  dSql.addCondition( 'bo.batch_id =', batchId is null);
   dSql.useCondition( 'condition');
   dSql.addCondition(
     'rownum <= :maxRowCount', maxRowCount is null
@@ -1693,14 +1729,16 @@ end findRootLog;
   Возврат (курсор):
     log_id                  - Уникальный идентификатор
     parent_log_id           - Идентификатор родительского лога
-    message_type_code       - Код типа сообщения
-    message_type_name       - Наименование типа сообщения
+    level_code              - Код уровня сообщения
+    level_name              - Наименование уровня сообщения
     message_text            - Текст сообщения
     message_value           - Значение сообщения
     log_level               - Уровень иерархии
     date_ins                - Дата создания
     operator_id             - Идентификатор оператора
     operator_name           - Оператор
+    message_type_code       - Устаревшее поле (следует использовать level_code)
+    message_type_name       - Устаревшее поле (следует использовать level_name)
 */
 function getDetailedLog
 (
@@ -1712,28 +1750,14 @@ is
   -- возвращаемый курсор
   resultSet sys_refcursor;
 
-  -- Флаг лога с использованием контекста модуля Logging
-  isContextLog integer;
-
 begin
-  select
-    count(*)
-  into isContextLog
-  from
-    lg_log lg
-  where
-    lg.log_id = parentLogId
-    and lg.context_type_id is not null
-  ;
-  if isContextLog = 1 then
-
   open resultSet for
     select
         lg.log_id
-      , nullif( parentLogId, lg.log_id) as parent_log_id
-      , m.message_type_code
-      , m.message_type_name_rus as message_type_name
-      , coalesce( lg.message_value, lg.context_value_id) as message_value
+      , parentLogId as parent_log_id
+      , lg.level_code
+      , lv.level_description as level_name
+      , lg.message_value
       , lg.message_text
       , 1 + ( lg.context_level - ccl.open_context_level)
         + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
@@ -1741,87 +1765,24 @@ begin
       , lg.date_ins
       , lg.operator_id
       , op.operator_name
+      -- deprecated columns
+      , lg.level_code as message_type_code
+      , lv.level_description as message_type_name
     from
       v_lg_context_change_log ccl
       inner join lg_log lg
         on lg.sessionid = ccl.sessionid
           and lg.log_id >= ccl.open_log_id
           and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+      inner join lg_level lv
+        on lv.level_code = lg.level_code
       left join op_operator op
         on op.operator_id = lg.operator_id
-      left join lg_context_type ct
-        on ct.context_type_id = lg.context_type_id
-      left join sch_message_type m
-        on m.message_type_code =
-          case ct.context_type_short_name
-            when pkg_SchedulerMain.Batch_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                Bstart_MessageTypeCode
-              else
-                Bfinish_MessageTypeCode
-              end
-            when pkg_SchedulerMain.Job_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                Jstart_MessageTypeCode
-              else
-                Jfinish_MessageTypeCode
-              end
-            else
-              case lg.level_code
-                when pkg_Logging.Fatal_LevelCode then
-                  Error_MessageTypeCode
-                when pkg_Logging.Error_LevelCode then
-                  Error_MessageTypeCode
-                when pkg_Logging.Warn_LevelCode then
-                  Warning_MessageTypeCode
-                when pkg_Logging.Info_LevelCode then
-                  Info_MessageTypeCode
-                else
-                  Debug_MessageTypeCode
-              end
-          end
     where
       ccl.log_id = parentLogId
     order by
       1
   ;
-
-  else
-
-  open resultSet for
-  select
-      l.log_id
-    , l.parent_log_id
-    , l.message_type_code
-    , m.message_type_name_rus as message_type_name
-    , l.message_value
-    , l.message_text
-    , l.log_level
-    , l.date_ins
-    , l.operator_id
-    , op.operator_name
-  from
-  (
-    select
-        l.log_id
-      , l.parent_log_id
-      , l.message_type_code
-      , l.message_value
-      , l.message_text
-      , level as log_level
-      , l.date_ins
-      , l.operator_id
-    from sch_log l
-    start with l.log_id = parentLogId
-    connect by prior l.log_id = l.parent_log_id
-    order siblings by l.date_ins, l.log_id
-  ) l
-  inner join sch_message_type m
-    on m.message_type_code = l.message_type_code
-  left join op_operator op
-    on op.operator_id = l.operator_id;
-
-  end if;
 
   return resultSet;
 
@@ -2125,11 +2086,12 @@ end deleteOption;
   option_description          - Описание параметра
 
   Замечания:
+  - обязательно должно быть указано значение параметра batchId либо optionId;
   - в возвращаемом курсоре также присутствуют другие недокументированные выше
     поля, которые не должны использоваться в интерфейсе;
 */
 function findOption(
-  batchId integer
+  batchId integer := null
   , optionId integer := null
   , maxRowCount integer := null
   , operatorId integer := null
@@ -2141,7 +2103,9 @@ is
   bth sch_batch%rowtype;
 
 begin
-  pkg_SchedulerMain.getBatch( bth, batchId);
+  if batchId is not null or optionId is null then
+    pkg_SchedulerMain.getBatch( bth, batchId);
+  end if;
   return
     pkg_Option.findOption(
       optionId                  => optionId
@@ -3707,19 +3671,11 @@ is
 
 
   procedure findBatch is
-  --Определяем исполняемый пакет
-
-    lOracleJobId sch_batch.oracle_job_id%type;
-
+  -- Определяем исполняемый пакет
   begin
+    lBatchId := coalesce(batchId, oracleJobId);
     if lIsJob then
-      -- Устанавливаем режим поиска пакета в зависимости от типа запуска
-      lOracleJobId := oracleJobId;
-      lBatchId := null;
-      batchScheduleDate := getJobScheduleDate;
-    else
-      lOracleJobId := null;
-      lBatchId := batchId;
+      batchScheduleDate := getJobScheduleDate();
     end if;
     select                              --Определяем пакет для выполнения
       bt.batch_id
@@ -3734,11 +3690,7 @@ is
       sch_batch bt
     where
       bt.date_del is null
-      and
-        (
-        bt.batch_id = lBatchId
-        or bt.oracle_job_id = lOracleJobId
-        )
+      and bt.batch_id = lBatchId
     ;
     -- Логгируем начало выполнения пакета
     logger.info(
@@ -3750,12 +3702,12 @@ is
           || ' выполнения пакета "' || batchNameRus
           || '" [' || batchShortName || ']'
           || case when lIsJob
-              then ' (oracle_job_id=' || lOracleJobId || ')'
+              then ' (oracle_job_id=' || lBatchId|| ')'
               end
           || '.'
       , messageLabel          => pkg_SchedulerMain.Exec_BatchMsgLabel
       , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
-      , contextValueId        => coalesce( lBatchId, batchId)
+      , contextValueId        => coalesce(lBatchId, batchId)
       , openContextFlag       => 1
     );
     lStartLogId := lg_logger_t.getOpenContextLogId();
@@ -4158,7 +4110,7 @@ end;'
   --retrialNumber             - новое значение поля retrial_number
     pragma autonomous_transaction;      --Используем автономную транзакцию
 
-    cursor curBatch( batchId integer, oracleJobId integer) is
+    cursor curBatch( batchId integer) is
       select
         b.batch_id
         , b.retrial_number
@@ -4166,13 +4118,13 @@ end;'
         sch_batch b
       where
         b.batch_id = batchId
-        and b.oracle_job_id = oracleJobId
+        and b.active_flag = 1
       for update of b.retrial_number nowait
     ;
 
   --UpdateRetrialNumber
   begin
-    for rec in curBatch( lBatchId, oracleJobId) loop
+    for rec in curBatch(lBatchId) loop
       update
         sch_batch b
       set
@@ -4385,7 +4337,7 @@ end;'
               ', '
             end
             || case when oracleJobId is not null then
-              'oracle_job_id=' || oracleJobId
+              'oracle_job_id=' || batchId
             end
             )
           || '.'                        -- . чтобы Outlook не сливал строки
@@ -4451,13 +4403,11 @@ end;'
       cursor curDetail is
         select
           lg.log_id
-          , case lg.level_code
-              when pkg_Logging.Warn_LevelCode then
-                Warning_MessageTypeCode
-              else
-                Error_MessageTypeCode
+          , case when lg.level_code = pkg_Logging.Warn_LevelCode
+              then 0
+              else 1
             end
-            as message_type_code
+            as error_flag
           , lg.message_text
           , (
             select
@@ -4483,8 +4433,6 @@ end;'
             on lg.sessionid = ccl.sessionid
               and lg.log_id >= ccl.open_log_id
               and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
-          left join lg_context_type ct
-            on ct.context_type_id = lg.context_type_id
         where
           ccl.log_id = lStartLogId
           and lg.level_code in
@@ -4502,14 +4450,14 @@ end;'
     begin
       for rec in curDetail loop
         nDetail := nDetail + 1;         --Увеличиваем счетчики
-        if rec.message_type_code = Error_MessageTypeCode then
+        if rec.error_flag = 1 then
           nError := nError + 1;
         else
           nWarning := nWarning + 1;
         end if;
         AddMessageText(                 --Пишем детальное описание
           chr(10) || to_char( nDetail) || '. '
-          || case when rec.message_type_code = Error_MessageTypeCode
+          || case when rec.error_flag = 1
               then 'Ошибка'
               else 'Предупреждение'
             end
@@ -4731,39 +4679,6 @@ begin
       )
   ;
   nDeleted := nDeleted + sql%rowcount;
-  logger.debug( 'deleted by sessionid: ' || nDeleted);
-
-  -- Удаляет устаревшие записи старого лога (без sessionid)
-  delete from
-    sch_log lg
-  where
-    lg.rowid in
-      (
-      select
-        t.rowid
-      from
-        sch_log t
-      start with
-        t.log_id in
-          (
-          select /*+ index(t2 sch_log_ix_root_date_ins) */
-            t2.log_id
-          from
-            sch_log t2
-          where
-            case when
-              t2.parent_log_id is null
-              and t2.sessionid is null
-            then
-              t2.date_ins
-            end < toDate
-          )
-      connect by
-        prior t.log_id = t.parent_log_id
-      )
-  ;
-  nDeleted := nDeleted + SQL%ROWCOUNT;
-
   return nDeleted;
 exception when others then
   raise_application_error(
@@ -4797,40 +4712,15 @@ is
     select
       sch_log_t(
         lg.log_id
-        , nullif( rootLogId, lg.log_id)
-        , case ct.context_type_short_name
-            when pkg_SchedulerMain.Batch_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                Bstart_MessageTypeCode
-              else
-                Bfinish_MessageTypeCode
-              end
-            when pkg_SchedulerMain.Job_CtxTpSName then
-              case when lg.open_context_flag != 0 then
-                Jstart_MessageTypeCode
-              else
-                Jfinish_MessageTypeCode
-              end
-            else
-              case lg.level_code
-                when pkg_Logging.Fatal_LevelCode then
-                  Error_MessageTypeCode
-                when pkg_Logging.Error_LevelCode then
-                  Error_MessageTypeCode
-                when pkg_Logging.Warn_LevelCode then
-                  Warning_MessageTypeCode
-                when pkg_Logging.Info_LevelCode then
-                  Info_MessageTypeCode
-                else
-                  Debug_MessageTypeCode
-              end
-          end
-        , coalesce( lg.context_value_id, lg.message_value)
+        , rootLogId
+        , lg.level_code
+        , lg.message_value
         , lg.message_text
         , 1 + ( lg.context_level - ccl.open_context_level)
           + case when lg.open_context_flag in ( 1, -1) then 0 else 1 end
         , lg.date_ins
         , lg.operator_id
+        , lg.level_code
       )
       as log_row
     from
@@ -4839,60 +4729,16 @@ is
         on lg.sessionid = ccl.sessionid
           and lg.log_id >= ccl.open_log_id
           and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
-      left join lg_context_type ct
-        on ct.context_type_id = lg.context_type_id
     where
       ccl.log_id = rootLogId
     order by
       lg.log_id
   ;
 
-  cursor curOldLog( rootLogId integer) is
-    select
-      sch_log_t(
-        lg.log_id
-        , lg.parent_log_id
-        , lg.message_type_code
-        , lg.message_value
-        , lg.message_text
-        , level
-        , lg.date_ins
-        , lg.operator_id
-      )
-      as log_row
-    from
-      sch_log lg
-    start with
-      lg.log_id = rootLogId
-    connect by
-      prior lg.log_id = lg.parent_log_id
-    order siblings by
-      lg.date_ins
-      , lg.log_id
-  ;
-
-  -- Флаг лога с использованием контекста модуля Logging
-  isContextLog integer;
-
 begin
-  select
-    count(*)
-  into isContextLog
-  from
-    lg_log lg
-  where
-    lg.log_id = rootLogId
-    and lg.context_type_id is not null
-  ;
-  if isContextLog = 1 then
-    for rec in curLog( rootLogId) loop
-      pipe row( rec.log_row);
-    end loop;
-  else
-    for rec in curOldLog( rootLogId) loop
-      pipe row( rec.log_row);
-    end loop;
-  end if;
+  for rec in curLog( rootLogId) loop
+    pipe row( rec.log_row);
+  end loop;
   return;
 end getLog;
 

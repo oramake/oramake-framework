@@ -9,7 +9,7 @@ create table sch_batch  (
    , batch_type_id                integer                             not null
    , retrial_count                integer
    , retrial_timeout              interval day to second
-   , oracle_job_id                number
+   , active_flag                  number(1,0)         default 0       not null
    , nls_language                 varchar2(40)
    , nls_territory                varchar2(40)
    , retrial_number               integer
@@ -17,17 +17,17 @@ create table sch_batch  (
    , operator_id                  integer                             not null
    , date_del                     date
    , operator_id_del              integer
+   -- deprecated: delete after changing OraMakeSystem
+   , oracle_job_id                integer
    , constraint sch_batch_pk primary key (batch_id)
    , constraint sch_batch_uk_batch_short_name unique (batch_short_name)
+   , constraint sch_batch_ck_active check (
+       active_flag in (0, 1)
+     )
    , constraint sch_batch_ck_retrial check (
        coalesce( retrial_count, 0) >= 0
        and coalesce( retrial_timeout, interval '0' second) >= interval '0' second
      )
-)
-/
-
-create unique index sch_batch_ux_oracle_job_id on sch_batch (
-   oracle_job_id asc
 )
 /
 
@@ -60,8 +60,8 @@ comment on column sch_batch.retrial_count is
 comment on column sch_batch.retrial_timeout is
   'Интервал следующего повторного выполнения пакетного задания'
 /
-comment on column sch_batch.oracle_job_id is
-  'Id job из таблицы dba_jobs'
+comment on column sch_batch.active_flag is
+  'Флаг активности пакетного задания (1 - активированное, 0 - неактивированное)'
 /
 comment on column sch_batch.nls_language is
   'Значение NLS_LANGUAGE для job ( по-умолчанию "AMERICAN")'
@@ -84,4 +84,8 @@ comment on column sch_batch.date_del is
 comment on column sch_batch.operator_id_del is
   'Id оператора, удалившего запись'
 /
+comment on column sch_batch.oracle_job_id is
+  'Deprecated. Delete after changing OraMakeSystem'
+/
+
 
