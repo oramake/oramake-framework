@@ -21,6 +21,7 @@ declare
     , 'lg_logger_t'
     , 'lg_destination'
     , 'lg_level'
+    , 'v_lg_current_log'
   );
 
   -- Признак выдачи прав для всех пользователей

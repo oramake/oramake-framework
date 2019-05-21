@@ -1045,6 +1045,7 @@ from
         then
           vb.batch_id
         end as oracle_job_id
+      , vb.oracle_job_id
       , vb.retrial_number
       , vb.date_ins
       , vb.operator_id
@@ -1054,6 +1055,7 @@ from
         then
           vb.batch_id
         end as job
+      , vb.oracle_job_id as job
       , vb.last_date
       , vb.this_date
       , vb.next_date

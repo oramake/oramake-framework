@@ -75,10 +75,9 @@ select
   lg.level_code
   , lg.message_text
 from
-  lg_log lg
+  v_lg_current_log lg
 where
-  lg.sessionid = sys_context( 'USERENV', 'SESSIONID')
-  and lg.module_name = 'TestModule'
+  lg.module_name = 'TestModule'
 order by
-  log_id
+  lg.log_id
 /

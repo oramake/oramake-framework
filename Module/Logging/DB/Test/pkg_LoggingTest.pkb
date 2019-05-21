@@ -412,10 +412,9 @@ is
         , count(*)
       into logId, logCount
       from
-        lg_log t
+        v_lg_current_log t
       where
         t.log_id > prevLogId
-        and t.sessionid = sys_context('USERENV','SESSIONID')
         -- исключаем отладочные сообщения пакета pkg_LoggingInternal
         and not (
           nullif( 'Logging', t.module_name) is null
@@ -482,26 +481,6 @@ is
           , expectedString    => levelCode
           , failMessageText   =>
               cinfo || 'Некорректное значение level_code'
-        );
-        pkg_TestUtility.compareChar(
-          actualString        => lgr.message_type_code
-          , expectedString    =>
-              case levelCode
-                when pkg_Logging.Fatal_LevelCode then
-                  pkg_LoggingInternal.Error_MessageTypeCode
-                when pkg_Logging.Error_LevelCode then
-                  pkg_LoggingInternal.Error_MessageTypeCode
-                when pkg_Logging.Warn_LevelCode then
-                  pkg_LoggingInternal.Warning_MessageTypeCode
-                when pkg_Logging.Info_LevelCode then
-                  pkg_LoggingInternal.Info_MessageTypeCode
-                when pkg_Logging.Debug_LevelCode then
-                  pkg_LoggingInternal.Debug_MessageTypeCode
-                when pkg_Logging.Trace_LevelCode then
-                  pkg_LoggingInternal.Debug_MessageTypeCode
-              end
-          , failMessageText   =>
-              cinfo || 'Некорректное значение message_type_code'
         );
       end if;
       if length( messageText) <= 4000 then
@@ -633,10 +612,9 @@ is
         , count(*)
       into logId, logCount
       from
-        lg_log t
+        v_lg_current_log t
       where
         t.log_id > prevLogId
-        and t.sessionid = sys_context('USERENV','SESSIONID')
         -- исключаем отладочные сообщения пакета pkg_LoggingInternal
         and not (
           nullif( 'Logging', t.module_name) is null
@@ -687,7 +665,7 @@ is
   lg.*
   , ct.context_type_short_name
 from
-  lg_log lg
+  v_lg_current_log lg
   left join lg_context_type ct
     on ct.context_type_id = lg.context_type_id
 )
@@ -695,7 +673,6 @@ from
           , filterCondition   =>
 'log_id > ' || coalesce( prevLogId, 0) || '
 and log_id <= ' || coalesce( logId, 0) || '
-and sessionid = sys_context(''USERENV'',''SESSIONID'')
 -- исключаем отладочные сообщения пакета pkg_LoggingInternal
 and not (
   nullif( ''Logging'', module_name) is null

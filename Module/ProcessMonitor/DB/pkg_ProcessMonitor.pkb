@@ -1343,27 +1343,15 @@ from
       , (
         select
           max(
-            case when rl.start_time_utc is not null then
-              pkg_TaskHandler.toSecond( rl.finish_time_utc - rl.start_time_utc)
-              / 3600
-            else
-              ((
-              select
-                lg.date_ins
-              from
-                sch_log lg
-              where
-                lg.parent_log_id = rl.log_id
-                and lg.message_type_code = 'BFINISH'
-              )
-              - rl.date_ins)
-              * 24
-            end
+            pkg_TaskHandler.toSecond( bo.finish_time_utc - bo.start_time_utc)
+            / 3600
           )
         from
-          v_sch_batch_root_log rl
+          v_sch_batch_operation bo
         where
-          rl.batch_id = b.batch_id
+          bo.batch_id = b.batch_id
+          and bo.batch_operation_label = 'EXEC'
+          and bo.finish_time_utc is not null
         )
         as max_execution_hour
       , (

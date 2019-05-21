@@ -230,16 +230,16 @@ from
                   select
                     null
                   from
-                    v_sch_batch_root_log brl
-                    inner join sch_log lg
-                      on lg.log_id = brl.log_id
+                    v_sch_batch_operation bo
+                    inner join lg_log lg
+                      on lg.log_id = bo.start_log_id
                   where
-                    -- Current operator performed actions on the batch during
-                    -- the last period
-                    brl.batch_id = e.batch_id
-                    and brl.message_type_code
-                      = pkg_Scheduler.BManage_MessageTypeCode
-                    and brl.date_ins >= sysdate - reactivateTimeout
+                    bo.batch_id = e.batch_id
+                    and bo.start_time_utc >=
+                      sys_extract_utc(
+                        systimestamp
+                        - numtodsinterval( reactivateTimeout, 'DAY')
+                      )
                     and lg.operator_id = operatorId
                   )
             )

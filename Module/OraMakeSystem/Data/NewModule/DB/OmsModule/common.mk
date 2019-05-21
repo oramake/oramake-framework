@@ -1624,7 +1624,7 @@ uninstall-after.oms: \
 # Удаляет временные файлы, созданные при загрузке в БД.
 
 uninstall-clean.oms: 
-  -@rm -rf $(loadDir)/State/*
+	-@rm -rf $(loadDir)/State/*
 
 
 

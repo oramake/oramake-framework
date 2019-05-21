@@ -43,12 +43,11 @@ group: Завершение доработок
 
 [-] Удалить поля из App-части: is_job_broken, duration_second.
 
-[*] Удалить устаревшие представления <v_sch_batch_root_log>,
-    <v_sch_batch_root_log_old>, <v_sch_batch_result>, а также другие объекты
-    и части кода, связанные с %sch_log%.
+[*] В App-части вместо устаревших колонок message_type_code, message_type_name
+    использовать колонки level_code, level_name (в курсорах, возвращаемых
+    функциями <pkg_Scheduler.findRootLog>, <pkg_Scheduler.getDetailedLog>).
 
 [*] Удалить устаревшее поле oracle_job_id в <sch_batch>
     после прекращения использования в OraMakeSystem.
-
 
 

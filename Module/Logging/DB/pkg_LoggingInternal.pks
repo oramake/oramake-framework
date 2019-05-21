@@ -7,34 +7,6 @@ create or replace package pkg_LoggingInternal is
 
 
 
-/* group: Константы */
-
-
-
-/* group: Типы сообщений лога */
-
-/* const: Error_MessageTypeCode
-  Код типа сообщений "Ошибка".
-*/
-Error_MessageTypeCode constant varchar2(10) := 'ERROR';
-
-/* const: Info_MessageTypeCode
-  Код типа сообщений "Информация".
-*/
-Info_MessageTypeCode constant varchar2(10) := 'INFO';
-
-/* const: Warning_MessageTypeCode
-  Код типа сообщений "Предупреждение".
-*/
-Warning_MessageTypeCode constant varchar2(10) := 'WARNING';
-
-/* const: Debug_MessageTypeCode
-  Код типа сообщений "Отладка".
-*/
-Debug_MessageTypeCode constant varchar2(10) := 'DEBUG';
-
-
-
 /* group: Функции */
 
 
@@ -281,24 +253,6 @@ return integer;
 procedure deleteContextType(
   loggerUid varchar2
   , contextTypeShortName varchar2
-);
-
-
-
-/* group: Совместимость с Scheduler */
-
-/* pproc: beforeInsertLogRow
-  Вызывается при непосредственной вставке записей из других модулей из триггера
-  на таблице <lg_log>.
-
-  Параметры:
-  logRec                      - Данные записи таблицы <lg_log>
-                                (модификация)
-
-  ( <body::beforeInsertLogRow>)
-*/
-procedure beforeInsertLogRow(
-  logRec in out nocopy lg_log%rowtype
 );
 
 end pkg_LoggingInternal;

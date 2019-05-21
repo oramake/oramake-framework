@@ -160,13 +160,18 @@ Group: Скрипты  {
             File: lg_destination  (no auto-title, Install/Schema/Last/lg_destination.tab)
             File: lg_level  (no auto-title, Install/Schema/Last/lg_level.tab)
             File: lg_log  (no auto-title, Install/Schema/Last/lg_log.tab)
-            File: lg_log.comment  (no auto-title, Install/Schema/Last/lg_log.comment.sql)
-            File: lg_log_bi_define  (no auto-title, Install/Schema/Last/lg_log_bi_define.trg)
             File: lg_log_seq  (no auto-title, Install/Schema/Last/lg_log_seq.sqs)
-            File: lg_message_type  (no auto-title, Install/Schema/Last/lg_message_type.tab)
+            File: set-log-comment  (no auto-title, Install/Schema/Last/set-log-comment.sql)
             File: v_lg_context_change  (no auto-title, Install/Schema/Last/v_lg_context_change.vw)
             File: v_lg_context_change_log  (no auto-title, Install/Schema/Last/v_lg_context_change_log.vw)
+            File: v_lg_current_log  (no auto-title, Install/Schema/Last/v_lg_current_log.vw)
             }  # Group: Last
+
+         Group: 2.1.0  {
+
+            File: run  (no auto-title, Install/Schema/2.1.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.1.0/revert.sql)
+            }  # Group: 2.1.0
 
          Group: 2.0.0  {
 
