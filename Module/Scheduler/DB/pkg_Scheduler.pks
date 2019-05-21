@@ -200,6 +200,33 @@ procedure deactivateBatch(
   , operatorId integer
 );
 
+/* pproc: activateBatchAll
+  јктивирует пакетные задани€.
+
+  ѕараметры:
+  usedDayCount                - только пакеты, которые останавливались
+                                <deactivateBatchAll> в последние
+                                usedDayCount дней (0 текущий день, null без
+                                ограничени€ (по умолчанию))
+
+  ( <body::activateBatchAll>)
+*/
+procedure activateBatchAll(
+  usedDayCount number
+);
+
+/* pproc: deactivateBatchAll
+  ƒеактивирует все активные батчи и записывает сообщение об остановке в лог.
+
+  «амечани€:
+  - в случае ошибки commit не выполн€етс€ и ни один пакет не деактивируетс€;
+  - в случае ошибки при получении Id текущего зарегистрированного оператора
+    деактиваци€ выполн€етс€ от имени оператора с operator_id=1;
+
+  ( <body::deactivateBatchAll>)
+*/
+procedure deactivateBatchAll;
+
 /* pproc: setNextDate
   ”станавливает дату следующего запуска активированного пакета.
 

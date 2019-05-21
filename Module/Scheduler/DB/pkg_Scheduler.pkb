@@ -512,6 +512,14 @@ begin
       || ' изменена на '
         || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
       ;
+  elsif rec.active_flag = 0 and rec.current_job_flag = 1 then
+    -- јктуализируем флаг
+    update
+      sch_batch
+    set
+      active_flag = 1
+    where current of curBatch
+    ;
   end if;
   -- ќчищаем номер попытки, если он был
   if rec.retrial_number is not null then
@@ -728,6 +736,210 @@ exception when others then
     , true
   );
 end deactivateBatch;
+
+/* proc: activateBatchAll
+  јктивирует пакетные задани€.
+
+  ѕараметры:
+  usedDayCount                - только пакеты, которые останавливались
+                                <deactivateBatchAll> в последние
+                                usedDayCount дней (0 текущий день, null без
+                                ограничени€ (по умолчанию))
+*/
+procedure activateBatchAll(
+  usedDayCount number
+)
+is
+  cursor curBatch is
+    select
+      b.batch_id
+      , b.batch_name_rus
+      , b.batch_short_name
+      , b.active_flag
+      , b.next_date
+    from
+      v_sch_batch b
+      left join
+        (
+        select distinct
+          lg.context_value_id as batch_id
+        from
+          v_sch_batch_operation bo
+          inner join lg_log lg
+            on lg.sessionid = bo.sessionid
+              and lg.log_id between bo.start_log_id and bo.finish_log_id
+              and lg.context_type_id = bo.batch_context_type_id
+              and lg.context_type_level = bo.execution_level + 1
+              and lg.message_label
+                = pkg_SchedulerMain.Deactivate_BatchMsgLabel
+              and lg.context_value_id is not null
+        where
+          bo.batch_id is null
+          and bo.batch_operation_label
+            = pkg_SchedulerMain.DeactivateAll_BatchMsgLabel
+          and bo.processed_count > 0
+          and bo.start_time_utc >=
+            sys_extract_utc(
+              to_timestamp_tz(
+                to_char( systimestamp, 'dd.mm.yyyy tzh:tzm')
+                , 'dd.mm.yyyy tzh:tzm'
+              )
+              - numtodsinterval( usedDayCount, 'DAY')
+            )
+        ) d
+        on d.batch_id = b.batch_id
+    where
+      (usedDayCount is null or d.batch_id is not null)
+    order by
+      b.batch_short_name
+  ;
+
+  -- Id оператора, от имени которого выполн€етс€ операци€
+  operatorId integer;
+
+  nChecked integer := 0;
+
+  nDone integer := 0;
+
+begin
+  operatorId := pkg_Operator.getCurrentUserId();
+
+  logger.info(
+    'Ќачало массовой активации пакетных заданий ('
+      || 'usedDayCount=' || usedDayCount
+      || ') ...'
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , messageLabel          => pkg_SchedulerMain.ActivateAll_BatchMsgLabel
+    , openContextFlag       => 1
+  );
+  begin
+    for rec in curBatch loop
+      nChecked := nChecked + 1;
+      if rec.active_flag = 0 then
+        pkg_Scheduler.activateBatch(
+          batchId       => rec.batch_id
+          , operatorId  => operatorId
+        );
+        nDone := nDone + 1;
+      else
+        logger.info(
+          'ѕакет уже был активирован: "'
+          || rec.batch_name_rus || '" [' || rec.batch_short_name ||  ']'
+          || ' ( batch_id=' || rec.batch_id
+          || ', дата запуска '
+            || to_char( rec.next_date, 'dd.mm.yyyy hh24:mi:ss')
+          || ').'
+        );
+      end if;
+    end loop;
+    if nChecked = 0 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Ќе найдены пакетные задани€ дл€ активации ('
+          || ' usedDayCount=' || usedDayCount
+          || ').'
+      );
+    end if;
+    commit;
+    logger.info(
+      'јктивировано пакетных заданий: ' || nDone
+      , messageValue          => nDone
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
+    );
+  exception when others then
+    logger.error(
+      'ќшибка при массовой активации пакетных заданий:'
+        || chr(10) || logger.getErrorStack()
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
+    );
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'ќшибка при массовой активации пакетных заданий.'
+        )
+      , true
+    );
+  end;
+end activateBatchAll;
+
+/* proc: deactivateBatchAll
+  ƒеактивирует все активные батчи и записывает сообщение об остановке в лог.
+
+  «амечани€:
+  - в случае ошибки commit не выполн€етс€ и ни один пакет не деактивируетс€;
+  - в случае ошибки при получении Id текущего зарегистрированного оператора
+    деактиваци€ выполн€етс€ от имени оператора с operator_id=1;
+*/
+procedure deactivateBatchAll
+is
+  cursor curBatch is
+    select
+      b.batch_id
+      , b.batch_short_name
+    from
+      sch_batch b
+    where
+      active_flag = 1
+    order by
+      b.batch_short_name
+  ;
+
+  -- Id оператора, от имени которого выполн€етс€ операци€
+  operatorId integer;
+
+  nDone integer := 0;
+
+begin
+  begin
+    operatorId := pkg_Operator.getCurrentUserId();
+  exception when others then
+    operatorId := 1;
+    dbms_output.put_line(
+      'Use default operator_id: ' || operatorId
+    );
+  end;
+
+  logger.info(
+    'Deactivate all batches: ...'
+    , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+    , messageLabel          => pkg_SchedulerMain.DeactivateAll_BatchMsgLabel
+    , openContextFlag       => 1
+  );
+  begin
+
+    for rec in curBatch loop
+      pkg_Scheduler.deactivateBatch(
+        batchId       => rec.batch_id
+        , operatorId  => operatorId
+      );
+      nDone := nDone + 1;
+    end loop;
+
+    commit;
+
+    logger.info(
+      'Batches deactivated: ' || nDone
+      , messageValue          => nDone
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
+    );
+  exception when others then
+    logger.error(
+      'Error on deactivate all batches:' || chr(10) || logger.getErrorStack()
+      , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
+      , openContextFlag       => 0
+    );
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Error on deactivating all batches.'
+        )
+      , true
+    );
+  end;
+end deactivateBatchAll;
 
 /* proc: setNextDate
   ”станавливает дату следующего запуска активированного пакета.

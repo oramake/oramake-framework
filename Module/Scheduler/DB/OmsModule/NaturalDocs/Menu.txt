@@ -1,0 +1,290 @@
+Format: 1.5
+
+
+# You can add a title and sub-title to your menu like this:
+# Title: [project name]
+# SubTitle: [subtitle]
+
+# You can add a footer to your documentation like this:
+# Footer: [text]
+# If you want to add a copyright notice, this would be the place to do it.
+
+# You can add a timestamp to your documentation like one of these:
+# Timestamp: Generated on month day, year
+# Timestamp: Updated mm/dd/yyyy
+# Timestamp: Last updated mon day
+#
+#   m     - One or two digit month.  January is "1"
+#   mm    - Always two digit month.  January is "01"
+#   mon   - Short month word.  January is "Jan"
+#   month - Long month word.  January is "January"
+#   d     - One or two digit day.  1 is "1"
+#   dd    - Always two digit day.  1 is "01"
+#   day   - Day with letter extension.  1 is "1st"
+#   yy    - Two digit year.  2006 is "06"
+#   yyyy  - Four digit year.  2006 is "2006"
+#   year  - Four digit year.  2006 is "2006"
+
+
+# --------------------------------------------------------------------------
+# 
+# Cut and paste the lines below to change the order in which your files
+# appear on the menu.  Don't worry about adding or removing files, Natural
+# Docs will take care of that.
+# 
+# You can further organize the menu by grouping the entries.  Add a
+# "Group: [name] {" line to start a group, and add a "}" to end it.
+# 
+# You can add text and web links to the menu by adding "Text: [text]" and
+# "Link: [name] ([URL])" lines, respectively.
+# 
+# The formatting and comments are auto-generated, so don't worry about
+# neatness when editing the file.  Natural Docs will clean it up the next
+# time it is run.  When working with groups, just deal with the braces and
+# forget about the indentation and comments.
+# 
+# --------------------------------------------------------------------------
+
+
+Group: О модуле  {
+
+   File: Описание  (Doc/readme.txt)
+   File: Установка  (Doc/install.txt)
+   File: Ошибки  (Doc/bugs.txt)
+   File: Доработки  (Doc/todo.txt)
+   File: Сборка  (Makefile)
+   File: Версии  (Doc/version.txt)
+   }  # Group: О модуле
+
+Group: Объектные типы  {
+
+   Group: sch_batch_log_info_t  {
+
+      File: Спецификация  (no auto-title, sch_batch_log_info_t.typ)
+      File: Реализация  (no auto-title, sch_batch_log_info_t.tyb)
+      }  # Group: sch_batch_log_info_t
+
+   Group: sch_batch_option_t  {
+
+      File: Спецификация  (no auto-title, sch_batch_option_t.typ)
+      File: Реализация  (no auto-title, sch_batch_option_t.tyb)
+      }  # Group: sch_batch_option_t
+
+   Group: sch_log_t  {
+
+      File: Спецификация  (no auto-title, sch_log_t.typ)
+      }  # Group: sch_log_t
+
+   Group: sch_log_table_t  {
+
+      File: Спецификация  (no auto-title, sch_log_table_t.typ)
+      }  # Group: sch_log_table_t
+
+   }  # Group: Объектные типы
+
+Group: Пакеты  {
+
+   Group: pkg_Scheduler  {
+
+      File: Спецификация  (no auto-title, pkg_Scheduler.pks)
+      File: Реализация  (no auto-title, pkg_Scheduler.pkb)
+      }  # Group: pkg_Scheduler
+
+   Group: pkg_SchedulerLoad  {
+
+      File: Спецификация  (no auto-title, pkg_SchedulerLoad.pks)
+      File: Реализация  (no auto-title, pkg_SchedulerLoad.pkb)
+      }  # Group: pkg_SchedulerLoad
+
+   Group: pkg_SchedulerMain  {
+
+      File: Спецификация  (no auto-title, pkg_SchedulerMain.pks)
+      File: Реализация  (no auto-title, pkg_SchedulerMain.pkb)
+      }  # Group: pkg_SchedulerMain
+
+   Group: Test  {
+
+      Group: pkg_SchedulerTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_SchedulerTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_SchedulerTest.pkb)
+         }  # Group: pkg_SchedulerTest
+
+      }  # Group: Test
+
+   }  # Group: Пакеты
+
+Group: Скрипты  {
+
+   Group: Do  {
+
+      File: run  (no auto-title, Do/run.sql)
+      File: abort  (no auto-title, Do/abort.sql)
+      File: activate  (no auto-title, Do/activate.sql)
+      File: activate-all  (no auto-title, Do/activate-all.sql)
+      File: batch-log-level  (no auto-title, Do/batch-log-level.sql)
+      File: deactivate  (no auto-title, Do/deactivate.sql)
+      File: deactivate-all  (no auto-title, Do/deactivate-all.sql)
+      File: remove  (no auto-title, Do/remove.sql)
+      File: set-next-date  (no auto-title, Do/set-next-date.sql)
+      }  # Group: Do
+
+   Group: Install  {
+
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: resume-all-batch  (no auto-title, Install/Config/resume-all-batch.sql)
+         File: resume-job  (no auto-title, Install/Config/resume-job.sql)
+         File: stop-all-batch  (no auto-title, Install/Config/stop-all-batch.sql)
+         File: stop-job  (no auto-title, Install/Config/stop-job.sql)
+         }  # Group: Config
+
+      Group: Data  {
+
+         Group: Last  {
+
+            Group: AccessOperatorDb  {
+
+               File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
+               }  # Group: AccessOperatorDb
+
+            }  # Group: Last
+
+         }  # Group: Data
+
+      Group: Grant  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: create-batch  (no auto-title, Install/Grant/Last/create-batch.sql)
+            File: manage-batch  (no auto-title, Install/Grant/Last/manage-batch.sql)
+            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
+            }  # Group: Last
+
+         Group: 5.0.0  {
+
+            File: sys-privs  (no auto-title, Install/Grant/5.0.0/sys-privs.sql)
+            }  # Group: 5.0.0
+
+         }  # Group: Grant
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: sch_batch  (no auto-title, Install/Schema/Last/sch_batch.tab)
+            File: sch_batch_content  (no auto-title, Install/Schema/Last/sch_batch_content.tab)
+            File: sch_batch_content_seq  (no auto-title, Install/Schema/Last/sch_batch_content_seq.sqs)
+            File: sch_batch_role  (no auto-title, Install/Schema/Last/sch_batch_role.tab)
+            File: sch_batch_role_seq  (no auto-title, Install/Schema/Last/sch_batch_role_seq.sqs)
+            File: sch_batch_seq  (no auto-title, Install/Schema/Last/sch_batch_seq.sqs)
+            File: sch_batch_type  (no auto-title, Install/Schema/Last/sch_batch_type.tab)
+            File: sch_batch_type_seq  (no auto-title, Install/Schema/Last/sch_batch_type_seq.sqs)
+            File: sch_condition  (no auto-title, Install/Schema/Last/sch_condition.tab)
+            File: sch_condition_seq  (no auto-title, Install/Schema/Last/sch_condition_seq.sqs)
+            File: sch_interval  (no auto-title, Install/Schema/Last/sch_interval.tab)
+            File: sch_interval_seq  (no auto-title, Install/Schema/Last/sch_interval_seq.sqs)
+            File: sch_interval_type  (no auto-title, Install/Schema/Last/sch_interval_type.tab)
+            File: sch_job  (no auto-title, Install/Schema/Last/sch_job.tab)
+            File: sch_job_seq  (no auto-title, Install/Schema/Last/sch_job_seq.sqs)
+            File: sch_load_condition_tmp  (no auto-title, Install/Schema/Last/sch_load_condition_tmp.tab)
+            File: sch_load_interval_tmp  (no auto-title, Install/Schema/Last/sch_load_interval_tmp.tab)
+            File: sch_load_schedule_tmp  (no auto-title, Install/Schema/Last/sch_load_schedule_tmp.tab)
+            File: sch_module_role_privilege  (no auto-title, Install/Schema/Last/sch_module_role_privilege.tab)
+            File: sch_module_role_privilege_bi_d  (no auto-title, Install/Schema/Last/sch_module_role_privilege_bi_d.trg)
+            File: sch_module_role_privilege_seq  (no auto-title, Install/Schema/Last/sch_module_role_privilege_seq.sqs)
+            File: sch_privilege  (no auto-title, Install/Schema/Last/sch_privilege.tab)
+            File: sch_privilege_bi_define  (no auto-title, Install/Schema/Last/sch_privilege_bi_define.trg)
+            File: sch_result  (no auto-title, Install/Schema/Last/sch_result.tab)
+            File: sch_result_seq  (no auto-title, Install/Schema/Last/sch_result_seq.sqs)
+            File: sch_schedule  (no auto-title, Install/Schema/Last/sch_schedule.tab)
+            File: sch_schedule_seq  (no auto-title, Install/Schema/Last/sch_schedule_seq.sqs)
+            File: v_sch_batch  (no auto-title, Install/Schema/Last/v_sch_batch.vw)
+            File: v_sch_batch_operation  (no auto-title, Install/Schema/Last/v_sch_batch_operation.vw)
+            File: v_sch_operator_batch  (no auto-title, Install/Schema/Last/v_sch_operator_batch.vw)
+            File: v_sch_role_privilege  (no auto-title, Install/Schema/Last/v_sch_role_privilege.vw)
+            }  # Group: Last
+
+         Group: 5.2.0  {
+
+            File: run  (no auto-title, Install/Schema/5.2.0/run.sql)
+            }  # Group: 5.2.0
+
+         Group: 5.1.0  {
+
+            File: run  (no auto-title, Install/Schema/5.1.0/run.sql)
+            }  # Group: 5.1.0
+
+         Group: 4.6.0  {
+
+            File: run  (no auto-title, Install/Schema/4.6.0/run.sql)
+            }  # Group: 4.6.0
+
+         Group: 4.4.0  {
+
+            File: run  (no auto-title, Install/Schema/4.4.0/run.sql)
+            }  # Group: 4.4.0
+
+         }  # Group: Schema
+
+      }  # Group: Install
+
+   Group: OmsConfig  {
+
+      File: op_role  (no auto-title, OmsConfig/op_role.sql)
+      File: set-schDbRoleSuffixList  (no auto-title, OmsConfig/set-schDbRoleSuffixList.sql)
+      }  # Group: OmsConfig
+
+   Group: Show  {
+
+      File: run  (no auto-title, Show/run.sql)
+      File: batch  (no auto-title, Show/batch.sql)
+      File: log  (no auto-title, Show/log.sql)
+      File: operation  (no auto-title, Show/operation.sql)
+      File: option  (no auto-title, Show/option.sql)
+      }  # Group: Show
+
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: test-batch  (no auto-title, Test/test-batch.sql)
+      }  # Group: Test
+
+   }  # Group: Скрипты
+
+Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Type Index: Типы
+      Database View Index: Представления
+      Database Table Index: Таблицы
+      Database Trigger Index: Триггеры
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
+
+   Group: Открытые объявления  {
+
+      Constant Index: Константы
+      Variable Index: Переменные
+      Function public Index: Функции
+      }  # Group: Открытые объявления
+
+   Group: Закрытые объявления  {
+
+      Type internal Index: Типы
+      Constant internal Index: Константы
+      Variable internal Index: Переменные
+      }  # Group: Закрытые объявления
+
+   Function Index: Функции
+   File Index: Скрипты
+   Index: Все вместе
+   }  # Group: Индекс
+
