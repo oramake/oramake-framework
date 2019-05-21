@@ -36,11 +36,7 @@ declare
       b.batch_id
       , b.batch_name_rus
       , b.batch_short_name
-<<<<<<< HEAD
       , b.active_flag
-=======
-      , b.oracle_job_id
->>>>>>> 0da9d9dc5ae895f76be0b3c9ac7adbaa75a3d142
       , b.next_date
     from
       v_sch_batch b
@@ -96,11 +92,7 @@ declare
 begin
   for rec in curBatch loop
     nChecked := nChecked + 1;
-<<<<<<< HEAD
     if rec.active_flag = 0 then
-=======
-    if rec.oracle_job_id is null then
->>>>>>> 0da9d9dc5ae895f76be0b3c9ac7adbaa75a3d142
       pkg_Scheduler.activateBatch(
         batchId       => rec.batch_id
         , operatorId  => operatorId
