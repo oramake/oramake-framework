@@ -108,10 +108,15 @@ isAccessOperatorFound boolean := null;
 */
 previousDebugTimeStamp timestamp := null;
 
-/* ivar: forcedDestinationCode
-  ѕереопределение назначени€ дл€ вывода сообщений.
+/* ivar: isDboutOutput
+  ѕризнак вывода сообщений лога через пакет dbms_output.
 */
-forcedDestinationCode varchar2(10) := null;
+isDboutOutput boolean := null;
+
+/* ivar: isTableOutput
+  ѕризнак вывода сообщений лога в таблицу <lg_log>.
+*/
+isTableOutput boolean := null;
 
 /* ivar: colLogger
   Ћогеры.
@@ -708,25 +713,37 @@ end getCurrentOperatorId;
   «амечани€:
   - по умолчанию (если не задано единственное назначение дл€ вывода)
     логируемые сообщени€ добавл€ютс€ в таблицу <lg_log>, а в тестовых Ѕƒ
-    дополнительно вывод€тс€ через пакет dbms_output;
+    дополнительно вывод€тс€ через пакет dbms_output (если сесси€ не запущена
+    через dbms_job);
 */
 procedure setDestination(
   destinationCode varchar2
 )
 is
 begin
-  if destinationCode is not null
-      and destinationCode not in (
+  if destinationCode is null then
+    isDboutOutput := coalesce(
+      -- в тестовых Ѕƒ
+      pkg_Common.isProduction() = 0
+        -- сесси€ не запущена через dbms_job
+        and sys_context( 'USERENV', 'BG_JOB_ID') is null
+        and nullif( sys_context( 'USERENV', 'FG_JOB_ID'), 0) is null
+      , false
+    );
+    isTableOutput := true;
+  elsif destinationCode in (
         pkg_Logging.DbmsOutput_DestinationCode
         , pkg_Logging.Table_DestinationCode
       )
-  then
+      then
+    isDboutOutput := destinationCode = pkg_Logging.DbmsOutput_DestinationCode;
+    isTableOutput := destinationCode = pkg_Logging.Table_DestinationCode;
+  else
     raise_application_error(
       pkg_Error.IllegalArgument
       , '¬ывод по коду "' || destinationCode || '" не реализован.'
     );
   end if;
-  forcedDestinationCode := destinationCode;
 end setDestination;
 
 
@@ -1096,9 +1113,6 @@ is
   -- –азрешен вывод через dbms_output
   isDboutEnabled boolean := false;
 
-  -- –азрешен вывод в таблицу
-  isTableEnabled boolean := false;
-
   -- ѕризнак вывода сообщени€ (любым способом)
   isOutput boolean := false;
 
@@ -1350,10 +1364,10 @@ is
               and lgr.open_context_flag = 0
           then
         isToDbout := isDboutEnabled and not hiddenContextList( i);
-        if isToDbout or isTableEnabled then
+        if isToDbout or isTableOutput then
           --  орректируем данные до фактического вывода чтобы исключить
           -- повторную попытку вывода в случае исключени€ при выводе
-          if isTableEnabled then
+          if isTableOutput then
             hiddenContextList.delete( i);
           elsif isToDbout then
             hiddenContextList( i) := true;
@@ -1361,7 +1375,7 @@ is
           outputMessage(
             logRec              => openContextCol( i)
             , isDboutEnabled    => isToDbout
-            , isTableEnabled    => isTableEnabled
+            , isTableEnabled    => isTableOutput
           );
         end if;
       end if;
@@ -1405,7 +1419,7 @@ is
     begin
       isHidden := hiddenContextList.exists( i);
       isToDbout := isDboutEnabled and not (isHidden and hiddenContextList( i));
-      isToTable := isTableEnabled and not isHidden;
+      isToTable := isTableOutput and not isHidden;
       if isHidden then
         hiddenContextList.delete( i);
       end if;
@@ -1497,7 +1511,7 @@ is
     -- ќбщие действи€ при открытии контекста любого типа
     if lgr.open_context_flag = 1 then
       openContextCol( ids) := lgr;
-      if not ( isOutput and isTableEnabled) then
+      if not ( isOutput and isTableOutput) then
         hiddenContextList( ids) := isOutput and isDboutEnabled;
         --dbms_output.put_line( 'hiddenContextList: add: ' || ids);
       end if;
@@ -1613,20 +1627,13 @@ begin
     );
   end if;
 
-  isDboutEnabled :=
-    coalesce( disableDboutFlag, 0) != 1
-    -- если €вно задано либо ничего €вно не задано в тестовой Ѕƒ
-    and (
-      forcedDestinationCode = pkg_Logging.DbmsOutput_DestinationCode
-      or forcedDestinationCode is null and pkg_Common.isProduction() = 0
-    )
-  ;
-  isTableEnabled :=
-    -- если ничего другого €вно не задано
-    nullif( forcedDestinationCode, pkg_Logging.Table_DestinationCode) is null
-  ;
+  if isDboutOutput is null then
+    -- ”станавливаем значени€ вывода по умолчанию
+    setDestination( destinationCode => null);
+  end if;
+  isDboutEnabled := coalesce( disableDboutFlag, 0) != 1 and isDboutOutput;
   isOutput :=
-    ( isDboutEnabled or isTableEnabled)
+    ( isDboutEnabled or isTableOutput)
       and isMessageEnabled( messageLoggerUid, levelCode)
     -- независимо от уровн€ сообщени€ выводим закрытие контекста если
     -- ранее было выведено открытие
@@ -1634,7 +1641,7 @@ begin
       and isOutputForAny(
         openContextIds  => getIdStr( lgr.open_context_log_id)
         , forDbout      => isDboutEnabled
-        , forTable      => isTableEnabled
+        , forTable      => isTableOutput
       )
   ;
   if isOutput then
@@ -1656,7 +1663,7 @@ begin
       , loggerUid         => messageLoggerUid
       , disableDboutFlag  => disableDboutFlag
     );
-    if lgr.open_context_flag = 1 or isTableEnabled then
+    if lgr.open_context_flag = 1 or isTableOutput then
       prepareLogRow( lgr);
     end if;
   end if;
@@ -1664,7 +1671,7 @@ begin
     outputMessage(
       logRec              => lgr
       , isDboutEnabled    => isDboutEnabled
-      , isTableEnabled    => isTableEnabled
+      , isTableEnabled    => isTableOutput
     );
   end if;
 

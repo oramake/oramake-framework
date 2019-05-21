@@ -15,8 +15,7 @@ create or replace package body pkg_Logging is
   Замечания:
   - по умолчанию (если не задано единственное назначение для вывода)
     логируемые сообщения добавляются в таблицу <lg_log>, а в тестовых БД
-    дополнительно выводятся через пакет dbms_output (если сессия не запущена
-    через dbms_job);
+    дополнительно выводятся через пакет dbms_output;
 */
 procedure setDestination(
   destinationCode varchar2
