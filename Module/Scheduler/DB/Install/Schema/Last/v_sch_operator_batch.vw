@@ -36,6 +36,7 @@ select
   , d.warning_count
   , d.duration_second
   , d.read_operator_id
+  , d.oracle_job_id
 from
   (
   select
