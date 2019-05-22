@@ -1,5 +1,22 @@
-create or replace type body lg_logger_t is
-/* db object type body: lg_logger_t::body */
+create or replace type
+  lg_logger_t
+force
+as object
+(
+/* db object type: lg_logger_t
+  Логер ( обеспечивает логирование с указанием источника сообщений).
+
+  SVN root: Oracle/Module/Logging
+*/
+
+
+
+/* group: Закрытые объявления */
+
+/* ivar: loggerUid
+  Уникальный идентификатор логера.
+*/
+loggerUid varchar2(250),
 
 
 
@@ -9,7 +26,7 @@ create or replace type body lg_logger_t is
 
 /* group: Закрытые объявления */
 
-/* func: lg_logger_t
+/* pfunc: lg_logger_t
   Создает логер.
 
   Параметры:
@@ -34,6 +51,8 @@ create or replace type body lg_logger_t is
   - функция не должна вызываться явно, более адекватно использовать функции
     getLogger;
   - вызывает функцию <pkg_LoggingInternal.getLoggerUid>;
+
+  ( <body::lg_logger_t>)
 */
 constructor function lg_logger_t(
   loggerName varchar2
@@ -41,139 +60,105 @@ constructor function lg_logger_t(
   , objectName varchar2 := null
   , findModuleString varchar2 := null
 )
-return self as result
-is
-begin
-  self.loggerUid := pkg_LoggingInternal.getLoggerUid(
-    loggerName          => loggerName
-    , moduleName        => moduleName
-    , objectName        => objectName
-    , findModuleString  => findModuleString
-  );
-  return;
-end lg_logger_t;
-
-
-
-/* group: Открытые объявления */
+return self as result,
 
 
 
 /* group: Уровни логирования */
 
-/* func: getOffLevelCode
+/* pfunc: getOffLevelCode
   Возвращает код уровня логирования "Логирование отключено".
+
+  ( <body::getOffLevelCode>)
 */
 static function getOffLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Off_LevelCode;
-end getOffLevelCode;
+return varchar2,
 
-/* func: getFatalLevelCode
+/* pfunc: getFatalLevelCode
   Возвращает код уровня логирования "Фатальная ошибка".
+
+  ( <body::getFatalLevelCode>)
 */
 static function getFatalLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Fatal_LevelCode;
-end getFatalLevelCode;
+return varchar2,
 
-/* func: getErrorLevelCode
+/* pfunc: getErrorLevelCode
   Возвращает код уровня логирования "Ошибка".
+
+  ( <body::getErrorLevelCode>)
 */
 static function getErrorLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Error_LevelCode;
-end getErrorLevelCode;
+return varchar2,
 
-/* func: getWarnLevelCode
+/* pfunc: getWarnLevelCode
   Возвращает код уровня логирования "Предупреждение".
+
+  ( <body::getWarnLevelCode>)
 */
 static function getWarnLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Warn_LevelCode;
-end getWarnLevelCode;
+return varchar2,
 
-/* func: getInfoLevelCode
+/* pfunc: getInfoLevelCode
   Возвращает код уровня логирования "Информация".
+
+  ( <body::getInfoLevelCode>)
 */
 static function getInfoLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Info_LevelCode;
-end getInfoLevelCode;
+return varchar2,
 
-/* func: getDebugLevelCode
+/* pfunc: getDebugLevelCode
   Возвращает код уровня логирования "Отладка".
+
+  ( <body::getDebugLevelCode>)
 */
 static function getDebugLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Debug_LevelCode;
-end getDebugLevelCode;
+return varchar2,
 
-/* func: getTraceLevelCode
+/* pfunc: getTraceLevelCode
   Возвращает код уровня логирования "Трассировка".
+
+  ( <body::getTraceLevelCode>)
 */
 static function getTraceLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.Trace_LevelCode;
-end getTraceLevelCode;
+return varchar2,
 
-/* func: getAllLevelCode
+/* pfunc: getAllLevelCode
   Возвращает код уровня логирования "Максимальный уровень логирования".
+
+  ( <body::getAllLevelCode>)
 */
 static function getAllLevelCode
-return varchar2
-is
-begin
-  return pkg_Logging.All_LevelCode;
-end getAllLevelCode;
+return varchar2,
 
 
 
 /* group: Вспомогательные функции */
 
-/* func: getOpenContextLogId
+/* pfunc: getOpenContextLogId
   Возвращает Id записи лога открытия текущего (последнего открытого)
   вложенного контекста (null при отсутствии текущего вложенного контекста).
+
+  ( <body::getOpenContextLogId>)
 */
 static function getOpenContextLogId
-return integer
-is
-begin
-  return pkg_LoggingInternal.getOpenContextLogId();
-end getOpenContextLogId;
+return integer,
 
 
 
 /* group: Получение логера */
 
-/* func: getRootLogger
+/* pfunc: getRootLogger
   Возвращает корневой логер.
 
   Возврат:
   - корневой логер
+
+  ( <body::getRootLogger>)
 */
 static function getRootLogger
-return lg_logger_t
-is
-begin
-  return lg_logger_t( loggerName => null);
-end getRootLogger;
+return lg_logger_t,
 
-/* func: getLoggerName
+/* pfunc: getLoggerName
   Возвращает имя логера по имени модуля и объекта в модуле.
 
   Параметры:
@@ -182,21 +167,16 @@ end getRootLogger;
 
   Возврат:
   - имя логера
+
+  ( <body::getLoggerName>)
 */
 static function getLoggerName(
   moduleName varchar2
   , objectName varchar2
 )
-return varchar2
-is
-begin
-  return
-    moduleName
-    || case when objectName is not null then '.' || objectName end
-  ;
-end getLoggerName;
+return varchar2,
 
-/* func: getLogger
+/* pfunc: getLogger
   Возвращает логер по имени либо по имени модуля и объекта в модуле.
 
   Параметры:
@@ -229,6 +209,8 @@ end getLoggerName;
     именем объекта в модуле (objectName);
   - необязательный параметр packageName присутствует для совместимости и не
     должен использоваться, вместо него следует использовать objectName;
+
+  ( <body::getLogger>)
 */
 static function getLogger(
   loggerName varchar2 := null
@@ -237,42 +219,13 @@ static function getLogger(
   , findModuleString varchar2 := null
   , packageName varchar2 := null
 )
-return lg_logger_t
-is
-
-  -- Имя модуля передано в первом параметре
-  -- (поддержка использования позиционной нотации)
-  loggerIsModuleName boolean :=
-    moduleName is null
-    and coalesce( objectName, packageName) is not null
-  ;
-
-begin
-  return
-    lg_logger_t(
-      -- считаем, что вызов getLogger( s1, s2) соответствует
-      -- вызову getLogger( moduleName => s1, objectName => s2)
-      loggerName          =>
-          case when not loggerIsModuleName then
-            loggerName
-          end
-      , moduleName        =>
-          case when not loggerIsModuleName then
-            moduleName
-          else
-            loggerName
-          end
-      , objectName        => coalesce( objectName, packageName)
-      , findModuleString  => findModuleString
-    )
-  ;
-end getLogger;
+return lg_logger_t,
 
 
 
 /* group: Настройка логера */
 
-/* func: getLevel
+/* pfunc: getLevel
   Возвращает назначенный уровень логирования.
 
   Замечания:
@@ -280,18 +233,13 @@ end getLogger;
 
   Возврат:
   - код уровня логирования
+
+  ( <body::getLevel>)
 */
 member function getLevel
-return varchar2
-is
-begin
-  return
-    pkg_LoggingInternal.getLevel(
-      loggerUid       => loggerUid
-    );
-end getLevel;
+return varchar2,
 
-/* proc: setLevel
+/* pproc: setLevel
   Устанавливает уровень логирования.
 
   Параметры:
@@ -299,20 +247,15 @@ end getLevel;
 
   Замечания:
   - вызывает процедуру <pkg_LoggingInternal.setLevel>;
+
+  ( <body::setLevel>)
 */
 member procedure setLevel(
   self in lg_logger_t
   , levelCode varchar2
-)
-is
-begin
-  pkg_LoggingInternal.setLevel(
-    loggerUid         => loggerUid
-    , levelCode       => levelCode
-  );
-end setLevel;
+),
 
-/* func: getEffectiveLevel
+/* pfunc: getEffectiveLevel
   Возвращает эффективный уровень логирования.
 
   Замечания:
@@ -320,18 +263,13 @@ end setLevel;
 
   Возврат:
   - код уровня логирования
+
+  ( <body::getEffectiveLevel>)
 */
 member function getEffectiveLevel
-return varchar2
-is
-begin
-  return
-    pkg_LoggingInternal.getEffectiveLevel(
-      loggerUid       => loggerUid
-    );
-end getEffectiveLevel;
+return varchar2,
 
-/* func: isEnabledFor
+/* pfunc: isEnabledFor
   Возвращает истину, если сообщение данного уровня будет логироваться.
 
   Параметры:
@@ -339,64 +277,52 @@ end getEffectiveLevel;
 
   Замечания:
   - вызывает функцию <pkg_LoggingInternal.isEnabledFor>;
+
+  ( <body::isEnabledFor>)
 */
 member function isEnabledFor(
   levelCode varchar2
 )
-return boolean
-is
-begin
-  return
-    pkg_LoggingInternal.isEnabledFor(
-      loggerUid     => loggerUid
-      , levelCode   => levelCode
-    );
-end isEnabledFor;
+return boolean,
 
-/* func: isInfoEnabled
+/* pfunc: isInfoEnabled
   Возвращает истину, если информационное сообщение будет логироваться.
 
   Замечания:
   - вызывает функцию <isEnabledFor>;
+
+  ( <body::isInfoEnabled>)
 */
 member function isInfoEnabled
-return boolean
-is
-begin
-  return isEnabledFor( pkg_Logging.Info_LevelCode);
-end isInfoEnabled;
+return boolean,
 
-/* func: isDebugEnabled
+/* pfunc: isDebugEnabled
   Возвращает истину, если отладочное сообщение будет логироваться.
 
   Замечания:
   - вызывает функцию <isEnabledFor>;
+
+  ( <body::isDebugEnabled>)
 */
 member function isDebugEnabled
-return boolean
-is
-begin
-  return isEnabledFor( pkg_Logging.Debug_LevelCode);
-end isDebugEnabled;
+return boolean,
 
-/* func: isTraceEnabled
+/* pfunc: isTraceEnabled
   Возвращает истину, если трассировочное сообщение будет логироваться.
 
   Замечания:
   - вызывает функцию <isEnabledFor>;
+
+  ( <body::isTraceEnabled>)
 */
 member function isTraceEnabled
-return boolean
-is
-begin
-  return isEnabledFor( pkg_Logging.Trace_LevelCode);
-end isTraceEnabled;
+return boolean,
 
 
 
 /* group: Логирование сообщений */
 
-/* proc: log
+/* pproc: log
   Логирует сообщение с указанным уровнем.
 
   Параметры:
@@ -422,6 +348,8 @@ end isTraceEnabled;
                                 открываемый/закрываемый контекст выполнения
                                 (по умолчанию Id модуля, к которому относится
                                 логер)
+
+  ( <body::log>)
 */
 member procedure log(
   self in lg_logger_t
@@ -433,29 +361,17 @@ member procedure log(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  pkg_LoggingInternal.logMessage(
-    levelCode               => levelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-    , loggerUid             => loggerUid
-  );
-end log;
+),
 
-/* proc: fatal
+/* pproc: fatal
   Логирует сообщение о фатальной ошибке (уровня <getFatalLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::fatal>)
 */
 member procedure fatal(
   self in lg_logger_t
@@ -466,28 +382,17 @@ member procedure fatal(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Fatal_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end fatal;
+),
 
-/* proc: error
+/* pproc: error
   Логирует сообщение об ошибке (уровня <getErrorLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::error>)
 */
 member procedure error(
   self in lg_logger_t
@@ -498,28 +403,17 @@ member procedure error(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Error_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end error;
+),
 
-/* proc: warn
+/* pproc: warn
   Логирует предупреждающее сообщение (уровня <getWarnLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::warn>)
 */
 member procedure warn(
   self in lg_logger_t
@@ -530,28 +424,17 @@ member procedure warn(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Warn_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end warn;
+),
 
-/* proc: info
+/* pproc: info
   Логирует информационое сообщение (уровня <getInfoLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::info>)
 */
 member procedure info(
   self in lg_logger_t
@@ -562,28 +445,17 @@ member procedure info(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Info_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end info;
+),
 
-/* proc: debug
+/* pproc: debug
   Логирует отладочное сообщение (уровня <getDebugLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::debug>)
 */
 member procedure debug(
   self in lg_logger_t
@@ -594,28 +466,17 @@ member procedure debug(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Debug_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end debug;
+),
 
-/* proc: trace
+/* pproc: trace
   Логирует трассировочное сообщение (уровня <getTraceLevelCode>).
 
   Параметры:
   messageText                 - Текст сообщения
   ...                         - Необязательные параметры, идентичные
                                 необязательным параметрам процедуры <log>
+
+  ( <body::trace>)
 */
 member procedure trace(
   self in lg_logger_t
@@ -626,49 +487,18 @@ member procedure trace(
   , contextValueId integer := null
   , openContextFlag integer := null
   , contextTypeModuleId integer := null
-)
-is
-begin
-  log(
-    levelCode               => pkg_Logging.Trace_LevelCode
-    , messageText           => messageText
-    , messageValue          => messageValue
-    , messageLabel          => messageLabel
-    , contextTypeShortName  => contextTypeShortName
-    , contextValueId        => contextValueId
-    , openContextFlag       => openContextFlag
-    , contextTypeModuleId   => contextTypeModuleId
-  );
-end trace;
+),
 
 
 
 /* group: Стек ошибок ( исключений) */
 
-/* func: errorStack
+/* pfunc: errorStack
   Сохраняет сообщение в стек ошибок
   и возвращает строку для генерации исключения.
 
   Параметры:
   messageText                 - текст сообщения
-  closeContextTypeShortName   - Краткое наименование типа закрываемого
-                                контекста выполнения
-                                (по умолчанию отсутствует)
-  contextValueId              - Идентификатор, связанный с закрываемым
-                                контекстом выполнения
-                                (по умолчанию отсутствует)
-  contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
-                                закрываемый контекст выполнения (по умолчанию
-                                Id модуля, к которому относится логер)
-  levelCode                   - Код уровня сообщения о закрытии контекста
-                                выполнения
-                                (по умолчанию "Ошибка" ("ERROR"))
-  messageValue                - Целочисленное значение, связанное с сообщением
-                                о закрытии контекста выполнения
-                                (по умолчанию отсутствует)
-  messageLabel                - Строковое значение, связанное с сообщением
-                                о закрытии контекста выполнения
-                                (по умолчанию отсутствует)
 
   Возврат:
   - соообщение для генерации исключения
@@ -679,52 +509,17 @@ end trace;
     возвращает messageText
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>
-    (см. также <Описание::Логирование стека ошибок>);
-  - если указано значение closeContextTypeShortName, то предварительно будет
-    выполнено закрытие указанного контекста выполнения, при этом формируется
-    сообщение с текстом "Закрытие контекста выполнения в связи с ошибкой:",
-    с добавлением messageText и текущего стека ошибок, возвращаемого функцией
-    <getErrorStack> (с указанием isStackPreserved равного 1), а также с
-    использованием значений levelCode, messageValue и messageLabel;
-  - если значение параметра closeContextTypeShortName не указано, то значения
-    последующих параметров (начиная с contextValueId) игнориуются;
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
+  - см. также <Описание::Логирование стека ошибок>;
+
+  ( <body::errorStack>)
 */
 member function errorStack(
   messageText varchar2
-  , closeContextTypeShortName varchar2 := null
-  , contextValueId integer := null
-  , contextTypeModuleId integer := null
-  , levelCode varchar2 := null
-  , messageValue integer := null
-  , messageLabel varchar2 := null
 )
-return varchar2
-is
-begin
-  if closeContextTypeShortName is not null then
-    log(
-      levelCode               =>
-          coalesce( levelCode, pkg_Logging.Error_LevelCode)
-      , messageText           =>
-          'Закрытие контекста выполнения в связи с ошибкой:'
-          || chr(10) || messageText
-          || chr(10) || getErrorStack( isStackPreserved => 1)
-      , messageValue          => messageValue
-      , messageLabel          => messageLabel
-      , contextTypeShortName  => closeContextTypeShortName
-      , contextValueId        => contextValueId
-      , openContextFlag       => 0
-      , contextTypeModuleId   => contextTypeModuleId
-    );
-  end if;
-  return
-    pkg_LoggingErrorStack.processStackElement(
-      messageText => messageText
-    );
-end errorStack;
+return varchar2,
 
-/* func: remoteErrorStack
+/* pfunc: remoteErrorStack
   Сохраняет сообщение в стек ошибок, учитывая
   возможные данные о стеке на удалённой БД,
   и возвращает строку для генерации исключения.
@@ -746,22 +541,16 @@ end errorStack;
     модуля Logging;
   - перед вызовом рекомендуется откатить распределённую транзакцию;
   - см. также <Описание::Логирование стека ошибок>;
+
+  ( <body::remoteErrorStack>)
 */
 member function remoteErrorStack(
   messageText varchar2
   , dbLink varchar2
 )
-return varchar2
-is
-begin
-  return
-    pkg_LoggingErrorStack.processRemoteStackElement(
-      messageText => messageText
-      , dbLink => dbLink
-    );
-end remoteErrorStack;
+return varchar2,
 
-/* func: getErrorStack
+/* pfunc: getErrorStack
   Получает строку стека ошибок и очищает информацию о стеке.
 
   Параметры:
@@ -776,37 +565,30 @@ end remoteErrorStack;
   Замечания:
   - вызывает процедуру <pkg_LoggingErrorStack.getErrorStack>;
   - см. также <Описание::Логирование стека ошибок>;
+
+  ( <body::getErrorStack>)
 */
 member function getErrorStack(
   isStackPreserved integer := null
 )
-return varchar2
-is
-begin
-  return
-    pkg_LoggingErrorStack.getErrorStack(
-      isStackPreserved => isStackPreserved
-    );
-end getErrorStack;
+return varchar2,
 
-/* proc: clearErrorStack
+/* pproc: clearErrorStack
   Очищает (сбрасывает) предыдущую информацию о стеке ошибок.
 
   Замечания:
   - вызывает процедуру <pkg_LoggingErrorStack.clearLastStack>;
   - см. также <Описание::Логирование стека ошибок>;
+
+  ( <body::clearErrorStack>)
 */
-member procedure clearErrorStack
-is
-begin
-  pkg_LoggingErrorStack.clearLastStack();
-end clearErrorStack;
+member procedure clearErrorStack,
 
 
 
 /* group: Типы контекста выполнения */
 
-/* func: mergeContextType
+/* pfunc: mergeContextType
   Создает или обновляет тип контекста выполнения.
 
   Параметры:
@@ -829,6 +611,8 @@ end clearErrorStack;
     (открытые позже) закрываются автоматически, вложенный контекст закрывается
     с учетом связанного с ним значения (context_value_id), невложенный без
     учета значения;
+
+  ( <body::mergeContextType>)
 */
 member function mergeContextType(
   contextTypeShortName varchar2
@@ -836,24 +620,14 @@ member function mergeContextType(
   , nestedFlag integer
   , contextTypeDescription varchar2
 )
-return integer
-is
-begin
-  return
-    pkg_LoggingInternal.mergeContextType(
-      loggerUid                 => self.loggerUid
-      , contextTypeShortName    => contextTypeShortName
-      , contextTypeName         => contextTypeName
-      , nestedFlag              => nestedFlag
-      , contextTypeDescription  => contextTypeDescription
-    )
-  ;
-end mergeContextType;
+return integer,
 
-/* proc: mergeContextType( PROC)
+/* pproc: mergeContextType( PROC)
   Создает или обновляет тип контекста выполнения.
   Процедура идентична функции <mergeContextType> за исключением отсутствия
   возвращаемого значения.
+
+  ( <body::mergeContextType( PROC)>)
 */
 member procedure mergeContextType(
   self in lg_logger_t
@@ -861,22 +635,9 @@ member procedure mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
-)
-is
+),
 
-  changeFlag integer;
-
-begin
-  changeFlag := pkg_LoggingInternal.mergeContextType(
-    loggerUid                 => self.loggerUid
-    , contextTypeShortName    => contextTypeShortName
-    , contextTypeName         => contextTypeName
-    , nestedFlag              => nestedFlag
-    , contextTypeDescription  => contextTypeDescription
-  );
-end mergeContextType;
-
-/* proc: deleteContextType
+/* pproc: deleteContextType
   Удаляет тип контекста выполнения.
 
   Параметры:
@@ -887,18 +648,13 @@ end mergeContextType;
     относится текущий экземпляр логера;
   - при отсутствии использования в логе запись удаляется физически, иначе
     ставится флаг логического удаления;
+
+  ( <body::deleteContextType>)
 */
 member procedure deleteContextType(
   self in lg_logger_t
   , contextTypeShortName varchar2
 )
-is
-begin
-  pkg_LoggingInternal.deleteContextType(
-    loggerUid                => self.loggerUid
-    , contextTypeShortName   => contextTypeShortName
-  );
-end deleteContextType;
 
-end;
+)
 /

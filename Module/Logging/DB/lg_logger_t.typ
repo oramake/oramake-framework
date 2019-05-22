@@ -499,6 +499,24 @@ member procedure trace(
 
   ѕараметры:
   messageText                 - текст сообщени€
+  closeContextTypeShortName   -  раткое наименование типа закрываемого
+                                контекста выполнени€
+                                (по умолчанию отсутствует)
+  contextValueId              - »дентификатор, св€занный с закрываемым
+                                контекстом выполнени€
+                                (по умолчанию отсутствует)
+  contextTypeModuleId         - Id модул€ в ModuleInfo, к которому относитс€
+                                закрываемый контекст выполнени€ (по умолчанию
+                                Id модул€, к которому относитс€ логер)
+  levelCode                   -  од уровн€ сообщени€ о закрытии контекста
+                                выполнени€
+                                (по умолчанию "ќшибка" ("ERROR"))
+  messageValue                - ÷елочисленное значение, св€занное с сообщением
+                                о закрытии контекста выполнени€
+                                (по умолчанию отсутствует)
+  messageLabel                - —троковое значение, св€занное с сообщением
+                                о закрытии контекста выполнени€
+                                (по умолчанию отсутствует)
 
   ¬озврат:
   - соообщение дл€ генерации исключени€
@@ -509,13 +527,27 @@ member procedure trace(
     возвращает messageText
 
   «амечани€:
-  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
-  - см. также <ќписание::Ћогирование стека ошибок>;
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>
+    (см. также <ќписание::Ћогирование стека ошибок>);
+  - если указано значение closeContextTypeShortName, то предварительно будет
+    выполнено закрытие указанного контекста выполнени€, при этом формируетс€
+    сообщение с текстом "«акрытие контекста выполнени€ в св€зи с ошибкой:",
+    с добавлением messageText и текущего стека ошибок, возвращаемого функцией
+    <getErrorStack> (с указанием isStackPreserved равного 1), а также с
+    использованием значений levelCode, messageValue и messageLabel;
+  - если значение параметра closeContextTypeShortName не указано, то значени€
+    последующих параметров (начина€ с contextValueId) игнориуютс€;
 
   ( <body::errorStack>)
 */
 member function errorStack(
   messageText varchar2
+  , closeContextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , contextTypeModuleId integer := null
+  , levelCode varchar2 := null
+  , messageValue integer := null
+  , messageLabel varchar2 := null
 )
 return varchar2,
 
