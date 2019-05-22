@@ -254,7 +254,7 @@ is
     select
       batch_short_name
       , batch_id
-      , active_flag
+      , activated_flag
       , last_start_date
       , sid
       , batch_result_id
@@ -312,7 +312,7 @@ begin
     when
       Activate_OperCode
     then
-      if batch.active_flag = 0 then
+      if batch.activated_flag = 0 then
         pkg_Scheduler.activateBatch(
           batchId => batch.batch_id
           , operatorId => operatorId
@@ -322,7 +322,7 @@ begin
     when
       Deactivate_OperCode
     then
-      if batch.active_flag = 1 then
+      if batch.activated_flag = 1 then
         pkg_Scheduler.deactivateBatch(
           batchId => batch.batch_id
           , operatorId => operatorId

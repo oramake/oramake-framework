@@ -5,7 +5,7 @@ title: Версии
 group: 5.2.0 ( 2019-05-08)
 (<Установка::5.2.0>)
 
-[*] Замена oracle_job_id на active_flag в <sch_batch>.
+[*] Замена oracle_job_id на activated_flag в <sch_batch>.
 
 
 

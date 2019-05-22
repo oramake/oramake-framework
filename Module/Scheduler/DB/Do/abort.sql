@@ -21,7 +21,7 @@ declare
     from
       v_sch_batch b
     where
-      b.active_flag = 1
+      b.activated_flag = 1
       and b.sid is not null
       and b.batch_short_name like '&batchPattern'
     order by

@@ -22,7 +22,7 @@ declare
     select
       b.batch_id
       , b.batch_short_name
-      , b.active_flag
+      , b.activated_flag
     from
       sch_batch b
     where
@@ -36,7 +36,7 @@ declare
 begin
   for rec in curBatch loop
     begin
-      if rec.active_flag = 1 then
+      if rec.activated_flag = 1 then
         raise_application_error(
           pkg_Error.IllegalArgument
           , 'Активированный пакет не может быть удален.'

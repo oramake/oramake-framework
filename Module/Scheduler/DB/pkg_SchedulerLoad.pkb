@@ -3624,7 +3624,7 @@ is
       sch_batch t
     where
       t.batch_id = batchId
-      and t.active_flag = 0
+      and t.activated_flag = 0
     ;
     if sql%rowcount = 0 then
       raise_application_error(

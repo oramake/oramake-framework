@@ -24,7 +24,7 @@ declare
     from
       sch_batch b
     where
-      b.active_flag = 1
+      b.activated_flag = 1
       and b.batch_short_name like &batchPattern
     order by
       b.batch_short_name

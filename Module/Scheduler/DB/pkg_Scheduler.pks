@@ -313,6 +313,7 @@ procedure abortBatch(
                                 задание
   serial                      - serial# сессии, в которой выполняется пакетное
                                 задание
+  activated_flag              - флаг активированности пакетного задания (0, 1)
 
   (сортировка по batch_short_name)
 

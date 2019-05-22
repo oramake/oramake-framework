@@ -18,7 +18,7 @@ select
   , d.batch_type_id
   , d.retrial_count
   , d.retrial_timeout
-  , d.active_flag
+  , d.activated_flag
   , d.nls_language
   , d.nls_territory
   , d.retrial_number
@@ -49,7 +49,7 @@ select
     end as duration_second
   -- TODO: for backward compatability
   , case when
-      active_flag = 1
+      activated_flag = 1
     then
       batch_id
     end as oracle_job_id
@@ -118,8 +118,8 @@ comment on column v_sch_batch.retrial_count is 'Число попыток повторного выполне
 comment on column v_sch_batch.retrial_timeout is 'Интервал между попытками повторного выполнения (в минутах)'
 /
 
-comment on column v_sch_batch.active_flag is
-  'Флаг активности пакетного задания (1 - активированное, 0 - неактивированное)'
+comment on column v_sch_batch.activated_flag is
+  'Флаг активированного пакетного задания (1 - активированное, 0 - неактивированное)'
 /
 
 comment on column v_sch_batch.nls_language is

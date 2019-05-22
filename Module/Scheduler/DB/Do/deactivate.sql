@@ -35,7 +35,7 @@ declare
           bt.batch_type_name_rus like &batchTypePattern
         )
       and (
-        active_flag = 1
+        activated_flag = 1
         and batch_short_name like &batchPattern
       )
     order by

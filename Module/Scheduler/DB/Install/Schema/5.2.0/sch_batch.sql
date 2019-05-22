@@ -1,13 +1,13 @@
 alter table
   sch_batch
 add (
-   active_flag                  number(1,0) default 0
+   activated_flag                  number(1,0) default 0
 );
 
 update
   sch_batch
 set
-  active_flag =
+  activated_flag =
   case when
     oracle_job_id is not null
   then
@@ -15,12 +15,32 @@ set
   else
     0
   end
-  , oracle_job_id = null
 /
-alter table sch_batch modify active_flag not null
+alter table sch_batch modify activated_flag not null
 /
 
-comment on column sch_batch.active_flag is
+alter table sch_batch add
+  constraint sch_batch_ck_activated check (
+    activated_flag in (0, 1)
+  );
+
+
+alter table sch_batch drop column oracle_job_id
+/
+
+alter table sch_batch add  (
+  oracle_job_id                integer as (
+       case when
+         activated_flag = 1
+       then
+         batch_id
+       end
+     )
+)
+/
+
+
+comment on column sch_batch.activated_flag is
   'Флаг активности пакетного задания (1 - активированное, 0 - неактивированное)'
 /
 comment on column sch_batch.oracle_job_id is

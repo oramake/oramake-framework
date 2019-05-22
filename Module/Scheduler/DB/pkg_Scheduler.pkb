@@ -296,7 +296,7 @@ is
       b.batch_id
       , b.batch_short_name
       , b.batch_name_rus
-      , b.active_flag
+      , b.activated_flag
       , b.retrial_number
       , (
         select
@@ -324,7 +324,7 @@ is
       sch_batch b
     where
       b.batch_id = batchId
-    for update of b.active_flag nowait
+    for update of b.activated_flag nowait
   ;
 
   rec curBatch%rowtype;
@@ -490,10 +490,10 @@ begin
     update
       sch_batch
     set
-      active_flag = 1
+      activated_flag = 1
     where current of curBatch
     ;
-    rec.active_flag := rec.current_job_flag;
+    rec.activated_flag := rec.current_job_flag;
     info := 'Активирован пакет ' || batchLogName
       || ' ( batch_id=' || rec.batch_id
       || ', дата запуска '
@@ -512,12 +512,12 @@ begin
       || ' изменена на '
         || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
       ;
-  elsif rec.active_flag = 0 and rec.current_job_flag = 1 then
+  elsif rec.activated_flag = 0 and rec.current_job_flag = 1 then
     -- Актуализируем флаг
     update
       sch_batch
     set
-      active_flag = 1
+      activated_flag = 1
     where current of curBatch
     ;
   end if;
@@ -583,7 +583,7 @@ is
       b.batch_id
       , b.batch_short_name
       , b.batch_name_rus
-      , b.active_flag
+      , b.activated_flag
       , (
         select
           1
@@ -598,7 +598,7 @@ is
       sch_batch b
     where
       b.batch_id = batchId
-    for update of b.active_flag nowait
+    for update of b.activated_flag nowait
   ;
 
   rec curBatch%rowtype;
@@ -690,17 +690,17 @@ begin
     );
   end if;
   -- Отвязываем пакет от задания Oracle
-  if rec.active_flag = 1 then
+  if rec.activated_flag = 1 then
     update
       sch_batch
     set
-      active_flag = 0
+      activated_flag = 0
       , retrial_number = null
     where current of curBatch
     ;
   end if;
   -- Пишем информационное сообщение
-  if rec.active_flag = 1 then
+  if rec.activated_flag = 1 then
     logger.info(
       messageText             =>
           'Деактивирован пакет ' || batchLogName
@@ -755,7 +755,7 @@ is
       b.batch_id
       , b.batch_name_rus
       , b.batch_short_name
-      , b.active_flag
+      , b.activated_flag
       , b.next_date
     from
       v_sch_batch b
@@ -815,7 +815,7 @@ begin
   begin
     for rec in curBatch loop
       nChecked := nChecked + 1;
-      if rec.active_flag = 0 then
+      if rec.activated_flag = 0 then
         pkg_Scheduler.activateBatch(
           batchId       => rec.batch_id
           , operatorId  => operatorId
@@ -881,7 +881,7 @@ is
     from
       sch_batch b
     where
-      active_flag = 1
+      activated_flag = 1
     order by
       b.batch_short_name
   ;
@@ -976,7 +976,7 @@ begin
     '"' || bth.batch_name_rus || '" [' || bth.batch_short_name || ']'
   ;
   oracleJobName := getOracleJobName(batchId => batchId);
-  if bth.active_flag = 1 then
+  if bth.activated_flag = 1 then
     -- Устанавливаем дату запуска
     dbms_scheduler.disable(name => oracleJobName);
     dbms_scheduler.set_attribute(
@@ -1206,6 +1206,7 @@ end abortBatch;
                                 задание
   serial                      - serial# сессии, в которой выполняется пакетное
                                 задание
+  activated_flag              - флаг активированности пакетного задания (0, 1)
 
   (сортировка по batch_short_name)
 
@@ -1253,7 +1254,7 @@ from
       , vb.retrial_count
       , to_char(vb.retrial_timeout) as retrial_timeout
       , case when
-          vb.active_flag = 1
+          vb.activated_flag = 1
         then
           vb.batch_id
         end as oracle_job_id
@@ -1263,7 +1264,7 @@ from
       , vb.operator_id
       , op.operator_name
       , case when
-          vb.active_flag = 1
+          vb.activated_flag = 1
         then
           vb.batch_id
         end as job
@@ -1285,6 +1286,7 @@ from
       , vb.duration_second
       , vb.sid
       , vb.serial# as serial
+      , vb.activated_flag
     from
       v_sch_operator_batch vb
       inner join v_mod_module md
@@ -4332,7 +4334,7 @@ end;'
         sch_batch b
       where
         b.batch_id = batchId
-        and b.active_flag = 1
+        and b.activated_flag = 1
       for update of b.retrial_number nowait
     ;
 

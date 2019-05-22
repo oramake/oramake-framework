@@ -13,7 +13,7 @@ select
   , d.batch_type_id
   , d.retrial_count
   , d.retrial_timeout
-  , d.active_flag
+  , d.activated_flag
   , d.nls_language
   , d.nls_territory
   , d.retrial_number

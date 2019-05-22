@@ -36,7 +36,7 @@ declare
       b.batch_id
       , b.batch_name_rus
       , b.batch_short_name
-      , b.active_flag
+      , b.activated_flag
       , b.next_date
     from
       v_sch_batch b
@@ -92,7 +92,7 @@ declare
 begin
   for rec in curBatch loop
     nChecked := nChecked + 1;
-    if rec.active_flag = 0 then
+    if rec.activated_flag = 0 then
       pkg_Scheduler.activateBatch(
         batchId       => rec.batch_id
         , operatorId  => operatorId
