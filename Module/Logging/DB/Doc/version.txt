@@ -14,9 +14,9 @@ group: 2.1.0 ( 2019-04-16)
 
 [+] Добавлено представление <v_lg_current_log> с логом текущей сессии.
 
-[+] Добавлена возможность закрытия контекста выполнения с помощью функции
-    <lg_logger_t.errorStack> (в функцию добавлены параметры начиная с
-    closeContextTypeShortName).
+[+] В функцию <lg_logger_t.errorStack> добавлена возможность логирования
+    стека ошибок (параметр logMessageFlag) и закрытия контекста выполнения
+    (параметр closeContextTypeShortName).
 
 [+] В таблицу <lg_level> добавлены поля level_name и message_level_code.
 

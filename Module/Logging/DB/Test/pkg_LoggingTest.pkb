@@ -163,6 +163,7 @@ begin
           );
         when 'errorStack1' then
           es1lg.message_text            := getStr( 'messageText');
+          es1lg.log_id                  := getNum( 'logMessageFlag', 0);
           es1ct.context_type_short_name := getStr( 'contextTypeShortName', 0);
           es1lg.context_value_id        := getNum( 'contextValueId', 0);
           es1ct.module_id               := getNum( 'contextTypeModuleId', 0);
@@ -182,6 +183,7 @@ begin
                   pkg_Error.ErrorStackInfo
                   , usedLogger.errorStack(
                       es1lg.message_text
+                      , logMessageFlag            => es1lg.log_id
                       , closeContextTypeShortName => es1ct.context_type_short_name
                       , contextValueId            => es1lg.context_value_id
                       , contextTypeModuleId       => es1ct.module_id
@@ -197,6 +199,7 @@ begin
                 pkg_Error.ErrorStackInfo
                 , usedLogger.errorStack(
                     getStr( 'messageText')
+                    , logMessageFlag            => getNum( 'logMessageFlag', 0)
                     , closeContextTypeShortName => getStr( 'contextTypeShortName', 0)
                     , contextValueId            => getNum( 'contextValueId', 0)
                     , contextTypeModuleId       => getNum( 'contextTypeModuleId', 0)
@@ -1100,24 +1103,24 @@ ERROR       ; Обработка файла прервана.         ;               ;               
       , execLoggerMethodCsv =>
           cmn_string_table_t( fileRecCtxExecCsv,
 '
-methodName  ; messageText                       ; levelCode  ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; errorCode  ; errorMessage
------------ ; --------------------------------- ; ---------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ---------- ; -------------------
-info        ; Начало обработки файла tmp1.txt   ;            ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            ;
-debug       ; Начало обработки записи #1        ;            ;               ;               ; record                  ;                1 ;                 1 ;            ;
-debug       ; Записи #1 обработана              ;            ;               ;               ; record                  ;                1 ;                 0 ;            ;
-debug       ; Начало обработки записи #2        ;            ;               ;               ; record                  ;                2 ;                 1 ;            ;
-errorStack1 ; Ошибка при обработке записи #2.   ;       INFO ;        -20015 ;     DUB_ERROR ; record                  ;                2 ;                   ;            ;
-errorStack2 ; Ошибка при обработке файла.       ;            ;             1 ;               ; file                    ;               11 ;                   ;     -20015 ; Запись загружена ранее
+methodName  ; messageText                       ; levelCode  ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; logMessageFlag  ; errorCode  ; errorMessage
+----------- ; --------------------------------- ; ---------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; --------------- ; ---------- ; -------------------
+info        ; Начало обработки файла tmp1.txt   ;            ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;                 ;            ;
+debug       ; Начало обработки записи #1        ;            ;               ;               ; record                  ;                1 ;                 1 ;                 ;            ;
+debug       ; Записи #1 обработана              ;            ;               ;               ; record                  ;                1 ;                 0 ;                 ;            ;
+debug       ; Начало обработки записи #2        ;            ;               ;               ; record                  ;                2 ;                 1 ;                 ;            ;
+errorStack1 ; Ошибка при обработке записи #2.   ;       INFO ;        -20015 ;     DUB_ERROR ; record                  ;                2 ;                   ;                 ;            ;
+errorStack2 ; Ошибка при обработке файла.       ;            ;             1 ;               ; file                    ;               11 ;                   ;               1 ;     -20015 ; Запись загружена ранее
 '
           )
       , expectedLogCsv      =>
 '
-LEVEL_CODE  ; MESSAGE_TEXT                                                                                                                                                                                                                                                           ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
------------ ; ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
-INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                                                        ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
-DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                                                             ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
-INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                                                     ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
-ERROR       ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 181 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 176  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+LEVEL_CODE  ; MESSAGE_TEXT                                                                                                                                                                                                                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                   ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
+INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
+ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 177  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
 '
     );
 

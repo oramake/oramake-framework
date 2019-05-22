@@ -499,6 +499,14 @@ member procedure trace(
 
   Параметры:
   messageText                 - текст сообщения
+	logMessageFlag 							- Флаг логирования сообщения при выполнении
+                                функции
+                                (1 логировать, 0 логировать если указано
+                                значение closeContextTypeShortName, по
+                                умолчанию логировать если указано значение
+                                любого из параметров
+                                closeContextTypeShortName, levelCode,
+                                messageValue, messageLabel)
   closeContextTypeShortName   - Краткое наименование типа закрываемого
                                 контекста выполнения
                                 (по умолчанию отсутствует)
@@ -508,14 +516,11 @@ member procedure trace(
   contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
                                 закрываемый контекст выполнения (по умолчанию
                                 Id модуля, к которому относится логер)
-  levelCode                   - Код уровня сообщения о закрытии контекста
-                                выполнения
+  levelCode                   - Код уровня сообщения
                                 (по умолчанию "Ошибка" ("ERROR"))
   messageValue                - Целочисленное значение, связанное с сообщением
-                                о закрытии контекста выполнения
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
-                                о закрытии контекста выполнения
                                 (по умолчанию отсутствует)
 
   Возврат:
@@ -530,18 +535,18 @@ member procedure trace(
   - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>
     (см. также <Описание::Логирование стека ошибок>);
   - если указано значение closeContextTypeShortName, то предварительно будет
-    выполнено закрытие указанного контекста выполнения, при этом формируется
-    сообщение с текстом "Закрытие контекста выполнения в связи с ошибкой:",
-    с добавлением messageText и текущего стека ошибок, возвращаемого функцией
-    <getErrorStack> (с указанием isStackPreserved равного 1), а также с
-    использованием значений levelCode, messageValue и messageLabel;
-  - если значение параметра closeContextTypeShortName не указано, то значения
-    последующих параметров (начиная с contextValueId) игнориуются;
+    выполнено закрытие указанного контекста выполнения;
+  - текст сообщения, логируемого при выполнении функции, состоит из
+    префикса "Закрытие контекста выполнения в связи с ошибкой:", добавляемого
+    если closeContextTypeShortName отличен от null и logMessageFlag не равен 1,
+    значения messageText и текущего стека ошибок, возвращаемого функцией
+    <getErrorStack> (с указанием isStackPreserved равного 1);
 
   ( <body::errorStack>)
 */
 member function errorStack(
   messageText varchar2
+  , logMessageFlag integer := null
   , closeContextTypeShortName varchar2 := null
   , contextValueId integer := null
   , contextTypeModuleId integer := null
