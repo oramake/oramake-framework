@@ -33,6 +33,9 @@ group: Общие
     обращения batchParameter.<Имя параметра батча>, таким образом можно будет
     не объявлять переменные в разделе declare SQL job'ов.
 
+[+] Перенести код скриптов OraMakeSystem (exec-batch-operation.sql) а также
+    пакета pkg_CredilogicUnloadHandler в модуль Scheduler.
+
 
 
 group: Завершение доработок
@@ -48,6 +51,8 @@ group: Завершение доработок
     функциями <pkg_Scheduler.findRootLog>, <pkg_Scheduler.getDetailedLog>).
 
 [*] Удалить устаревшее поле oracle_job_id в <sch_batch>
-    после прекращения использования в OraMakeSystem.
+    после прекращения использования в OraMakeSystem, CredilogicUnload.
+
+
 
 
