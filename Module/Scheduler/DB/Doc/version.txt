@@ -5,7 +5,9 @@ title: Версии
 group: 5.2.0 ( 2019-05-08)
 (<Установка::5.2.0>)
 
-[*] Замена oracle_job_id на activated_flag в <sch_batch>.
+[*] Replace oracle_job_id for activated_flag in <sch_batch>.
+
+[*] Do not change JOB_QUEUE_PROCESSES parameter.
 
 
 
