@@ -318,6 +318,16 @@ is
           j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
         )
         as next_date
+      , (
+        select
+          1
+        from
+          user_scheduler_running_jobs j
+        where
+          -- getOracleJobName
+          j.job_name = 'SCHEDULER_' || to_char(b.batch_id)
+        )
+        as running_flag
       , b.nls_territory
       , b.nls_language
     from
@@ -500,7 +510,7 @@ begin
       || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
       ;
   -- Устанавливаем новую дату запуска
-  elsif newDate != rec.next_date then
+  elsif newDate != rec.next_date and rec.running_flag is null then
     dbms_scheduler.disable(name => oracleJobName);
     dbms_scheduler.set_attribute(
       name => oracleJobName
@@ -512,7 +522,8 @@ begin
       || ' изменена на '
         || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
       ;
-  elsif rec.activated_flag = 0 and rec.current_job_flag = 1 then
+  end if;
+  if rec.activated_flag = 0 and rec.current_job_flag = 1 then
     -- Актуализируем флаг
     update
       sch_batch
