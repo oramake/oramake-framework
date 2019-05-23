@@ -18,6 +18,9 @@ group: 2.1.0 ( 2019-04-16)
     стека ошибок (параметр logMessageFlag) и закрытия контекста выполнения
     (параметр closeContextTypeShortName).
 
+[+] Добавлена возможность использования временных типов контекста (параметр
+    temporaryFlag в <lg_logger_t.mergeContextType>).
+
 [+] В таблицу <lg_level> добавлены поля level_name и message_level_code.
 
 [*] Изменена выборка в представлении <v_lg_context_change_log> для исключения

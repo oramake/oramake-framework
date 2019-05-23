@@ -2043,6 +2043,8 @@ end isEnabledFor;
   contextTypeName             - Наименование типа контекста
   nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - Описание типа контекста
+  temporaryFlag               - Флаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   Возврат:
   - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
@@ -2053,6 +2055,7 @@ function mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer
 is
@@ -2075,6 +2078,10 @@ begin
       , contextTypeName as context_type_name
       , nestedFlag as nested_flag
       , contextTypeDescription as context_type_description
+      , case when temporaryFlag = 1 then
+          sysdate
+        end
+        as temporary_use_date
       , 0 as deleted
     from
       dual
@@ -2085,6 +2092,7 @@ begin
       , t.context_type_name
       , t.nested_flag
       , t.context_type_description
+      , t.temporary_use_date
       , t.deleted
     from
       lg_context_type t
@@ -2101,6 +2109,7 @@ begin
       , context_type_name
       , nested_flag
       , context_type_description
+      , temporary_use_date
       , deleted
     )
     values
@@ -2110,6 +2119,7 @@ begin
       , s.context_type_name
       , s.nested_flag
       , s.context_type_description
+      , s.temporary_use_date
       , s.deleted
     )
   when matched then
@@ -2117,6 +2127,7 @@ begin
       d.context_type_name           = s.context_type_name
       , d.nested_flag               = s.nested_flag
       , d.context_type_description  = s.context_type_description
+      , d.temporary_use_date        = s.temporary_use_date
       , d.deleted                   = s.deleted
   ;
   isChanged := sql%rowcount;
@@ -2129,6 +2140,7 @@ exception when others then
         || ' loggerUid="' || loggerUid || '"'
         || ', contextTypeShortName="' || contextTypeShortName || '"'
         || ', nestedFlag=' || nestedFlag
+        || ', temporaryFlag=' || temporaryFlag
         || case when moduleId is not null then
             ', moduleId=' || moduleId
           end

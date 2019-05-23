@@ -263,6 +263,7 @@ begin
             , contextTypeName         => getStr( 'contextTypeName', 0)
             , nestedFlag              => getNum( 'nestedFlag', 0)
             , contextTypeDescription  => getStr( 'contextTypeDescription', 0)
+            , temporaryFlag           => getNum( 'temporaryFlag', 0)
           );
         when 'deleteContextType' then
           usedLogger.deleteContextType(
@@ -954,18 +955,18 @@ and not (
 
     fileRecCtxExecCsv varchar2(10000) :=
 '
-methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
-------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
-mergeContextType    ; file                 ; Обработка файла                       ;          1 ; В context_value_id указывается Id файла (из таблицы tst_file)
-mergeContextType    ; record               ; Обработка записи с данными из файла   ;          1 ; В context_value_id указывается порядковый номер строки файла (используется в контексте обработки файла)
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; temporaryFlag  ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; -------------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; file                 ; Обработка файла                       ;          1 ;              1 ; В context_value_id указывается Id файла (из таблицы tst_file)
+mergeContextType    ; record               ; Обработка записи с данными из файла   ;          1 ;              1 ; В context_value_id указывается порядковый номер строки файла (используется в контексте обработки файла)
 '
     ;
     operEdtCtxExecCsv varchar2(10000) :=
 '
-methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
-------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
-mergeContextType    ; operator             ; Авторизация оператора                 ;          0 ; В context_value_id указывается Id оператора (из таблицы tst_operator)
-mergeContextType    ; edition              ; Переключение на определенный edition  ;          0 ; В message_label указывается используемый edition
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; temporaryFlag  ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; -------------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; operator             ; Авторизация оператора                 ;          0 ;                ; В context_value_id указывается Id оператора (из таблицы tst_operator)
+mergeContextType    ; edition              ; Переключение на определенный edition  ;          0 ;                ; В message_label указывается используемый edition
 '
     ;
     fileRecLogExecCsv varchar2(10000) :=

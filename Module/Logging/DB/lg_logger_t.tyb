@@ -835,6 +835,8 @@ end clearErrorStack;
   contextTypeName             - Наименование типа контекста
   nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - Описание типа контекста
+  temporaryFlag               - Флаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   Возврат:
   - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
@@ -850,12 +852,15 @@ end clearErrorStack;
     (открытые позже) закрываются автоматически, вложенный контекст закрывается
     с учетом связанного с ним значения (context_value_id), невложенный без
     учета значения;
+  - временный тип контекста удаляется автоматически по истечении определенного
+    срока после его создания/обновления данной функцией;
 */
 member function mergeContextType(
   contextTypeShortName varchar2
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer
 is
@@ -867,6 +872,7 @@ begin
       , contextTypeName         => contextTypeName
       , nestedFlag              => nestedFlag
       , contextTypeDescription  => contextTypeDescription
+      , temporaryFlag           => temporaryFlag
     )
   ;
 end mergeContextType;
@@ -882,6 +888,7 @@ member procedure mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 is
 
@@ -894,6 +901,7 @@ begin
     , contextTypeName         => contextTypeName
     , nestedFlag              => nestedFlag
     , contextTypeDescription  => contextTypeDescription
+    , temporaryFlag           => temporaryFlag
   );
 end mergeContextType;
 

@@ -223,6 +223,8 @@ return boolean;
   contextTypeName             - Наименование типа контекста
   nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - Описание типа контекста
+  temporaryFlag               - Флаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   Возврат:
   - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
@@ -235,6 +237,7 @@ function mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer;
 

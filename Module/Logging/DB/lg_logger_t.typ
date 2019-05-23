@@ -633,6 +633,8 @@ member procedure clearErrorStack,
   contextTypeName             - Наименование типа контекста
   nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - Описание типа контекста
+  temporaryFlag               - Флаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   Возврат:
   - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
@@ -648,6 +650,8 @@ member procedure clearErrorStack,
     (открытые позже) закрываются автоматически, вложенный контекст закрывается
     с учетом связанного с ним значения (context_value_id), невложенный без
     учета значения;
+  - временный тип контекста удаляется автоматически по истечении определенного
+    срока после его создания/обновления данной функцией;
 
   ( <body::mergeContextType>)
 */
@@ -656,6 +660,7 @@ member function mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer,
 
@@ -672,6 +677,7 @@ member procedure mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 ),
 
 /* pproc: deleteContextType
