@@ -114,8 +114,8 @@ Group: Скрипты  {
 
       Group: Config  {
 
-         File: resume-batches  (no auto-title, Install/Config/resume-batches.sql)
-         File: stop-batches  (no auto-title, Install/Config/stop-batches.sql)
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
          }  # Group: Config
 
       Group: Grant  {
