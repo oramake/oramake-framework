@@ -10,6 +10,7 @@ create table
   , context_type_name             varchar2(100)                       not null
   , nested_flag                   number(1)                           not null
   , context_type_description      varchar2(1000)
+  , temporary_use_date            date
   , deleted                       number(1)           default 0       not null
   , date_ins                      date                default sysdate not null
   , constraint lg_context_type_pk primary key
@@ -47,6 +48,9 @@ comment on column lg_context_type.nested_flag is
 /
 comment on column lg_context_type.context_type_description is
   'Описание типа контекста'
+/
+comment on column lg_context_type.temporary_use_date is
+  'Дата последнего использования временного типа контекста (null если тип контекста не является временным). Временный тип контекста удаляется автоматически по истечении определенного срока после его последнего использования'
 /
 comment on column lg_context_type.deleted is
   'Флаг логического удаления записи (0 - существующая, 1 - удалена)'

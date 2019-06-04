@@ -6,10 +6,14 @@
 --    поля sessionid, level_code, log_time сделаны обязательными (таблица
 --    при этом пересоздается);
 --  - удалена таблица lg_message_type;
+--  - в таблицу <lg_context_type> добавлено поле temporary_use_date;
 --
 
 -- Определяем табличное пространство для индексов
 @oms-set-indexTablespace.sql
 
+@oms-run lg_level.sql
 @oms-run lg_log.sql
 @oms-run drop-lg_message_type.sql
+
+@oms-run lg_context_type.sql

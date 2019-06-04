@@ -1,31 +1,44 @@
---table: lg_level
---Уровни сообщений лога.
+-- table: lg_level
+-- Уровни логирования.
 create table lg_level
 (
   level_code                      varchar2(10)                        not null
+  , message_level_code as (
+      case when level_code not in ('ALL', 'OFF') then level_code end
+    )
   , level_order                   number(3)                           not null
+  , level_name                    varchar2(100)                       not null
   , level_description             varchar2(255)
   , date_ins                      date            default sysdate     not null
-  , constraint lg_level_pk primary key ( level_code)
+  , constraint lg_level_pk primary key
+    (level_code)
+    using index tablespace &indexTablespace
+  , constraint lg_level_uk_message_level_code unique
+    (message_level_code)
+    using index tablespace &indexTablespace
 )
-organization index
-tablespace &indexTablespace;
+/
 
 
 
 comment on table lg_level is
-  'Уровни сообщений лога ( SVN root: Oracle/Module/Logging).'
-;
+  'Уровни логирования [ SVN root: Oracle/Module/Logging]'
+/
 comment on column lg_level.level_code is
-  'Код уровня'
-;
+  'Код уровня логирования'
+/
+comment on column lg_level.message_level_code is
+  'Код уровня сообщения лога (null если уровень не используется для сообщений лога)'
+/
 comment on column lg_level.level_order is
-  'Порядковое значение для уровня ( более приоритетные имеют большее значение).'
-;
+  'Порядковое значение для уровня логирования (более приоритетные имеют большее значение)'
+/
+comment on column lg_level.level_name is
+  'Наименование уровня логирования'
+/
 comment on column lg_level.level_description is
-  'Описание уровня'
-;
+  'Описание уровня логирования'
+/
 comment on column lg_level.date_ins is
   'Дата добавления записи'
-;
-
+/

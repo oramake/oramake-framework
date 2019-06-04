@@ -499,6 +499,29 @@ member procedure trace(
 
   Параметры:
   messageText                 - текст сообщения
+	logMessageFlag 							- Флаг логирования сообщения при выполнении
+                                функции
+                                (1 логировать, 0 логировать если указано
+                                значение closeContextTypeShortName, по
+                                умолчанию логировать если указано значение
+                                любого из параметров
+                                closeContextTypeShortName, levelCode,
+                                messageValue, messageLabel)
+  closeContextTypeShortName   - Краткое наименование типа закрываемого
+                                контекста выполнения
+                                (по умолчанию отсутствует)
+  contextValueId              - Идентификатор, связанный с закрываемым
+                                контекстом выполнения
+                                (по умолчанию отсутствует)
+  contextTypeModuleId         - Id модуля в ModuleInfo, к которому относится
+                                закрываемый контекст выполнения (по умолчанию
+                                Id модуля, к которому относится логер)
+  levelCode                   - Код уровня сообщения
+                                (по умолчанию "Ошибка" ("ERROR"))
+  messageValue                - Целочисленное значение, связанное с сообщением
+                                (по умолчанию отсутствует)
+  messageLabel                - Строковое значение, связанное с сообщением
+                                (по умолчанию отсутствует)
 
   Возврат:
   - соообщение для генерации исключения
@@ -509,13 +532,27 @@ member procedure trace(
     возвращает messageText
 
   Замечания:
-  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>;
-  - см. также <Описание::Логирование стека ошибок>;
+  - вызывает процедуру <pkg_LoggingErrorStack.processStackElement>
+    (см. также <Описание::Логирование стека ошибок>);
+  - если указано значение closeContextTypeShortName, то предварительно будет
+    выполнено закрытие указанного контекста выполнения;
+  - текст сообщения, логируемого при выполнении функции, состоит из
+    префикса "Закрытие контекста выполнения в связи с ошибкой:", добавляемого
+    если closeContextTypeShortName отличен от null и logMessageFlag не равен 1,
+    значения messageText и текущего стека ошибок, возвращаемого функцией
+    <getErrorStack> (с указанием isStackPreserved равного 1);
 
   ( <body::errorStack>)
 */
 member function errorStack(
   messageText varchar2
+  , logMessageFlag integer := null
+  , closeContextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , contextTypeModuleId integer := null
+  , levelCode varchar2 := null
+  , messageValue integer := null
+  , messageLabel varchar2 := null
 )
 return varchar2,
 
@@ -596,6 +633,8 @@ member procedure clearErrorStack,
   contextTypeName             - Наименование типа контекста
   nestedFlag                  - Флаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - Описание типа контекста
+  temporaryFlag               - Флаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   Возврат:
   - флаг внесения изменений (0 нет изменений, 1 если изменения внесены)
@@ -611,6 +650,8 @@ member procedure clearErrorStack,
     (открытые позже) закрываются автоматически, вложенный контекст закрывается
     с учетом связанного с ним значения (context_value_id), невложенный без
     учета значения;
+  - временный тип контекста удаляется автоматически по истечении определенного
+    срока после его создания/обновления данной функцией;
 
   ( <body::mergeContextType>)
 */
@@ -619,6 +660,7 @@ member function mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer,
 
@@ -635,6 +677,7 @@ member procedure mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 ),
 
 /* pproc: deleteContextType

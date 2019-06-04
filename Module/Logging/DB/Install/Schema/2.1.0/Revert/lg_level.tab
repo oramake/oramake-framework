@@ -1,0 +1,31 @@
+--table: lg_level
+--Уровни сообщений лога.
+create table lg_level
+(
+  level_code                      varchar2(10)                        not null
+  , level_order                   number(3)                           not null
+  , level_description             varchar2(255)
+  , date_ins                      date            default sysdate     not null
+  , constraint lg_level_pk primary key ( level_code)
+)
+organization index
+tablespace &indexTablespace;
+
+
+
+comment on table lg_level is
+  'Уровни сообщений лога ( SVN root: Oracle/Module/Logging).'
+;
+comment on column lg_level.level_code is
+  'Код уровня'
+;
+comment on column lg_level.level_order is
+  'Порядковое значение для уровня ( более приоритетные имеют большее значение).'
+;
+comment on column lg_level.level_description is
+  'Описание уровня'
+;
+comment on column lg_level.date_ins is
+  'Дата добавления записи'
+;
+

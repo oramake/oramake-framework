@@ -40,7 +40,8 @@ return integer;
   «амечани€:
   - по умолчанию (если не задано единственное назначение дл€ вывода)
     логируемые сообщени€ добавл€ютс€ в таблицу <lg_log>, а в тестовых Ѕƒ
-    дополнительно вывод€тс€ через пакет dbms_output;
+    дополнительно вывод€тс€ через пакет dbms_output (если сесси€ не запущена
+    через dbms_job);
 
   ( <body::setDestination>)
 */
@@ -222,6 +223,8 @@ return boolean;
   contextTypeName             - Ќаименование типа контекста
   nestedFlag                  - ‘лаг вложенного контекста (1 да, 0 нет)
   contextTypeDescription      - ќписание типа контекста
+  temporaryFlag               - ‘лаг временного типа контекста
+                                (1 да, 0 нет (по умолчанию))
 
   ¬озврат:
   - флаг внесени€ изменений (0 нет изменений, 1 если изменени€ внесены)
@@ -234,6 +237,7 @@ function mergeContextType(
   , contextTypeName varchar2
   , nestedFlag integer
   , contextTypeDescription varchar2
+  , temporaryFlag integer := null
 )
 return integer;
 

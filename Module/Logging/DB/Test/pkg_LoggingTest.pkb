@@ -70,7 +70,8 @@ is
   ci tpr_csv_iterator_t;
   methodName varchar2(100);
 
-
+  es1ct lg_context_type%rowtype;
+  es1lg lg_log%rowtype;
 
   /*
     Возвращает значение строкового поля с игнорированием пробелов.
@@ -160,6 +161,61 @@ begin
             , openContextFlag       => getNum( 'openContextFlag', 0)
             , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
           );
+        when 'errorStack1' then
+          es1lg.message_text            := getStr( 'messageText');
+          es1lg.log_id                  := getNum( 'logMessageFlag', 0);
+          es1ct.context_type_short_name := getStr( 'contextTypeShortName', 0);
+          es1lg.context_value_id        := getNum( 'contextValueId', 0);
+          es1ct.module_id               := getNum( 'contextTypeModuleId', 0);
+          es1lg.level_code              := getStr( 'levelCode', 0);
+          es1lg.message_value           := getNum( 'messageValue', 0);
+          es1lg.message_label           := getStr( 'messageLabel', 0);
+        when 'errorStack2' then
+          begin
+            begin
+              begin
+                raise_application_error(
+                  getNum( 'errorCode')
+                  , getStr( 'errorMessage')
+                );
+              exception when others then
+                raise_application_error(
+                  pkg_Error.ErrorStackInfo
+                  , usedLogger.errorStack(
+                      es1lg.message_text
+                      , logMessageFlag            => es1lg.log_id
+                      , closeContextTypeShortName => es1ct.context_type_short_name
+                      , contextValueId            => es1lg.context_value_id
+                      , contextTypeModuleId       => es1ct.module_id
+                      , levelCode                 => es1lg.level_code
+                      , messageValue              => es1lg.message_value
+                      , messageLabel              => es1lg.message_label
+                    )
+                  , true
+                );
+              end;
+            exception when others then
+              raise_application_error(
+                pkg_Error.ErrorStackInfo
+                , usedLogger.errorStack(
+                    getStr( 'messageText')
+                    , logMessageFlag            => getNum( 'logMessageFlag', 0)
+                    , closeContextTypeShortName => getStr( 'contextTypeShortName', 0)
+                    , contextValueId            => getNum( 'contextValueId', 0)
+                    , contextTypeModuleId       => getNum( 'contextTypeModuleId', 0)
+                    , levelCode                 => getStr( 'levelCode', 0)
+                    , messageValue              => getNum( 'messageValue', 0)
+                    , messageLabel              => getStr( 'messageLabel', 0)
+                  )
+                , true
+              );
+            end;
+          exception when others then
+            logger.trace(
+              'execLoggerMethod: errorStack2: usedLogger.getErrorStack:'
+              || chr(10) || usedLogger.getErrorStack()
+            );
+          end;
         when 'warn' then
           usedLogger.warn(
             messageText             => getStr( 'messageText')
@@ -207,6 +263,7 @@ begin
             , contextTypeName         => getStr( 'contextTypeName', 0)
             , nestedFlag              => getNum( 'nestedFlag', 0)
             , contextTypeDescription  => getStr( 'contextTypeDescription', 0)
+            , temporaryFlag           => getNum( 'temporaryFlag', 0)
           );
         when 'deleteContextType' then
           usedLogger.deleteContextType(
@@ -681,7 +738,12 @@ and not (
 '
           , orderByExpression => 'log_id'
           , idColumnName      => 'log_id'
-          , expectedCsv       => expectedLogCsv
+          , expectedCsv       =>
+              replace(
+                expectedLogCsv
+                , '$(CURRENT_SCHEMA)'
+                , sys_context('USERENV','CURRENT_SCHEMA')
+              )
           , failMessagePrefix => cinfo
         );
       end if;
@@ -893,18 +955,18 @@ and not (
 
     fileRecCtxExecCsv varchar2(10000) :=
 '
-methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
-------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
-mergeContextType    ; file                 ; Обработка файла                       ;          1 ; В context_value_id указывается Id файла (из таблицы tst_file)
-mergeContextType    ; record               ; Обработка записи с данными из файла   ;          1 ; В context_value_id указывается порядковый номер строки файла (используется в контексте обработки файла)
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; temporaryFlag  ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; -------------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; file                 ; Обработка файла                       ;          1 ;              1 ; В context_value_id указывается Id файла (из таблицы tst_file)
+mergeContextType    ; record               ; Обработка записи с данными из файла   ;          1 ;              1 ; В context_value_id указывается порядковый номер строки файла (используется в контексте обработки файла)
 '
     ;
     operEdtCtxExecCsv varchar2(10000) :=
 '
-methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; contextTypeDescription
-------------------- ; -------------------- ; ------------------------------------- ; ---------- ; --------------------------------------------------------------------------------------------------------
-mergeContextType    ; operator             ; Авторизация оператора                 ;          0 ; В context_value_id указывается Id оператора (из таблицы tst_operator)
-mergeContextType    ; edition              ; Переключение на определенный edition  ;          0 ; В message_label указывается используемый edition
+methodName          ; contextTypeShortName ; contextTypeName                       ; nestedFlag ; temporaryFlag  ; contextTypeDescription
+------------------- ; -------------------- ; ------------------------------------- ; ---------- ; -------------- ; --------------------------------------------------------------------------------------------------------
+mergeContextType    ; operator             ; Авторизация оператора                 ;          0 ;                ; В context_value_id указывается Id оператора (из таблицы tst_operator)
+mergeContextType    ; edition              ; Переключение на определенный edition  ;          0 ;                ; В message_label указывается используемый edition
 '
     ;
     fileRecLogExecCsv varchar2(10000) :=
@@ -1036,6 +1098,33 @@ DEBUG       ; Автоматическое закрытие контекста ;               ;               
 ERROR       ; Обработка файла прервана.         ;               ;               ; file                    ;                1 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
 '
     );
+    checkContextCase(
+      'errorStack с закрытием контекста'
+      , setLevelCode        => 'INFO'
+      , execLoggerMethodCsv =>
+          cmn_string_table_t( fileRecCtxExecCsv,
+'
+methodName  ; messageText                       ; levelCode  ; messageValue  ; messageLabel  ; contextTypeShortName    ; contextValueId   ; openContextFlag   ; logMessageFlag  ; errorCode  ; errorMessage
+----------- ; --------------------------------- ; ---------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; --------------- ; ---------- ; -------------------
+info        ; Начало обработки файла tmp1.txt   ;            ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;                 ;            ;
+debug       ; Начало обработки записи #1        ;            ;               ;               ; record                  ;                1 ;                 1 ;                 ;            ;
+debug       ; Записи #1 обработана              ;            ;               ;               ; record                  ;                1 ;                 0 ;                 ;            ;
+debug       ; Начало обработки записи #2        ;            ;               ;               ; record                  ;                2 ;                 1 ;                 ;            ;
+errorStack1 ; Ошибка при обработке записи #2.   ;       INFO ;        -20015 ;     DUB_ERROR ; record                  ;                2 ;                   ;                 ;            ;
+errorStack2 ; Ошибка при обработке файла.       ;            ;             1 ;               ; file                    ;               11 ;                   ;               1 ;     -20015 ; Запись загружена ранее
+'
+          )
+      , expectedLogCsv      =>
+'
+LEVEL_CODE  ; MESSAGE_TEXT                                                                                                                                                                                                                      ; MESSAGE_VALUE ; MESSAGE_LABEL ; CONTEXT_TYPE_SHORT_NAME ; CONTEXT_VALUE_ID ; OPEN_CONTEXT_FLAG ; OPEN_CONTEXT_LOG_ID ; CONTEXT_LEVEL ; CONTEXT_TYPE_LEVEL
+----------- ; --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ; ------------- ; ------------- ; ----------------------- ; ---------------- ; ----------------- ; ------------------- ; ------------- ; ------------------
+INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                   ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
+DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
+INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
+ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 177  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+'
+    );
+
 
     -- Ассоциативный и вложенный контекст
     execCsv :=

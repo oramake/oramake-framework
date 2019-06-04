@@ -14,38 +14,39 @@
 -- declare
 -- *
 -- ERROR at line 1:
--- ORA-20150: Ошибка при расчете статистики.
--- ORA-06512: at line 101
+-- ORA-20150: Ошибка при расчете (обработано запросов: 2).
+-- ORA-06512: at line 92
 -- ORA-20150: Ошибка при обработке запроса (requestId=33).
--- ORA-06512: at line 63
+-- ORA-06512: at line 56
 -- ORA-20185: Некорректный запрос
 -- ORA-06512: at line 41
--- ORA-06512: at line 85
--- ORA-06512: at line 85
+-- ORA-06512: at line 83
+-- ORA-06512: at line 83
 --
 --
 -- Rows in v_lg_context_change:
 --
 -- OPEN_LOG_ID CLOSE_LOG_ID CLOSE_LEVE CLOSE_MESSAGE_VALUE
 -- ----------- ------------ ---------- -------------------
---   337082332    337082338 INFO                         5
---   337082339    337082344 ERROR                        2
+--        7450         7456 INFO                         5
+--        7457         7462 ERROR                        2
 --
 -- Rows in lg_log (last calculation):
 --
 --     LOG_ID LEVEL_CODE MESSAGE_TEXT                                             ...  MESSAGE_VALUE CONTEXT_LEVEL CONTEXT_VALUE_ID
 -- ---------- ---------- --------------------------------------------------------      ------------- ------------- ----------------
---  337082339 INFO       Расчет статистики по запросам                                                           1
---  337082342 TRACE      Обработка запроса: requestId=33                                                         2               33
---  337082343 ERROR      Ошибка при обработке запроса:                                                           2               33
+--       7457 INFO       Расчет статистики по запросам                                                           1
+--       7460 TRACE      Обработка запроса: requestId=33                                                         2               33
+--       7461 INFO       Закрытие контекста выполнения в связи с ошибкой:                                        2               33
+--                       Ошибка при обработке запроса (requestId=33).
 --                       ORA-20185: Некорректный запрос
 --
---  337082344 ERROR      Ошибка при расчете (обработано запросов: 2):                              2             1
+--       7462 ERROR      Ошибка при расчете (обработано запросов: 2).                              2             1
 --                       ORA-20150: Ошибка при обработке запроса (requestId=33).
---                       ORA-06512: at line 63
+--                       ORA-06512: at line 56
 --                       ORA-20185: Некорректный запрос
 --                       ORA-06512: at line 41
---                       ORA-06512: at line 85
+--                       ORA-06512: at line 83
 -- (end)
 --
 
@@ -185,19 +186,17 @@ declare
       , openContextFlag => 0
     );
   exception when others then
-    logger.error(
-      'Ошибка при обработке запроса:'
-        || chr(10) || logger.getErrorStack( isStackPreserved => 1)
-      , contextTypeShortName => :RequestId_CtxTpSName
-      , contextValueId => requestId
-      , openContextFlag => 0
-    );
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка при обработке запроса ('
-          || 'requestId=' || requestId
-          || ').'
+            || 'requestId=' || requestId
+            || ').'
+          , closeContextTypeShortName => :RequestId_CtxTpSName
+          , contextValueId            => requestId
+            -- использованием INFO, т.к. полный стек ошибки будет логироваться
+            -- уровнем выше
+          , levelCode                 => lg_logger_t.getInfoLevelCode()
         )
       , true
     );
@@ -223,17 +222,13 @@ begin
     , messageValue => processedCount
   );
 exception when others then
-  logger.error(
-    'Ошибка при расчете (обработано запросов: ' || processedCount || '):'
-      || chr(10) || logger.getErrorStack( isStackPreserved => 1)
-    , contextTypeShortName => :CalcStats_CtxTpSName
-    , openContextFlag => 0
-    , messageValue => processedCount
-  );
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка при расчете статистики.'
+        'Ошибка при расчете (обработано запросов: ' || processedCount || ').'
+				, logMessageFlag            => 1
+        , closeContextTypeShortName => :CalcStats_CtxTpSName
+        , messageValue              => processedCount
       )
     , true
   );
