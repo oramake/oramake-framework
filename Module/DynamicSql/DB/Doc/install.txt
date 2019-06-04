@@ -33,6 +33,33 @@ JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
 которое говорит о том, что используетс€ значение параметра JOB_QUEUE_PROCESSES,
 запомненного при предыдущем запуске установки.
 
+<<<<<<< .mine
+ѕеред установкой модуль деактивирует пакетные задани€ модул€ Scheduler в
+Ѕƒ, а после успешной установки восстанавливает активацию.
+
+ оманда дл€ восстановлени€ выполнени€ заданий в Ѕƒ:
+
+(code)
+
+make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.1.2
+
+ оманда дл€ установки обновлени€:
+
+(code)
+
+$ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+=======
 ¬ случае ошибки при установке "Batch stop waiting timed out" батчей, можно
 попробовать увеличить BATCH_WAIT.
 ѕример запуска установки со временем ожидани€ 1000 секунд
@@ -66,6 +93,7 @@ $ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 
 
+>>>>>>> .r3609
 group: 1.1.1
 
 To upgrade module:

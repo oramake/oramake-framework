@@ -1,0 +1,98 @@
+title: Установка
+
+
+
+group: Общие замечания
+
+Реализуется с помощью целей сборки модуля из make-целей <Установка модуля в БД>.
+Для корректной установки должна быть установлена актуальная версия OMS
+( см. <Версия OMS-файлов>).
+
+Параметры установки:
+INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
+                                первоначальной установке или номер при
+                                обновлении)
+LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
+                                ( формат: login/password)
+LOAD_USERID                   - основной пользователь для установки в БД
+                                ( формат: username/password@dbName)
+
+
+
+Перед установкой модуль деактивирует пакетные задания модуля Scheduler в
+БД, а после успешной установки восстанавливает активацию.
+
+Команда для восстановления выполнения заданий в БД:
+
+(code)
+
+make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.1.2
+
+Команда для установки обновления:
+
+(code)
+
+$ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.1.1
+
+To upgrade module:
+
+(code)
+
+$ make install INSTALL_VERSION=1.1.1 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: Первоначальная установка модуля
+
+Порядок первоначальной установки текущей версии модуля:
+
+- установка объектов модуля
+
+(code)
+
+$ make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: Выдача прав на использование модуля
+
+Команда для выдачи прав:
+
+(code)
+
+$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+
+(end)
+
+Замечания:
+- для выдачи прав всем пользователям в TO_USERNAME нужно указать public
+  ( " TO_USERNAME=public"), при этом у пользователя, в схему которого
+  установлен модуль, должна быть системная привилегия "CREATE PUBLIC SYNONYM";
+
+
+
+group: Удаление модуля из БД
+
+Команда для удаления модуля из БД:
+
+(code)
+
+$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)

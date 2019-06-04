@@ -1,4 +1,13 @@
 var indexSectionsWithContent = {
+<<<<<<< .mine
+   "General": {
+      "Symbols": true,
+      "Numbers": true,
+      "A": true,
+      "B": true,
+      "C": true,
+      "D": true,
+=======
    "Variablesinternal": {
       "Symbols": false,
       "Numbers": false,
@@ -6,7 +15,12 @@ var indexSectionsWithContent = {
       "B": false,
       "C": true,
       "D": false,
+>>>>>>> .r3609
       "E": false,
+<<<<<<< .mine
+      "F": true,
+      "G": true,
+=======
       "F": false,
       "G": true,
       "H": false,
@@ -23,6 +37,37 @@ var indexSectionsWithContent = {
       "S": false,
       "T": false,
       "U": false,
+      "V": false,
+      "W": false,
+      "X": false,
+      "Y": false,
+      "Z": false
+      },
+   "Typesinternal": {
+      "Symbols": false,
+      "Numbers": false,
+      "A": false,
+      "B": false,
+      "C": true,
+      "D": false,
+      "E": false,
+      "F": false,
+      "G": false,
+>>>>>>> .r3609
+      "H": false,
+      "I": true,
+      "J": false,
+      "K": false,
+      "L": true,
+      "M": true,
+      "N": true,
+      "O": true,
+      "P": true,
+      "Q": false,
+      "R": false,
+      "S": true,
+      "T": false,
+      "U": true,
       "V": false,
       "W": false,
       "X": false,
@@ -59,36 +104,9 @@ var indexSectionsWithContent = {
       "Y": false,
       "Z": false
       },
-   "Constantsinternal": {
-      "Symbols": false,
-      "Numbers": false,
-      "A": false,
-      "B": false,
-      "C": false,
-      "D": false,
-      "E": false,
-      "F": false,
-      "G": false,
-      "H": false,
-      "I": false,
-      "J": false,
-      "K": false,
-      "L": false,
-      "M": true,
-      "N": false,
-      "O": false,
-      "P": false,
-      "Q": false,
-      "R": false,
-      "S": false,
-      "T": false,
-      "U": false,
-      "V": false,
-      "W": false,
-      "X": false,
-      "Y": false,
-      "Z": false
-      },
+<<<<<<< .mine
+   "Functions": {
+=======
    "Constants": {
       "Symbols": false,
       "Numbers": false,
@@ -120,6 +138,7 @@ var indexSectionsWithContent = {
       "Z": false
       },
    "Functions": {
+>>>>>>> .r3609
       "Symbols": false,
       "Numbers": false,
       "A": true,
@@ -149,7 +168,11 @@ var indexSectionsWithContent = {
       "Y": false,
       "Z": false
       },
+<<<<<<< .mine
+   "Variables": {
+=======
    "Functionspublic": {
+>>>>>>> .r3609
       "Symbols": false,
       "Numbers": false,
       "A": true,
@@ -158,7 +181,7 @@ var indexSectionsWithContent = {
       "D": true,
       "E": false,
       "F": true,
-      "G": true,
+      "G": false,
       "H": false,
       "I": false,
       "J": false,
@@ -179,12 +202,20 @@ var indexSectionsWithContent = {
       "Y": false,
       "Z": false
       },
+<<<<<<< .mine
+   "Files": {
+      "Symbols": false,
+      "Numbers": false,
+      "A": false,
+      "B": false,
+=======
    "General": {
       "Symbols": true,
       "Numbers": true,
       "A": true,
       "B": true,
-      "C": true,
+>>>>>>> .r3609
+      "C": false,
       "D": true,
       "E": false,
       "F": true,
@@ -200,9 +231,15 @@ var indexSectionsWithContent = {
       "P": true,
       "Q": false,
       "R": false,
+<<<<<<< .mine
+      "S": false,
+      "T": true,
+      "U": false,
+=======
       "S": true,
       "T": true,
       "U": true,
+>>>>>>> .r3609
       "V": false,
       "W": false,
       "X": false,
@@ -239,12 +276,16 @@ var indexSectionsWithContent = {
       "Y": false,
       "Z": false
       },
+<<<<<<< .mine
+   "Constantsinternal": {
+=======
    "Variables": {
+>>>>>>> .r3609
       "Symbols": false,
       "Numbers": false,
       "A": false,
       "B": false,
-      "C": true,
+      "C": false,
       "D": false,
       "E": false,
       "F": false,
@@ -254,7 +295,70 @@ var indexSectionsWithContent = {
       "J": false,
       "K": false,
       "L": false,
+      "M": true,
+      "N": false,
+      "O": false,
+      "P": false,
+      "Q": false,
+      "R": false,
+      "S": false,
+      "T": false,
+      "U": false,
+      "V": false,
+      "W": false,
+      "X": false,
+      "Y": false,
+      "Z": false
+<<<<<<< .mine
+      },
+   "Functionspublic": {
+      "Symbols": false,
+      "Numbers": false,
+      "A": true,
+      "B": false,
+      "C": true,
+      "D": true,
+      "E": false,
+      "F": true,
+      "G": true,
+      "H": false,
+      "I": false,
+      "J": false,
+      "K": false,
+      "L": false,
       "M": false,
+      "N": false,
+      "O": true,
+      "P": false,
+      "Q": false,
+      "R": false,
+      "S": true,
+      "T": false,
+      "U": true,
+      "V": false,
+      "W": false,
+      "X": false,
+      "Y": false,
+      "Z": false
+=======
+>>>>>>> .r3609
+      },
+   "Variablesinternal": {
+      "Symbols": false,
+      "Numbers": false,
+      "A": false,
+      "B": false,
+      "C": true,
+      "D": false,
+      "E": false,
+      "F": false,
+      "G": true,
+      "H": false,
+      "I": false,
+      "J": false,
+      "K": false,
+      "L": true,
+      "M": true,
       "N": false,
       "O": false,
       "P": false,
