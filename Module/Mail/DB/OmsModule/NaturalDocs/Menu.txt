@@ -137,10 +137,6 @@ Group: Скрипты  {
 
          File: after-action  (no auto-title, Install/Config/after-action.sql)
          File: before-action  (no auto-title, Install/Config/before-action.sql)
-         File: resume-batch  (no auto-title, Install/Config/resume-batch.sql)
-         File: resume-job  (no auto-title, Install/Config/resume-job.sql)
-         File: stop-batch  (no auto-title, Install/Config/stop-batch.sql)
-         File: stop-job  (no auto-title, Install/Config/stop-job.sql)
          }  # Group: Config
 
       Group: Data  {
