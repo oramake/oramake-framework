@@ -137,6 +137,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: view-log  (no auto-title, Install/Grant/Last/view-log.sql)
             }  # Group: Last
 
          }  # Group: Grant
