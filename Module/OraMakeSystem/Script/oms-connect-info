@@ -44,11 +44,11 @@ OMS_VERSION=2.2.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 25977929 $'
+fileRevisionValue='$Revision:: 26037021 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2019-05-24 08:29:19 +0300 #$'
+fileChangeDateValue='$Date:: 2019-07-04 09:21:56 +0300 #$'
 
 
 

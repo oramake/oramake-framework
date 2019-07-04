@@ -73,7 +73,7 @@ cslGetPassword()
       if [[ -n "$passwdScript" ]]; then
         bashCmd=$(type -p "bash")
         if [[ -n "$bashCmd" ]]; then
-          $bashCmd -c "$passwdScript \"$1\""
+          $bashCmd -c "$passwdScript '$1'"
         else
           $passwdScript "$1"
         fi
