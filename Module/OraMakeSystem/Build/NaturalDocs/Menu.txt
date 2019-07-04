@@ -68,6 +68,15 @@ Group: Соглашения по оформлению модуля  {
    File: Меню документации  (Doc/Agreement/doc_menu_tree.txt)
    }  # Group: Соглашения по оформлению модуля
 
+Group: Примеры  {
+
+   Group: Интеграция с KeePass  {
+
+      File: get-password&lparen;for KeePass&rparen;  (Doc/Example/KeePass/get-password)
+      }  # Group: Интеграция с KeePass
+
+   }  # Group: Примеры
+
 Group: Скрипты  {
 
    File: create-patch  (Script/create-patch)

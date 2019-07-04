@@ -401,7 +401,7 @@ $ make load LOAD_USERID=testuser/passwd@testdb LOAD_OPERATORID=operator/passwd
 ORACLE_OPERATOR.
 
 Если при загрузке задан параметр <COMMON_SCHEMA>, то регистрация оператора
-будет производиться при помощи модуля AccessOperator, 
+будет производиться при помощи модуля AccessOperator,
 загруженного в данную схему.
 Пример:
 
@@ -411,10 +411,10 @@ $ make load LOAD_USERID=testuser/passwd@testdb LOAD_OPERATORID=operator/passwd C
 
 (end)
 
-В данном примере для регистрации оператора будет вызван пакет 
+В данном примере для регистрации оператора будет вызван пакет
 commonschema.pkg_Operator.
 
-Предварительно пользователю testuser должны быть выданы привилегии на 
+Предварительно пользователю testuser должны быть выданы привилегии на
 выполнение пакета commonschema.pkg_Operator.
 
 Список файлов для загрузки в БД задается в DB/Makefile в переменной loadTarget
@@ -984,9 +984,9 @@ PublicJob);
 
 installBatchTarget = \
   $(addsuffix .$(ru), \
-	  $(wildcard Install/Batch/Last/*.job.sql) \
-	  $(wildcard Install/Batch/Last/*/*.job.sql) \
-	  $(wildcard Install/Batch/Last/*/batch.xml) \
+    $(wildcard Install/Batch/Last/*.job.sql) \
+    $(wildcard Install/Batch/Last/*/*.job.sql) \
+    $(wildcard Install/Batch/Last/*/batch.xml) \
   )
   $(addsuffix .$(ru2), \
   ) \

@@ -11,6 +11,9 @@ group: 2.2.0 ( 2019-02-06)
 
 [+] Add clean operation into uninstall target.
 
+[+] Add description of using password manager (with example for KeePass)
+    (<Установка::Использование менеджера паролей>).
+
 [*] Stop using deprecated objects (v_sch_batch_root_log, sch_log) of Scheduler
     module.
 
