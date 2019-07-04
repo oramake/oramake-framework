@@ -411,11 +411,55 @@ $ make load LOAD_USERID=testuser/passwd@testdb LOAD_OPERATORID=operator/passwd C
 
 (end)
 
-В данном примере для регистрации оператора будет вызван пакет
-commonschema.pkg_Operator.
+В данном примере для регистрации оператора будет вызван пакет commonSchema.pkg_Operator. Предварительно пользователю testuser должны быть выданы привилегии на выполнение пакета commonSchema.pkg_Operator.
 
-Предварительно пользователю testuser должны быть выданы привилегии на
-выполнение пакета commonschema.pkg_Operator.
+Если в прикладном модуле существует файл DB/OmsModule/operatorLoginScript.sh, то регистрация оператора выполняется из него.
+
+Пример скрипта operatorLoginScript.sh:
+(start code)
+#!/bin/bash
+
+operatorLoginScriptLocal="
+declare
+  userName varchar2(1024);
+begin
+  execute immediate '
+begin
+  :userName := pkg_Operator.Login(
+    operatorLogin => :operatorName
+    , password    => :operatorPassword
+  );
+end;
+'
+  using
+    out userName
+    , in '\$(operatorName)'
+    , in '\$(operatorPassword)'
+  ;
+exception when others then
+  if SQLERRM like
+        '%PLS-00201: identifier ''PKG_OPERATOR'' must be declared%'
+      or SQLERRM like
+        '%PLS-00201: identifier ''PKG_OPERATOR.LOGIN'' must be declared%'
+      or SQLERRM like
+        '%PLS-00904: insufficient privilege to access object %.PKG_OPERATOR%'
+      or SQLERRM like
+        '%ORA-06508: PL/SQL: could not find program unit being called:%'
+      then
+    null;
+  else
+    raise_application_error(
+      -20001
+      , 'Error during automatic operator login ('
+        || ' operatorName=\"\$(operatorName)\"'
+        || ').'
+      , true
+    );
+  end if;
+end;
+/
+"
+(end)
 
 Список файлов для загрузки в БД задается в DB/Makefile в переменной loadTarget
 с помощью перечисления файлов с дополнительным суффиксом, определяющим,

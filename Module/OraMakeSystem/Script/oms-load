@@ -249,7 +249,11 @@ tmpSqlFileNamePrefix="oms-load.$$.sqltmp"
 # Скрипт для регистрации оператора.
 # Перед использованием подставляются значения переменных <operatorName> и
 # <operatorPassword>.
-operatorLoginScript="
+if [[ -f "$moduleOperatorLoginScript" ]]; then
+  source $moduleOperatorLoginScript
+  operatorLoginScript=$operatorLoginScriptLocal
+else
+  operatorLoginScript="
 declare
   userName varchar2(1024);
 begin
@@ -289,7 +293,7 @@ exception when others then
 end;
 /
 "
-
+fi
 
 
 # group: Параметры вызова

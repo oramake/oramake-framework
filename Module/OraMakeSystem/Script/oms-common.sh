@@ -173,6 +173,10 @@ patchConfigDir="$configDir/UpdateModule"
 # Каталог с файлами OMS внутри прикладного модуля.
 moduleOmsDir="DB/OmsModule"
 
+# var: moduleOperatorLoginScript
+# Скрипт регистрации оператора внутри прикладного модуля.
+moduleOperatorLoginScript="OmsModule/operatorLoginScript.sh"
+
 # var: tmpFileDir
 # Каталог для временных файлов
 tmpFileDir="${TEMP:-/tmp}"
