@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>DataSync</name>
   <description>Функции репликации данных для использования в прикладных модулях</description>
-  <version>1.3.1</version>
+  <version>1.3.2</version>
   <prefix>dsn</prefix>
   <team>
     <programmerDB></programmerDB>
