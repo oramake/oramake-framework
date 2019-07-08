@@ -749,6 +749,7 @@ is
       cons.constraint_type = 'P'
       and cons.constraint_name = cols.constraint_name
       and cons.owner = cols.owner
+      and cols.position = 1
     where
       cols.table_name = upper(idColumnTableName)
     ;
