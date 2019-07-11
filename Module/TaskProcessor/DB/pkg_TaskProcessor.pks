@@ -55,7 +55,47 @@ Abort_ResultCode constant varchar2(10) :=
 
 
 
+/* group: Типы контекста выполнения в логе */
+
+/* const: Line_CtxTpName
+  Тип контекста выполнения "Строка обрабатываемого файла".
+  Обработка строки файла, в context_value_id указывается порядковый номер
+  строки (начиная с 1). Тип контекста может использоваться в прикладных
+  модулях для добавления сообщений лога, связанных с определенной строкой
+  обрабатываемого файла.
+
+  Пример:
+
+  - добавляет в лог сообщение об успешной обработке строки файла с порядковым
+    номером lineNumber (переменная logger типа lg_logger_t из модуля Logging).
+
+  (code)
+
+  logger.info(
+    'Запись добавлена (строка файла #' || lineNumber || ').'
+    , contextTypeShortName  => pkg_TaskProcessor.Line_CtxTpName
+    , contextTypeModuleId   => pkg_TaskProcessor.getModuleId()
+    , contextValueId        => lineNumber
+  );
+
+  (end)
+*/
+Line_CtxTpName constant varchar2(10) := 'line';
+
+
+
 /* group: Функции */
+
+/* pfunc: getModuleId
+  Возвращает Id модуля TaskProcessor.
+
+  Возврат:
+  значение module_id из таблицы mod_module (модуль ModuleInfo).
+
+  ( <body::getModuleId>)
+*/
+function getModuleId
+return integer;
 
 
 
@@ -393,189 +433,49 @@ procedure stopTask(
 
 /* group: Лог выполнения заданий */
 
-/* pproc: logMessage
-  Записывает в лог сообщение, относящееся к текущему выполняемому заданию.
-
-  Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logMessage>)
-*/
-procedure logMessage(
-  levelCode varchar2
-  , messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
-/* pproc: logError
-  Записывает в лог сообщение по ошибке, относящееся к текущему выполняемому
-  заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logError>)
-*/
-procedure logError(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
-/* pproc: logWarning
-  Записывает в лог предупреждающее сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logWarning>)
-*/
-procedure logWarning(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
-/* pproc: logInfo
-  Записывает в лог информационное сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logInfo>)
-*/
-procedure logInfo(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
-/* pproc: logDebug
-  Записывает в лог отладочное сообщение, относящееся к текущему выполняемому
-  заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logDebug>)
-*/
-procedure logDebug(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
-/* pproc: logTrace
-  Записывает в лог трассировочное сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-
-  ( <body::logTrace>)
-*/
-procedure logTrace(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-);
-
 /* pfunc: findTaskLog
   Поиск лога выполнения задания.
 
   Параметры:
   taskLogId                   - Id записи лога
+                                (по умолчанию без ограничений)
   taskId                      - Id задания
-  startNumber                 - номер запуска задания ( начиная с 1)
-  lineNumber                  - номер строки обрабатываемого файла ( начиная 1
+                                (по умолчанию без ограничений)
+  startNumber                 - Номер запуска задания (начиная с 1)
+                                (по умолчанию без ограничений)
+  lineNumber                  - Номер строки обрабатываемого файла (начиная 1
                                 или 0 для сообщений, не связанных со строкой
                                 файла)
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-                                ( поиск по like без учета регистра)
+                                (по умолчанию без ограничений)
+  levelCode                   - Код уровня сообщения
+                                (по умолчанию без ограничений)
+  messageText                 - Текст сообщения
+                                (поиск по like без учета регистра)
+                                (по умолчанию без ограничений)
   startTaskLogId              - Id записи лога, с которой нужно начать выборку
-  maxRowCount                 - максимальное число возвращаемых поиском записей
+                                (по умолчанию без ограничений)
+  maxRowCount                 - Максимальное число возвращаемых поиском записей
+                                (по умолчанию без ограничений)
   operatorId                  - Id оператора, выполняющего операцию
-                                ( по умолчанию текущий)
+                                (по умолчанию текущий)
 
   Возврат ( курсор):
   task_log_id                 - Id записи лога
   task_id                     - Id задания
-  start_number                - номер запуска задания ( начиная с 1)
-  line_number                 - номер строки обрабатываемого файла ( начиная 1
-                                или 0 для сообщений, не связанных со строкой
-                                файла)
-  level_code                  - код уровня сообщения
-  level_name                  - название уровня сообщения
-  message_text                - текст сообщения
-  date_ins                    - дата добавления записи
+  start_number                - Номер запуска задания ( начиная с 1)
+  line_number                 - Номер строки обрабатываемого файла
+                                (начиная 1 или 0 для сообщений, не связанных
+                                со строкой файла)
+  level_code                  - Код уровня сообщения
+  level_name                  - Название уровня сообщения
+  message_text                - Текст сообщения
+  date_ins                    - Дата добавления записи
+
+  (сортировка по полю task_log_id)
 
   Замечания:
-  - возвращаемые записи отсортированы по полю task_log_id;
+  - обязательно должно быть задано отличное от NULL значение хотя бы для
+    одного из параметров taskLogId или taskId;
 
   ( <body::findTaskLog>)
 */
@@ -625,6 +525,80 @@ return sys_refcursor;
 */
 function getResult
 return sys_refcursor;
+
+
+
+/* group: Устаревшие функции */
+
+/* pproc: logMessage
+  Устаревшая функция, вместо нее следует использовать функции логирования
+  сообщений из типа lg_logger_t (модуль Logging), при этом для указания строки
+  обрабатываемого файла следует использовать контекст выполнения
+  <Line_CtxTpName>.
+
+  ( <body::logMessage>)
+*/
+procedure logMessage(
+  levelCode varchar2
+  , messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
+
+/* pproc: logError
+  Устаревшая функция аналогично <logMessage>.
+
+  ( <body::logError>)
+*/
+procedure logError(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
+
+/* pproc: logWarning
+  Устаревшая функция аналогично <logMessage>.
+
+  ( <body::logWarning>)
+*/
+procedure logWarning(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
+
+/* pproc: logInfo
+  Устаревшая функция аналогично <logMessage>.
+
+  ( <body::logInfo>)
+*/
+procedure logInfo(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
+
+/* pproc: logDebug
+  Устаревшая функция аналогично <logMessage>.
+
+  ( <body::logDebug>)
+*/
+procedure logDebug(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
+
+/* pproc: logTrace
+  Устаревшая функция аналогично <logMessage>.
+
+  ( <body::logTrace>)
+*/
+procedure logTrace(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+);
 
 end pkg_TaskProcessor;
 /

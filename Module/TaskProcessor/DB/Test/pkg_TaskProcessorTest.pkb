@@ -17,6 +17,61 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* proc: stopTask
+  Снимает задания с выполнения.
+
+  Параметры:
+  moduleName                  - имя прикладного модуля
+  processName                 - имя прикладного процесса, обрабатывающего этот
+                                тип задания
+
+  Замечания:
+  - выполняется в автономной транзакции;
+*/
+procedure stopTask(
+  moduleName varchar2 := null
+  , processName varchar2 := null
+)
+is
+
+  pragma autonomous_transaction;
+
+  cursor dataCur is
+    select
+      ts.*
+    from
+      v_tp_active_task ts
+      inner join tp_task_type tt
+        on tt.task_type_id = ts.task_type_id
+    where
+      ts.task_status_code = pkg_TaskProcessorBase.Queued_TaskStatusCode
+      and nullif( moduleName, tt.module_name) is null
+      and nullif( processName, tt.process_name) is null
+    order by
+      ts.task_id
+  ;
+
+begin
+  for rec in dataCur loop
+    pkg_TaskProcessor.stopTask(
+      taskId => rec.task_id
+    );
+    commit;
+  end loop;
+  commit;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при снятии с выполнения заданий ('
+        || ' moduleName="' || moduleName || '"'
+        || ', processName="' || processName || '"'
+        || ').'
+      )
+    , true
+  );
+end stopTask;
+
 /* proc: waitForTask
   Ожидание обработки задания.
 
@@ -63,6 +118,8 @@ end waitForTask;
   moduleName                  - название модуля, к которому относится задание
   processName                 - название процесса, к которому относится задание
   fileData                    - текстовые данные файла
+  fileName                    - имя файла
+                                (по умолчанию "Тестовый файл.csv")
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -72,6 +129,7 @@ function createProcessFileTask(
   moduleName varchar2
   , processName varchar2
   , fileData clob
+  , fileName varchar2 := null
   , operatorId integer := null
 )
 return integer
@@ -83,7 +141,7 @@ begin
   taskId := pkg_TaskProcessor.createTask(
     moduleName        => moduleName
     , processName     => processName
-    , fileName        => 'Тестовый файл.csv'
+    , fileName        => coalesce( fileName, 'Тестовый файл.csv')
     , mimeTypeCode    => 'application/vnd.ms-excel'
     , operatorId      =>
         coalesce( operatorId, pkg_Operator.getCurrentUserId())

@@ -9,6 +9,24 @@ create or replace package pkg_TaskProcessorTest is
 
 /* group: Функции */
 
+/* pproc: stopTask
+  Снимает задания с выполнения.
+
+  Параметры:
+  moduleName                  - имя прикладного модуля
+  processName                 - имя прикладного процесса, обрабатывающего этот
+                                тип задания
+
+  Замечания:
+  - выполняется в автономной транзакции;
+
+  ( <body::stopTask>)
+*/
+procedure stopTask(
+  moduleName varchar2 := null
+  , processName varchar2 := null
+);
+
 /* pproc: waitForTask
   Ожидание обработки задания.
 
@@ -16,7 +34,7 @@ create or replace package pkg_TaskProcessorTest is
   maxCount                    - интервал ожидания в сек
                                 ( по умолчанию 200)
 
-  ( <body::executeLoadFileTask>)
+  ( <body::waitForTask>)
 */
 procedure waitForTask(
   taskId                      integer
@@ -30,6 +48,8 @@ procedure waitForTask(
   moduleName                  - название модуля, к которому относится задание
   processName                 - название процесса, к которому относится задание
   fileData                    - текстовые данные файла
+  fileName                    - имя файла
+                                (по умолчанию "Тестовый файл.csv")
   operatorId                  - Id оператора ( по умолчанию текущий)
 
   Возврат:
@@ -41,6 +61,7 @@ function createProcessFileTask(
   moduleName varchar2
   , processName varchar2
   , fileData clob
+  , fileName varchar2 := null
   , operatorId integer := null
 )
 return integer;

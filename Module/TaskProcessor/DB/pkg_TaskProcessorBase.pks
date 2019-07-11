@@ -14,6 +14,11 @@ create or replace package pkg_TaskProcessorBase is
 */
 Module_Name constant varchar2(30) := 'TaskProcessor';
 
+/* const: Module_SvnRoot
+  Путь к корневому каталогу модуля в Subversion.
+*/
+Module_SvnRoot constant varchar2(100) := 'Oracle/Module/TaskProcessor';
+
 /* group: Роли */
 
 /* const: Administrator_RoleName
@@ -112,6 +117,50 @@ Processing_FileStatusCode constant varchar2(10) := 'PROCESSING';
   Код состояния файла "Данные обработаны".
 */
 Processed_FileStatusCode constant varchar2(10) := 'PROCESSED';
+
+
+
+/* group: Типы контекста выполнения в логе */
+
+/* const: Task_CtxTpSName
+  Тип контекста выполнения "Задание".
+  Операции над заданием, в context_value_id указывается Id задания (значение
+  поля task_id из таблицы tp_task), в message_label указывается вид операции
+  (см. <Метки сообщений об операциях с заданием>).
+*/
+Task_CtxTpSName constant varchar2(10) := 'TASK';
+
+
+
+/* group: Метки сообщений об операциях с заданием
+  Значения используются для заполнения поля message_label лога в случае
+  открытия контекста <Task_CtxTpSName>.
+*/
+
+/* const: Create_TaskMsgLabel
+  Метка сообщения для операции "Создание".
+*/
+Create_TaskMsgLabel constant varchar2(50) := 'CREATE';
+
+/* const: Exec_TaskMsgLabel
+  Метка сообщения для операции "Выполнение".
+*/
+Exec_TaskMsgLabel constant varchar2(50) := 'EXEC';
+
+/* const: Start_TaskMsgLabel
+  Метка сообщения для операции "Постановка на выполнение".
+*/
+Start_TaskMsgLabel constant varchar2(50) := 'START';
+
+/* const: Stop_TaskMsgLabel
+  Метка сообщения для операции "Снятие с выполнения".
+*/
+Stop_TaskMsgLabel constant varchar2(50) := 'STOP';
+
+/* const: Update_TaskMsgLabel
+  Метка сообщения для операции "Обновление параметров".
+*/
+Update_TaskMsgLabel constant varchar2(50) := 'UPDATE';
 
 end pkg_TaskProcessorBase;
 /

@@ -36,6 +36,7 @@ pkg_TaskProcessor.pkb.$(lu): \
   pkg_TaskProcessor.pks.$(lu) \
   pkg_TaskProcessorBase.pks.$(lu) \
 	pkg_TaskProcessorHandler.pks.$(lu) \
+  Install/Schema/Last/v_tp_task_operation.vw.$(lu) \
 
 
 pkg_TaskProcessorBase.pkb.$(lu): \

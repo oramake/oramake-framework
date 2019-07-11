@@ -803,17 +803,25 @@ is
         isSetFileProcessing := true;
         getFile();
       end if;
-      logMessage(
-        pkg_Logging.Info_LevelCode
-        , case when not isProcessFile then
-            'Начало выполнения задания.'
-          else
-            'Начало выполнения задания по обработке файла'
-            || ' "' || fileName || '" ('
-            || ' размер файла: '
-            || dbms_lob.getlength( fileData)
+      logger.info(
+        messageText             =>
+            case when not isProcessFile then
+              'Начало выполнения задания'
+            else
+              'Начало выполнения задания по обработке файла'
+              || ' "' || fileName || '" ('
+              || ' размер файла: '
+              || dbms_lob.getlength( fileData)
+              || ')'
+            end
+            || ' (task_id=' || currentTaskId
+            || ', start_number=' || currentStartNumber
             || ').'
-          end
+        , messageLabel          => pkg_TaskProcessorBase.Exec_TaskMsgLabel
+        , messageValue          => currentStartNumber
+        , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+        , contextValueId        => currentTaskId
+        , openContextFlag       => 1
       );
       task.result_code := pkg_TaskProcessorBase.True_ResultCode;
       execute immediate
@@ -850,18 +858,27 @@ is
     end if;
 
     if task.result_code = pkg_TaskProcessorBase.Error_ResultCode then
-      logMessage(
-        pkg_Logging.Error_LevelCode
-        , 'Выполнение задания завершено с ошибкой:'
-          || chr(10) || task.error_message
+      logger.error(
+        messageText             =>
+            'Выполнение задания завершено с ошибкой:'
+            || chr(10) || task.error_message
+        , messageLabel          => task.result_code
+        , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+        , contextValueId        => currentTaskId
+        , openContextFlag       => 0
       );
     else
-      logMessage(
-        pkg_Logging.Info_LevelCode
-        , 'Выполнение задания завершено ('
-          || ' resultCode="' || task.result_code || '"'
-          || ', execResult=' || task.exec_result
-          || ').'
+      logger.info(
+        messageText             =>
+            'Выполнение задания завершено ('
+            || ' resultCode="' || task.result_code || '"'
+            || ', execResult=' || task.exec_result
+            || ').'
+        , messageLabel          => task.result_code
+        , messageValue          => task.exec_result
+        , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+        , contextValueId        => currentTaskId
+        , openContextFlag       => 0
       );
     end if;
 
@@ -1080,77 +1097,6 @@ exception when others then
   clean();
   raise;
 end taskHandler;
-
-/* proc: logMessage
-  Записывает в лог сообщение, относящееся к текущему выполняемому заданию.
-
-  Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-  - функция выполняется в автономной транзакции;
-*/
-procedure logMessage(
-  levelCode varchar2
-  , messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-
-  pragma autonomous_transaction;
-
-begin
-  if currentTaskId is null then
-    raise_application_error(
-      pkg_Error.ProcessError
-      , 'Отсутствует выполняемое задание.'
-    );
-  end if;
-
-  insert into
-    tp_task_log
-  (
-    task_id
-    , start_number
-    , line_number
-    , level_code
-    , message_text
-    , operator_id
-  )
-  values
-  (
-    currentTaskId
-    , currentStartNumber
-    , coalesce( lineNumber, 0)
-    , levelCode
-    , messageText
-    , operatorId
-  );
-  commit;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при записи в лог сообщения ('
-        || ' levelCode="' || levelCode || '"'
-        || ', lineNumber=' || lineNumber
-        || ', operatorId=' || operatorId
-        || ', messageText="' || chr(10) || messageText || chr(10) || '"'
-        || ').'
-      )
-    , true
-  );
-end logMessage;
 
 end pkg_TaskProcessorHandler;
 /

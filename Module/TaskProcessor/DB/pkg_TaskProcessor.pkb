@@ -13,9 +13,41 @@ logger lg_logger_t := lg_logger_t.getLogger(
   , objectName  => 'pkg_TaskProcessor'
 );
 
+/* ivar: moduleId
+  Id модуля TaskProcessor.
+*/
+moduleId integer;
+
 
 
 /* group: Функции */
+
+/* func: getModuleId
+  Возвращает Id модуля TaskProcessor.
+
+  Возврат:
+  значение module_id из таблицы mod_module (модуль ModuleInfo).
+*/
+function getModuleId
+return integer
+is
+begin
+  if moduleId is null then
+    moduleId := pkg_ModuleInfo.getModuleId(
+      moduleName            => pkg_TaskProcessorBase.Module_Name
+      , raiseExceptionFlag  => 1
+    );
+  end if;
+  return moduleId;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении Id модуля TaskProcessor.'
+      )
+    , true
+  );
+end getModuleId;
 
 /* ifunc: checkAccess
   Проверяет права доступа оператора и в случае отсутствия прав выбрасывает
@@ -516,11 +548,8 @@ is
   -- Id добавленной записи
   taskId tp_task.task_id%type;
 
-  -- Id типа добавляемого задания
-  taskTypeId tp_task.task_type_id%type;
-
-  -- Маска имени файла
-  fileNamePattern tp_task_type.file_name_pattern%type;
+  -- Параметры типа задания
+  tpr tp_task_type%rowtype;
 
   -- Id оператора, выполняющего операцию
   manageOperatorId integer := operatorId;
@@ -535,9 +564,8 @@ is
   is
   begin
     select
-      tt.task_type_id
-      , tt.file_name_pattern
-    into taskTypeId, fileNamePattern
+      tt.*
+    into tpr
     from
       tp_task_type tt
     where
@@ -574,7 +602,7 @@ is
     )
     values
     (
-      taskTypeId
+      tpr.task_type_id
       , case when startDate is null then
           pkg_TaskProcessorBase.Idle_TaskStatusCode
         else
@@ -640,21 +668,21 @@ begin
   getTaskType();
 
   -- Проверка прав доступа
-  manageOperatorId := checkAccess( operatorId, taskTypeId);
+  manageOperatorId := checkAccess( operatorId, tpr.task_type_id);
 
-  if fileNamePattern is not null then
+  if tpr.file_name_pattern is not null then
     if fileName is null then
       raise_application_error(
         pkg_Error.IllegalArgument
         , 'Для данного типа задания необходима загрузка файла для обработки ('
-        || ' task_type_id=' || taskTypeId
+        || ' task_type_id=' || tpr.task_type_id
         || ').'
       );
-    elsif fileName not like fileNamePattern escape '\' then
+    elsif fileName not like tpr.file_name_pattern escape '\' then
       raise_application_error(
         pkg_Error.IllegalArgument
         , 'Имя файла не соответствует шаблону ('
-          || ' fileNamePattern="' || fileNamePattern || '"'
+          || ' file_name_pattern="' || tpr.file_name_pattern || '"'
           || ').'
       );
     end if;
@@ -662,7 +690,7 @@ begin
     raise_application_error(
       pkg_Error.IllegalArgument
       , 'Для данного типа задания не разрешена загрузка файла ('
-        || ' task_type_id=' || taskTypeId
+        || ' task_type_id=' || tpr.task_type_id
         || ').'
     );
   end if;
@@ -671,9 +699,26 @@ begin
   addTask();
 
   -- Добавление записи для файла
-  if fileNamePattern is not null then
+  if tpr.file_name_pattern is not null then
     addFile();
   end if;
+
+  logger.info(
+    messageText             =>
+        'Создано задание типа "' || tpr.task_type_name_rus || '"'
+        || ' [' || tpr.process_name || ']'
+        || case when startDate is not null then
+            ' с датой запуска {'
+            || to_char( startDate, 'dd.mm.yyyy hh24:mi:ss')  || '}'
+          end
+        || case when fileName is not null then
+            ' для обработки файла "' || fileName || '"'
+          end
+        || ' (task_id=' || taskId || ').'
+    , messageLabel          => pkg_TaskProcessorBase.Create_TaskMsgLabel
+    , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+    , contextValueId        => taskId
+  );
 
   return taskId;
 end createTask;
@@ -910,6 +955,15 @@ begin
   where
     t.task_id = taskId
   ;
+
+  logger.info(
+    messageText             =>
+        'Изменены параметры задания'
+        || ' (task_id=' || taskId || ').'
+    , messageLabel          => pkg_TaskProcessorBase.Update_TaskMsgLabel
+    , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+    , contextValueId        => taskId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -1149,6 +1203,9 @@ is
   -- Id оператора, выполняющего операцию
   manageOperatorId integer := operatorId;
 
+  -- Дата следующего запуска
+  nextStartDate tp_task.next_start_date%type;
+
 begin
 
   -- Проверка перед выполнением операции
@@ -1168,7 +1225,21 @@ begin
     , t.manage_operator_id = manageOperatorId
   where
     t.task_id = taskId
+  returning
+    next_start_date
+  into
+    nextStartDate
   ;
+
+  logger.info(
+    messageText             =>
+        'Задание поставлено в очередь на выполнение с датой запуска {'
+        || to_char( nextStartDate, 'dd.mm.yyyy hh24:mi:ss')  || '}'
+        || ' (task_id=' || taskId || ').'
+    , messageLabel          => pkg_TaskProcessorBase.Start_TaskMsgLabel
+    , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+    , contextValueId        => taskId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -1221,6 +1292,15 @@ begin
   where
     ts.task_id = taskId
   ;
+
+  logger.info(
+    messageText             =>
+        'Задание снято с очереди на выполнение'
+        || ' (task_id=' || taskId || ').'
+    , messageLabel          => pkg_TaskProcessorBase.Stop_TaskMsgLabel
+    , contextTypeShortName  => pkg_TaskProcessorBase.Task_CtxTpSName
+    , contextValueId        => taskId
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -1237,233 +1317,11 @@ end stopTask;
 
 /* group: Лог выполнения заданий */
 
-/* proc: logMessage
-  Записывает в лог сообщение, относящееся к текущему выполняемому заданию.
-
-  Параметры:
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
+/* ifunc: findTaskLogOld
+  Поиск лога выполнения задания в устаревшей таблице <tp_task_log> (для
+  обпеспечения совместимости).
 */
-procedure logMessage(
-  levelCode varchar2
-  , messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  pkg_TaskProcessorHandler.logMessage(
-    levelCode       => levelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logMessage;
-
-/* proc: logError
-  Записывает в лог сообщение по ошибке, относящееся к текущему выполняемому
-  заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-*/
-procedure logError(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  logMessage(
-    levelCode       => pkg_Logging.Error_LevelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logError;
-
-/* proc: logWarning
-  Записывает в лог предупреждающее сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-*/
-procedure logWarning(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  logMessage(
-    levelCode       => pkg_Logging.Warning_LevelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logWarning;
-
-/* proc: logInfo
-  Записывает в лог информационное сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-*/
-procedure logInfo(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  logMessage(
-    levelCode       => pkg_Logging.Info_LevelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logInfo;
-
-/* proc: logDebug
-  Записывает в лог отладочное сообщение, относящееся к текущему выполняемому
-  заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-*/
-procedure logDebug(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  logMessage(
-    levelCode       => pkg_Logging.Debug_LevelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logDebug;
-
-/* proc: logTrace
-  Записывает в лог трассировочное сообщение, относящееся к текущему
-  выполняемому заданию.
-
-  Параметры:
-  messageText                 - текст сообщения
-  lineNumber                  - номер строки обрабатываемого файла, к которой
-                                относится сообщение ( нумерация подряд начиная
-                                с 1, 0 если сообщение не относится к строке
-                                ( по умолчанию))
-  operatorId                  - Id оператора ( по умолчанию текущий)
-
-  Замечания:
-  - функция предназначена для логирования процесса выполнения текущего
-    задания, в случае вызова при отсутствии выполняемого задания будет
-    выброшено исключение;
-*/
-procedure logTrace(
-  messageText varchar2
-  , lineNumber integer := null
-  , operatorId integer := null
-)
-is
-begin
-  logMessage(
-    levelCode       => pkg_Logging.Trace_LevelCode
-    , messageText   => messageText
-    , lineNumber    => lineNumber
-    , operatorId    => operatorId
-  );
-end logTrace;
-
-/* func: findTaskLog
-  Поиск лога выполнения задания.
-
-  Параметры:
-  taskLogId                   - Id записи лога
-  taskId                      - Id задания
-  startNumber                 - номер запуска задания ( начиная с 1)
-  lineNumber                  - номер строки обрабатываемого файла ( начиная 1
-                                или 0 для сообщений, не связанных со строкой
-                                файла)
-  levelCode                   - код уровня сообщения
-  messageText                 - текст сообщения
-                                ( поиск по like без учета регистра)
-  startTaskLogId              - Id записи лога, с которой нужно начать выборку
-  maxRowCount                 - максимальное число возвращаемых поиском записей
-  operatorId                  - Id оператора, выполняющего операцию
-                                ( по умолчанию текущий)
-
-  Возврат ( курсор):
-  task_log_id                 - Id записи лога
-  task_id                     - Id задания
-  start_number                - номер запуска задания ( начиная с 1)
-  line_number                 - номер строки обрабатываемого файла ( начиная 1
-                                или 0 для сообщений, не связанных со строкой
-                                файла)
-  level_code                  - код уровня сообщения
-  level_name                  - название уровня сообщения
-  message_text                - текст сообщения
-  date_ins                    - дата добавления записи
-
-  Замечания:
-  - возвращаемые записи отсортированы по полю task_log_id;
-*/
-function findTaskLog(
+function findTaskLogOld(
   taskLogId integer := null
   , taskId integer := null
   , startNumber integer := null
@@ -1547,6 +1405,284 @@ begin
     , startTaskLogId
     , maxRowCount
   ;
+  return rc;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при поиске лога выполнения задания. ('
+        || ' taskLogId=' || to_char( taskLogId )
+        || ', taskId=' || to_char( taskId )
+        || ', startNumber=' || to_char( startNumber )
+        || ', lineNumber=' || to_char( lineNumber )
+        || ', levelCode="' || levelCode || '"'
+        || ', messageText="' || messageText || '"'
+        || ', startTaskLogId=' || to_char( startTaskLogId )
+        || ', maxRowCount=' || to_char( maxRowCount )
+        || ', operatorId=' || to_char( operatorId )
+        || ').'
+      )
+    , true
+  );
+end findTaskLogOld;
+
+/* func: findTaskLog
+  Поиск лога выполнения задания.
+
+  Параметры:
+  taskLogId                   - Id записи лога
+                                (по умолчанию без ограничений)
+  taskId                      - Id задания
+                                (по умолчанию без ограничений)
+  startNumber                 - Номер запуска задания (начиная с 1)
+                                (по умолчанию без ограничений)
+  lineNumber                  - Номер строки обрабатываемого файла (начиная 1
+                                или 0 для сообщений, не связанных со строкой
+                                файла)
+                                (по умолчанию без ограничений)
+  levelCode                   - Код уровня сообщения
+                                (по умолчанию без ограничений)
+  messageText                 - Текст сообщения
+                                (поиск по like без учета регистра)
+                                (по умолчанию без ограничений)
+  startTaskLogId              - Id записи лога, с которой нужно начать выборку
+                                (по умолчанию без ограничений)
+  maxRowCount                 - Максимальное число возвращаемых поиском записей
+                                (по умолчанию без ограничений)
+  operatorId                  - Id оператора, выполняющего операцию
+                                (по умолчанию текущий)
+
+  Возврат ( курсор):
+  task_log_id                 - Id записи лога
+  task_id                     - Id задания
+  start_number                - Номер запуска задания ( начиная с 1)
+  line_number                 - Номер строки обрабатываемого файла
+                                (начиная 1 или 0 для сообщений, не связанных
+                                со строкой файла)
+  level_code                  - Код уровня сообщения
+  level_name                  - Название уровня сообщения
+  message_text                - Текст сообщения
+  date_ins                    - Дата добавления записи
+
+  (сортировка по полю task_log_id)
+
+  Замечания:
+  - обязательно должно быть задано отличное от NULL значение хотя бы для
+    одного из параметров taskLogId или taskId;
+*/
+function findTaskLog(
+  taskLogId integer := null
+  , taskId integer := null
+  , startNumber integer := null
+  , lineNumber integer := null
+  , levelCode varchar2 := null
+  , messageText varchar2 := null
+  , startTaskLogId integer := null
+  , maxRowCount integer := null
+  , operatorId integer := null
+)
+return sys_refcursor
+is
+
+  -- Возвращаемый курсор
+  rc sys_refcursor;
+
+  -- Динамически формируемый текст запроса
+  dsql dyn_dynamic_sql_t := dyn_dynamic_sql_t( '
+select
+  a.*
+from
+  (
+  select
+    t.task_log_id
+    , t.task_id
+    , t.start_number
+    , t.line_number
+    , t.level_code
+    , lv.level_description as level_name
+    , t.message_text
+    , t.date_ins
+  from
+    (
+    select
+      d.*
+      , d.log_id as task_log_id
+      , case when
+          d.context_type_id =
+            (
+            select
+              ct.context_type_id
+            from
+              v_mod_module md
+              inner join lg_context_type ct
+                on ct.module_id = md.module_id
+            where
+              md.svn_root = ''' || pkg_TaskProcessorBase.Module_SvnRoot || '''
+              and ct.context_type_short_name = ''' || Line_CtxTpName || '''
+            )
+        then
+          d.context_value_id
+        else
+          0
+        end
+        as line_number
+    from
+      (
+      select
+        lg.log_id
+        , o.task_id
+        , o.start_number
+        , lg.context_value_id
+        , lg.context_type_id
+        , lg.level_code
+        , lg.message_text
+        , lg.date_ins
+      from
+        v_tp_task_operation o
+        inner join lg_log lg
+          on lg.sessionid = o.sessionid
+            and lg.log_id >= o.start_log_id
+            and lg.log_id <= coalesce( o.finish_log_id, lg.log_id)
+      where
+        o.task_id = :taskId
+        -- только логи выполнения
+        and o.start_number is not null
+        and nullif( :startNumber, o.start_number) is null
+        and :taskLogId is null
+      union all
+      select
+        lg.log_id
+        , max( o.task_id)
+          keep( dense_rank last order by o.start_log_id)
+          as task_id
+        , max( o.start_number)
+          keep( dense_rank last order by o.start_log_id)
+          as start_number
+        , lg.context_value_id
+        , lg.context_type_id
+        , lg.level_code
+        , lg.message_text
+        , lg.date_ins
+      from
+        lg_log lg
+        inner join lg_log lg0
+          on lg0.sessionid = lg.sessionid
+            and lg0.log_id <= lg.log_id
+            and lg0.open_context_flag = 1
+        inner join v_tp_task_operation o
+          on o.task_context_type_id = lg0.context_type_id
+            and o.task_id = lg0.context_value_id
+            and o.start_number is not null
+            and nullif( :taskId, o.task_id) is null
+            and nullif( :startNumber, o.start_number) is null
+      where
+        lg.log_id = :taskLogId
+      group by
+        lg.log_id
+        , lg.context_value_id
+        , lg.context_type_id
+        , lg.level_code
+        , lg.message_text
+        , lg.date_ins
+      ) d
+    ) t
+    inner join lg_level lv
+      on lv.level_code = t.level_code
+  where
+    $(condition)
+  order by
+    t.task_log_id
+  ) a
+where
+  $(rownumCondition)
+'
+  );
+
+  -- Флаг выборки лога из устаревшей таблицы tp_task_log
+  oldLogFlag integer;
+
+begin
+  if taskId is null and taskLogId is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Должно быть задано отличное от NULL значение хотя бы для одного из'
+        || ' параметров taskLogId или taskId.'
+    );
+  end if;
+  select
+    count(*) as old_log_flag
+  into oldLogFlag
+  from
+    tp_task_log tl
+  where
+    rownum <= 1
+    and (
+      tl.task_id = taskId
+        and nullif( startNumber, tl.start_number) is null
+      or taskId is null
+        and tl.task_log_id = taskLogId
+    )
+  ;
+  if oldLogFlag = 0 then
+    dsql.addCondition(
+      't.task_log_id =', taskLogId is null
+    );
+    dsql.addCondition(
+      't.task_id =', taskId is null
+    );
+    dsql.addCondition(
+      't.start_number =', startNumber is null
+    );
+    dsql.addCondition(
+      't.line_number =', lineNumber is null
+    );
+    dsql.addCondition(
+      't.level_code =', levelCode is null
+    );
+    dsql.addCondition(
+      'upper( t.message_text) like upper( :messageText)', messageText is null
+    );
+    dsql.addCondition(
+      't.task_log_id >= :startTaskLogId', startTaskLogId is null
+    );
+    dsql.useCondition( 'condition');
+    dsql.addCondition(
+      'rownum <= :maxRowCount', maxRowCount is null
+    );
+    dsql.useCondition( 'rownumCondition');
+    open rc for
+      dsql.getSqlText()
+    using
+      -- параметры, используемые в тексте SQL
+      taskId
+      , startNumber
+      , taskLogId
+      , taskId
+      , startNumber
+      , taskLogId
+      -- для условий addCondition
+      , taskLogId
+      , taskId
+      , startNumber
+      , lineNumber
+      , levelCode
+      , messageText
+      , startTaskLogId
+      , maxRowCount
+    ;
+  else
+    rc := findTaskLogOld(
+      taskLogId           => taskLogId
+      , taskId            => taskId
+      , startNumber       => startNumber
+      , lineNumber        => lineNumber
+      , levelCode         => levelCode
+      , messageText       => messageText
+      , startTaskLogId    => startTaskLogId
+      , maxRowCount       => maxRowCount
+      , operatorId        => operatorId
+    );
+  end if;
   return rc;
 exception when others then
   raise_application_error(
@@ -1652,6 +1788,125 @@ exception when others then
     , true
   );
 end getResult;
+
+
+
+/* group: Устаревшие функции */
+
+/* proc: logMessage
+  Устаревшая функция, вместо нее следует использовать функции логирования
+  сообщений из типа lg_logger_t (модуль Logging), при этом для указания строки
+  обрабатываемого файла следует использовать контекст выполнения
+  <Line_CtxTpName>.
+*/
+procedure logMessage(
+  levelCode varchar2
+  , messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logger.log(
+    levelCode               => levelCode
+    , messageText           => messageText
+    , contextTypeShortName  =>
+        case when nullif( lineNumber, 0) is not null then
+          Line_CtxTpName
+        end
+    , contextValueId        => nullif( lineNumber, 0)
+  );
+end logMessage;
+
+/* proc: logError
+  Устаревшая функция аналогично <logMessage>.
+*/
+procedure logError(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logMessage(
+    levelCode       => pkg_Logging.Error_LevelCode
+    , messageText   => messageText
+    , lineNumber    => lineNumber
+    , operatorId    => operatorId
+  );
+end logError;
+
+/* proc: logWarning
+  Устаревшая функция аналогично <logMessage>.
+*/
+procedure logWarning(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logMessage(
+    levelCode       => pkg_Logging.Warning_LevelCode
+    , messageText   => messageText
+    , lineNumber    => lineNumber
+    , operatorId    => operatorId
+  );
+end logWarning;
+
+/* proc: logInfo
+  Устаревшая функция аналогично <logMessage>.
+*/
+procedure logInfo(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logMessage(
+    levelCode       => pkg_Logging.Info_LevelCode
+    , messageText   => messageText
+    , lineNumber    => lineNumber
+    , operatorId    => operatorId
+  );
+end logInfo;
+
+/* proc: logDebug
+  Устаревшая функция аналогично <logMessage>.
+*/
+procedure logDebug(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logMessage(
+    levelCode       => pkg_Logging.Debug_LevelCode
+    , messageText   => messageText
+    , lineNumber    => lineNumber
+    , operatorId    => operatorId
+  );
+end logDebug;
+
+/* proc: logTrace
+  Устаревшая функция аналогично <logMessage>.
+*/
+procedure logTrace(
+  messageText varchar2
+  , lineNumber integer := null
+  , operatorId integer := null
+)
+is
+begin
+  logMessage(
+    levelCode       => pkg_Logging.Trace_LevelCode
+    , messageText   => messageText
+    , lineNumber    => lineNumber
+    , operatorId    => operatorId
+  );
+end logTrace;
 
 end pkg_TaskProcessor;
 /

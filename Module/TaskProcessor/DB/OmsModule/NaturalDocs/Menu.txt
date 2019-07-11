@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TaskProcessor
-SubTitle: Версия 2.3.2
+SubTitle: Версия 2.4.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -142,8 +142,14 @@ Group: Скрипты  {
             File: tp_task_type_seq  (no auto-title, Install/Schema/Last/tp_task_type_seq.sqs)
             File: v_tp_active_task  (no auto-title, Install/Schema/Last/v_tp_active_task.vw)
             File: v_tp_task  (no auto-title, Install/Schema/Last/v_tp_task.vw)
+            File: v_tp_task_operation  (no auto-title, Install/Schema/Last/v_tp_task_operation.vw)
             File: v_tp_task_type  (no auto-title, Install/Schema/Last/v_tp_task_type.vw)
             }  # Group: Last
+
+         Group: 2.4.0  {
+
+            File: run  (no auto-title, Install/Schema/2.4.0/run.sql)
+            }  # Group: 2.4.0
 
          }  # Group: Schema
 
