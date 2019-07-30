@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>FormatData</name>
   <description>Модуль применяется для форматирования и сравнения клиентских данных</description>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
   <prefix>fd</prefix>
   <team>
     <programmerDB></programmerDB>

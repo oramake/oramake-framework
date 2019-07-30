@@ -9,7 +9,6 @@ select
   , al.alias_name
   , al.base_name
   , al.date_ins
-  , al.operator_id
 from
   fd_alias al
 where
@@ -32,7 +31,4 @@ comment on column v_fd_middle_name_alias.base_name is
 /
 comment on column v_fd_middle_name_alias.date_ins is
   'Дата добавления записи'
-/
-comment on column v_fd_middle_name_alias.operator_id is
-  'Id оператора, добавившего запись'
 /

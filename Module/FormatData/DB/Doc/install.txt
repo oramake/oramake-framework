@@ -12,12 +12,43 @@ LOAD_USERID                   - основной пользователь дл€ установки в Ѕƒ
                                 ( формат: username/password@dbName)
 
 ƒополнительные параметры:
-- <LOCAL_DB_DIR>
+BATCH_WAIT                    - ожидание окончани€ работы батчей в секундах
+                                ( по умолчанию 60)
 
 »спользуемые макропеременные:
 indexTablespace               - табличное пространство, используемое дл€
                                 индексов ( по умолчанию в соответствии с
                                 соглашени€ми об именовании)
+
+
+
+Ќа врем€ установки деактивируютс€ пакетные задани€, реализованные с помощью
+модул€ Scheduler. ¬ случае ошибки при установке "Batch stop waiting timed out"
+можно попробовать увеличить BATCH_WAIT. ѕример запуска установки с ожиданием
+остановки пакетных заданий в течении 1000 секунд
+
+(code)
+
+make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
+
+(end)
+
+¬ случае невозможности в данный момент выполнить установку можно восстановить
+выполнение пакетных заданий командой
+
+(code)
+
+make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.4.0
+
+ оманда дл€ установки:
+
+> make install INSTALL_VERSION=1.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
@@ -28,7 +59,7 @@ group: ѕервоначальна€ установка
 
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -50,6 +81,6 @@ group: ”даление модул€ из Ѕƒ
 
 (code)
 
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

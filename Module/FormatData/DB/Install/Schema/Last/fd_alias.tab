@@ -7,7 +7,6 @@ create table
   , alias_name                    varchar2(40)                        not null
   , base_name                     varchar2(40)                        not null
   , date_ins                      date            default sysdate     not null
-  , operator_id                   integer                             not null
   , constraint fd_alias_pk primary key
     ( alias_type_code, alias_name)
   , constraint fd_alias_ck_no_value_base_name check
@@ -33,7 +32,4 @@ comment on column fd_alias.base_name is
 /
 comment on column fd_alias.date_ins is
   'Дата добавления записи'
-/
-comment on column fd_alias.operator_id is
-  'Id оператора, добавившего запись'
 /

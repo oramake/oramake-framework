@@ -1,7 +1,0 @@
-alter table fd_alias_type add constraint
-  fd_alias_type_op_operator_fk
-foreign key
-  ( operator_id)
-references
-  op_operator ( operator_id)
-/
