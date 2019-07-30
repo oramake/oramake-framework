@@ -94,7 +94,7 @@ BaseName_OutChar constant varchar2(30) := 'Ии';
 /* iconst: BaseName_TrimChar
   Символы, удаляемые с крайних позиций при получении базовой формы названия.
 */
-BaseName_TrimChar constant varchar2(30) := '.,_=' || pkg_FormatBase.Zero_Value;
+BaseName_TrimChar constant varchar2(30) := ' .,_=' || pkg_FormatBase.Zero_Value;
 
 /* iconst: UpperLatin_Char
   Строка с буквами латинского алфавита в верхнем регистре.
