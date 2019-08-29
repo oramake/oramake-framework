@@ -847,8 +847,44 @@ is
     );
   end setMaxProcessedId;
 
-
-
+  /*
+    Проверяет наличие в таблице поля date_ins
+  */
+  function existsFieldDateIns
+  return boolean
+  is
+    idColumnTableName varchar2(30);
+    countDateIns integer;
+  begin
+    idColumnTableName :=
+      coalesce(idTableName, tableName);
+    select
+      count(cols.column_name)
+    into
+      countDateIns
+    from
+      all_tab_columns cols
+    where
+      cols.table_name = upper(idColumnTableName)
+      and cols.COLUMN_NAME = 'DATE_INS'
+    ;
+    return
+      case countDateIns 
+        when 0 then false
+        else true
+      end;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке наличия в таблице поля date_ins ('
+        || 'idColumnTableName="' || idColumnTableName || '"'
+        || ')'
+        )
+      , true
+    );
+  end existsFieldDateIns;
+ 
   /*
     Определяет максимальный Id записи для выгрузки.
   */
@@ -865,49 +901,54 @@ is
        coalesce( toDate, trunc(sysdate, 'hh24') - 1/24)
     ;
     logger.trace('toUnloadDate=' || to_char(toUnloadDate));
-    -- допустимо взять максимальное значение из таблицы, поэтому делаем
-    -- это для ускорения выполнения запроса
-    sqlText :=
-    '
-    select
-      case when b.max_period_id is not null then
-        b.max_period_id
-      else
-        (
+    -- проверяем налице в таблице поля date_ins
+    if existsFieldDateIns then
+      -- если поле date_ins присутствует в таблице, то попробуем вычислить 
+      -- максимальный Id записи для выгрузки изходя из него
+      sqlText :=
+      '
+        select
+          min(a.' || idColumnName || ') - 1 as max_period_id
+        from
+          (
+          select /*+ first_rows */
+            t.' || idColumnName || '
+          from
+            ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
+          where
+            t.date_ins > :toUnloadDate
+          order by
+            t.date_ins
+          ) a
+        where
+          rownum <= 1000
+      ';
+      logger.trace(sqlText);
+      execute immediate
+        sqlText
+      into
+        maxUnloadId
+      using
+        toUnloadDate
+      ;
+    end if;
+    if maxUnloadId is null then 
+      -- если не удалось вычислить максимальный Id записи для выгрузки
+      -- исходя из значений поля date_ins, берем максимальное значение из таблицы
+      sqlText :=
+      '
         select
           max(t.' || idColumnName || ') as max_id
         from
           ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
-        )
-      end
-      as max_log_id
-    from
-      (
-      select
-        min(a.' || idColumnName || ') - 1 as max_period_id
-      from
-        (
-        select /*+ first_rows */
-          t.' || idColumnName || '
-        from
-          ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
-        where
-          t.date_ins > :toUnloadDate
-        order by
-          t.date_ins
-        ) a
-      where
-        rownum <= 1000
-      ) b
-    ';
-    logger.trace(sqlText);
-    execute immediate
-      sqlText
-    into
-      maxUnloadId
-    using
-      toUnloadDate
-    ;
+      ';
+      logger.trace(sqlText);
+      execute immediate
+        sqlText
+      into
+        maxUnloadId
+      ;
+    end if;
     logger.debug('setMaxUnloadId: maxUnloadId=' || maxUnloadId);
   exception when others then
     raise_application_error(
