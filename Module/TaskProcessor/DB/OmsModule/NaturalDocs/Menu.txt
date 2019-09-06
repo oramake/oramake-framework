@@ -158,6 +158,7 @@ Group: Скрипты  {
    Group: Test  {
 
       File: run  (no auto-title, Test/run.sql)
+      File: repeat-task  (no auto-title, Test/repeat-task.sql)
       }  # Group: Test
 
    }  # Group: Скрипты
