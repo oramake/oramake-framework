@@ -2,6 +2,14 @@ Title: Версии
 
 
 
+group: 3.3.1 ( 2019-09-11)
+
+[+] Добавлена опция <pkg_FileBase::FileNameEncoding_OptSName> для обхода
+    проблема имён файлов с кириллическими символами в Windows. Добавлен
+    скрипт <Do/set-option-file-name-encoding.sql>.
+
+
+
 group: 3.3.0 ( 2017-08-14)
 
 [+] Добавлена кодировка <pkg_FileOrigin::Encoding_Utf8Bom> для работы

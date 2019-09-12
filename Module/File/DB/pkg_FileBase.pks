@@ -13,6 +13,11 @@ create or replace package pkg_FileBase is
 
 /* group: Наименования настроечных параметров */
 
+/* const: FileNameEncoding_OptSName
+  Кодировка имён файлов, получаемых от операционной системы.
+*/
+FileNameEncoding_OptSName constant varchar2(50) := 'FileNameEncoding';
+
 /* const: ProxyServerAddress_OptSName
   Короткое наименование опции "Адрес прокси-сервера ( используется для
   запросов по протоколу HTTP)"
@@ -51,6 +56,14 @@ ProxySkipAddressList_OptSName constant varchar2(50) := 'ProxySkipAddressList';
 
 
 /* group: Функции */
+
+/* pfunc: getFileNameEncoding
+  Получение кодировки имён файлов, получаемых от операционной системы.
+
+  ( <body::getFileNameEncoding>)
+*/
+function getFileNameEncoding
+return varchar2;
 
 /* pproc: getProxyConfig
   Возвращает настройки прокси-сервера для обращения по указанному URL.

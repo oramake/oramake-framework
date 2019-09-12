@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: File
-SubTitle: Версия 3.3.0
+SubTitle: Версия 3.3.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -158,6 +158,7 @@ Group: Скрипты  {
       File: exec  (no auto-title, Do/exec.sql)
       File: file-list  (no auto-title, Do/file-list.sql)
       File: move  (no auto-title, Do/move.sql)
+      File: set-option-file-name-encoding  (no auto-title, Do/set-option-file-name-encoding.sql)
       File: subdir-list  (no auto-title, Do/subdir-list.sql)
       }  # Group: Do
 
@@ -206,6 +207,11 @@ Group: Скрипты  {
       }  # Group: Java
 
    Group: Test  {
+
+      Group: 3.4.0  {
+
+         File: cyrillic-test-2  (no auto-title, Test/3.4.0/cyrillic-test-2.sql)
+         }  # Group: 3.4.0
 
       Group: Data  {
 

@@ -17,6 +17,18 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* func: getFileNameEncoding
+  Получение кодировки имён файлов, получаемых от операционной системы.
+*/
+function getFileNameEncoding
+return varchar2
+is
+-- getFileNameEncoding
+begin
+  return opt_option_list_t(pkg_FileOrigin.Module_Name).
+    getString(FileNameEncoding_OptSName, raiseNotFoundFlag => 0);
+end getFileNameEncoding;
+
 /* proc: getProxyConfig
   Возвращает настройки прокси-сервера для обращения по указанному URL.
   Вызывается из Java-класса com.technology.oramake.file.netfile.HttpFile.

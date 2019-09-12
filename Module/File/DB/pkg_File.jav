@@ -29,15 +29,93 @@ public class pkg_File
   static public String WRITE_MODE_CODE_APPEND   = "APPEND";
 
   // UTF8 BOM Marker
-  static public final byte[] UTF8_BOM = { (byte)0xEF, (byte)0xBB, (byte)0xBF};
+  static public final byte[] UTF8_BOM = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
 
-  /* ivar: internalServerConnection
+   /* ivar: internalServerConnection
    * Current own DB connection. Initialized in static initialization
    * block.
    */
   private static Connection internalServerConnection = null;
 
+  /* ivar: fileNameEncoding
+   * Encoding with which operating system provides Java for file names.
+   */
+  protected static String fileNameEncoding = null;
 
+  /* ivar: fileNameEncodingInitialized
+   * true if fileNameEncoding initialized.
+   */
+  protected static boolean fileNameEncodingInitialized = false;
+
+/** getFileNameEncoding
+ *  Returns encoding of files names obtained from the operating system
+ */
+public static String getFileNameEncoding()
+  throws
+    SQLException
+{
+  if (!fileNameEncodingInitialized) {
+    CallableStatement statement = internalServerConnection.prepareCall(
+  " begin\n"
++ "   ? := pkg_FileBase.getFileNameEncoding();\n"
++ " end;\n"
+    );
+    statement.registerOutParameter(1, Types.VARCHAR);
+    statement.executeUpdate();
+    fileNameEncoding = statement.getString(1);
+    fileNameEncodingInitialized = true;
+    statement.close();
+  }
+  return fileNameEncoding;
+}
+
+/** func: encodeFileName
+ *
+ * Parameters:
+ * fileName                   - file name in default encoding
+ *
+ * Return:
+ * - file name in fileNameEncoding
+ **/
+public static String encodeFileName(
+  java.lang.String fileName
+)
+throws
+  UnsupportedEncodingException
+, SQLException
+{
+  String fileNameEncoding = getFileNameEncoding();
+  // Перекодируем согласно кодировке
+  if (fileNameEncoding != null && fileNameEncoding != "") {
+    return new String(fileName.getBytes(), fileNameEncoding);
+  } else {
+    return fileName;
+  }
+}
+
+/** func: decodeFileName
+ *
+ * Parameters:
+ * encodedFileName           - encoded file name
+ *
+ * Return
+ * - file name in default encoding
+ **/
+public static String decodeFileName(
+  java.lang.String encodedFileName
+)
+throws
+  UnsupportedEncodingException
+, SQLException
+{
+  String fileNameEncoding = getFileNameEncoding();
+  // Перекодируем согласно кодировке
+  if (fileNameEncoding != null && fileNameEncoding != "") {
+     return new String(encodedFileName.getBytes(getFileNameEncoding()));
+  } else {
+    return encodedFileName;
+  }
+}
 
 /** func: updateJavaUtilLoggingLevel
  * Обновляет уровень логирования в java.util.logging согласно текущему уровню
@@ -70,7 +148,7 @@ updateJavaUtilLoggingLevel()
   " begin\n"
 + "   ? := \n"
 + "   case when\n"
-+ "     lg_logger_t.getLogger( '" + SQL_LOGGER_NAME + "').isTraceEnabled()\n"
++ "     lg_logger_t.getLogger('" + SQL_LOGGER_NAME + "').isTraceEnabled()\n"
 + "   then\n"
 + "     1\n"
 + "   else\n"
@@ -234,7 +312,7 @@ public static int saveList(
     logTrace( "dir: list[i]...(" + i + ")");
     if ( mask != null ) {
       logTrace( "dir: get fileName...");
-      fileName = list[i].name();       //Получаем имя файла
+      fileName = decodeFileName(list[i].name());
       logTrace( "dir: fileName=" + fileName);
       logTrace( "dir: get isOfMask");
       maskConditionStatement.setString( 2, fileName);
@@ -258,9 +336,9 @@ public static int saveList(
         || etype == 1 && isFile
         || etype == 2 && !isFile
       ){
-        if ( fileName == null ){
+        if ( fileName == null) {
           logTrace( "dir: get fileName...");
-          fileName = list[i].name();   //Получаем имя файла
+          fileName = decodeFileName(list[i].name());
         }
         logTrace( "dir: get fileSize...");
         fileSize = list[i].length();
@@ -335,7 +413,7 @@ dir(
   logTrace( "dir: start...");
   int etype = entryType != null ? entryType.intValue() : 0;
   int nFound = 0;
-  NetFile netfile = new NetFile( fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
   logTrace( "dir: check exists...");
   if( !netfile.exists()) {                 //Проверяем наличие файла
     throw new java.io.FileNotFoundException(
@@ -394,7 +472,7 @@ fileCopy( java.lang.String fromPath, java.lang.String unloadPath
     , com.enterprisedt.net.ftp.FTPException
 {
   updateJavaUtilLoggingLevel();
-  NetFile netfile = new NetFile( fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
   if( !netfile.exists()) {                 //Проверяем наличие файла
     throw new java.io.FileNotFoundException(
       "Source file '" + fromPath + "' does not exist"
@@ -407,8 +485,8 @@ fileCopy( java.lang.String fromPath, java.lang.String unloadPath
   }
 
   boolean isOverwrite = overwrite != null && overwrite.intValue() != 0;
-  NetFile.setTempFileDir( tempFileDir);
-  netfile.copy( unloadPath, isOverwrite);
+  NetFile.setTempFileDir(tempFileDir);
+  netfile.copy(encodeFileName(unloadPath), isOverwrite);
 }
 
 /** func: fileDelete
@@ -427,7 +505,7 @@ fileDelete( java.lang.String fromPath)
     , com.enterprisedt.net.ftp.FTPException
 {
   updateJavaUtilLoggingLevel();
-  NetFile netfile = new NetFile( fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
   if( !netfile.exists()) {                 //Проверяем наличие файла
     throw new java.io.FileNotFoundException(
       "File '" + fromPath + "' does not exist."
@@ -461,7 +539,7 @@ fileMove( java.lang.String fromPath, java.lang.String toPath
     , com.enterprisedt.net.ftp.FTPException
 {
   updateJavaUtilLoggingLevel();
-  NetFile netfile = new NetFile( fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
   if( !netfile.exists()) {
     throw new java.io.FileNotFoundException(
       "Source file '" + fromPath + "' does not exist"
@@ -475,7 +553,7 @@ fileMove( java.lang.String fromPath, java.lang.String toPath
 
   boolean isOverwrite = overwrite != null && overwrite.intValue() != 0;
   NetFile.setTempFileDir( tempFileDir);
-  netfile.move( toPath, isOverwrite);
+  netfile.move(encodeFileName(toPath), isOverwrite);
 }
 
 
@@ -498,7 +576,7 @@ throws
   , com.enterprisedt.net.ftp.FTPException
 {
   updateJavaUtilLoggingLevel();
-  NetFile netfile = new NetFile( dirPath);
+  NetFile netfile = new NetFile(encodeFileName(dirPath));
   netfile.makeDirectory(
     ( raiseExceptionFlag.intValue() == 0 ? false : true)
   );
@@ -554,8 +632,8 @@ public static void loadBlobFromFile(
     , com.enterprisedt.net.ftp.FTPException
 {
   updateJavaUtilLoggingLevel();
-  NetFile netfile = new NetFile( fromPath);
-  checkLoadFile( netfile, fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
+  checkLoadFile(netfile, fromPath);
   if ( blob[0] == null) {
     // Проверка на наличие LOB
     throw new java.lang.IllegalArgumentException(
@@ -604,8 +682,8 @@ public static void loadClobFromFile(
 {
   updateJavaUtilLoggingLevel();
   // Загружаемы файл
-  NetFile netfile = new NetFile( fromPath);
-  checkLoadFile( netfile, fromPath);
+  NetFile netfile = new NetFile(encodeFileName(fromPath));
+  checkLoadFile(netfile, fromPath);
   if ( clob[0] == null) {
     throw new java.lang.IllegalArgumentException(
       "CLOB object is null"
@@ -703,8 +781,8 @@ public static void unloadBlobToFile(
     , com.enterprisedt.net.ftp.FTPException
 {
   logTrace( "unloadBlobToFile: begin");
-  NetFile netfile = new NetFile( unloadPath);
-  checkUnloadFile( netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
+  NetFile netfile = new NetFile(encodeFileName(unloadPath));
+  checkUnloadFile(netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
   if ( blob == null) {
     throw new java.lang.IllegalArgumentException(
       "BLOB object is null"
@@ -756,9 +834,9 @@ public static void unloadClobToFile(
     , java.lang.IllegalArgumentException
     , com.enterprisedt.net.ftp.FTPException
 {
-  logTrace( "unloadClobToFile: begin ( writeModeCode=\"" + writeModeCode + ")\"");
-  NetFile netfile = new NetFile( unloadPath);
-  checkUnloadFile( netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
+  logTrace( "unloadClobToFile: begin (writeModeCode=\"" + writeModeCode + ")\"");
+  NetFile netfile = new NetFile(encodeFileName(unloadPath));
+  checkUnloadFile(netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
   if ( clob == null) {
     throw new java.lang.IllegalArgumentException(
       "CLOB object is null"
@@ -814,8 +892,8 @@ unloadTxt(
     , com.enterprisedt.net.ftp.FTPException
 {
   logTrace( "unloadTxt: start");
-  NetFile netfile = new NetFile( unloadPath);
-  checkUnloadFile( netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
+  NetFile netfile = new NetFile(encodeFileName(unloadPath));
+  checkUnloadFile(netfile, unloadPath, writeModeCode.equals( WRITE_MODE_CODE_REWRITE));
   logTrace( "unloadTxt: iter: begin");
   PreparedStatement outputQuery = internalServerConnection.prepareStatement(
   " select\n"
