@@ -30,6 +30,16 @@ Get_HttpMethod constant varchar2(64) := 'GET';
 */
 Post_HttpMethod constant varchar2(64) := 'POST';
 
+/* const: Patch_HttpMethod
+  HTTP Method "PATCH".
+*/
+Patch_HttpMethod constant varchar2(64) := 'PATCH';
+
+/* const: Delete_HttpMethod
+  HTTP Method "DELETE".
+*/
+Delete_HttpMethod constant varchar2(64) := 'DELETE';
+
 
 
 /* group: HTTP Headers */
@@ -53,6 +63,16 @@ SoapAction_HttpHeader constant varchar2(100) := 'SOAPAction';
   HTTP Header "Transfer-Encoding".
 */
 TransferEncoding_HttpHeader constant varchar2(100) := 'Transfer-Encoding';
+
+/* const: ContentDisposition_HttpHeader
+  HTTP Header "Content-Disposition".
+*/
+ContentDisposition_HttpHeader constant varchar2(100) := 'Content-Disposition';
+
+/* const: Authorization_HttpHeader
+  HTTP Header "Authorization".
+*/
+Authorization_HttpHeader constant varchar2(100) := 'Authorization';
 
 
 
@@ -97,11 +117,115 @@ Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
 
 
 
+/* group: Authentification schemes */
+
+/* const: NTLM_Scheme
+  'NTLN' authentification scheme.
+*/
+NTLM_Scheme constant varchar2(30) := 'NTLM';
+
+/* const: Basic_Scheme
+  'Basic' authentification scheme.
+*/
+Basic_Scheme constant varchar2(30) := 'Basic';
+
+/* const: Digest_Scheme
+  'Digest' authentification scheme.
+*/
+Digest_Scheme constant varchar2(30) := 'Digest';
+
+/* const: AWS_Scheme
+  'AWS' authentification scheme.
+*/
+AWS_Scheme constant varchar2(30) := 'AWS';
+
+/* const: AWS4-HMAC-SHA256_Scheme
+  'AWS4-HMAC-SHA256' authentification scheme.
+*/
+AWS4_HMAC_SHA256_Scheme constant varchar2(30) := 'AWS4-HMAC-SHA256';
+
+
+
 /* group: Functions */
 
 
 
 /* group: Execute of HTTP requests */
+
+/* pproc: execHttpRequest
+  Execute of HTTP request.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (out)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (out, maximum 256 chars)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (out, maximum 1024 chars)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (out)
+  execSecond                  - Request execution time
+                                (in seconds, -1 if it was not possible to
+                                  measure)
+                                (out)
+  responseHeaderList          - Response headers (out)
+  requestUrl                  - Request URL
+  requestText                 - Request text
+                                (default is absent)
+  parameterList               - Request parameters
+                                (default is absent)
+  httpMethod                  - HTTP method for request
+                                (default POST if requestText or parameterList
+                                  is not empty oterwise GET)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  partList                    - Request parts
+                                (defaut is absent, only for multipart request,
+                                 RFC 2045)
+  bodyCharset                 - Character set of request body
+                                (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+
+  Remarks:
+  - headers in headerList with null value are not sent;
+  - by default, request uses chunked transfer-encoding and sends
+    "Transfer-Encoding: chunked" header ( this will be disabled if
+    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
+    <TransferEncoding_HttpHeader> in headerList);
+  - by default, request sends <ContentType_HttpHeader> header with value
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
+    with value <Json_ContentType> if request text starts with "[" or "{"
+    ( this will be disabled if you use <ContentType_HttpHeader> in
+    headerList);
+  - data is automatically converted from the database character set to the
+    request body character set;
+
+  ( <body::execHttpRequest>)
+*/
+procedure execHttpRequest(
+  statusCode out nocopy integer
+  , reasonPhrase out nocopy varchar2
+  , contentType out nocopy varchar2
+  , entityBody out nocopy clob
+  , execSecond out nocopy number
+  , responseHeaderList out nocopy wbu_header_list_t
+  , requestUrl varchar2
+  , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
+  , httpMethod varchar2 := null
+  , disableChunkedEncFlag integer := null
+  , headerList wbu_header_list_t := null
+  , partList wbu_part_list_t := null
+  , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
+);
 
 /* pproc: execHttpRequest
   Execute of HTTP request.
@@ -134,6 +258,9 @@ Windows1251_Charset constant varchar2(30) := 'WINDOWS-1251';
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
+  partList                    - Request parts
+                                (defaut is absent, only for multipart request,
+                                 RFC 2045)
   bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
@@ -168,6 +295,7 @@ procedure execHttpRequest(
   , httpMethod varchar2 := null
   , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
+  , partList wbu_part_list_t := null
   , bodyCharset varchar2 := null
   , maxWaitSecond integer := null
 );
@@ -385,6 +513,43 @@ function getSoapResponse(
   , maxWaitSecond integer := null
 )
 return xmltype;
+
+
+
+/* group: Authentification  */
+
+/* pproc: login
+  Perform authentification request
+
+  Parameters:
+  requestUrl                  - URL of web service
+  username                    - The username for the authentication
+  password                    - The password for the HTTP authentication
+  domain                      - The user domain for the authentication
+  walletPath                  - Path to wallet (must have for https)
+  walletPassword              - Password for wallet (must have for https)
+  proxyServer                 - Name of proxy server
+  scheme                      - The HTTP authentication scheme.
+                                Either 'NTLM' for the Microsoft NTLM,
+                                'Basic' for the HTTP basic,
+                                'Digest' for the HTTP digest,
+                                'AWS' for Amazon AWS version 2 authentication scheme, or
+                                'AWS4-HMAC-SHA256' for AWS version 4 authentication scheme.
+                                Default is 'Basic'.
+
+
+  ( <body::login>)
+*/
+procedure login(
+  requestUrl                varchar2
+  , username                varchar2
+  , password                varchar2
+  , domain                  varchar2 default null
+  , walletPath              varchar2 default null
+  , walletPassword          varchar2 default null
+  , proxyServer             varchar2 default null
+  , scheme                  varchar2 default null
+);
 
 end pkg_WebUtility;
 /

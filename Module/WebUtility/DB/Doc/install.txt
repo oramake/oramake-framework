@@ -57,6 +57,18 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? STOP_JOB=1
 
 
 
+group: 1.1.0
+
+ оманда дл€ установки обновлени€:
+
+(code)
+
+make install INSTALL_VERSION=1.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 1.0.4
 
 Ќужно повторно выдать права на использование модул€ пользовател€м, которым они

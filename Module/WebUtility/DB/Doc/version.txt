@@ -2,6 +2,12 @@ title: Версии
 
 
 
+group: 1.1.0. ( 2019-09-09)
+
+[+] HTTP authentication functions.
+
+
+
 group: 1.0.4 ( 2019-05-03)
 
 [!] Grant rights to object types when issuing rights to use module.

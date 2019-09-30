@@ -1,0 +1,36 @@
+create or replace type body wbu_part_t
+as
+/* db object type body: wbu_part_t::body */
+
+
+
+/* pfunc: wbu_part_t
+  Create object
+
+  Parameters:
+  partName                    - Name of part
+  partContent                 - Content of part
+  fileName                    - File name (option)
+  contentTransferEncode       - Content transfer encode for part (option)
+
+  ( <body::wbu_part_t>)
+*/
+constructor function wbu_part_t(
+  partName                 varchar2
+  , partContent            clob
+  , fileName               varchar2 default null
+  , contentTransferEncode  varchar2 default null
+)
+return self as result
+is
+begin
+  self.part_name := partName;
+  self.file_name := fileName;
+  self.content_transfer_encode := contentTransferEncode;
+  self.part_content := partContent;
+  return;
+end wbu_part_t;
+
+
+end;
+/

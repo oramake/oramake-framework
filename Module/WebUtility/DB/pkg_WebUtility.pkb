@@ -13,7 +13,10 @@ logger lg_logger_t := lg_logger_t.getLogger(
   , objectName  => 'pkg_WebUtility'
 );
 
-
+/* ivar: ntlmToken
+  ntlmToken for all requests.
+*/
+ntlmToken varchar2(1024);
 
 /* group: Functions */
 
@@ -104,6 +107,7 @@ end getTextLength;
                                 (in seconds, -1 if it was not possible to
                                   measure)
                                 (out)
+  responseHeaderList          - Response headers (out)
   requestUrl                  - Request URL
   requestText                 - Request text
                                 (default is absent)
@@ -118,6 +122,9 @@ end getTextLength;
   headerList                  - Request headers
                                 (defaut is absent, but some headers can be
                                   added by default, see the remarks below)
+  partList                    - Request parts
+                                (defaut is absent, only for multipart request,
+                                 RFC 2045)
   bodyCharset                 - Character set of request body
                                 (default is UTF-8)
   maxWaitSecond               - Maximum response time on request
@@ -144,12 +151,14 @@ procedure execHttpRequest(
   , contentType out nocopy varchar2
   , entityBody out nocopy clob
   , execSecond out nocopy number
+  , responseHeaderList out nocopy wbu_header_list_t
   , requestUrl varchar2
   , requestText clob := null
   , parameterList wbu_parameter_list_t := null
   , httpMethod varchar2 := null
   , disableChunkedEncFlag integer := null
   , headerList wbu_header_list_t := null
+  , partList wbu_part_list_t := null
   , bodyCharset varchar2 := null
   , maxWaitSecond integer := null
 )
@@ -159,6 +168,14 @@ is
   nParameter pls_integer :=
     case when parameterList is not null
       then parameterList.count()
+      else 0
+    end
+  ;
+
+  -- Number of parts
+  nPart pls_integer :=
+    case when partList is not null
+      then partList.count()
       else 0
     end
   ;
@@ -190,6 +207,10 @@ is
 
     -- Data of request parameters (joined)
     parameterData clob;
+
+    -- Data of multipart request
+    multipartData clob;
+    boundary varchar2(256) := '7e315618717a8';
 
     -- HTTP method of current request
     reqMethod varchar2(100);
@@ -367,6 +388,91 @@ is
       );
     end processHeaderList;
 
+    /*
+      Process request part list
+    */
+    procedure preparePartData
+    is
+      i pls_integer := partList.first();
+      /*
+        Add request part
+      */
+      procedure addPart(
+        boundary                varchar2
+        , partName              varchar2
+        , fileName              varchar2
+        , contentTransferEncode varchar2
+        , partContent           clob
+      )
+      is
+      begin
+        dbms_lob.append(
+          multipartData
+          , '--' || boundary
+            || chr(13) || chr(10)
+        );
+        dbms_lob.append(
+          multipartData
+          , 'Content-Disposition: form-data; name="' || partName || '"'
+            || case
+                 when fileName is not null then
+                   '; filename="' || fileName || '"'
+               end
+            || chr(13) || chr(10)
+        );
+        if contentTransferEncode is not null then
+          dbms_lob.append(
+            multipartData
+            , 'Content-Transfer-Encoding: ' || contentTransferEncode || '"'
+              || chr(13) || chr(10)
+          );
+        end if;
+        dbms_lob.append(
+          multipartData
+          , chr(13) || chr(10)
+            || partContent
+            || chr(13) || chr(10)
+        );
+      exception when others then
+        raise_application_error(
+          pkg_Error.ErrorStackInfo
+          , logger.ErrorStack(
+              'Error while adding part('
+              || 'partName="' || partName || '"'
+              || ', fileName="' || fileName || '"'
+              || ', contentTransferEncode="' || contentTransferEncode || '"'
+              || ').'
+            )
+          , true
+        );
+      end addPart;
+
+    -- preparePartData
+    begin
+      dbms_lob.createtemporary(multipartData, true);
+      while i is not null loop
+        addPart(
+          boundary                => boundary
+          , partName              => partList(i).part_name
+          , fileName              => partList(i).file_name
+          , contentTransferEncode => partList(i).content_transfer_encode
+          , partContent           => partList(i).part_content
+        );
+        i := partList.next( i);
+      end loop;
+      dbms_lob.append(
+        multipartData
+        , '--' || boundary || '--'
+          || chr(13) || chr(10));
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Error while adding parts from partList.'
+          )
+        , true
+      );
+    end preparePartData;
 
 
     /*
@@ -383,6 +489,17 @@ is
       tmpClob clob;
 
     begin
+      -- Text data is automatically converted in UTL_HTTP from the database
+      -- character set to the request body character set
+      utl_http.set_body_charset( req, usedBodyCharset);
+      logger.trace(
+        'message body: source length=' || length( bodyText)
+        || ', set body charset: ' || usedBodyCharset
+      );
+      if ntlmToken is not null then
+        addHeader(Authorization_HttpHeader, ntlmToken);
+      end if;
+
       if len > 0 then
         if not isContentTypeUsed then
           if reqMethod = Post_HttpMethod and nParameter > 0 then
@@ -413,19 +530,13 @@ is
               )
           );
         end if;
+        if nPart > 0 then
+          addHeader( ContentType_HttpHeader, 'multipart/form-data; boundary="' || boundary || '"');
+        end if;
       end if;
       logger.trace( '* HTTP request header: finish');
 
       if len > 0 then
-
-        -- Text data is automatically converted in UTL_HTTP from the database
-        -- character set to the request body character set
-        utl_http.set_body_charset( req, usedBodyCharset);
-        logger.trace(
-          'message body: source length=' || length( bodyText)
-          || ', set body charset: ' || usedBodyCharset
-        );
-
         logger.trace( '* HTTP message body: start');
         loop
           buffer := substr( bodyText, offset, Buffer_Size);
@@ -469,6 +580,9 @@ is
           end
       );
     end if;
+    if nPart > 0 then
+      preparePartData();
+    end if;
     req := utl_http.begin_request(
       url             =>
           requestUrl
@@ -489,15 +603,27 @@ is
       if headerList is not null then
         processHeaderList();
       end if;
+
       writeBody(
-        case when
-            reqMethod = Post_HttpMethod and nParameter > 0
-          then parameterData
-          else requestText
+        case
+          when
+              reqMethod = Post_HttpMethod and nPart > 0
+            then
+              multipartData
+          when
+              reqMethod = Post_HttpMethod and nParameter > 0
+            then
+              parameterData
+          else
+              requestText
         end
       );
+
       if parameterData is not null then
         dbms_lob.freeTemporary( parameterData);
+      end if;
+      if multipartData is not null then
+        dbms_lob.freeTemporary( multipartData);
       end if;
     exception when others then
       -- Close the request in case of an error
@@ -537,9 +663,12 @@ is
     logger.trace(
       'HTTP: '|| resp.status_code || ' ' || resp.reason_phrase
     );
+    responseHeaderList := wbu_header_list_t();
     for i in 1 .. utl_http.get_header_count( resp) loop
       utl_http.get_header( resp, i, headerName, headerValue);
       logger.trace( headerName || ': ' || headerValue);
+      responseHeaderList.Extend();
+      responseHeaderList(i) := wbu_header_t(headerName, headerValue);
 
       if headerName = ContentType_HttpHeader then
         contentType := substr( headerValue, 1, 1024);
@@ -609,6 +738,18 @@ begin
       , 'Simultaneous use of request text and parameters is incorrect.'
     );
   end if;
+  if nPart > 0 and requestText is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Simultaneous use of request text and partList is incorrect.'
+    );
+  end if;
+  if nPart > 0 and  nParameter > 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Simultaneous use of parameters and partList is incorrect.'
+    );
+  end if;
 
   logger.trace( '*** HTTP request: ' || requestUrl);
   if not pkg_WebUtilityBase.getTestResponse(
@@ -652,6 +793,102 @@ exception when others then
     , true
   );
 end execHttpRequest;
+
+/* pproc: execHttpRequest
+  Execute of HTTP request.
+
+  Parameters:
+  statusCode                  - Request result code (HTTP Status-Code)
+                                (out)
+  reasonPhrase                - Description of the query result
+                                (HTTP Reason-Phrase)
+                                (out, maximum 256 chars)
+  contentType                 - Type of response (HTTP Content-Type)
+                                (out, maximum 1024 chars)
+  entityBody                  - Response to request (HTTP entity-body)
+                                (out)
+  execSecond                  - Request execution time
+                                (in seconds, -1 if it was not possible to
+                                  measure)
+                                (out)
+  requestUrl                  - Request URL
+  requestText                 - Request text
+                                (default is absent)
+  parameterList               - Request parameters
+                                (default is absent)
+  httpMethod                  - HTTP method for request
+                                (default POST if requestText or parameterList
+                                  is not empty oterwise GET)
+  disableChunkedEncFlag       - Disable use chunked transfer encoding when
+                                sending request
+                                (1 yes, 0 no (is default))
+  headerList                  - Request headers
+                                (defaut is absent, but some headers can be
+                                  added by default, see the remarks below)
+  partList                    - Request parts
+                                (defaut is absent, only for multipart request,
+                                 RFC 2045)
+  bodyCharset                 - Character set of request body
+                                (default is UTF-8)
+  maxWaitSecond               - Maximum response time on request
+                                (in seconds, default 60 seconds)
+
+  Remarks:
+  - headers in headerList with null value are not sent;
+  - by default, request uses chunked transfer-encoding and sends
+    "Transfer-Encoding: chunked" header ( this will be disabled if
+    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
+    <TransferEncoding_HttpHeader> in headerList);
+  - by default, request sends <ContentType_HttpHeader> header with value
+    <WwwForm_ContentType> if it is POST request with parameters,
+    with value <Xml_ContentType> if request text starts with "<?xml ",
+    with value <Json_ContentType> if request text starts with "[" or "{"
+    ( this will be disabled if you use <ContentType_HttpHeader> in
+    headerList);
+  - data is automatically converted from the database character set to the
+    request body character set;
+
+  ( <body::execHttpRequest>)
+*/
+procedure execHttpRequest(
+  statusCode out nocopy integer
+  , reasonPhrase out nocopy varchar2
+  , contentType out nocopy varchar2
+  , entityBody out nocopy clob
+  , execSecond out nocopy number
+  , requestUrl varchar2
+  , requestText clob := null
+  , parameterList wbu_parameter_list_t := null
+  , httpMethod varchar2 := null
+  , disableChunkedEncFlag integer := null
+  , headerList wbu_header_list_t := null
+  , partList wbu_part_list_t := null
+  , bodyCharset varchar2 := null
+  , maxWaitSecond integer := null
+)
+is
+  responseHeaderList wbu_header_list_t;
+begin
+  execHttpRequest(
+    statusCode                => statusCode
+    , reasonPhrase            => reasonPhrase
+    , contentType             => contentType
+    , entityBody              => entityBody
+    , execSecond              => execSecond
+    , responseHeaderList      => responseHeaderList
+    , requestUrl              => requestUrl
+    , requestText             => requestText
+    , parameterList           => parameterList
+    , httpMethod              => httpMethod
+    , disableChunkedEncFlag   => disableChunkedEncFlag
+    , headerList              => headerList
+    , partList                => partList
+    , bodyCharset             => bodyCharset
+    , maxWaitSecond           => maxWaitSecond
+  );
+end execHttpRequest;
+
+
 
 /* proc: checkResponseError
   Raises an exception when the Web server returns a status code other than
@@ -739,7 +976,10 @@ is
 
 -- checkResponseError
 begin
-  if statusCode <> utl_http.HTTP_OK then
+  if statusCode not in (
+    utl_http.HTTP_OK
+    , utl_http.HTTP_CREATED
+  ) then
     raise_application_error(
       pkg_Error.ProcessError
       , 'HTTP error ' || to_char( statusCode)
@@ -1177,6 +1417,104 @@ exception when others then
     , true
   );
 end getSoapResponse;
+
+/* group: Authentification  */
+
+/* pproc: login
+  Perform authentification request
+
+  Parameters:
+  requestUrl                  - URL of web service
+  username                    - The username for the authentication
+  password                    - The password for the HTTP authentication
+  domain                      - The user domain for the authentication
+  walletPath                  - Path to wallet (must have for https)
+  walletPassword              - Password for wallet (must have for https)
+  proxyServer                 - Name of proxy server
+  schema                      - The HTTP authentication scheme.
+                                Either 'NTLM' for the Microsoft NTLM,
+                                'Basic' for the HTTP basic,
+                                'Digest' for the HTTP digest,
+                                'AWS' for Amazon AWS version 2 authentication scheme, or
+                                'AWS4-HMAC-SHA256' for AWS version 4 authentication scheme.
+                                Default is 'Basic'.
+
+
+*/
+procedure login(
+  requestUrl                varchar2
+  , username                varchar2
+  , password                varchar2
+  , domain                  varchar2 default null
+  , walletPath              varchar2 default null
+  , walletPassword          varchar2 default null
+  , proxyServer             varchar2 default null
+  , scheme                  varchar2 default null
+)
+is
+  req utl_http.req;
+  resp utl_http.resp;
+  statusCode integer;
+  reasonPhrase varchar2(1024);
+begin
+  -- support for HTTPS
+  if instr(lower(requestUrl),'https') = 1 then
+    utl_http.set_wallet (walletPath, walletPassword);
+  end if;
+
+  -- support for proxy server
+  if proxyServer is not null then
+    utl_http.set_proxy (proxyServer);
+  end if;
+
+  -- NTLM authentication
+  if scheme = NTLM_scheme then
+    ntlmToken := pkg_WebUtilityNtlm.ntlmLogin(
+        requestUrl       => requestUrl
+        , username       => username
+        , password       => password
+        , domain         => domain
+    );
+  else
+  -- others authentications
+    req := utl_http.begin_request(requestUrl);
+    utl_http.set_authentication(
+      r => req
+      , username => userName
+      , password => password
+      , scheme => coalesce(scheme, Basic_Scheme)
+    );
+    resp := utl_http.get_response(req);
+    statusCode := resp.status_code;
+    reasonPhrase := resp.reason_phrase;
+    if statusCode != utl_http.HTTP_OK then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , 'Server return an error:'
+          || to_char(statusCode)
+          || ' ' || reasonPhrase
+          || '.'
+      );
+    end if;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while user authentification ('
+        || 'requestUrl="' || requestUrl || '"'
+        || ', username="' || username || '"'
+        || ', password="' || password || '"'
+        || ', domain="' || domain || '"'
+        || ', walletPath="' || walletPath || '"'
+        || ', walletPassword="' || walletPassword || '"'
+        || ', proxyServer="' || proxyServer || '"'
+        || ', scheme="' || scheme || '"'
+        || ').'
+      )
+    , true
+  );
+end login;
 
 end pkg_WebUtility;
 /

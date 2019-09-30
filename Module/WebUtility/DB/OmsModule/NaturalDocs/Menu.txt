@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: WebUtility
-SubTitle: Версия 1.0.4
+SubTitle: Версия 1.1.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -77,6 +77,17 @@ Group: Объектные типы  {
       File: Спецификация  (no auto-title, wbu_parameter_t.typ)
       }  # Group: wbu_parameter_t
 
+   Group: wbu_part_list_t  {
+
+      File: Спецификация  (no auto-title, wbu_part_list_t.typ)
+      }  # Group: wbu_part_list_t
+
+   Group: wbu_part_t  {
+
+      File: Спецификация  (no auto-title, wbu_part_t.typ)
+      File: Реализация  (no auto-title, wbu_part_t.tyb)
+      }  # Group: wbu_part_t
+
    }  # Group: Объектные типы
 
 Group: Пакеты  {
@@ -92,6 +103,12 @@ Group: Пакеты  {
       File: Спецификация  (no auto-title, pkg_WebUtilityBase.pks)
       File: Реализация  (no auto-title, pkg_WebUtilityBase.pkb)
       }  # Group: pkg_WebUtilityBase
+
+   Group: pkg_WebUtilityNtlm  {
+
+      File: Спецификация  (no auto-title, pkg_WebUtilityNtlm.pks)
+      File: Реализация  (no auto-title, pkg_WebUtilityNtlm.pkb)
+      }  # Group: pkg_WebUtilityNtlm
 
    Group: Test  {
 
