@@ -49,7 +49,7 @@ Module_SvnRoot constant varchar2(30) := 'Oracle/Module/Option';
   Замечания:
   - настройки, определяющие БД, для которых создаются роли указаного вида,
     и используемые суффиксы ролей, задаются в скрипте
-    <Install/Data/Last/Custom/set-optDbRoleSuffixList.sql>;
+    <ModuleConfig/Option/set-optDbRoleSuffixList.sql>;
 */
 LocalRoleSuffix_OptionSName constant varchar2(50) := 'LocalRoleSuffix';
 

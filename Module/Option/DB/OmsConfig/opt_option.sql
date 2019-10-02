@@ -1,4 +1,4 @@
--- script: Install/Data/Last/opt_option.sql
+-- script: ModuleConfig/Option/opt_option.sql
 -- —оздает настроечные параметры модул€.
 --
 -- ѕараметры:
@@ -9,7 +9,7 @@
 -- «амечани€:
 --  - значение дл€ параметра <pkg_OptionMain.LocalRoleSuffix_OptionSName>
 --    определ€етс€ согласно настройкам, заданным скриптом
---    <Install/Data/Last/Custom/set-optDbRoleSuffixList.sql>,
+--    <ModuleConfig/Option/set-optDbRoleSuffixList.sql>,
 --    по значению productionDbName с учетом текущей схемы, при этом
 --    если параметру уже было присвоено значение, отличное от null, то оно не
 --    измен€етс€;
@@ -21,7 +21,7 @@ define productionDbName = "&1"
 
 prompt get local roles config...
 
-@Install/Data/Last/Custom/set-optDbRoleSuffixList.sql
+@@set-optDbRoleSuffixList.sql
 
 
 
@@ -89,19 +89,12 @@ declare
 
   -- setLocalRoleSuffix
   begin
-    if productionDbName is null then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Ќе удалось определить им€ промышленной Ѕƒ, к которой относитс€'
-          || ' установка ('
-          || ' можно указать с помощью параметра установки PRODUCTION_DB_NAME'
-          || ').'
-      );
-    end if;
     dbms_output.put_line(
       'productionDbName: "' || productionDbName || '"'
     );
-    getNewValue();
+    if productionDbName is not null then
+      getNewValue();
+    end if;
 
     if opt.existsOption( pkg_OptionMain.LocalRoleSuffix_OptionSName) = 0 then
       opt.addString(

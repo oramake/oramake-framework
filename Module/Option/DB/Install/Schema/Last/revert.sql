@@ -10,10 +10,6 @@ drop package pkg_OptionMain
 drop package pkg_OptionCrypto
 /
 
--- Функции
-drop function opt_getLocalCryptoKey
-/
-
 -- Представления
 drop view v_opt_object_type
 /

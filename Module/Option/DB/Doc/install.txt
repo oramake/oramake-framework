@@ -18,6 +18,11 @@ TO_USERNAME                   - имя пользователя, которому выдаются права
 
 
 Дополнительные параметры:
+MODULE_CONFIG_DIR             - Каталог с пользовательскими настроечными
+                                файлами
+                                (по умолчанию
+                                /usr/local/etc/oms/ModuleConfig/Option, а при
+                                его отсутствии подкаталог OmsConfig)
 PRODUCTION_DB_NAME            - может быть использован для явного задания
                                 промышленной БД, к которой относится установка
                                 ( при установке в тестовую БД
@@ -64,28 +69,9 @@ group: 3.3.0
 
 (code)
 
-$ make install INSTALL_VERSION=3.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=3.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
-
-
-
-group: 3.1.0.1
-(<Версии::3.1.0.1 ( 2016-04-21)>)
-
-Предварительные требования:
-
-- установка модуля AccessOperator версии не ранее 3.12.1;
-
-Порядок установки:
-
-- установка в основную схему;
-
-(code)
-
-make install INSTALL_VERSION=3.1.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end code)
 
 
 
@@ -118,7 +104,7 @@ SQL> grant execute on sys.dbms_crypto to &userName;
 
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -126,7 +112,7 @@ $ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/
 
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -138,7 +124,7 @@ group: Выдача прав на использование модуля
 
 (code)
 
-$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 (end)
 
@@ -150,6 +136,6 @@ group: Удаление модуля из БД
 
 (code)
 
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)

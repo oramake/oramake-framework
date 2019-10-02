@@ -154,12 +154,6 @@ Group: Скрипты  {
                File: op_role  (no auto-title, Install/Data/Last/AccessOperatorDb/op_role.sql)
                }  # Group: AccessOperatorDb
 
-            Group: Custom  {
-
-               File: set-optDbRoleSuffixList  (no auto-title, Install/Data/Last/Custom/set-optDbRoleSuffixList.sql)
-               }  # Group: Custom
-
-            File: opt_option  (no auto-title, Install/Data/Last/opt_option.sql)
             }  # Group: Last
 
          }  # Group: Data
@@ -177,11 +171,6 @@ Group: Скрипты  {
       Group: Schema  {
 
          Group: Last  {
-
-            Group: Custom  {
-
-               File: opt_getLocalCryptoKey  (no auto-title, Install/Schema/Last/Custom/opt_getLocalCryptoKey.prc)
-               }  # Group: Custom
 
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
@@ -220,6 +209,14 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: OmsConfig  {
+
+      File: op_role  (no auto-title, OmsConfig/op_role.sql)
+      File: opt_getLocalCryptoKey  (no auto-title, OmsConfig/opt_getLocalCryptoKey.prc)
+      File: opt_option  (no auto-title, OmsConfig/opt_option.sql)
+      File: set-optDbRoleSuffixList  (no auto-title, OmsConfig/set-optDbRoleSuffixList.sql)
+      }  # Group: OmsConfig
 
    Group: Show  {
 

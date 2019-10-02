@@ -35,6 +35,3 @@
 @oms-run opt_option_history_seq.sqs
 @oms-run opt_value_history_seq.sqs
 @oms-run opt_value_seq.sqs
-
--- Функции
-@oms-run Install/Schema/Last/Custom/opt_getLocalCryptoKey.prc

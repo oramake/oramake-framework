@@ -1,4 +1,4 @@
--- script: Install/Data/Last/Custom/set-optDbRoleSuffixList.sql
+-- script: ModuleConfig/Option/set-optDbRoleSuffixList.sql
 -- Определяет суффиксы для ролей, с помощью которых выдаются права на все
 -- параметры, созданные в определенной промышленной БД ( настройки могут
 -- модифицироваться в пользовательской версии).

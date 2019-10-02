@@ -393,6 +393,13 @@ loadTarget =                             \
 # указать *).
 loadArgumentList +=
 
+# build var: MODULE_CONFIG_DIR
+# Каталог с пользовательскими настроечными файлами.
+#
+
+MODULE_CONFIG_DIR = $(firstword \
+  $(wildcard $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Option) OmsConfig)
+
 # build var: PRODUCTION_DB_NAME
 # Имя промышленной БД, к которой относится установка ( при установке в тестовую
 # БД должно указываться имя соответствующей промышленной БД), по умолчанию
@@ -409,7 +416,7 @@ override PRODUCTION_DB_NAME := $(call getProductionDbName,$(PRODUCTION_DB_NAME))
 
 # Передача параметров скрипту <Install/Data/Last/opt_option.sql>
 loadArgumentList += \
-  $(call getArgumentDefine,Install/Data/Last/opt_option.sql.$(lu), \
+  $(call getArgumentDefine,$(MODULE_CONFIG_DIR)/opt_option.sql.$(lu), \
    "$(PRODUCTION_DB_NAME)")
 
 
@@ -441,7 +448,9 @@ INSTALL_VERSION  =
 # Обеспечивает сохранение в логе установки значений дополнительных параметров
 # ( в случае наличия у них непустых значений).
 # Формат: список имен параметров с пробелом в качестве разделителя.
-installAddonOptionList =
+installAddonOptionList = \
+  MODULE_CONFIG_DIR \
+  PRODUCTION_DB_NAME \
 
 
 # Список объектов для обязательной проверки блокировок перед установкой и
@@ -497,6 +506,7 @@ install-before: install-before.oms
 installSchemaTarget =                   \
   $(addsuffix .$(lu),                    \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
+    $(wildcard $(MODULE_CONFIG_DIR)/opt_getLocalCryptoKey.prc) \
   )                                      \
   $(addsuffix .$(lu2),                  \
   )                                      \
@@ -576,9 +586,11 @@ getInstallDataFile = \
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
+    $(wildcard $(MODULE_CONFIG_DIR)/opt_option.sql) \
   ) \
   $(addsuffix .$(lu2), \
     $(call getInstallDataFile,AccessOperatorDb) \
+    $(wildcard $(MODULE_CONFIG_DIR)/op_role.sql) \
   ) \
   $(addsuffix .$(lu3), \
   ) \
@@ -825,6 +837,9 @@ uninstall-before: uninstall-before.oms
 uninstallSchemaTarget = \
   $(addsuffix .$(ru), \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
+    $(if $(call nullif,LAST,$(call upper,$(INSTALL_VERSION))),, \
+      $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/drop-opt_getLocalCryptoKey.sql) \
+    ) \
   ) \
   $(addsuffix .$(ru2), \
   ) \
