@@ -775,6 +775,426 @@ exception when others then
   );
 end getValueId;
 
+
+
+/* group: Получение значения параметра */
+
+/* func: getDate
+  Возвращает указанное значение настроечного параметра типа дата.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  значение типа дата.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getDate(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return date
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.date_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getDate;
+
+/* func: getDate( USED)
+  Возвращает используемое в текущей БД значение настроечного параметра типа
+  дата.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  значение типа дата.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getDate(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return date
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.date_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого значения параметра типа дата ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getDate;
+
+/* func: getNumber
+  Возвращает указанное числовое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  числовое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getNumber(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return number
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.number_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getNumber;
+
+/* func: getNumber( USED)
+  Возвращает используемое в текущей БД числовое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  числовое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getNumber(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return number
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.number_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого числового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getNumber;
+
+/* func: getString
+  Возвращает указанное строковое значение настроечного параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строковое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getString(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getString;
+
+/* func: getString( USED)
+  Возвращает используемое в текущей БД строковое значение настроечного
+  параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию 1)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строковое значение.
+
+  Замечения:
+  - в случае, если значение настроечного параметра не задано ( в т.ч. в
+    случае, если индекс значения в valueIndex превышает число значений в
+    списке либо больше 1 если список не используется) возвращается null;
+*/
+member function getString(
+  optionShortName varchar2
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
+    , valueIndex            => coalesce( valueIndex, 1)
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого строкового значения параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', valueIndex=' || valueIndex
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getString;
+
 /* func: getValueCount
   Возвращает число указанных значений настроечного параметра.
 
@@ -787,6 +1207,9 @@ end getValueId;
   instanceName                - имя экземпляра БД, в которой может
                                 использоваться значение
                                 ( null без ограничений ( по умолчанию))
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -799,33 +1222,28 @@ member function getValueCount(
   optionShortName varchar2
   , prodValueFlag integer
   , instanceName varchar2 := null
+  , useCacheFlag integer := null
   , raiseNotFoundFlag integer := null
 )
 return integer
 is
 
-  -- Id параметра
-  optionId integer;
-
   -- Данные значения
   vlr opt_value%rowtype;
 
 begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , useCacheFlag          => useCacheFlag
   );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData             => vlr
-      , optionId          => optionId
-      , prodValueFlag     => prodValueFlag
-      , instanceName      => instanceName
-      , usedOperatorId    => usedOperatorId
-      , decryptValueFlag  => 0
-      , raiseNotFoundFlag => 0
-    );
-  end if;
   return
     case when vlr.value_id is not null then
       pkg_OptionMain.getValueCount(
@@ -856,6 +1274,9 @@ end getValueCount;
 
   Параметры:
   optionShortName             - краткое наименование параметра
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -866,32 +1287,27 @@ end getValueCount;
 */
 member function getValueCount(
   optionShortName varchar2
+  , useCacheFlag integer := null
   , raiseNotFoundFlag integer := null
 )
 return integer
 is
 
-  -- Id параметра
-  optionId integer;
-
   -- Данные значения
   vlr opt_value%rowtype;
 
 begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , useCacheFlag          => useCacheFlag
   );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData             => vlr
-      , optionId          => optionId
-      , usedOperatorId    => usedOperatorId
-      , usedValueFlag     => 1
-      , decryptValueFlag  => 0
-      , raiseNotFoundFlag => 0
-    );
-  end if;
   return
     case when vlr.value_id is not null then
       pkg_OptionMain.getValueCount(
@@ -915,6 +1331,130 @@ exception when others then
   );
 end getValueCount;
 
+/* func: getValueList
+  Возвращает указанный список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строка со списком значений ( символ, используемый в качестве разделителя,
+  возвращается функцией <getValueListSeparator>).
+
+  Замечения:
+  - в случае, если указанное значение настроечного параметра не задано,
+    возвращается null;
+*/
+member function getValueList(
+  optionShortName varchar2
+  , prodValueFlag integer
+  , instanceName varchar2 := null
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , valueListFlag         => 1
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении указанного списка значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueList;
+
+/* func: getValueList( USED)
+  Возвращает используемый в текущей БД список значений настроечного параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  строка со списком значений ( символ, используемый в качестве разделителя,
+  возвращается функцией <getValueListSeparator( USED)>).
+
+  Замечения:
+  - в случае, если указанное значение настроечного параметра не задано,
+    возвращается null;
+*/
+member function getValueList(
+  optionShortName varchar2
+  , useCacheFlag integer := null
+  , raiseNotFoundFlag integer := null
+)
+return varchar2
+is
+
+  -- Данные значения
+  vlr opt_value%rowtype;
+
+begin
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , valueListFlag         => 1
+    , useCacheFlag          => useCacheFlag
+  );
+  return vlr.string_value;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при определении используемого списка значений параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
+        || ').'
+      )
+    , true
+  );
+end getValueList;
+
 /* func: getValueListSeparator
   Возвращает символ, используемый в качестве разделителя в указанном списке
   значений настроечного параметра.
@@ -928,6 +1468,9 @@ end getValueCount;
   instanceName                - имя экземпляра БД, в которой может
                                 использоваться значение
                                 ( null без ограничений ( по умолчанию))
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -939,33 +1482,28 @@ member function getValueListSeparator(
   optionShortName varchar2
   , prodValueFlag integer
   , instanceName varchar2 := null
+  , useCacheFlag integer := null
   , raiseNotFoundFlag integer := null
 )
 return varchar2
 is
 
-  -- Id параметра
-  optionId integer;
-
   -- Данные значения
   vlr opt_value%rowtype;
 
 begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , prodValueFlag         => prodValueFlag
+    , instanceName          => instanceName
+    , usedOperatorId        => usedOperatorId
+    , useCacheFlag          => useCacheFlag
   );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , prodValueFlag         => prodValueFlag
-      , instanceName          => instanceName
-      , usedOperatorId        => usedOperatorId
-      , decryptValueFlag      => 0
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
   return vlr.list_separator;
 exception when others then
   raise_application_error(
@@ -987,6 +1525,9 @@ end getValueListSeparator;
 
   Параметры:
   optionShortName             - краткое наименование параметра
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
   raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
                                 параметра ( 1 да ( по умолчанию), 0 нет)
 
@@ -996,32 +1537,27 @@ end getValueListSeparator;
 */
 member function getValueListSeparator(
   optionShortName varchar2
+  , useCacheFlag integer := null
   , raiseNotFoundFlag integer := null
 )
 return varchar2
 is
 
-  -- Id параметра
-  optionId integer;
-
   -- Данные значения
   vlr opt_value%rowtype;
 
 begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
+  pkg_OptionMain.getValue(
+    rowData                 => vlr
+    , moduleId              => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , optionShortName       => optionShortName
+    , raiseNotFoundFlag     => raiseNotFoundFlag
+    , usedOperatorId        => usedOperatorId
+    , usedValueFlag         => 1
+    , useCacheFlag          => useCacheFlag
   );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , usedOperatorId        => usedOperatorId
-      , usedValueFlag         => 1
-      , decryptValueFlag      => 0
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
   return vlr.list_separator;
 exception when others then
   raise_application_error(
@@ -1036,6 +1572,172 @@ exception when others then
     , true
   );
 end getValueListSeparator;
+
+
+
+/* group: Получение значения параметра в SQL */
+
+/* func: getOptionValue
+  Возвращает таблицу параметров с текущими используемыми значениями.
+
+  Возврат:
+  таблица с набором полей, который отличается от полей представления
+  <v_opt_option_value> добавлением поля encrypted_string_value ( при этом
+  значение в поле string_value всегда указывается в незашифрованном виде)
+  ( поля перечислены в типе <opt_option_value_t>).
+
+  Пример использования:
+
+(code)
+
+SQL> select * from table( opt_option_list_t( 'Option').getOptionValue());
+
+(end)
+
+  ( выборка параметров модуля Option)
+*/
+member function getOptionValue
+return opt_option_value_table_t
+pipelined
+is
+
+  -- Таблица с возвращаемыми данными
+  ovt opt_option_value_table_t;
+
+begin
+  pkg_OptionMain.getOptionValue(
+    rowTable              => ovt
+    , moduleId            => self.moduleId
+    , objectShortName     => self.objectShortName
+    , objectTypeId        => self.objectTypeId
+    , usedOperatorId      => self.usedOperatorId
+  );
+  for i in 1 .. ovt.count() loop
+    pipe row( ovt( i));
+  end loop;
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении таблицы параметров с текущими значениями.'
+      )
+    , true
+  );
+end getOptionValue;
+
+/* func: getValue
+  Возвращает таблицу со значениями параметра.
+
+  Параметры:
+  optionShortName             - краткое наименование параметра
+
+  Возврат:
+  таблица с набором полей, который отличается от полей представления
+  <v_opt_value> добавлением поля encrypted_string_value ( при этом значение
+  в поле string_value всегда указывается в незашифрованном виде) ( поля
+  перечислены в типе <opt_value_t>).
+
+  Пример использования:
+
+(code)
+
+SQL> select * from table( opt_option_list_t( 'Option').getValue('Test1'));
+
+(end)
+
+  ( выборка значений параметра Test1 модуля Option)
+*/
+member function getValue(
+  optionShortName varchar2
+)
+return opt_value_table_t
+pipelined
+is
+
+  cursor dataCur( optionId integer) is
+    select
+      t.*
+    from
+      v_opt_value t
+    where
+      t.option_id = optionId
+    order by
+      t.value_id
+  ;
+
+  vlr opt_value_t;
+
+begin
+  for rec in dataCur(
+        getOptionId(
+          optionShortName     => optionShortName
+          , raiseNotFoundFlag => 1
+        )
+      )
+      loop
+    begin
+      vlr := opt_value_t(
+        value_id                          => rec.value_id
+        , option_id                       => rec.option_id
+        , prod_value_flag                 => rec.prod_value_flag
+        , instance_name                   => rec.instance_name
+        , used_operator_id                => rec.used_operator_id
+        , value_type_code                 => rec.value_type_code
+        , value_list_flag                 => rec.value_list_flag
+        , list_separator                  => rec.list_separator
+        , encryption_flag                 => rec.encryption_flag
+        , storage_value_type_code         => rec.storage_value_type_code
+        , date_value                      => rec.date_value
+        , number_value                    => rec.number_value
+        , string_value                    =>
+            case when
+              rec.encryption_flag = 1 and rec.string_value is not null
+            then
+              pkg_OptionMain.getDecryptValue(
+                stringValue     => rec.string_value
+                , listSeparator => rec.list_separator
+              )
+            else
+              rec.string_value
+            end
+        , encrypted_string_value          =>
+            case when rec.encryption_flag = 1 then
+              rec.string_value
+            end
+        , change_number                   => rec.change_number
+        , change_date                     => rec.change_date
+        , change_operator_id              => rec.change_operator_id
+        , date_ins                        => rec.date_ins
+        , operator_id                     => rec.operator_id
+      );
+
+      pipe row( vlr);
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при обработке записи ('
+            || ' option_id=' || rec.option_id
+            || ', value_id=' || rec.value_id
+            || ').'
+          )
+        , true
+      );
+    end;
+  end loop;
+  return;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении таблицы со значениями параметра ('
+        || ' optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end getValue;
 
 
 
@@ -1948,558 +2650,6 @@ end addStringList;
 
 
 
-/* group: Получение значения параметра */
-
-/* func: getDate
-  Возвращает указанное значение настроечного параметра типа дата.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-  instanceName                - имя экземпляра БД, в которой может
-                                использоваться значение
-                                ( null без ограничений ( по умолчанию))
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  значение типа дата.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getDate(
-  optionShortName varchar2
-  , prodValueFlag integer
-  , instanceName varchar2 := null
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return date
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , prodValueFlag         => prodValueFlag
-      , instanceName          => instanceName
-      , usedOperatorId        => usedOperatorId
-      , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.date_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении указанного значения параметра типа дата ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getDate;
-
-/* func: getDate( USED)
-  Возвращает используемое в текущей БД значение настроечного параметра типа
-  дата.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  значение типа дата.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getDate(
-  optionShortName varchar2
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return date
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , usedOperatorId        => usedOperatorId
-      , usedValueFlag         => 1
-      , valueTypeCode         => pkg_OptionMain.Date_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.date_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении используемого значения параметра типа дата ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getDate;
-
-/* func: getNumber
-  Возвращает указанное числовое значение настроечного параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-  instanceName                - имя экземпляра БД, в которой может
-                                использоваться значение
-                                ( null без ограничений ( по умолчанию))
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  числовое значение.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getNumber(
-  optionShortName varchar2
-  , prodValueFlag integer
-  , instanceName varchar2 := null
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return number
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , prodValueFlag         => prodValueFlag
-      , instanceName          => instanceName
-      , usedOperatorId        => usedOperatorId
-      , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.number_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении указанного числового значения параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getNumber;
-
-/* func: getNumber( USED)
-  Возвращает используемое в текущей БД числовое значение настроечного параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  числовое значение.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getNumber(
-  optionShortName varchar2
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return number
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , usedOperatorId        => usedOperatorId
-      , usedValueFlag         => 1
-      , valueTypeCode         => pkg_OptionMain.Number_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.number_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении используемого числового значения параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getNumber;
-
-/* func: getString
-  Возвращает указанное строковое значение настроечного параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-  instanceName                - имя экземпляра БД, в которой может
-                                использоваться значение
-                                ( null без ограничений ( по умолчанию))
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  строковое значение.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getString(
-  optionShortName varchar2
-  , prodValueFlag integer
-  , instanceName varchar2 := null
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return varchar2
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , prodValueFlag         => prodValueFlag
-      , instanceName          => instanceName
-      , usedOperatorId        => usedOperatorId
-      , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.string_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении указанного строкового значения параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getString;
-
-/* func: getString( USED)
-  Возвращает используемое в текущей БД строковое значение настроечного
-  параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию 1)
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  строковое значение.
-
-  Замечения:
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) возвращается null;
-*/
-member function getString(
-  optionShortName varchar2
-  , valueIndex integer := null
-  , raiseNotFoundFlag integer := null
-)
-return varchar2
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , usedOperatorId        => usedOperatorId
-      , usedValueFlag         => 1
-      , valueTypeCode         => pkg_OptionMain.String_ValueTypeCode
-      , valueIndex            => coalesce( valueIndex, 1)
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.string_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении используемого строкового значения параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', valueIndex=' || valueIndex
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getString;
-
-/* func: getValueList
-  Возвращает указанный список значений настроечного параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  prodValueFlag               - флаг использования значения только в
-                                промышленных ( либо тестовых) БД
-                                ( 1 только в промышленных БД, 0 только в
-                                тестовых БД, null без ограничений)
-  instanceName                - имя экземпляра БД, в которой может
-                                использоваться значение
-                                ( null без ограничений ( по умолчанию))
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  строка со списком значений ( символ, используемый в качестве разделителя,
-  возвращается функцией <getValueListSeparator>).
-
-  Замечения:
-  - в случае, если указанное значение настроечного параметра не задано,
-    возвращается null;
-*/
-member function getValueList(
-  optionShortName varchar2
-  , prodValueFlag integer
-  , instanceName varchar2 := null
-  , raiseNotFoundFlag integer := null
-)
-return varchar2
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , prodValueFlag         => prodValueFlag
-      , instanceName          => instanceName
-      , usedOperatorId        => usedOperatorId
-      , valueListFlag         => 1
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.string_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении указанного списка значений параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getValueList;
-
-/* func: getValueList( USED)
-  Возвращает используемый в текущей БД список значений настроечного параметра.
-
-  Параметры:
-  optionShortName             - краткое наименование параметра
-  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
-                                параметра ( 1 да ( по умолчанию), 0 нет)
-
-  Возврат:
-  строка со списком значений ( символ, используемый в качестве разделителя,
-  возвращается функцией <getValueListSeparator( USED)>).
-
-  Замечения:
-  - в случае, если указанное значение настроечного параметра не задано,
-    возвращается null;
-*/
-member function getValueList(
-  optionShortName varchar2
-  , raiseNotFoundFlag integer := null
-)
-return varchar2
-is
-
-  -- Id параметра
-  optionId integer;
-
-  -- Данные значения
-  vlr opt_value%rowtype;
-
-begin
-  optionId := getOptionId(
-    optionShortName     => optionShortName
-    , raiseNotFoundFlag => raiseNotFoundFlag
-  );
-  if optionId is not null then
-    pkg_OptionMain.getValue(
-      rowData                 => vlr
-      , optionId              => optionId
-      , usedOperatorId        => usedOperatorId
-      , usedValueFlag         => 1
-      , valueListFlag         => 1
-      , raiseNotFoundFlag     => 0
-    );
-  end if;
-  return vlr.string_value;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при определении используемого списка значений параметра ('
-        || ' optionShortName="' || optionShortName || '"'
-        || ', raiseNotFoundFlag=' || raiseNotFoundFlag
-        || ').'
-      )
-    , true
-  );
-end getValueList;
-
-
-
 /* group: Установка значения параметра */
 
 /* proc: setDate
@@ -3353,7 +3503,7 @@ end setValueList;
 
 
 
-/* group: Дополнительные функции */
+/* group: Дополнительные функции изменения данных */
 
 /* proc: createOption
   Создает настроечный параметр без задания значений.
@@ -4148,169 +4298,41 @@ end deleteValue;
 
 
 
-/* group: Функции для использования в SQL */
+/* group: Вспомогательные функции */
 
-/* func: getOptionValue
-  Возвращает таблицу параметров с текущими используемыми значениями.
-
-  Возврат:
-  таблица с набором полей, который отличается от полей представления
-  <v_opt_option_value> добавлением поля encrypted_string_value ( при этом
-  значение в поле string_value всегда указывается в незашифрованном виде)
-  ( поля перечислены в типе <opt_option_value_t>).
-
-  Пример использования:
-
-(code)
-
-SQL> select * from table( opt_option_list_t( 'Option').getOptionValue());
-
-(end)
-
-  ( выборка параметров модуля Option)
-*/
-member function getOptionValue
-return opt_option_value_table_t
-pipelined
-is
-
-  -- Таблица с возвращаемыми данными
-  ovt opt_option_value_table_t;
-
-begin
-  pkg_OptionMain.getOptionValue(
-    rowTable              => ovt
-    , moduleId            => self.moduleId
-    , objectShortName     => self.objectShortName
-    , objectTypeId        => self.objectTypeId
-    , usedOperatorId      => self.usedOperatorId
-  );
-  for i in 1 .. ovt.count() loop
-    pipe row( ovt( i));
-  end loop;
-  return;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении таблицы параметров с текущими значениями.'
-      )
-    , true
-  );
-end getOptionValue;
-
-/* func: getValue
-  Возвращает таблицу с заданными значениями параметра.
+/* func: clearCache
+  Очищает кэшированные значения параметров, относящихся к текущему набору
+  параметров. Кэшированные значения используются в функциях получения значения
+  параметра (например, <getDate>) при указании useCacheFlag равного 1.
 
   Параметры:
   optionShortName             - краткое наименование параметра
-
-  Возврат:
-  таблица с набором полей, который отличается от полей представления
-  <v_opt_value> добавлением поля encrypted_string_value ( при этом значение
-  в поле string_value всегда указывается в незашифрованном виде) ( поля
-  перечислены в типе <opt_value_t>).
-
-  Пример использования:
-
-(code)
-
-SQL> select * from table( opt_option_list_t( 'Option').getValue('Test1'));
-
-(end)
-
-  ( выборка значений параметра Test1 модуля Option)
+                                (null без ограничений (по умолчанию))
 */
-member function getValue(
-  optionShortName varchar2
+member procedure clearCache(
+  self in opt_option_list_t
+  , optionShortName varchar2 := null
 )
-return opt_value_table_t
-pipelined
 is
-
-  cursor dataCur( optionId integer) is
-    select
-      t.*
-    from
-      v_opt_value t
-    where
-      t.option_id = optionId
-    order by
-      t.value_id
-  ;
-
-  vlr opt_value_t;
-
 begin
-  for rec in dataCur(
-        getOptionId(
-          optionShortName     => optionShortName
-          , raiseNotFoundFlag => 1
-        )
-      )
-      loop
-    begin
-      vlr := opt_value_t(
-        value_id                          => rec.value_id
-        , option_id                       => rec.option_id
-        , prod_value_flag                 => rec.prod_value_flag
-        , instance_name                   => rec.instance_name
-        , used_operator_id                => rec.used_operator_id
-        , value_type_code                 => rec.value_type_code
-        , value_list_flag                 => rec.value_list_flag
-        , list_separator                  => rec.list_separator
-        , encryption_flag                 => rec.encryption_flag
-        , storage_value_type_code         => rec.storage_value_type_code
-        , date_value                      => rec.date_value
-        , number_value                    => rec.number_value
-        , string_value                    =>
-            case when
-              rec.encryption_flag = 1 and rec.string_value is not null
-            then
-              pkg_OptionMain.getDecryptValue(
-                stringValue     => rec.string_value
-                , listSeparator => rec.list_separator
-              )
-            else
-              rec.string_value
-            end
-        , encrypted_string_value          =>
-            case when rec.encryption_flag = 1 then
-              rec.string_value
-            end
-        , change_number                   => rec.change_number
-        , change_date                     => rec.change_date
-        , change_operator_id              => rec.change_operator_id
-        , date_ins                        => rec.date_ins
-        , operator_id                     => rec.operator_id
-      );
-
-      pipe row( vlr);
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при обработке записи ('
-            || ' option_id=' || rec.option_id
-            || ', value_id=' || rec.value_id
-            || ').'
-          )
-        , true
-      );
-    end;
-  end loop;
-  return;
+  pkg_OptionMain.clearOptionValueCache(
+    moduleId                => moduleId
+    , objectShortName       => objectShortName
+    , objectTypeId          => objectTypeId
+    , usedOperatorId        => usedOperatorId
+    , optionShortName       => optionShortName
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка при получении таблицы с заданными значениями параметра ('
+        'Ошибка при очистке кэша параметров ('
         || ' optionShortName="' || optionShortName || '"'
         || ').'
       )
     , true
   );
-end getValue;
+end clearCache;
 
 
 

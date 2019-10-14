@@ -406,7 +406,7 @@ MODULE_CONFIG_DIR = $(firstword \
 # определяется по LOAD_USERID.
 #
 # Значение параметра передается в качестве аргумента скрипту
-# <Install/Data/Last/opt_option.sql>.
+# $(MODULE_CONFIG_DIR)/opt_option.sql.
 #
 
 PRODUCTION_DB_NAME = $(call getProductionDbName,$(LOAD_DB))
@@ -414,7 +414,7 @@ PRODUCTION_DB_NAME = $(call getProductionDbName,$(LOAD_DB))
 # Приводим значение, возможно указанное в параметрах, к каноническому виду
 override PRODUCTION_DB_NAME := $(call getProductionDbName,$(PRODUCTION_DB_NAME))
 
-# Передача параметров скрипту <Install/Data/Last/opt_option.sql>
+# Передача параметров скрипту $(MODULE_CONFIG_DIR)/opt_option.sql
 loadArgumentList += \
   $(call getArgumentDefine,$(MODULE_CONFIG_DIR)/opt_option.sql.$(lu), \
    "$(PRODUCTION_DB_NAME)")
@@ -506,7 +506,9 @@ install-before: install-before.oms
 installSchemaTarget =                   \
   $(addsuffix .$(lu),                    \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
-    $(wildcard $(MODULE_CONFIG_DIR)/opt_getLocalCryptoKey.prc) \
+    $(if $(call nullif,LAST,$(call upper,$(INSTALL_VERSION))),, \
+			$(wildcard $(MODULE_CONFIG_DIR)/opt_getLocalCryptoKey.prc) \
+    ) \
   )                                      \
   $(addsuffix .$(lu2),                  \
   )                                      \

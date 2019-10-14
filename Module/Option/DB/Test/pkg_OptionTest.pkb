@@ -824,6 +824,511 @@ procedure testOptionList(
 )
 is
 
+  -- Опции тестового модуля
+  opt opt_option_list_t := opt_option_list_t(
+    moduleName => Exp_ModuleName
+  );
+
+
+
+  /*
+    Проверяет значение функции get%.
+  */
+  procedure checkGetFunction(
+    funcName varchar2
+    , optionShortName varchar2
+    , prodValueFlag integer := null
+    , instanceName varchar2 := null
+    , usedValueFlag integer := null
+    , raiseNotFoundFlag integer := null
+    , useCacheFlag integer := null
+    , valueStr varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+
+    cinfo varchar2(500) := failMessagePrefix || ': ';
+
+    -- Результат выполнения функции (в виде строки)
+    actualString varchar2(32000);
+
+    -- Сообщение об ошибке при выполнении функции
+    execErrorMessage varchar2(32000);
+
+  begin
+    case funcName
+      when 'getDate' then
+        actualString := to_char(
+          case when usedValueFlag = 1  then
+            opt.getDate(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getDate(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+          , 'dd.mm.yyyy hh24:mi:ss'
+        );
+      when 'getNumber' then
+        actualString := to_char(
+          case when usedValueFlag = 1  then
+            opt.getNumber(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getNumber(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+        );
+      when 'getString' then
+        actualString :=
+          case when usedValueFlag = 1  then
+            opt.getString(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getString(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+        ;
+      when 'getValueCount' then
+        actualString := to_char(
+          case when usedValueFlag = 1  then
+            opt.getValueCount(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getValueCount(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+        );
+      when 'getValueList' then
+        actualString :=
+          case when usedValueFlag = 1  then
+            opt.getValueList(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getValueList(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+        ;
+      when 'getValueListSeparator' then
+        actualString :=
+          case when usedValueFlag = 1  then
+            opt.getValueListSeparator(
+              optionShortName     => optionShortName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          else
+            opt.getValueListSeparator(
+              optionShortName     => optionShortName
+              , prodValueFlag     => prodValueFlag
+              , instanceName      => instanceName
+              , raiseNotFoundFlag => raiseNotFoundFlag
+              , useCacheFlag      => useCacheFlag
+            )
+          end
+        ;
+      else
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Неожиданное имя get-функции ('
+            || 'funcName="' || funcName || '"'
+            || ').'
+        );
+    end case;
+    pkg_TestUtility.compareChar(
+      actualString        => actualString
+      , expectedString    => valueStr
+      , failMessageText   =>
+          cinfo || 'Неожиданный результат'
+    );
+    if execErrorMessageMask is not null then
+      pkg_TestUtility.failTest(
+        failMessageText   =>
+          cinfo || 'Успешное выполнение вместо ошибки'
+      );
+    end if;
+  exception when others then
+    if execErrorMessageMask is not null then
+      execErrorMessage := logger.getErrorStack();
+      if execErrorMessage not like execErrorMessageMask then
+        pkg_TestUtility.compareChar(
+          actualString        => execErrorMessage
+          , expectedString    => execErrorMessageMask
+          , failMessageText   =>
+              cinfo || 'Сообщение об ошибке не соответствует маске'
+        );
+      end if;
+    else
+      pkg_TestUtility.failTest(
+        failMessageText   =>
+          cinfo || 'Выполнение завершилось с ошибкой:'
+          || chr(10) || logger.getErrorStack()
+      );
+    end if;
+  end checkGetFunction;
+
+  /*
+    Проверяет значения функции get%.
+  */
+  procedure checkGetFunction(
+    funcName varchar2
+    , optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => funcName
+      , optionShortName       => optionShortName
+      , prodValueFlag         => 1
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              => prodValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix || ' (prod value)'
+    );
+    checkGetFunction(
+      funcName                => funcName
+      , optionShortName       => optionShortName
+      , prodValueFlag         => 0
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix || ' (test value)'
+    );
+    checkGetFunction(
+      funcName                => funcName
+      , optionShortName       => optionShortName
+      , usedValueFlag         => 1
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              =>
+          case isProduction
+            when 1 then prodValue
+            when 0 then testValue
+          end
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix || ' (used value)'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке значений функции ' || funcName || ' ('
+          || ' failMessagePrefix="' || failMessagePrefix || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkGetFunction;
+
+  /*
+    Проверяет значение функции getDate.
+  */
+  procedure checkGetDate(
+    optionShortName varchar2
+    , prodValueFlag integer := null
+    , instanceName varchar2 := null
+    , usedValueFlag integer := null
+    , raiseNotFoundFlag integer := null
+    , useCacheFlag integer := null
+    , valueStr varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getDate'
+      , optionShortName       => optionShortName
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedValueFlag         => usedValueFlag
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              => valueStr
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetDate;
+
+  /*
+    Проверяет значения функции getDate.
+  */
+  procedure checkGetDate(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getDate'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetDate;
+
+  /*
+    Проверяет значение функции getNumber.
+  */
+  procedure checkGetNumber(
+    optionShortName varchar2
+    , prodValueFlag integer := null
+    , instanceName varchar2 := null
+    , usedValueFlag integer := null
+    , raiseNotFoundFlag integer := null
+    , useCacheFlag integer := null
+    , valueStr varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getNumber'
+      , optionShortName       => optionShortName
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedValueFlag         => usedValueFlag
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              => valueStr
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetNumber;
+
+  /*
+    Проверяет значения функции getNumber.
+  */
+  procedure checkGetNumber(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getNumber'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetNumber;
+
+  /*
+    Проверяет значение функции getString.
+  */
+  procedure checkGetString(
+    optionShortName varchar2
+    , prodValueFlag integer := null
+    , instanceName varchar2 := null
+    , usedValueFlag integer := null
+    , raiseNotFoundFlag integer := null
+    , useCacheFlag integer := null
+    , valueStr varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getString'
+      , optionShortName       => optionShortName
+      , prodValueFlag         => prodValueFlag
+      , instanceName          => instanceName
+      , usedValueFlag         => usedValueFlag
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , valueStr              => valueStr
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetString;
+
+  /*
+    Проверяет значения функции getString.
+  */
+  procedure checkGetString(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getString'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetString;
+
+  /*
+    Проверяет значения функции getValueCount.
+  */
+  procedure checkGetValueCount(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getValueCount'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetValueCount;
+
+  /*
+    Проверяет значения функции getValueList.
+  */
+  procedure checkGetValueList(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getValueList'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetValueList;
+
+  /*
+    Проверяет значения функции getValueListSeparator.
+  */
+  procedure checkGetValueListSeparator(
+    optionShortName varchar2
+    , instanceName varchar2 := null
+    , raiseNotFoundFlag integer := 0
+    , useCacheFlag integer := null
+    , prodValue varchar2
+    , testValue varchar2
+    , execErrorMessageMask varchar2 := null
+    , failMessagePrefix varchar2
+  )
+  is
+  begin
+    checkGetFunction(
+      funcName                => 'getValueListSeparator'
+      , optionShortName       => optionShortName
+      , instanceName          => instanceName
+      , raiseNotFoundFlag     => raiseNotFoundFlag
+      , useCacheFlag          => useCacheFlag
+      , prodValue             => prodValue
+      , testValue             => testValue
+      , execErrorMessageMask  => execErrorMessageMask
+      , failMessagePrefix     => failMessagePrefix
+    );
+  end checkGetValueListSeparator;
+
 
 
   /*
@@ -831,11 +1336,6 @@ is
   */
   procedure testDateOption
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
     -- Текущее используемое значение
     usedValue opt_value.date_value%type;
@@ -986,47 +1486,25 @@ is
     );
 
     -- проверяем getDate
-   pkg_TestUtility.compareChar(
-      actualString        =>
-          to_char(
-            opt.getDate(
-              optionShortName     => 'DueDate'
-              , prodValueFlag     => 1
-              , raiseNotFoundFlag => 0
-            )
-            , 'dd.mm.yyyy hh24:mi:ss'
-          )
-      , expectedString    => '05.07.2012 13:01:03'
-      , failMessageText   => 'Неожиданное значение getDate( prod)'
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix => 'Неожиданное значение getDate'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          to_char(
-            opt.getDate(
-              optionShortName     => 'DueDate'
-              , prodValueFlag     => 0
-              , raiseNotFoundFlag => 0
-            )
-            , 'dd.mm.yyyy hh24:mi:ss'
-          )
-      , expectedString    => '03.04.2012 12:00:00'
-      , failMessageText   => 'Неожиданное значение getDate( test)'
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 0
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix => 'Неожиданное значение getDate (nocache)'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          to_char(
-            opt.getDate(
-              optionShortName     => 'DueDate'
-              , raiseNotFoundFlag => 0
-            )
-            , 'dd.mm.yyyy hh24:mi:ss'
-          )
-      , expectedString    =>
-          case isProduction
-            when 1 then '05.07.2012 13:01:03'
-            when 0 then '03.04.2012 12:00:00'
-          end
-      , failMessageText   => 'Неожиданное значение getDate( used)'
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 1
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix => 'Неожиданное значение getDate (cache)'
     );
 
     -- проверяем setDate
@@ -1055,6 +1533,22 @@ is
           to_date( '10.07.2012 01:00:00', 'dd.mm.yyyy hh24:mi:ss')
       , testDateValue         =>
           to_date( '11.04.2012 03:00:00', 'dd.mm.yyyy hh24:mi:ss')
+    );
+
+    -- проверяем кэширование getDate
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 0
+      , prodValue         => '10.07.2012 01:00:00'
+      , testValue         => '11.04.2012 03:00:00'
+      , failMessagePrefix => 'Неожиданное некэшированное значение getDate'
+    );
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 1
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix => 'Неожиданное кэшированное значение getDate'
     );
 
     -- проверяем setDate с instanceName
@@ -1148,6 +1642,23 @@ is
       , failMessageText   =>
           'Неожиданное указанное значение в getDate после удаления значения'
     );
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 1
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix =>
+          'Неожиданное кэшированное значение getDate после его удаления'
+    );
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , raiseNotFoundFlag => 1
+      , useCacheFlag      => 1
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix =>
+          'Неожиданное кэшированное значение getDate( raiseNotFoundFlag) после его удаления'
+    );
 
     -- проверяем setDate( USED)
     opt.setDate(
@@ -1174,25 +1685,12 @@ is
       , testDateValue         =>
           to_date( '25.11.2013 00:00:01', 'dd.mm.yyyy hh24:mi:ss')
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          to_char(
-            opt.getDate( 'DueDate', prodValueFlag => 1, raiseNotFoundFlag => 0)
-            , 'dd.mm.yyyy hh24:mi:ss'
-          )
-      , expectedString    => '20.10.2014 00:00:00'
-      , failMessageText   =>
-          'Не удалось задать промышленную дату с помощью setDate( TEST_PROD)'
-    );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          to_char(
-            opt.getDate( 'DueDate', prodValueFlag => 0, raiseNotFoundFlag => 0)
-            , 'dd.mm.yyyy hh24:mi:ss'
-          )
-      , expectedString    => '25.11.2013 00:00:01'
-      , failMessageText   =>
-          'Не удалось задать тестовую дату с помощью setDate( TEST_PROD)'
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , prodValue         => '20.10.2014 00:00:00'
+      , testValue         => '25.11.2013 00:00:01'
+      , failMessagePrefix =>
+          'Не удалось задать значение с помощью setDate( TEST_PROD)'
     );
 
     -- проверяем setValue
@@ -1322,6 +1820,16 @@ is
           || ' Некорректный результат при отсутствии значения'
     );
 
+    checkGetDate(
+      optionShortName         => 'ForceLoadDate'
+      , prodValue             => null
+      , testValue             => null
+      , raiseNotFoundFlag     => 0
+      , useCacheFlag          => 1
+      , failMessagePrefix     =>
+          'getDate: получение несуществующего параметра с кэшированием и игнорированием ошибки'
+    );
+
     -- параметр без тестового значения ( со значением null)
     opt.addDate(
       optionShortName         => 'ForceLoadDate'
@@ -1376,6 +1884,59 @@ is
           to_date( '29.10.2014 00:00:05', 'dd.mm.yyyy hh24:mi:ss')
     );
 
+    checkGetDate(
+      optionShortName         => 'ForceLoadDate'
+      , prodValue             => null
+      , testValue             => null
+      , raiseNotFoundFlag     => 0
+      , useCacheFlag          => 1
+      , failMessagePrefix     =>
+          'getDate: получение несуществующего на момент кэширования параметра'
+    );
+    checkGetDate(
+      optionShortName         => 'ForceLoadDate'
+      , prodValue             => null
+      , testValue             => null
+      , raiseNotFoundFlag     => 1
+      , useCacheFlag          => 1
+      , execErrorMessageMask  =>
+          '%ORA-20195: Настроечный параметр не найден ( moduleId=%, objectShortName="", objectTypeId=, optionShortName="ForceLoadDate").%'
+      , failMessagePrefix     =>
+          'getDate: получение несуществующего на момент кэширования параметра с выбросом исключения'
+    );
+
+    opt.clearCache(
+      optionShortName => 'ForceLoadDate'
+    );
+    checkGetDate(
+      optionShortName     => 'DueDate'
+      , useCacheFlag      => 1
+      , prodValue         => '05.07.2012 13:01:03'
+      , testValue         => '03.04.2012 12:00:00'
+      , failMessagePrefix =>
+          'Неожиданное кэшированное значение getDate после очистки кэша другого параметра'
+    );
+    checkGetDate(
+      optionShortName         => 'ForceLoadDate'
+      , usedValueFlag         => 1
+      , useCacheFlag          => 1
+      , raiseNotFoundFlag     => 0
+      , valueStr              => '29.10.2014 00:00:05'
+      , failMessagePrefix     =>
+          'getDate: получение параметра после очистки кэша'
+    );
+
+    opt.clearCache();
+    checkGetDate(
+      optionShortName         => 'DueDate'
+      , usedValueFlag         => 1
+      , useCacheFlag          => 1
+      , raiseNotFoundFlag     => 0
+      , valueStr              => ''
+      , failMessagePrefix     =>
+          'Неожиданное значение после очистки кэша набора параметров'
+    );
+
     pkg_TestUtility.endTest();
   exception when others then
     raise_application_error(
@@ -1394,11 +1955,6 @@ is
   */
   procedure testNumberOption
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
     -- Текущее используемое значение
     usedValue opt_value.number_value%type;
@@ -1528,38 +2084,27 @@ is
     );
 
     -- проверяем getNumber
-   pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getNumber(
-            optionShortName     => 'TimeoutSecond'
-            , prodValueFlag     => 1
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    => 3.5
-      , failMessageText   => 'Неожиданное значение getNumber( prod)'
+    checkGetNumber(
+      optionShortName         => 'TimeoutSecond'
+      , prodValue             => 3.5
+      , testValue             => 7.1
+      , failMessagePrefix     => 'Неожиданное значение getNumber'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getNumber(
-            optionShortName     => 'TimeoutSecond'
-            , prodValueFlag     => 0
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    => 7.1
-      , failMessageText   => 'Неожиданное значение getNumber( test)'
+    checkGetNumber(
+      optionShortName         => 'TimeoutSecond'
+      , useCacheFlag          => 0
+      , prodValue             => 3.5
+      , testValue             => 7.1
+      , failMessagePrefix     =>
+          'Неожиданное значение getNumber( useCacheFlag=0)'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getNumber(
-            optionShortName     => 'TimeoutSecond'
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    =>
-          case isProduction
-            when 1 then 3.5
-            when 0 then 7.1
-          end
-      , failMessageText   => 'Неожиданное значение getNumber( used)'
+    checkGetNumber(
+      optionShortName         => 'TimeoutSecond'
+      , useCacheFlag          => 1
+      , prodValue             => 3.5
+      , testValue             => 7.1
+      , failMessagePrefix     =>
+          'Неожиданное значение getNumber( useCacheFlag=1)'
     );
 
     -- проверяем setNumber
@@ -1582,6 +2127,24 @@ is
       optionShortName     => 'TimeoutSecond'
       , numberValue       => 3.8
       , testNumberValue   => 7.8
+    );
+
+    -- проверяем кэширование getNumber
+    checkGetNumber(
+      optionShortName         => 'TimeoutSecond'
+      , useCacheFlag          => 0
+      , prodValue             => 3.8
+      , testValue             => 7.8
+      , failMessagePrefix     =>
+          'Неожиданное некэшированное значение getNumber'
+    );
+    checkGetNumber(
+      optionShortName         => 'TimeoutSecond'
+      , useCacheFlag          => 1
+      , prodValue             => 3.5
+      , testValue             => 7.1
+      , failMessagePrefix     =>
+          'Неожиданное кэшированное значение getNumber'
     );
 
     -- проверяем setNumber с instanceName
@@ -1914,11 +2477,6 @@ is
   procedure testStringOption
   is
 
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
-
     -- Текущее используемое значение
     usedValue opt_value.string_value%type;
 
@@ -2075,38 +2633,25 @@ is
     );
 
     -- проверяем getString
-   pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getString(
-            optionShortName     => 'InfoString'
-            , prodValueFlag     => 1
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    => 'Production info (1)'
-      , failMessageText   => 'Неожиданное значение getString( prod)'
+    checkGetString(
+      optionShortName     => 'InfoString'
+      , prodValue         => 'Production info (1)'
+      , testValue         => 'Test info (1)'
+      , failMessagePrefix => 'Неожиданное значение getString'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getString(
-            optionShortName     => 'InfoString'
-            , prodValueFlag     => 0
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    => 'Test info (1)'
-      , failMessageText   => 'Неожиданное значение getString( test)'
+    checkGetString(
+      optionShortName     => 'InfoString'
+      , useCacheFlag      => 0
+      , prodValue         => 'Production info (1)'
+      , testValue         => 'Test info (1)'
+      , failMessagePrefix => 'Неожиданное значение getString( useCacheFlag=>0)'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getString(
-            optionShortName     => 'InfoString'
-            , raiseNotFoundFlag => 0
-          )
-      , expectedString    =>
-          case isProduction
-            when 1 then 'Production info (1)'
-            when 0 then 'Test info (1)'
-          end
-      , failMessageText   => 'Неожиданное значение getString( used)'
+    checkGetString(
+      optionShortName     => 'InfoString'
+      , useCacheFlag      => 1
+      , prodValue         => 'Production info (1)'
+      , testValue         => 'Test info (1)'
+      , failMessagePrefix => 'Неожиданное значение getString( useCacheFlag=>1)'
     );
 
     -- проверяем setString
@@ -2129,6 +2674,24 @@ is
       optionShortName     => 'InfoString'
       , stringValue       => 'Production info (3)'
       , testStringValue   => 'Test info (3)'
+    );
+
+    -- проверяем кэширование getString
+    checkGetString(
+      optionShortName     => 'InfoString'
+      , useCacheFlag      => 0
+      , prodValue         => 'Production info (3)'
+      , testValue         => 'Test info (3)'
+      , failMessagePrefix =>
+          'Неожиданное некэшированное значение getString'
+    );
+    checkGetString(
+      optionShortName     => 'InfoString'
+      , useCacheFlag      => 1
+      , prodValue         => 'Production info (1)'
+      , testValue         => 'Test info (1)'
+      , failMessagePrefix =>
+          'Неожиданное кэшированное значение getString'
     );
 
     -- проверяем setString с instanceName
@@ -2439,11 +3002,6 @@ is
   procedure testSqlFunction
   is
 
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
-
     nOption integer;
 
   -- testSqlFunction
@@ -2559,11 +3117,6 @@ where
   */
   procedure testChangeOptionData
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
     changeFlag integer;
 
@@ -3155,11 +3708,6 @@ where
   procedure testDateList
   is
 
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
-
     -- Флаг внесения изменений
     changeFlag integer;
 
@@ -3611,123 +4159,126 @@ where
     );
 
     -- getValueList
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList( 'CheckDateList', prodValueFlag => 1)
-      , expectedString    => '2011-09-21 00:00:00'
-      , failMessageText   =>
-          'Неожиданное пром. значение в getValueList'
+    checkGetValueList(
+      optionShortName         => 'CheckDateList'
+      , prodValue             => '2011-09-21 00:00:00'
+      , testValue             => '2003-09-21 00:00:00;2004-07-18 00:00:00'
+      , failMessagePrefix     =>
+          'Неожиданное значение getValueList'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList( 'CheckDateList', prodValueFlag => 0)
-      , expectedString    => '2003-09-21 00:00:00;2004-07-18 00:00:00'
-      , failMessageText   =>
-          'Неожиданное тестовое значение в getValueList'
+    checkGetValueList(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => '2011-09-21 00:00:00'
+      , testValue             => '2003-09-21 00:00:00;2004-07-18 00:00:00'
+      , failMessagePrefix     =>
+          'Неожиданное кэшированное значение getValueList'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList( 'CheckDateList')
-      , expectedString    =>
-          case isProduction
-            when 1 then '2011-09-21 00:00:00'
-            when 0 then '2003-09-21 00:00:00;2004-07-18 00:00:00'
-          end
-      , failMessageText   =>
-          'Неожиданное используемое значение в getValueList'
+    checkGetDate(
+      optionShortName         => 'CheckDateList'
+      , prodValueFlag         => 0
+      , useCacheFlag          => 0
+      , raiseNotFoundFlag     => 0
+      , valueStr              => '21.09.2003 00:00:00'
+      , failMessagePrefix     =>
+          'Некэшированное значение элемента типа дата'
+    );
+    checkGetDate(
+      optionShortName         => 'CheckDateList'
+      , prodValueFlag         => 0
+      , useCacheFlag          => 1
+      , raiseNotFoundFlag     => 0
+      , valueStr              => '21.09.2003 00:00:00'
+      , failMessagePrefix     =>
+          'Кэшированное значение элемента типа дата'
     );
 
     -- getValueListSeparator
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueListSeparator( 'CheckDateList', prodValueFlag => 1)
-      , expectedString    => ';'
-      , failMessageText   =>
-          'Неожиданное пром. значение в getValueListSeparator'
+    checkGetValueListSeparator(
+      optionShortName         => 'CheckDateList'
+      , prodValue             => ';'
+      , testValue             => ';'
+      , failMessagePrefix     =>
+          'Неожиданное значение getValueListSeparator'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueListSeparator( 'CheckDateList', prodValueFlag => 0)
-      , expectedString    => ';'
-      , failMessageText   =>
-          'Неожиданное тестовое значение в getValueListSeparator'
+    checkGetValueListSeparator(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => ';'
+      , testValue             => ';'
+      , failMessagePrefix     =>
+          'Неожиданное кэшированное значение getValueListSeparator'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueListSeparator( 'CheckDateList')
-      , expectedString    => ';'
-      , failMessageText   =>
-          'Неожиданное используемое значение в getValueListSeparator'
+
+    -- getValueCount
+    checkGetValueCount(
+      optionShortName         => 'CheckDateList'
+      , prodValue             => '1'
+      , testValue             => '2'
+      , failMessagePrefix     =>
+          'Неожиданное значение getValueCount'
+    );
+    checkGetValueCount(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => '1'
+      , testValue             => '2'
+      , failMessagePrefix     =>
+          'Неожиданное кэшированное значение getValueCount'
     );
 
     -- получение списка при отсутствии значения параметра
     opt.deleteValue( 'CheckDateList');
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-            , prodValueFlag       => 0
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList:'
-          || ' Некорректный результат при отсутствии значения'
+    checkGetValueList(
+      optionShortName         => 'CheckDateList'
+      , prodValue             => '2011-09-21 00:00:00'
+      , testValue             => ''
+      , failMessagePrefix     =>
+          'Некорректный результат getValueList после удаления исп. значения'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList( USED):'
-          || ' Некорректный результат при отсутствии значения'
+    checkGetValueList(
+      optionShortName         => 'CheckDateList'
+      , prodValue             => '2011-09-21 00:00:00'
+      , testValue             => ''
+      , raiseNotFoundFlag     => 1
+      , failMessagePrefix     =>
+          'Некорректный результат getValueList( raise=1)'
+          || ' после удаления исп. значения'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-            , prodValueFlag       => 0
-            , raiseNotFoundFlag   => 0
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList: raise=0:'
-          || ' Некорректный результат при отсутствии значения'
+
+    -- сохрарение кэшированных значений
+    checkGetValueList(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => '2011-09-21 00:00:00'
+      , testValue             => '2003-09-21 00:00:00;2004-07-18 00:00:00'
+      , failMessagePrefix     =>
+          'Сохранение кэшированных значений getValueList'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-            , raiseNotFoundFlag   => 0
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList( USED): raise=0:'
-          || ' Некорректный результат при отсутствии значения'
+    checkGetDate(
+      optionShortName         => 'CheckDateList'
+      , prodValueFlag         => 0
+      , useCacheFlag          => 1
+      , raiseNotFoundFlag     => 0
+      , valueStr              => '21.09.2003 00:00:00'
+      , failMessagePrefix     =>
+          'Сохранение кэшированных значений: элемента типа дата'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-            , prodValueFlag       => 0
-            , raiseNotFoundFlag   => 1
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList: raise=1:'
-          || ' Некорректный результат при отсутствии значения'
+    checkGetValueListSeparator(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => ';'
+      , testValue             => ';'
+      , failMessagePrefix     =>
+          'Сохранение кэшированных значений getValueListSeparator'
     );
-    pkg_TestUtility.compareChar(
-      actualString        =>
-          opt.getValueList(
-            'CheckDateList'
-            , raiseNotFoundFlag   => 1
-          )
-      , expectedString    => null
-      , failMessageText   =>
-          'getValueList( USED): raise=1:'
-          || ' Некорректный результат при отсутствии значения'
+    checkGetValueCount(
+      optionShortName         => 'CheckDateList'
+      , useCacheFlag          => 1
+      , prodValue             => '1'
+      , testValue             => '2'
+      , failMessagePrefix     =>
+          'Сохранение кэшированных значений getValueCount'
     );
 
     -- addDateList: параметр с общим значением
@@ -3767,11 +4318,6 @@ where
   */
   procedure testNumberList
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
     -- Флаг внесения изменений
     changeFlag integer;
@@ -4271,11 +4817,6 @@ where
   */
   procedure testStringList
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
     -- Флаг внесения изменений
     changeFlag integer;
@@ -4807,11 +5348,6 @@ where
   procedure testObjectOption
   is
 
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
-
     -- Параметры объектов
     ob1 opt_option_list_t;
     ob2 opt_option_list_t;
@@ -5313,11 +5849,6 @@ where
   procedure testOperatorValue
   is
 
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
-
     -- Параметры для операторов
     op1 opt_option_list_t;
     op2 opt_option_list_t;
@@ -5465,11 +5996,6 @@ where
   */
   procedure testEncryption
   is
-
-    -- Опции модуля
-    opt opt_option_list_t := opt_option_list_t(
-      moduleName => Exp_ModuleName
-    );
 
 
 

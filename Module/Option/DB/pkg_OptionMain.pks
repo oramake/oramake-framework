@@ -518,10 +518,6 @@ return integer;
                                 ( 1 да, 0 нет)
                                 ( выбрасывать исключение если отличается от
                                   указанного, по умолчанию не проверяется)
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию null)
   decryptValueFlag            - флаг возврата расшифрованного значения в
                                 случае, если оно хранится в зашифрованном виде
                                 ( 1 да ( по умолчанию), 0 нет)
@@ -535,14 +531,8 @@ return integer;
     указано raiseNotFoundFlag равное 0, то в записи rowData поля
     prod_value_flag и instance_name заполняются значениями, соответствующими
     текущей БД, в остальных полях возвращается null;
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) и значение параметра
-    функции raiseNotFoundFlag равно 0, возвращается null;
-  - в случае, если используется список значений и указан valueIndex, из поля
-    string_value удаляется список значений и значение с указанным индексом
-    сохраняется в одно из полей date_value, number_value или string_value
-    согласно типу значения;
+  - в случае, если значение настроечного параметра не задано и значение
+    параметра функции raiseNotFoundFlag равно 0, возвращается null;
 
   ( <body::getValue>)
 */
@@ -555,7 +545,6 @@ procedure getValue(
   , usedValueFlag integer := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
-  , valueIndex integer := null
   , decryptValueFlag integer := null
   , raiseNotFoundFlag integer := null
 );
@@ -799,6 +788,109 @@ procedure setValue(
 procedure deleteValue(
   valueId integer
   , operatorId integer := null
+);
+
+
+
+/* group: Кэширование параметров */
+
+/* pproc: clearOptionValueCache
+  Очищает кэшированные значения параметров.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - краткое наименование объекта модуля
+  objectTypeId                - Id типа объекта
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                (null без ограничений)
+  optionShortName             - краткое наименование параметра
+                                (null без ограничений (по умолчанию))
+
+  ( <body::clearOptionValueCache>)
+*/
+procedure clearOptionValueCache(
+  moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
+  , usedOperatorId integer
+  , optionShortName varchar2 := null
+);
+
+/* pproc: getValue( useCacheFlag)
+  Возвращает значение для параметра модуля, причем можно разрешить
+  использование кэша значений параметров с помощью useCacheFlag.
+
+  Параметры:
+  rowData                     - данные значения ( возврат)
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - краткое наименование объекта модуля
+  objectTypeId                - Id типа объекта
+  optionShortName             - краткое наименование параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений
+                                ( по умолчанию))
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  usedValueFlag               - флаг возврата используемого в текущей БД
+                                значения
+                                ( 1 да, 0 нет ( по умолчанию))
+  valueTypeCode               - код типа значения параметра
+                                ( выбрасывать исключение если отличается от
+                                  указанного, по умолчанию не проверяется)
+  valueListFlag               - флаг задания для параметра списка значений
+                                ( 1 да, 0 нет)
+                                ( выбрасывать исключение если отличается от
+                                  указанного, по умолчанию не проверяется)
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию null)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+
+  Замечания:
+  - в случае, если тип или флаг использования списка для значения отличается
+    от тех же данных для параметра, то значение игнорируется;
+  - в случае, если параметр найден, а если значение для него не задано
+    (в т.ч. в случае, если индекс значения в valueIndex превышает число
+    значений в списке либо больше 1 если список не используется), то
+    а) заполняется rowData.option_id;
+    б) при запросе используемого значения (usedValueFlag = 1) в записи rowData
+      поля prod_value_flag и instance_name заполняются значениями,
+      соответствующими текущей БД;
+    в) в остальных полях возвращается null;
+  - в случае, если используется список значений и указан valueIndex, из поля
+    string_value удаляется список значений и значение с указанным индексом
+    сохраняется в одно из полей date_value, number_value или string_value
+    согласно типу значения;
+
+  ( <body::getValue( useCacheFlag)>)
+*/
+procedure getValue(
+  rowData out nocopy opt_value%rowtype
+  , moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
+  , optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+  , prodValueFlag integer := null
+  , instanceName varchar2 := null
+  , usedOperatorId integer := null
+  , usedValueFlag integer := null
+  , valueTypeCode varchar2 := null
+  , valueListFlag integer := null
+  , valueIndex integer := null
+  , useCacheFlag integer := null
 );
 
 

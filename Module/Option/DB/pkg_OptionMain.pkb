@@ -59,6 +59,28 @@ currentUsedOperatorId integer := null;
 
 
 
+/* group: Кэш значений параметров */
+
+/* itype: OptionValueCacheKeyT
+  Тип ключа для <optionValueCache>.
+*/
+subtype OptionValueCacheKeyT is varchar2(500);
+
+/* itype: OptionValueCacheT
+  Тип для <optionValueCache>.
+*/
+type OptionValueCacheT is table of
+  opt_value%rowtype
+index by OptionValueCacheKeyT;
+
+/* ivar: optionValueCache
+  Кэш значений настроечных параметров
+  (для функции <getOptionValue( useCacheFlag)>).
+*/
+optionValueCache OptionValueCacheT;
+
+
+
 /* group: Функции */
 
 /* func: getCurrentUsedOperatorId
@@ -1701,10 +1723,6 @@ end getValueCount;
                                 ( 1 да, 0 нет)
                                 ( выбрасывать исключение если отличается от
                                   указанного, по умолчанию не проверяется)
-  valueIndex                  - индекс значения в списке значений
-                                ( начиная с 1, 1 можно также указывать при
-                                получении значения параметра, не использующего
-                                список значений, по умолчанию null)
   decryptValueFlag            - флаг возврата расшифрованного значения в
                                 случае, если оно хранится в зашифрованном виде
                                 ( 1 да ( по умолчанию), 0 нет)
@@ -1718,14 +1736,8 @@ end getValueCount;
     указано raiseNotFoundFlag равное 0, то в записи rowData поля
     prod_value_flag и instance_name заполняются значениями, соответствующими
     текущей БД, в остальных полях возвращается null;
-  - в случае, если значение настроечного параметра не задано ( в т.ч. в
-    случае, если индекс значения в valueIndex превышает число значений в
-    списке либо больше 1 если список не используется) и значение параметра
-    функции raiseNotFoundFlag равно 0, возвращается null;
-  - в случае, если используется список значений и указан valueIndex, из поля
-    string_value удаляется список значений и значение с указанным индексом
-    сохраняется в одно из полей date_value, number_value или string_value
-    согласно типу значения;
+  - в случае, если значение настроечного параметра не задано и значение
+    параметра функции raiseNotFoundFlag равно 0, возвращается null;
 */
 procedure getValue(
   rowData out nocopy opt_value%rowtype
@@ -1736,7 +1748,6 @@ procedure getValue(
   , usedValueFlag integer := null
   , valueTypeCode varchar2 := null
   , valueListFlag integer := null
-  , valueIndex integer := null
   , decryptValueFlag integer := null
   , raiseNotFoundFlag integer := null
 )
@@ -1879,63 +1890,6 @@ is
 
 
 
-  /*
-    Устанавливает данные значения с указанным индексом.
-  */
-  procedure setValueByIndex
-  is
-
-    -- Число заданных значений
-    valueCount integer;
-
-    -- Строка со списком значений
-    valueList opt_value.string_value%type;
-
-  begin
-    if valueIndex < 1 then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Указан некорректный индекс значения.'
-      );
-    end if;
-    valueCount := getValueCount(
-      valueTypeCode   => rowData.value_type_code
-      , listSeparator => rowData.list_separator
-      , stringValue   => rowData.string_value
-    );
-    if coalesce( raiseNotFoundFlag, 1) != 0 and valueIndex > valueCount then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , case when rowData.list_separator is null then
-            'Указан недопустимый индекс значения'
-            || ' ( параметр не использует список значений).'
-          else
-            'Указан индекс значения, превышающий число значений в списке.'
-          end
-      );
-    end if;
-    if valueIndex > valueCount then
-      rowData.date_value := null;
-      rowData.number_value := null;
-      rowData.string_value := null;
-    elsif rowData.list_separator is not null
-        and rowData.string_value is not null
-        then
-      valueList := rowData.string_value;
-      getValueFromList(
-        dateValue       => rowData.date_value
-        , numberValue   => rowData.number_value
-        , stringValue   => rowData.string_value
-        , valueTypeCode => rowData.value_type_code
-        , valueList     => valueList
-        , listSeparator => rowData.list_separator
-        , valueIndex    => valueIndex
-      );
-    end if;
-  end setValueByIndex;
-
-
-
 -- getValue
 begin
   if usedValueFlag = 1 then
@@ -1964,9 +1918,6 @@ begin
           || ').'
       );
     end if;
-    if valueIndex is not null then
-      setValueByIndex();
-    end if;
     if rowData.encryption_flag = 1 and coalesce( decryptValueFlag, 1) != 0 then
       rowData.string_value := getDecryptValue(
         stringValue     => rowData.string_value
@@ -1983,7 +1934,6 @@ begin
     || ', instanceName="' || instanceName || '"'
     || ', usedOperatorId=' || usedOperatorId
     || ', usedValueFlag=' || usedValueFlag
-    || ', valueIndex=' || valueIndex
     || ')'
   );
 exception when others then
@@ -1998,7 +1948,6 @@ exception when others then
         || ', usedValueFlag=' || usedValueFlag
         || ', valueTypeCode="' || valueTypeCode || '"'
         || ', valueListFlag=' || valueListFlag
-        || ', valueIndex=' || valueIndex
         || ', raiseNotFoundFlag=' || raiseNotFoundFlag
         || ').'
       )
@@ -3123,6 +3072,356 @@ exception when others then
     , true
   );
 end deleteValue;
+
+
+
+/* group: Кэширование параметров */
+
+/* ifunc: getOptionValueCacheKey
+  Возвращает ключ для поиска значения настроечного параметра в кэше
+  <optionValueCache>.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - краткое наименование объекта модуля
+  objectTypeId                - Id типа объекта
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений)
+  optionShortName             - краткое наименование параметра
+                                (null для возврата префикса ключей значений
+                                параметров, относящихся к набору параметров
+                                согласно moduleId, objectShortName,
+                                objectTypeId, usedOperatorId)
+  usedValueFlag               - флаг возврата используемого в текущей БД
+                                значения
+                                ( 1 да, 0 нет, null для возврата префикса
+                                ключей значений, относящихся к параметру
+                                optionShortName (по умолчанию))
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений)
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений)
+
+  Возврат:
+  - если не задан optionShortName, то возвращается префикс ключей, относящихся
+    к набору параметров;
+  - если не задан usedValueFlag, то возвращается префикс ключей, относящихся к
+    параметру optionShortName;
+  - иначе возвращается ключ для указанного значения параметра;
+*/
+function getOptionValueCacheKey(
+  moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
+  , usedOperatorId integer
+  , optionShortName varchar2
+  , usedValueFlag integer := null
+  , prodValueFlag integer := null
+  , instanceName varchar2 := null
+)
+return varchar2
+is
+begin
+  return
+    to_char( moduleId) || ':'
+    || objectShortName || ':'
+    || to_char( objectTypeId) || ':'
+    || to_char( usedOperatorId) || ':'
+    || case when optionShortName is not null then
+        optionShortName || ':'
+        || case when usedValueFlag is not null then
+            to_char( usedValueFlag)
+            || ':' || to_char( prodValueFlag)
+            || ':' || upper( instanceName)
+          end
+      end
+  ;
+end getOptionValueCacheKey;
+
+/* proc: clearOptionValueCache
+  Очищает кэшированные значения параметров.
+
+  Параметры:
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - краткое наименование объекта модуля
+  objectTypeId                - Id типа объекта
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                (null без ограничений)
+  optionShortName             - краткое наименование параметра
+                                (null без ограничений (по умолчанию))
+*/
+procedure clearOptionValueCache(
+  moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
+  , usedOperatorId integer
+  , optionShortName varchar2 := null
+)
+is
+
+  -- Префикс удаляемых значений
+  cacheKeyPrefix OptionValueCacheKeyT;
+
+  -- Ключ кэшированного значения
+  cacheKey OptionValueCacheKeyT;
+
+begin
+  cacheKeyPrefix := getOptionValueCacheKey(
+    moduleId            => moduleId
+    , objectShortName   => objectShortName
+    , objectTypeId      => objectTypeId
+    , usedOperatorId    => usedOperatorId
+    , optionShortName   => optionShortName
+  );
+  cacheKey := cacheKeyPrefix;
+  loop
+    cacheKey := optionValueCache.next( cacheKey);
+    exit when cacheKey is null or instr( cacheKey, cacheKeyPrefix) != 1;
+    optionValueCache.delete( cacheKey);
+    logger.trace(
+      'clearOptionValueCache: clear cache for key: "' || cacheKey || '"'
+    );
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при очистке кэшированных значений параметров ('
+        || ' moduleId=' || moduleId
+        || ', objectShortName="' || objectShortName || '"'
+        || ', objectTypeId=' || objectTypeId
+        || ', usedOperatorId=' || usedOperatorId
+        || ', optionShortName="' || optionShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end clearOptionValueCache;
+
+/* proc: getValue( useCacheFlag)
+  Возвращает значение для параметра модуля, причем можно разрешить
+  использование кэша значений параметров с помощью useCacheFlag.
+
+  Параметры:
+  rowData                     - данные значения ( возврат)
+  moduleId                    - Id модуля, к которому относится параметр
+  objectShortName             - краткое наименование объекта модуля
+  objectTypeId                - Id типа объекта
+  optionShortName             - краткое наименование параметра
+  raiseNotFoundFlag           - выбрасывать ли исключение в случае отсутствия
+                                параметра ( 1 да ( по умолчанию), 0 нет)
+  prodValueFlag               - флаг использования значения только в
+                                промышленных ( либо тестовых) БД
+                                ( 1 только в промышленных БД, 0 только в
+                                тестовых БД, null без ограничений
+                                ( по умолчанию))
+  instanceName                - имя экземпляра БД, в которой может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  usedOperatorId              - Id оператора, для которого может
+                                использоваться значение
+                                ( null без ограничений ( по умолчанию))
+  usedValueFlag               - флаг возврата используемого в текущей БД
+                                значения
+                                ( 1 да, 0 нет ( по умолчанию))
+  valueTypeCode               - код типа значения параметра
+                                ( выбрасывать исключение если отличается от
+                                  указанного, по умолчанию не проверяется)
+  valueListFlag               - флаг задания для параметра списка значений
+                                ( 1 да, 0 нет)
+                                ( выбрасывать исключение если отличается от
+                                  указанного, по умолчанию не проверяется)
+  valueIndex                  - индекс значения в списке значений
+                                ( начиная с 1, 1 можно также указывать при
+                                получении значения параметра, не использующего
+                                список значений, по умолчанию null)
+  useCacheFlag                - использовать кэширование (значение берется из
+                                кэша, а при отсутствии в кэше сохраняется в нем)
+                                (1 да, 0 нет ( по умолчанию))
+
+  Замечания:
+  - в случае, если тип или флаг использования списка для значения отличается
+    от тех же данных для параметра, то значение игнорируется;
+  - в случае, если параметр найден, а если значение для него не задано
+    (в т.ч. в случае, если индекс значения в valueIndex превышает число
+    значений в списке либо больше 1 если список не используется), то
+    а) заполняется rowData.option_id;
+    б) при запросе используемого значения (usedValueFlag = 1) в записи rowData
+      поля prod_value_flag и instance_name заполняются значениями,
+      соответствующими текущей БД;
+    в) в остальных полях возвращается null;
+  - в случае, если используется список значений и указан valueIndex, из поля
+    string_value удаляется список значений и значение с указанным индексом
+    сохраняется в одно из полей date_value, number_value или string_value
+    согласно типу значения;
+*/
+procedure getValue(
+  rowData out nocopy opt_value%rowtype
+  , moduleId integer
+  , objectShortName varchar2
+  , objectTypeId integer
+  , optionShortName varchar2
+  , raiseNotFoundFlag integer := null
+  , prodValueFlag integer := null
+  , instanceName varchar2 := null
+  , usedOperatorId integer := null
+  , usedValueFlag integer := null
+  , valueTypeCode varchar2 := null
+  , valueListFlag integer := null
+  , valueIndex integer := null
+  , useCacheFlag integer := null
+)
+is
+
+  -- Id параметра
+  optionId integer;
+
+  -- Ключ кэшированного значения (null если кэш не используется)
+  cacheKey OptionValueCacheKeyT;
+
+  -- Флаг возврата используемого в текущей БД значения
+  usedFlag integer := coalesce( usedValueFlag, 0);
+
+
+
+  /*
+    Устанавливает данные значения с указанным индексом.
+  */
+  procedure setValueByIndex
+  is
+
+    -- Число заданных значений
+    valueCount integer;
+
+    -- Строка со списком значений
+    valueList opt_value.string_value%type;
+
+  begin
+    if valueIndex < 1 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Указан некорректный индекс значения.'
+      );
+    end if;
+    valueCount := getValueCount(
+      valueTypeCode   => rowData.value_type_code
+      , listSeparator => rowData.list_separator
+      , stringValue   => rowData.string_value
+    );
+    if valueIndex > valueCount then
+      rowData.date_value := null;
+      rowData.number_value := null;
+      rowData.string_value := null;
+    elsif rowData.list_separator is not null
+        and rowData.string_value is not null
+        then
+      valueList := rowData.string_value;
+      getValueFromList(
+        dateValue       => rowData.date_value
+        , numberValue   => rowData.number_value
+        , stringValue   => rowData.string_value
+        , valueTypeCode => rowData.value_type_code
+        , valueList     => valueList
+        , listSeparator => rowData.list_separator
+        , valueIndex    => valueIndex
+      );
+    end if;
+  end setValueByIndex;
+
+
+
+-- getValue
+begin
+  if useCacheFlag = 1 then
+    cacheKey := getOptionValueCacheKey(
+      moduleId            => moduleId
+      , objectShortName   => objectShortName
+      , objectTypeId      => objectTypeId
+      , usedOperatorId    => usedOperatorId
+      , optionShortName   => optionShortName
+      , usedValueFlag     => usedFlag
+      , prodValueFlag     => prodValueFlag
+      , instanceName      => instanceName
+    );
+  end if;
+
+  if cacheKey is null or not optionValueCache.exists( cacheKey) then
+    optionId := getOptionId(
+      moduleId            => moduleId
+      , objectShortName   => objectShortName
+      , objectTypeId      => objectTypeId
+      , optionShortName   => optionShortName
+      , raiseNotFoundFlag => raiseNotFoundFlag
+    );
+    if optionId is not null then
+      getValue(
+        rowData                 => rowData
+        , optionId              => optionId
+        , prodValueFlag         => prodValueFlag
+        , instanceName          => instanceName
+        , usedOperatorId        => usedOperatorId
+        , usedValueFlag         => usedFlag
+        , valueTypeCode         => valueTypeCode
+        , valueListFlag         => valueListFlag
+        , raiseNotFoundFlag     => 0
+      );
+      if rowData.option_id is null then
+        rowData.option_id := optionId;
+      end if;
+    else
+      rowData := null;
+    end if;
+    if cacheKey is not null then
+      optionValueCache( cacheKey) := rowData;
+      logger.trace(
+        'getValue: save to cache:'
+        || ' value_id=' || rowData.value_id
+        || ', option_id=' || rowData.option_id
+        || ' (cacheKey="' || cacheKey || '")'
+      );
+    end if;
+  else
+    rowData := optionValueCache( cacheKey);
+    -- Дополнительно проверяем, т.к. кэшируемая функция могла быть вызвана
+    -- повторно со значением raiseNotFoundFlag = 1 вместо 0
+    if rowData.option_id is null and coalesce( raiseNotFoundFlag, 1) != 0 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Настроечный параметр не найден ('
+          || ' moduleId=' || moduleId
+          || ', objectShortName="' || objectShortName || '"'
+          || ', objectTypeId=' || objectTypeId
+          || ', optionShortName="' || optionShortName || '"'
+          || ').'
+      );
+    end if;
+    logger.trace(
+      'getValue: get from cache:'
+      || ' value_id=' || rowData.value_id
+      || ', option_id=' || rowData.option_id
+      || ' (cacheKey="' || cacheKey || '")'
+    );
+  end if;
+  if valueIndex is not null then
+    setValueByIndex();
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении значения для параметра модуля ('
+        || ' useCacheFlag=' || useCacheFlag
+        || ', valueIndex=' || valueIndex
+        || ').'
+      )
+    , true
+  );
+end getValue;
 
 
 

@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Option
-SubTitle: Версия 3.3.0
+SubTitle: Версия 3.4.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -252,6 +252,7 @@ Group: Индекс  {
 
    Group: Закрытые объявления  {
 
+      Type internal Index: Типы
       Constant internal Index: Константы
       Variable internal Index: Переменные
       }  # Group: Закрытые объявления
