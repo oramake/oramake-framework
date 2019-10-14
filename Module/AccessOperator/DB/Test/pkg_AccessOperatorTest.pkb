@@ -91,7 +91,9 @@ is
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
-          'Ошибка при создании тестового оператора.'
+          'Ошибка при создании тестового оператора ('
+          || 'operatorLogin="' || operatorLogin || '"'
+          || ').'
         )
       , true
     );
