@@ -71,7 +71,10 @@ Install/Schema/Last/v_sch_batch.vw.$(lu): \
   pkg_SchedulerMain.pks.$(lu) \
 
 
+
 Install/Schema/Last/v_sch_operator_batch.vw.$(lu): \
   Install/Schema/Last/v_sch_role_privilege.vw.$(lu) \
+  Install/Schema/Last/v_sch_batch.vw.$(lu)
+
 
 
