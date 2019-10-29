@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Show/option.sql"></a>Show/<wbr>option.sql</h1><div class=CBody><p>Показывает настроечные параметры указанного модуля ( включая параметры пакетных заданий и т.д.).</p><h4 class=CHeading>Параметры</h4><table border=0 cellspacing=0 cellpadding=0 class=CDescriptionList><tr><td class=CDLEntry>findModuleString</td><td class=CDLDescription>строка для поиска модуля ( может совпадать с названием или путем к корневому каталогу модуля) ( шаблон для like без учета регистра)</td></tr></table></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Show/option.sql"></a>Show/<wbr>option.sql</h1><div class=CBody><p>Показывает настроечные параметры с текущими используемыми значениями (из <a href="../Install/Schema/Last/v_opt_option_value-vw.html#v_opt_option_value" class=LDatabaseView id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">v_opt_option_value</a>).</p><h4 class=CHeading>Параметры</h4><table border=0 cellspacing=0 cellpadding=0 class=CDescriptionList><tr><td class=CDLEntry>findString</td><td class=CDLDescription>Строка для отбора параметров (шаблон для like без учета регистра)</td></tr></table><h4 class=CHeading>Для отображения параметра досточно выполнения любого из условий</h4><ul><li>имя параметра (option_short_name) подходит под findString (сравнение по like без учета регистра);</li><li>имя модуля (module_name) или имя объекта (object_short_name) или имя типа объекта (object_type_short_name) равно findString (без учета регистра);</li><li>в findString присутствует точка и строка вида &ldquo;&lt;module_name&gt;.&lt;object_short_name&gt;.&lt;object_type_short_name&gt;.&lt;option_short_name&gt;&rdquo; подходит под findString (по like без учета регистра, при этом если findString начинается/заканчивается на точку, то в начало/конец строки findString добавляется символ &ldquo;%&rdquo;, если указано две точки подряд, то между ними вставляется символ &ldquo;%&rdquo;, подстрока &ldquo;.-.&rdquo;&nbsp; заменяется на &ldquo;...&rdquo;);</li></ul><h4 class=CHeading>Примеры</h4><ul><li>показать параметры с именами, оканчивающимися на &ldquo;DbLink&rdquo;</li></ul><blockquote><pre>SQL&gt; @option.sql %DbLink</pre></blockquote><ul><li>показать параметры пакетного задания &ldquo;ClearOldLog&rdquo;</li></ul><blockquote><pre>SQL&gt; @option.sql ClearOldLog</pre></blockquote><p>или более точно</p><blockquote><pre>SQL&gt; @option.sql .ClearOldLog.batch.</pre></blockquote><ul><li>показать параметры пакетных заданий с именами, содержащими &ldquo;Mail&rdquo;</li></ul><blockquote><pre>SQL&gt; @option.sql .%Mail%.batch.</pre></blockquote><ul><li>показать параметры модуля &ldquo;Scheduler&rdquo;</li></ul><blockquote><pre>SQL&gt; @option.sql scheduler</pre></blockquote><p>или более точно</p><blockquote><pre>SQL&gt; @option.sql scheduler.</pre></blockquote><ul><li>показать параметры модуля &ldquo;Scheduler&rdquo;, не относящиеся к объектам (в т.ч.&nbsp; пакетным заданиям)</li></ul><blockquote><pre>SQL&gt; @option.sql scheduler.-.</pre></blockquote></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([29, 31, 30, 28], 36);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CDatabaseView>Настроечные параметры с текущими используемыми значениями.</div></div><!--END_ND_TOOLTIPS-->
 
 
 
