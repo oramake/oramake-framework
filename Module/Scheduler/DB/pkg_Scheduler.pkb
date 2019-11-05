@@ -5,6 +5,13 @@ create or replace package body pkg_Scheduler is
 
 /* group:  онстанты */
 
+/* const: BatchRepeat_Second
+  »нтервал повторного запуска пакетного задани€ в случае прерывани€ его
+  выполнени€ (например, с помощью "alter system kill session"). «адаетс€ в
+  секундах, отсчитываетс€ от начала выполнени€ задани€.
+*/
+BatchRepeat_Second constant integer := 60;
+
 /* const: Default_RunDate
   ƒата запуска пакета, используема€ по умолчанию при отсутствии расписани€.
 */
@@ -474,7 +481,8 @@ begin
     , start_date => newDate
     , enabled => true
     , comments => 'Scheduler: ' || rec.batch_short_name
-    , repeat_interval => 'sysdate + 1000000'
+    , repeat_interval =>
+        'sysdate + ' || to_char( BatchRepeat_Second) || '/24/60/60'
     );
     dbms_scheduler.set_attribute(
       name => oracleJobName

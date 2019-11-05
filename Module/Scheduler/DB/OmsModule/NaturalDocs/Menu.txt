@@ -1,9 +1,8 @@
 Format: 1.5
 
 
-# You can add a title and sub-title to your menu like this:
-# Title: [project name]
-# SubTitle: [subtitle]
+Title: Scheduler
+SubTitle: Версия 5.2.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
