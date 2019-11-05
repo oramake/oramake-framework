@@ -59,8 +59,12 @@ select
   , bo.batch_operation_label
   , bo.batch_sessionid
   , bo.execution_level
-  , bo.start_time_utc
-  , bo.finish_time_utc
+  , from_tz( bo.start_time_utc, '00:00')
+    at time zone to_char( systimestamp, 'tzh:tzm')
+    as start_time
+  , from_tz( bo.finish_time_utc, '00:00')
+    at time zone to_char( systimestamp, 'tzh:tzm')
+    as finish_time
   , trim(
       rtrim( rtrim(
         ltrim( to_char( bo.finish_time_utc - bo.start_time_utc), '+0')
