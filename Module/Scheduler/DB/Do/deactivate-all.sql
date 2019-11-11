@@ -3,7 +3,7 @@
 --
 -- (см. <pkg_Scheduler::deactivateBatchAll>)
 
-declare
+begin
   pkg_Scheduler.deactivateBatchAll();
 end;
 /

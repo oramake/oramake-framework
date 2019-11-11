@@ -9,6 +9,8 @@ group: 5.2.0 ( 2019-05-08)
 
 [*] Do not change JOB_QUEUE_PROCESSES parameter.
 
+[!] Restart batch after kill of session (not work since version 5.0.0).
+
 
 
 group: 5.1.0 ( 2019-04-16)

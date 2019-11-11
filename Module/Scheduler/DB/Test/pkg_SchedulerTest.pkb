@@ -34,6 +34,668 @@ outputFlag number(1,0) not null :=
 
 /* group: Функции */
 
+/* ifunc: getBatchId
+  Возвращает Id пакетного задания.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  raiseNotFoundFlag           - Флаг исключения при отсутствии батча
+                                (1 выбрасывать (по умолчанию), 0 возвращать
+                                null)
+*/
+function getBatchId(
+  batchShortName varchar2
+  , raiseNotFoundFlag integer := null
+)
+return integer
+is
+
+  batchId integer;
+
+begin
+  select
+    max( b.batch_id)
+  into batchId
+  from
+    sch_batch b
+  where
+    b.batch_short_name = batchShortName
+  ;
+  if batchId is null and coalesce( raiseNotFoundFlag, 1) != 0 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Пакетное задание не найдено.'
+    );
+  end if;
+  return batchId;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении Id батча ('
+        || 'batchShortName="' || batchShortName || '"'
+        || ').'
+      )
+    , true
+  );
+end getBatchId;
+
+/* iproc: checkLog
+  Проверяет лог операции над пакетным заданием.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  batchOperationLabel         - Метка операции
+  expectedMessageMask         - Маска сообщения, которое должно быть в логе
+  failMessageText             - Сообщение о неуспешном результате теста
+                                (можно использовать макрос $(waitSecond))
+  waitSecond                  - Время ожидания появления сообщения
+                                (по умолчанию без ожидания)
+*/
+procedure checkLog(
+  batchShortName varchar2
+  , batchOperationLabel varchar2
+  , expectedMessageMask varchar2
+  , failMessageText varchar2
+  , waitSecond number := null
+)
+is
+
+  endTime timestamp with time zone :=
+    systimestamp + numtodsinterval( waitSecond, 'SECOND')
+  ;
+
+  batchId integer;
+
+  existsFlag integer;
+
+-- checkLog
+begin
+  batchId := getBatchId( batchShortName);
+  loop
+    select
+      count(*)
+    into existsFlag
+    from
+      v_lg_context_change_log ccl
+      inner join lg_log lg
+        on lg.sessionid = ccl.sessionid
+          and lg.log_id >= ccl.open_log_id
+          and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
+    where
+      ccl.log_id =
+        (
+        select
+          max( bo.start_log_id)
+        from
+          v_sch_batch_operation bo
+        where
+          bo.batch_operation_label = batchOperationLabel
+          and bo.batch_id = batchId
+        )
+      and lg.message_text like expectedMessageMask escape '\'
+      and rownum <= 1
+    ;
+    exit when existsFlag = 1 or coalesce( systimestamp >= endTime, true);
+    dbms_lock.sleep(1);
+  end loop;
+  if existsFlag = 0 then
+    pkg_TestUtility.failTest(
+      replace( failMessageText, '$(waitSecond)', waitSecond)
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при проверке лога операции ('
+        || 'batchShortName="' || batchShortName || '"'
+        || ', batchOperationLabel="' || batchOperationLabel || '"'
+        || ', expectedMessageMask="' || expectedMessageMask || '"'
+        || ', failMessageText="' || failMessageText || '"'
+        || ').'
+      )
+    , true
+  );
+end checkLog;
+
+/* iproc: checkBatchSession
+  Проверяет наличие/отсутствие сессии у батча.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  existsFlag                  - Флаг наличия или отсутствия сессии
+                                (1 есть (по умолчанию), 0 нет)
+  waitSecond                  - Максимальное время ожидания в секундах
+                                (по умолчанию без ожидания)
+*/
+procedure checkBatchSession(
+  batchShortName varchar2
+  , existsFlag integer := null
+  , waitSecond number := null
+)
+is
+
+  endTime timestamp with time zone :=
+    systimestamp + numtodsinterval( waitSecond, 'SECOND')
+  ;
+
+  rec v_sch_batch%rowtype;
+
+-- checkBatchSession
+begin
+  loop
+    select
+      b.*
+    into rec
+    from
+      v_sch_batch b
+    where
+      b.batch_short_name = batchShortName
+    ;
+    exit when
+      coalesce( existsFlag, 1)
+      = case when rec.sid is not null then 1 else 0 end
+    ;
+    if coalesce( systimestamp >= endTime, true) then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , case existsFlag
+            when 0 then
+              'Пакетное задание выполняется ('
+              || 'sid=' || rec.sid
+              || ', serial#=' || rec.serial#
+              || ').'
+            else
+              'Не найдена сессия пакетного задания.'
+          end
+      );
+    end if;
+    dbms_lock.sleep(1);
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при проверке сессии батча ('
+        || 'batchShortName="' || batchShortName || '"'
+        || ', existsFlag=' || existsFlag
+        || ', waitSecond=' || waitSecond
+        || ').'
+      )
+    , true
+  );
+end checkBatchSession;
+
+/* iproc: killBatchSession
+  Прерывает выполнение сессии батча.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  waitSecond                  - Максимальное время ожидания завершения сессии
+                                в секундах
+                                (по умолчанию без ожидания)
+*/
+procedure killBatchSession(
+  batchShortName varchar2
+  , waitSecond number := null
+)
+is
+
+  endTime timestamp with time zone :=
+    systimestamp + numtodsinterval( waitSecond, 'SECOND')
+  ;
+
+  rec v_sch_batch%rowtype;
+  existsFlag integer;
+  killError varchar2(4000);
+
+-- killBatchSession
+begin
+  select
+    b.*
+  into rec
+  from
+    v_sch_batch b
+  where
+    b.batch_short_name = batchShortName
+  ;
+  if rec.sid is null then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Пакетное задание не выполняется (нет сессии).'
+    );
+  end if;
+  begin
+    execute immediate
+      'alter system kill session '''
+        || rec.sid || ',' || rec.serial#
+        || ''' immediate'
+    ;
+  exception when others then
+    killError := logger.getErrorStack();
+  end;
+  logger.info(
+    'Kill batch session ' || rec.sid || ',' || rec.serial# || ' ('
+    || 'batch_short_name="' || batchShortName || '"'
+    || ', batch_id=' || rec.batch_id
+    || ')'
+    || case when killError is not null then
+        ' with errors:'
+        || chr(10) || killError
+      end
+  );
+  loop
+    select
+      count(*)
+    into existsFlag
+    from
+      v$session ss
+    where
+      ss.sid = rec.sid
+      and ss.serial# = rec.serial#
+    ;
+    exit when existsFlag = 0;
+    if coalesce( systimestamp >= endTime, true) then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , 'Сессия батча продолжает работать ('
+          || 'sid=' || rec.sid
+          || ', serial#=' || rec.serial#
+          || ').'
+          || case when killError is not null then
+              chr(10) || 'При прерывании сессии были ошибки:'
+              || chr(10) || killError
+            end
+      );
+    end if;
+    dbms_lock.sleep(1);
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при прерывании сессии батча ('
+        || 'batchShortName="' || batchShortName || '"'
+        || ', waitSecond=' || waitSecond
+        || ').'
+      )
+    , true
+  );
+end killBatchSession;
+
+/* iproc: execOperation
+  Выполняет операцию над пакетным заданием.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  operationCode               - Код операции
+  waitSecond                  - Максимальное время ожидания в секундах
+                                (по умолчанию 60 секунд)
+  nextDate                    - Дата следующего запуска для SET_NEXT_DATE
+                                (по умолчанию немедленно)
+*/
+procedure execOperation(
+  batchShortName varchar2
+  , operationCode varchar2
+  , waitSecond number := 60
+  , nextDate date := null
+)
+is
+
+  operatorId integer := pkg_Operator.getCurrentUserId();
+
+-- execOperation
+begin
+  case operationCode
+    when 'ACTIVATE' then
+      pkg_Scheduler.activateBatch(
+        batchId       => getBatchId( batchShortName)
+        , operatorId  => operatorId
+      );
+      commit;
+    when 'DEACTIVATE' then
+      pkg_Scheduler.deactivateBatch(
+        batchId       => getBatchId( batchShortName)
+        , operatorId  => operatorId
+      );
+      commit;
+    when 'SET_NEXT_DATE' then
+      pkg_Scheduler.setNextDate(
+        batchId       => getBatchId( batchShortName)
+        , operatorId  => operatorId
+        , nextDate    => coalesce( nextDate, sysdate)
+      );
+      commit;
+    when 'START' then
+      checkBatchSession( batchShortName, existsFlag => 0);
+      execOperation( batchShortName, 'ACTIVATE');
+      execOperation( batchShortName, 'SET_NEXT_DATE');
+      checkBatchSession(
+        batchShortName, existsFlag => 1, waitSecond => waitSecond
+      );
+    else
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Неизвестный код операции.'
+      );
+  end case;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при выполнении операции ('
+        || 'batchShortName="' || batchShortName || '"'
+        || ', operationCode="' || operationCode || '"'
+        || ').'
+      )
+    , true
+  );
+end execOperation;
+
+/* proc: testBatchOperation
+  Тестирует корректность выполнения операций над пакетными заданиями.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                (по умолчанию без ограничений)
+  saveDataFlag                - Флаг сохранения тестовых данных
+                                (1 да, 0 нет (по умолчанию))
+*/
+procedure testBatchOperation(
+  testCaseNumber integer := null
+  , saveDataFlag integer := null
+)
+is
+
+  -- Порядковый номер очередного тестового случая
+  checkCaseNumber integer := 0;
+
+  -- Описание проверяемого тестового случая
+  cinfo varchar2(200);
+
+  -- Тестовый батч
+  batchSName sch_batch.batch_short_name%type :=
+    'TestBatchOperation'
+  ;
+
+  -- Параметры тестового батча
+  bopt sch_batch_option_t;
+
+
+
+  /*
+    Возвращает истину, если тестовый случай не должен проверяться, иначе
+    логирует информацию о начале проверки.
+  */
+  function skipCheckCase(
+    caseDescription varchar2
+    , nextCaseUsedCount integer := null
+  )
+  return boolean
+  is
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return true;
+    end if;
+    cinfo :=
+      'CASE ' || to_char( checkCaseNumber)
+      || ' "' || caseDescription || '": '
+    ;
+    logger.info( '*** ' || cinfo);
+    return false;
+  end skipCheckCase;
+
+
+
+  /*
+    Очищает тестовые данные.
+  */
+  procedure clearTestData
+  is
+
+    cursor batchCur is
+      select
+        b.*
+      from
+        v_sch_batch b
+      where
+        b.batch_short_name in (
+          batchSName
+        )
+      order by
+        b.batch_short_name
+    ;
+
+    operatorId integer := pkg_Operator.getCurrentUserId();
+
+  begin
+    for rec in batchCur loop
+      if rec.sid is not null then
+        pkg_Scheduler.abortBatch(
+          batchId       => rec.batch_id
+          , operatorId  => operatorId
+        );
+        commit;
+      end if;
+      if rec.oracle_job_id is not null then
+        pkg_Scheduler.deactivateBatch(
+          batchId       => rec.batch_id
+          , operatorId  => operatorId
+        );
+        commit;
+      end if;
+      pkg_SchedulerLoad.deleteBatch(
+        batchShortName => batchSName
+      );
+      commit;
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при очистке тестовых данных.'
+        )
+      , true
+    );
+  end clearTestData;
+
+
+
+  /*
+    Подготавливает данные для теста.
+  */
+  procedure prepareTestData
+  is
+
+
+
+    /*
+      Загружает батч.
+    */
+    procedure loadBatch(
+      batchShortName varchar2 := batchSName
+      , moduleName varchar2 := pkg_ModuleInfoTest.getTestModuleName( 'Module1')
+      , jobShortName varchar2 := 'process'
+    )
+    is
+    begin
+      pkg_SchedulerLoad.loadJob(
+        moduleName                => moduleName
+        , jobShortName            => jobShortName
+        , jobName                 => 'Тестовый job'
+        , description             => 'Тестовый job'
+        , batchShortName          => batchShortName
+        , jobWhat                 =>
+'declare
+  endDate date :=
+    sysdate + pkg_Scheduler.getContextNumber( ''WorktimeSecond'') / 86400
+  ;
+begin
+  loop
+    exit when coalesce( sysdate >= endDate, true);
+    dbms_lock.sleep( 1);
+  end loop;
+end;'
+      );
+      pkg_SchedulerLoad.loadBatch(
+        moduleName            => moduleName
+        , batchShortName      => batchShortName
+        , updateScheduleFlag  => 1
+        , updateOptionValue   => 1
+        , xmlText             =>
+'<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="' || batchShortName || '">
+  <name>Тестовый батч модуля Scheduler (создан pkg_SchedulerTest.testBatchOperation)</name>
+  <batch_config>
+    <retry_count>5</retry_count>
+    <retry_interval>30</retry_interval>
+    <schedule>
+      <name>every day at 04:18</name>
+      <interval type="hh24">
+        <value>04</value>
+      </interval>
+      <interval type="mi">
+        <value>18</value>
+      </interval>
+    </schedule>
+    <option short_name="RunLabel" type="string" name="Метка запуска"/>
+    <option short_name="WorktimeSecond" type="number" name="Время работы"/>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="process">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">error</condition>
+    <condition id="3">skip</condition>
+  </content>
+</batch>'
+      );
+      commit;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при загрузке батча ('
+            || 'batchShortName="' || batchShortName || '"'
+            || ').'
+          )
+        , true
+      );
+    end loadBatch;
+
+
+
+  -- prepareTestData
+  begin
+    clearTestData();
+    loadBatch();
+    bopt := sch_batch_option_t( batchSName);
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при подготовке данных для теста.'
+        )
+      , true
+    );
+  end prepareTestData;
+
+
+
+  /*
+    Проверка рестарта батча после kill session.
+  */
+  procedure checkRestartAfterKill
+  is
+
+    restartLabel varchar2(100) :=
+      'RestartAfterKill:' || dbms_utility.get_time()
+    ;
+
+    btr v_sch_batch%rowtype;
+
+  begin
+    if skipCheckCase( 'Перезапуск батча после прерывания (kill) сессии') then
+      return;
+    end if;
+    bopt.setNumber( 'WorktimeSecond', 120);
+    commit;
+    execOperation( batchSName, 'START');
+    bopt.setNumber( 'WorktimeSecond', 0);
+    bopt.setString( 'RunLabel', restartLabel);
+    commit;
+    killBatchSession( batchSName, waitSecond => 60);
+    checkLog(
+      batchShortName        => batchSName
+      , batchOperationLabel => pkg_SchedulerMain.Exec_BatchMsgLabel
+      , expectedMessageMask => '%RunLabel := "' || restartLabel || '"%'
+      , waitSecond          => 120
+      , failMessageText     =>
+          cinfo || 'Батч не был перезапущен'
+          || ' (время ожидания: $(waitSecond) секунд)'
+    );
+    checkBatchSession( batchSName, existsFlag => 0, waitSecond => 10);
+    select
+      bt.*
+    into btr
+    from
+      v_sch_batch bt
+    where
+      bt.batch_short_name = batchSName
+    ;
+    pkg_TestUtility.compareChar(
+      actualString      =>
+          to_char( btr.next_date, 'dd.mm.yyyy hh24:mi:ss tzh:tzm')
+      , expectedString  =>
+          to_char( trunc(sysdate + 1), 'dd.mm.yyyy')
+          || ' 04:18:00'
+          || to_char( systimestamp, ' tzh:tzm')
+      , failMessageText =>
+          cinfo || 'Дата следующего запуска установлена не по расписанию'
+    );
+    execOperation( batchSName, 'DEACTIVATE');
+  exception when others then
+    rollback;
+    pkg_TestUtility.failTest(
+      cinfo || 'Ошибка при проверке тестового случая:'
+      || chr(10) || logger.getErrorStack()
+    );
+  end checkRestartAfterKill;
+
+
+
+-- testBatchOperation
+begin
+  prepareTestData();
+  pkg_TestUtility.beginTest( 'batch operation');
+  checkRestartAfterKill();
+  if coalesce( saveDataFlag, 0) != 1 then
+    clearTestData();
+  end if;
+  pkg_TestUtility.endTest();
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при тестировании выполнения операций над батчами ('
+        || ' testCaseNumber=' || testCaseNumber
+        || ', saveDataFlag=' || saveDataFlag
+        || ').'
+      )
+    , true
+  );
+end testBatchOperation;
 
 /* proc: setOutputFlag
   Установка флаг вывода в буфер dbms_output.

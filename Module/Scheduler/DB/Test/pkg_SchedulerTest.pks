@@ -52,6 +52,22 @@ WaitAbsentSession_OperCode constant varchar2(20) := 'SESSION_ABSENT';
 
 /* group: Функции */
 
+/* pproc: testBatchOperation
+  Тестирует корректность выполнения операций над пакетными заданиями.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                (по умолчанию без ограничений)
+  saveDataFlag                - Флаг сохранения тестовых данных
+                                (1 да, 0 нет (по умолчанию))
+
+  ( <body::testBatchOperation>)
+*/
+procedure testBatchOperation(
+  testCaseNumber integer := null
+  , saveDataFlag integer := null
+);
+
 /* pproc: setOutputFlag
   Установка флаг вывода в буфер dbms_output.
 
