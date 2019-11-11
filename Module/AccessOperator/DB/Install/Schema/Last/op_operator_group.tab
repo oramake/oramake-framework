@@ -1,33 +1,56 @@
 -- table: op_operator_group
--- Группы операторов.
+-- Группы операторов
 
 create table op_operator_group
 (
-  operator_id                     integer                             not null
-  , group_id                      number                              not null
-  , date_ins                      date                default sysdate not null
-  , operator_id_ins               integer                             not null
+  operator_id integer not null
+  , group_id number not null
+  , user_access_flag number(1) default 1 not null
+  , grant_option_flag number(1) default 0 not null
+  , date_ins date default sysdate not null
+  , operator_id_ins integer not null
   , constraint op_operator_group_pk primary key
       ( operator_id, group_id)
     using index tablespace
       &indexTablespace
+  , constraint op_operator_group_ck_access_fl check
+      (
+        (
+          user_access_flag = 1
+          and grant_option_flag = 0
+        ) or
+        (
+          user_access_flag = 0
+          and grant_option_flag = 1
+        ) or
+        (
+          user_access_flag = 1
+          and grant_option_flag = 1
+        )
+      )
 )
 /
 
 comment on table op_operator_group is
-  'Группы операторов [SVN root: Oracle/Module/AccessOperator]'
+  'Группы операторов [SVN root: Module/AccessOperator]'
 /
 comment on column op_operator_group.operator_id is
-  'Идентификатор оператора'
+  'ИД оператора'
 /
 comment on column op_operator_group.group_id is
-  'Идентификатор группы'
+  'ИД группы'
+/
+comment on column op_operator_group.user_access_flag is
+  'Признак доступа в группе'
+/
+comment on column op_operator_group.grant_option_flag is
+  'Признак выдачи прав на доступ в группе'
 /
 comment on column op_operator_group.date_ins is
   'Дата создания записи'
 /
 comment on column op_operator_group.operator_id_ins is
-  'Идентификатор оператора, создавшего запись'
+  'ИД оператора, создавшего запись'
 /
 
 -- index: op_operator_group_ix_op_id

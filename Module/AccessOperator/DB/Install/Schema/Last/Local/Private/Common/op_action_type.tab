@@ -1,0 +1,39 @@
+-- table: op_action_type
+-- Типы действий с оператором и правами доступа оператора
+
+create table op_action_type
+(
+  action_type_code                              varchar2(20) not null
+  , action_type_name_rus                        varchar2(150) not null
+  , action_type_name_en                         varchar2(150) not null
+  , action_type_comment                         varchar2(150)
+  , date_ins                                    date default sysdate not null
+  , operator_id                                 integer not null
+  , constraint op_action_type_pk                primary key
+      ( action_type_code )
+    using index tablespace
+      &indexTablespace
+)
+/
+
+comment on table op_action_type is
+  'Типы действий с оператором и правами доступа оператора [SVN root: Module/AccessOperator]'
+/
+comment on column op_action_type.action_type_code is
+  'Код типа действия'
+/
+comment on column op_action_type.action_type_name_rus is
+  'Наименование типа на русском языке'
+/
+comment on column op_action_type.action_type_name_en is
+  'Наименование типа на англ. языке'
+/
+comment on column op_action_type.action_type_comment is
+  'Наименование типа действия в отчете по логированию'
+/
+comment on column op_action_type.date_ins is
+  'Дата создания записи'
+/
+comment on column op_action_type.operator_id is
+  'ИД оператора, создавшего запись'
+/

@@ -1,1 +1,1 @@
-LOAD_FILE_MASK = pkg_AccessOperator.pk?
+LOAD_FILE_MASK = *pkg_AccessOperator.pk?

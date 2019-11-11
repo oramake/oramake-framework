@@ -1,0 +1,118 @@
+-- table: op_login_attempt_group
+-- Группы параметров блокировки
+
+create table op_login_attempt_group
+(
+  login_attempt_group_id                                    integer not null
+  , login_attempt_group_name                                varchar2(150) not null
+  , is_default                                              number(1,0) default 0 not null
+  , lock_type_code                                          varchar2(20) not null
+  , max_login_attempt_count                                 integer
+  , used_for_cl                                             number(1,0) not null
+  , locking_time                                            integer
+  , password_validity_period                                integer
+  , block_wait_period                                       integer
+  , deleted                                                 number(1,0) default 0 not null
+  , change_date                                             date default sysdate
+  , change_operator_id                                      integer
+  , date_ins                                                date default sysdate not null
+  , operator_id                                             integer not null
+  , constraint op_login_attempt_group_pk                    primary key
+      ( login_attempt_group_id )
+    using index tablespace
+      &indexTablespace
+  , constraint op_login_attempt_group_ck_dflt               check (is_default in (0,1))
+  , constraint op_login_attempt_group_ck_del                check (deleted in (0,1))
+  , constraint op_logn_attmpt_grp_ck_dflt_del               check (
+      is_default = 0 or deleted = 0
+    )
+  , constraint op_login_attempt_group_ck_cl                 check (used_for_cl in (0,1))
+)
+/
+
+comment on table op_login_attempt_group is
+  'Группы параметров блокировки [SVN root: Module/AccessOperator]'
+/
+comment on column op_login_attempt_group.login_attempt_group_id is
+  'Идентификатор записи'
+/
+comment on column op_login_attempt_group.login_attempt_group_name is
+  'Наименование группы'
+/
+comment on column op_login_attempt_group.is_default is
+  'Признак по умолчанию'
+/
+comment on column op_login_attempt_group.lock_type_code is
+  'Тип блокировки'
+/
+comment on column op_login_attempt_group.max_login_attempt_count is
+  'Максимально допустимое количество попыток входа в систему'
+/
+comment on column op_login_attempt_group.used_for_cl is
+  'Признак – "Использовать для CL"'
+/
+comment on column op_login_attempt_group.locking_time is
+  'Время блокировки в секундах. Указывается для типа TEMPORAL'
+/
+comment on column op_login_attempt_group.password_validity_period is
+  'Срок действия пароля в днях'
+/
+comment on column op_login_attempt_group.block_wait_period is
+  'Количество дней отложенной блокировки оператора при увольнении сотрудника'
+/
+comment on column op_login_attempt_group.deleted is
+  'Признак логического удаления записи'
+/
+comment on column op_login_attempt_group.change_date is
+  'Дата/время последнего изменения'
+/
+comment on column op_login_attempt_group.change_operator_id is
+  'Идентификатор оператора, последним изменившего запись'
+/
+comment on column op_login_attempt_group.date_ins is
+  'Дата вставки записи'
+/
+comment on column op_login_attempt_group.operator_id is
+  'Идентификатор оператора'
+/
+
+-- index: op_login_attempt_group_ux_name
+-- Индекс для контроля уникальности названия группы
+create unique index
+  op_login_attempt_group_ux_name
+on
+  op_login_attempt_group (
+    case when
+      deleted = 0
+    then
+      upper( trim( login_attempt_group_name ) )
+    end
+  )
+tablespace
+  &indexTablespace
+/
+-- index: op_login_attempt_group_ix_name
+-- Индекс для доступа по названию группы
+create index
+  op_login_attempt_group_ix_name
+on
+  op_login_attempt_group ( upper( trim( login_attempt_group_name ) ) )
+tablespace
+  &indexTablespace
+/
+-- index: op_login_attempt_group_ux_cl
+-- Индекс для контроля уникальности настроек репликации в CL
+create unique index
+  op_login_attempt_group_ux_cl
+on
+  op_login_attempt_group (
+    case when
+      deleted = 0
+      and used_for_cl = 1
+    then
+      used_for_cl
+    end
+  )
+tablespace
+  &indexTablespace
+/

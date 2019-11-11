@@ -1,0 +1,4 @@
+--scripts: OP_OPERATOR_SEQ.sql
+-- Create sequence 
+create sequence OP_OPERATOR_SEQ
+/

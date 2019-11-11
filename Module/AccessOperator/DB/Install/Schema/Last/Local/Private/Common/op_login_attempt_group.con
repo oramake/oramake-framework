@@ -1,0 +1,24 @@
+-- Отключение внешних ключей на таблице <op_login_attempt_group>
+
+declare
+  cursor curData
+  is
+  select
+    *
+  from
+    user_constraints c
+  where
+    c.table_name = upper( 'op_login_attempt_group' )
+    and c.constraint_type = 'R'
+  ;
+begin
+  for rec in curData loop
+    execute immediate
+      'alter table ' || rec.table_name || ' disable constraint ' || rec.constraint_name
+    ;
+    dbms_output.put_line(  
+      'Constraint "' || rec.table_name || '.' || rec.constraint_name || ' disabled...ok'
+    );
+  end loop; 
+end;
+/

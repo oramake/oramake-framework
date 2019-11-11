@@ -1,0 +1,19 @@
+-- script: Install/Schema/3.9.0/Local/Private/Main/op_group_role.con
+-- ¬нешние ограничени€ целостности pivate части таблицы <op_group_role>
+
+alter table
+  op_group_role
+add
+  constraint op_group_role_fk_act_type foreign key
+    ( action_type_code )
+  references op_action_type
+    ( action_type_code )
+/
+alter table
+  op_group_role
+add
+  constraint op_group_role_fk_chg_op foreign key
+    ( change_operator_id )
+  references op_operator
+    ( operator_id )
+/

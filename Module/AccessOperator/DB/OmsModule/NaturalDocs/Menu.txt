@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: AccessOperator
-SubTitle: Версия 3.16.0
+SubTitle: Версия 4.1.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -57,11 +57,23 @@ Group: О модуле  {
 
 Group: Пакеты  {
 
-   Group: pkg_AccessOperator  {
+   Group: Local  {
 
-      File: Спецификация  (no auto-title, pkg_AccessOperator.pks)
-      File: Реализация  (no auto-title, pkg_AccessOperator.pkb)
-      }  # Group: pkg_AccessOperator
+      Group: Private  {
+
+         Group: Common  {
+
+            Group: pkg_AccessOperator  {
+
+               File: Спецификация  (no auto-title, Local/Private/Common/pkg_AccessOperator.pks)
+               File: Реализация  (no auto-title, Local/Private/Common/pkg_AccessOperator.pkb)
+               }  # Group: pkg_AccessOperator
+
+            }  # Group: Common
+
+         }  # Group: Private
+
+      }  # Group: Local
 
    Group: pkg_Operator  {
 
@@ -70,6 +82,12 @@ Group: Пакеты  {
       }  # Group: pkg_Operator
 
    Group: Test  {
+
+      Group: pkg_AccessOperatorPrivateTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_AccessOperatorPrivateTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_AccessOperatorPrivateTest.pkb)
+         }  # Group: pkg_AccessOperatorPrivateTest
 
       Group: pkg_AccessOperatorTest  {
 
@@ -83,14 +101,196 @@ Group: Пакеты  {
 
 Group: Скрипты  {
 
+   Group: Do  {
+
+      File: set-next-date  (no auto-title, Do/set-next-date.sql)
+      }  # Group: Do
+
    Group: Install  {
+
+      Group: Config  {
+
+         Group: 3.5.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: before-action  (no auto-title, Install/Config/3.5.0/Local/Private/Main/before-action.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.5.0
+
+         Group: 3.4.19  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: after-action  (no auto-title, Install/Config/3.4.19/Local/Private/Main/after-action.sql)
+                     File: before-action  (no auto-title, Install/Config/3.4.19/Local/Private/Main/before-action.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            File: activate-all  (no auto-title, Install/Config/3.4.19/activate-all.sql)
+            File: after-action  (no auto-title, Install/Config/3.4.19/after-action.sql)
+            File: before-action  (no auto-title, Install/Config/3.4.19/before-action.sql)
+            File: compile_all_invalid  (no auto-title, Install/Config/3.4.19/compile_all_invalid.sql)
+            File: deactivate-all  (no auto-title, Install/Config/3.4.19/deactivate-all.sql)
+            }  # Group: 3.4.19
+
+         Group: Local  {
+
+            Group: Private  {
+
+               Group: Common  {
+
+                  File: after-action  (no auto-title, Install/Config/Local/Private/Common/after-action.sql)
+                  File: before-action  (no auto-title, Install/Config/Local/Private/Common/before-action.sql)
+                  }  # Group: Common
+
+               Group: Main  {
+
+                  File: after-action  (no auto-title, Install/Config/Local/Private/Main/after-action.sql)
+                  File: before-action  (no auto-title, Install/Config/Local/Private/Main/before-action.sql)
+                  }  # Group: Main
+
+               }  # Group: Private
+
+            File: after-action  (no auto-title, Install/Config/Local/after-action.sql)
+            File: before-action  (no auto-title, Install/Config/Local/before-action.sql)
+            File: compile_all_invalid  (no auto-title, Install/Config/Local/compile_all_invalid.sql)
+            File: resume-all-batch  (no auto-title, Install/Config/Local/resume-all-batch.sql)
+            File: resume-job  (no auto-title, Install/Config/Local/resume-job.sql)
+            File: stop-all-batch  (no auto-title, Install/Config/Local/stop-all-batch.sql)
+            File: stop-job  (no auto-title, Install/Config/Local/stop-job.sql)
+            }  # Group: Local
+
+         }  # Group: Config
 
       Group: Data  {
 
+         Group: 3.12.0  {
+
+            File: op_role  (no auto-title, Install/Data/3.12.0/op_role.sql)
+            }  # Group: 3.12.0
+
+         Group: 3.11.0  {
+
+            File: op_role  (no auto-title, Install/Data/3.11.0/op_role.sql)
+            }  # Group: 3.11.0
+
+         Group: 3.10.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Data/3.10.0/Local/Private/Main/run.sql)
+                     File: op_login_attempt_group  (no auto-title, Install/Data/3.10.0/Local/Private/Main/op_login_attempt_group.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.10.0
+
+         Group: 3.7.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Data/3.7.0/Local/Private/Main/run.sql)
+                     File: opt_option  (no auto-title, Install/Data/3.7.0/Local/Private/Main/opt_option.sql)
+                     File: rp_action  (no auto-title, Install/Data/3.7.0/Local/Private/Main/rp_action.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.7.0
+
+         Group: 3.5.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Data/3.5.0/Local/Private/Main/run.sql)
+                     File: op_role  (no auto-title, Install/Data/3.5.0/Local/Private/Main/op_role.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            File: run  (no auto-title, Install/Data/3.5.0/run.sql)
+            File: op_lock_type  (no auto-title, Install/Data/3.5.0/op_lock_type.sql)
+            }  # Group: 3.5.0
+
+         Group: 3.4.19  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Data/3.4.19/Local/Private/Main/run.sql)
+                     File: op_operator_group  (no auto-title, Install/Data/3.4.19/Local/Private/Main/op_operator_group.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.4.19
+
          Group: 1.0.0  {
+
+            Group: Local  {
+
+               Group: private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Data/1.0.0/Local/private/Main/run.sql)
+                     File: op_action_type  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_action_type.sql)
+                     File: op_group  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_group.sql)
+                     File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_group_role.sql)
+                     File: op_operator  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_operator.sql)
+                     File: op_role  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_role.sql)
+                     }  # Group: Main
+
+                  File: run  (no auto-title, Install/Data/1.0.0/Local/private/run.sql)
+                  File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/private/op_group_role.sql)
+                  }  # Group: private
+
+               }  # Group: Local
 
             File: op_group  (no auto-title, Install/Data/1.0.0/op_group.sql)
             File: op_operator  (no auto-title, Install/Data/1.0.0/op_operator.sql)
+            File: op_role  (no auto-title, Install/Data/1.0.0/op_role.sql)
             }  # Group: 1.0.0
 
          }  # Group: Data
@@ -99,8 +299,34 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: acl-connect  (no auto-title, Install/Grant/Last/Local/Private/Main/acl-connect.sql)
+                     File: ocrm  (no auto-title, Install/Grant/Last/Local/Private/Main/ocrm.sql)
+                     File: v_op_operator_role  (no auto-title, Install/Grant/Last/Local/Private/Main/v_op_operator_role.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: grant-all  (no auto-title, Install/Grant/Last/grant-all.sql)
+            File: grant_local  (no auto-title, Install/Grant/Last/grant_local.sql)
+            File: public-grant  (no auto-title, Install/Grant/Last/public-grant.sql)
+            File: synonym_local  (no auto-title, Install/Grant/Last/synonym_local.sql)
             }  # Group: Last
+
+         Group: 3.4.19  {
+
+            File: run  (no auto-title, Install/Grant/3.4.19/run.sql)
+            File: public_grant  (no auto-title, Install/Grant/3.4.19/public_grant.sql)
+            File: public_synonym  (no auto-title, Install/Grant/3.4.19/public_synonym.sql)
+            }  # Group: 3.4.19
 
          }  # Group: Grant
 
@@ -108,33 +334,223 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Common  {
+
+                     File: run  (no auto-title, Install/Schema/Last/Local/Private/Common/run.sql)
+                     File: revert  (no auto-title, Install/Schema/Last/Local/Private/Common/revert.sql)
+                     File: op_action_type  (no auto-title, Install/Schema/Last/Local/Private/Common/op_action_type.tab)
+                     File: op_action_type  (no auto-title, Install/Schema/Last/Local/Private/Common/op_action_type.con)
+                     File: op_action_type_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_action_type_bi_define.trg)
+                     File: op_group  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group.con)
+                     File: op_group  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group.sql)
+                     File: op_group_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_bi_define.trg)
+                     File: op_group_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_bu_history.trg)
+                     File: op_group_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_role.con)
+                     File: op_group_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_role.sql)
+                     File: op_group_role_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_role_bi_define.trg)
+                     File: op_group_role_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_group_role_bu_history.trg)
+                     File: op_lock_type_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_lock_type_bi_define.trg)
+                     File: op_login_attempt_group_bi_def  (no auto-title, Install/Schema/Last/Local/Private/Common/op_login_attempt_group_bi_def.trg)
+                     File: op_login_attempt_group_seq  (no auto-title, Install/Schema/Last/Local/Private/Common/op_login_attempt_group_seq.sqs)
+                     File: op_operator  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator.con)
+                     File: op_operator  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator.sql)
+                     File: op_operator_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_bi_define.trg)
+                     File: op_operator_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_bu_history.trg)
+                     File: op_operator_group  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_group.con)
+                     File: op_operator_group  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_group.sql)
+                     File: op_operator_group_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_group_bi_define.trg)
+                     File: op_operator_group_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_group_bu_history.trg)
+                     File: op_operator_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_role.con)
+                     File: op_operator_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_role.sql)
+                     File: op_operator_role_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_role_bi_define.trg)
+                     File: op_operator_role_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_operator_role_bu_history.trg)
+                     File: op_password_hist_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_password_hist_bi_define.trg)
+                     File: op_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_role.con)
+                     File: op_role  (no auto-title, Install/Schema/Last/Local/Private/Common/op_role.sql)
+                     File: op_role_bi_define  (no auto-title, Install/Schema/Last/Local/Private/Common/op_role_bi_define.trg)
+                     File: op_role_bu_history  (no auto-title, Install/Schema/Last/Local/Private/Common/op_role_bu_history.trg)
+                     }  # Group: Common
+
+                  }  # Group: Private
+
+               File: op_group_seq  (no auto-title, Install/Schema/Last/Local/op_group_seq.sqs)
+               File: op_operator_seq  (no auto-title, Install/Schema/Last/Local/op_operator_seq.sqs)
+               File: op_password_hist_seq  (no auto-title, Install/Schema/Last/Local/op_password_hist_seq.sqs)
+               File: op_role_seq  (no auto-title, Install/Schema/Last/Local/op_role_seq.sqs)
+               }  # Group: Local
+
             File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
-            File: op_group  (no auto-title, Install/Schema/Last/op_group.con)
             File: op_group  (no auto-title, Install/Schema/Last/op_group.tab)
-            File: op_group_bi_define  (no auto-title, Install/Schema/Last/op_group_bi_define.trg)
-            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.con)
+            File: op_group  (no auto-title, Install/Schema/Last/op_group.con)
             File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.tab)
-            File: op_group_role_bi_define  (no auto-title, Install/Schema/Last/op_group_role_bi_define.trg)
-            File: op_group_seq  (no auto-title, Install/Schema/Last/op_group_seq.sqs)
-            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.con)
+            File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.con)
+            File: op_lock_type  (no auto-title, Install/Schema/Last/op_lock_type.con)
+            File: op_lock_type  (no auto-title, Install/Schema/Last/op_lock_type.tab)
+            File: op_login_attempt_group  (no auto-title, Install/Schema/Last/op_login_attempt_group.con)
+            File: op_login_attempt_group  (no auto-title, Install/Schema/Last/op_login_attempt_group.tab)
             File: op_operator  (no auto-title, Install/Schema/Last/op_operator.tab)
-            File: op_operator_bi_define  (no auto-title, Install/Schema/Last/op_operator_bi_define.trg)
-            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.con)
+            File: op_operator  (no auto-title, Install/Schema/Last/op_operator.con)
             File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.tab)
-            File: op_operator_group_bi_define  (no auto-title, Install/Schema/Last/op_operator_group_bi_define.trg)
-            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.con)
+            File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.con)
             File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.tab)
-            File: op_operator_role_bi_define  (no auto-title, Install/Schema/Last/op_operator_role_bi_define.trg)
-            File: op_operator_seq  (no auto-title, Install/Schema/Last/op_operator_seq.sqs)
-            File: op_role  (no auto-title, Install/Schema/Last/op_role.con)
+            File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.con)
+            File: op_password_hist  (no auto-title, Install/Schema/Last/op_password_hist.tab)
+            File: op_password_hist  (no auto-title, Install/Schema/Last/op_password_hist.con)
             File: op_role  (no auto-title, Install/Schema/Last/op_role.tab)
-            File: op_role_bi_define  (no auto-title, Install/Schema/Last/op_role_bi_define.trg)
-            File: op_role_seq  (no auto-title, Install/Schema/Last/op_role_seq.sqs)
+            File: op_role  (no auto-title, Install/Schema/Last/op_role.con)
+            File: v_op_login_attempt_group  (no auto-title, Install/Schema/Last/v_op_login_attempt_group.vw)
             File: v_op_operator  (no auto-title, Install/Schema/Last/v_op_operator.vw)
             File: v_op_operator_role  (no auto-title, Install/Schema/Last/v_op_operator_role.vw)
+            File: v_op_operator_to_lock  (no auto-title, Install/Schema/Last/v_op_operator_to_lock.vw)
+            File: v_op_password_hist  (no auto-title, Install/Schema/Last/v_op_password_hist.vw)
             File: v_op_role  (no auto-title, Install/Schema/Last/v_op_role.vw)
             }  # Group: Last
+
+         Group: 4.1.0  {
+
+            Group: local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: op_group_aiud_add_event  (no auto-title, Install/Schema/4.1.0/local/Private/Main/op_group_aiud_add_event.trg)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: local
+
+            File: run  (no auto-title, Install/Schema/4.1.0/run.sql)
+            }  # Group: 4.1.0
+
+         Group: 4.0.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Schema/4.0.0/Local/Private/Main/run.sql)
+                     File: revert  (no auto-title, Install/Schema/4.0.0/Local/Private/Main/revert.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 4.0.0
+
+         Group: 3.13.0  {
+
+            Group: Local  {
+
+               Group: Prviate  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Schema/3.13.0/Local/Prviate/Main/run.sql)
+                     File: drop-old-objects  (no auto-title, Install/Schema/3.13.0/Local/Prviate/Main/drop-old-objects.sql)
+                     }  # Group: Main
+
+                  }  # Group: Prviate
+
+               }  # Group: Local
+
+            File: drop-old-objects  (no auto-title, Install/Schema/3.13.0/drop-old-objects.sql)
+            File: op_group  (no auto-title, Install/Schema/3.13.0/op_group.sql)
+            File: op_operator  (no auto-title, Install/Schema/3.13.0/op_operator.sql)
+            File: op_role  (no auto-title, Install/Schema/3.13.0/op_role.sql)
+            }  # Group: 3.13.0
+
+         Group: 3.10.3  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Private  {
+
+                     File: run  (no auto-title, Install/Schema/3.10.3/Local/Private/Private/run.sql)
+                     File: drop_object  (no auto-title, Install/Schema/3.10.3/Local/Private/Private/drop_object.sql)
+                     }  # Group: Private
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.10.3
+
+         Group: 3.10.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Schema/3.10.0/Local/Private/Main/run.sql)
+                     File: revert  (no auto-title, Install/Schema/3.10.0/Local/Private/Main/revert.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            File: run  (no auto-title, Install/Schema/3.10.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/3.10.0/revert.sql)
+            File: op_group  (no auto-title, Install/Schema/3.10.0/op_group.sql)
+            File: op_login_attempt_group  (no auto-title, Install/Schema/3.10.0/op_login_attempt_group.sql)
+            File: op_role  (no auto-title, Install/Schema/3.10.0/op_role.sql)
+            }  # Group: 3.10.0
+
+         Group: 3.9.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Schema/3.9.0/Local/Private/Main/run.sql)
+                     File: revert  (no auto-title, Install/Schema/3.9.0/Local/Private/Main/revert.sql)
+                     File: drop_unused_objects  (no auto-title, Install/Schema/3.9.0/Local/Private/Main/drop_unused_objects.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            }  # Group: 3.9.0
+
+         Group: 3.5.0  {
+
+            Group: Local  {
+
+               Group: Private  {
+
+                  Group: Main  {
+
+                     File: run  (no auto-title, Install/Schema/3.5.0/Local/Private/Main/run.sql)
+                     File: revert  (no auto-title, Install/Schema/3.5.0/Local/Private/Main/revert.sql)
+                     File: rp_event  (no auto-title, Install/Schema/3.5.0/Local/Private/Main/rp_event.sql)
+                     }  # Group: Main
+
+                  }  # Group: Private
+
+               }  # Group: Local
+
+            File: run  (no auto-title, Install/Schema/3.5.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/3.5.0/revert.sql)
+            File: op_operator  (no auto-title, Install/Schema/3.5.0/op_operator.con)
+            File: op_operator  (no auto-title, Install/Schema/3.5.0/op_operator.sql)
+            }  # Group: 3.5.0
 
          }  # Group: Schema
 
@@ -147,6 +563,7 @@ Group: Скрипты  {
          File: run  (no auto-title, Test/Grant/run.sql)
          }  # Group: Grant
 
+      File: run  (no auto-title, Test/run.sql)
       }  # Group: Test
 
    }  # Group: Скрипты

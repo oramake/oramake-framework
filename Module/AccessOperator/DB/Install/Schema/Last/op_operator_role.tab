@@ -1,37 +1,60 @@
 -- table: op_operator_role
--- Роли операторов.
+-- Роли операторов
 
 create table op_operator_role
 (
-  operator_id                     integer                             not null
-  , role_id                       integer                             not null
-  , date_ins                      date                default sysdate not null
-  , operator_id_ins               integer                             not null
+  operator_id integer not null
+  , role_id integer not null
+  , user_access_flag number(1) default 1 not null
+  , grant_option_flag number(1) default 0 not null
+  , date_ins date default sysdate not null
+  , operator_id_ins integer not null
   , constraint op_operator_role_pk primary key
       ( operator_id, role_id)
     using index tablespace
       &indexTablespace
+  , constraint op_operator_role_ck_access_fl check
+      (
+        (
+          user_access_flag = 1
+          and grant_option_flag = 0
+        ) or
+        (
+          user_access_flag = 0
+          and grant_option_flag = 1
+        ) or
+        (
+          user_access_flag = 1
+          and grant_option_flag = 1
+        )
+      )
 )
 /
 
 comment on table op_operator_role is
-  'Роли операторов [SVN root: Oracle/Module/AccessOperator]'
+  'Роли операторов [SVN root: Module/AccessOperator]'
 /
 comment on column op_operator_role.operator_id is
-  'Идентификатор оператора'
+  'ИД оператора'
 /
 comment on column op_operator_role.role_id is
-  'Идентификатор роли'
+  'ИД роли'
+/
+comment on column op_operator_role.user_access_flag is
+  'Признак доступа по роли'
+/
+comment on column op_operator_role.grant_option_flag is
+  'Признак выдачи прав на доступ по роли'
 /
 comment on column op_operator_role.date_ins is
   'Дата создания записи'
 /
 comment on column op_operator_role.operator_id_ins is
-  'Идентификатор оператора, создания запись'
+  'ИД оператора, созадвшего запись'
 /
 
 -- index: op_operator_role_ix_op_id
--- Индекс для доступа по идентификатору оператора, создавшего запись.
+-- Индекс для доступа по ИД оператора, создавшего запись
 create index
   op_operator_role_ix_op_id
 on

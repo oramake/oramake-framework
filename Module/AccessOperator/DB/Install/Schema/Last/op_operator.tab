@@ -1,30 +1,42 @@
 -- table: op_operator
--- Операторы.
+-- Операторы
 
 create table op_operator
 (
   operator_id                     integer                             not null
+  , operator_name                 varchar2(100)                       not null
+  , operator_name_en              varchar2(100)
   , login                         varchar2(50)                        not null
   , password                      varchar2(50)                        not null
   , date_begin                    date
   , date_finish                   date
-  , operator_name                 varchar2(100)                       not null
-  , operator_name_en              varchar2(100)
+  , change_password               number(1) default 0                 not null
   , operator_comment              varchar2(1000)
+  , login_attempt_group_id        integer default 1 not null
+  , curr_login_attempt_count      integer
+  , last_success_login_date       date
+  , date_ins                      date default sysdate                not null
   , operator_id_ins               integer not null
-  , date_ins                      date                default sysdate not null
   , constraint op_operator_pk primary key (
       operator_id
     )
-    using index tablespace &indexTablespace
+    using index tablespace
+      &indexTablespace
+  , constraint op_operator_ck_ch_psswrd check (change_password in (0, 1))
 )
 /
 
 comment on table op_operator is
-  'Операторы [SVN root: Oracle/Module/AccessOperator]'
+  'Операторы [SVN root: Module/AccessOperator]'
 /
 comment on column op_operator.operator_id is
-  'Первичный ключ. Идентификатор пользователя'
+  'Идентификатор оператора'
+/
+comment on column op_operator.operator_name is
+  'Наименование пользователя на языке по умолчанию'
+/
+comment on column op_operator.operator_name_en is
+  'Наименование пользователя на английском языке'
 /
 comment on column op_operator.login is
   'Логин пользователя'
@@ -38,41 +50,44 @@ comment on column op_operator.date_begin is
 comment on column op_operator.date_finish is
   'Дата окончания действия записи'
 /
-comment on column op_operator.operator_name is
-  'Наименование пользователя на языке по умолчанию'
+comment on column op_operator.date_ins is
+  'Дата создания записи'
 /
-comment on column op_operator.operator_name_en is
-  'Наименование пользователя на английском языке'
+comment on column op_operator.operator_id_ins is
+  'Пользователь, создавший запись'
+/
+comment on column op_operator.change_password is
+  'Пользователь, создавший запись'
 /
 comment on column op_operator.operator_comment is
   'Комментарий'
 /
-comment on column op_operator.operator_id_ins is
-  'Id пользователя, создавшего запись'
+comment on column op_operator.login_attempt_group_id is
+  'Идентификатор группы параметров блокировки'
 /
-comment on column op_operator.date_ins is
-  'Дата создания записи'
+comment on column op_operator.curr_login_attempt_count is
+  'Текущее количество неуспешных попыток входа'
 /
+comment on column op_operator.last_success_login_date is
+  'Дата/время последнего успешного входа в систему'
+/
+
+
+-- index: op_operator_ux_login
 -- Индекс для контроля уникальности логина (верхний регистр)
 create unique index
   op_operator_ux_login
 on
-  op_operator (
-    upper( login)
-  )
+  op_operator ( upper( login ) )
 tablespace
   &indexTablespace
 /
-
 -- index: op_operator_ix_name
 -- Индекс для доступа по имени оператора (верхний регистр)
 create index
   op_operator_ix_name
 on
-  op_operator (
-    upper( operator_name)
-  )
+  op_operator ( upper( operator_name ) )
 tablespace
   &indexTablespace
 /
-

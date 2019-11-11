@@ -1,0 +1,11 @@
+-- script: Install/Schema/Last/op_lock_type.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_lock_type>
+
+alter table
+  op_lock_type
+add
+  constraint op_lock_type_fk_op_oper foreign key
+    ( operator_id )
+  references op_operator
+    ( operator_id )
+/

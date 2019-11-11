@@ -1,7 +1,5 @@
-LOAD_FILE_MASK = \
-  */v_op_operator_role.vw \
-  pkg_Operator.pk? \
+LOAD_FILE_MASK = -
 
-SKIP_FILE_MASK=*oms-check-lock.sql
-
+override SKIP_FILE_MASK += \
+  Install/Data/Last/*.sql      \
 

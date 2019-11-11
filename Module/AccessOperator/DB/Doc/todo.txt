@@ -1,4 +1,49 @@
 Title: Доработки
 
+[*] В процедуре IsRole( operatorId, roleShortName) в случае значения null
+    у параметра operatorId использовать для проверки прав текущего
+    зарегистрированного оператора ( через функцию GetCurrentUserId).
 
-[+] Добавить интерфейсную функцию для добавлению роли.
+[*] Перенести вставку записей в <op_password_hist> из триггера
+    OP_OPERATOR_BU_DEFINE на таблице <op_operator> в процедуру смены пароля и
+    удалить триггер.
+
+[+] Добавить интерфейсные функции по добавлению и удалению роли.
+
+(code)
+begin
+  pkg_AccessOperator.mergeRole(
+     roleShortName
+     , roleName
+     , roleNameEn
+     , description
+  );
+end;
+/
+
+begin
+  pkg_AccessOperator.deleteRole(
+    roleShortName
+  );
+end;
+
+(end code)
+
+[*] Изменить расписание батчей AutoUnlockOperator%,
+    ( сделать либо меньший интервал запуска либо обработчик).
+
+[-] Избавиться от функции AddSqlCondition и перейти на использование
+    DynamicSql. Функция используется в Module/IcaOperator.
+
+[*] Переименовать функцию pkg_Operator.isChangePassword ->
+    getPasswordChangeFlag.
+
+[+] Удалить спецификации функций вначале пакета pkg_Operator.
+
+[*] Привести наименования функций ( например pkg_Operator.GETHASH) к
+    нижнему регистру.
+
+[*] Удалить зависимости от параметра rowCount функции
+    <pkg_Operator.getOperator>.  Удалить устаревший параметр rowCount.
+
+

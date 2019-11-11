@@ -1,0 +1,27 @@
+-- script: Install/Schema/Last/op_login_attempt_group.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_login_attempt_group>
+
+alter table
+  op_login_attempt_group
+add
+  constraint op_login_attmpt_grp_fk_lck_tp foreign key
+    ( lock_type_code )
+  references op_lock_type
+    ( lock_type_code )
+/
+alter table
+  op_login_attempt_group
+add
+  constraint op_login_attmpt_grp_fk_chg_op foreign key
+    ( change_operator_id )
+  references op_operator
+    ( operator_id )
+/
+alter table
+  op_login_attempt_group
+add
+  constraint op_login_attmpt_grp_fk_opoper foreign key
+    ( operator_id )
+  references op_operator
+    ( operator_id )
+/

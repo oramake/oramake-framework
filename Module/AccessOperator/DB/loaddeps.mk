@@ -28,41 +28,35 @@
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
 
-pkg_AccessOperator.pkb.$(lu): \
-  pkg_AccessOperator.pks.$(lu) \
-	pkg_Operator.pks.$(lu)
-
-
-pkg_Operator.pkb.$(lu): \
-  pkg_Operator.pks.$(lu) \
-  Install/Schema/Last/v_op_operator_role.vw.$(lu)
-
-
-Install/Schema/Last/op_group_bi_define.trg.$(lu): \
+pkg_Operator.pkb.$(lu):                 \
   pkg_Operator.pks.$(lu)
 
 
-Install/Schema/Last/op_group_role_bi_define.trg.$(lu): \
-  pkg_Operator.pks.$(lu)
+pkg_OperatorInternal.pkb.$(lu):         \
+  pkg_OperatorInternal.pks.$(lu)
 
 
-Install/Schema/Last/op_operator_bi_define.trg.$(lu): \
-  pkg_Operator.pks.$(lu)
+pkg_Operator.pkb.$(lu4):                 \
+  pkg_Operator.pks.$(lu4)
 
 
-Install/Schema/Last/op_operator_group_bi_define.trg.$(lu): \
-  pkg_Operator.pks.$(lu)
+pkg_OperatorInternal.pkb.$(lu4):         \
+  pkg_OperatorInternal.pks.$(lu4)
 
 
-Install/Schema/Last/op_operator_role_bi_define.trg.$(lu): \
-  pkg_Operator.pks.$(lu)
-
-
-Install/Schema/Last/op_role_bi_define.trg.$(lu): \
-  pkg_Operator.pks.$(lu)
-
-
-Install/Data/1.0.0/op_group.sql.$(lu): \
+Install/Data/1.0.0/op_group.sql.$(lu):         \
   Install/Data/1.0.0/op_operator.sql.$(lu)
+
+
+Install/Data/1.0.0/op_role.sql.$(lu):         \
+  Install/Data/1.0.0/op_operator.sql.$(lu)
+
+
+Install/Data/1.0.0/Local/Private/op_group_role.sql.$(lu2):     \
+  Install/Data/1.0.0/Local/Private/op_role.sql.$(lu2)
+
+
+Local/Private/Main/pkg_AccessOperator.pkb.$(lu4):     \
+  Local/Private/Main/pkg_AccessOperator.pks.$(lu4)
 
 

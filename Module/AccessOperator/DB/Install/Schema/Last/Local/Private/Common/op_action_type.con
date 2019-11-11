@@ -1,0 +1,11 @@
+-- script: Install/Schema/Last/Local/Private/Main/op_action_type.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_action_type>
+
+alter table
+  op_action_type
+add
+  constraint op_action_type_fk_operator foreign key
+    ( operator_id )
+  references op_operator
+    ( operator_id )
+/

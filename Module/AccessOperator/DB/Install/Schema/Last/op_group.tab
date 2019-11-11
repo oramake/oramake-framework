@@ -1,41 +1,46 @@
 -- table: op_group
--- Группы.
+-- Группы
 
 create table op_group
 (
-  group_id                        integer                             not null
-  , group_name                    varchar2(50)                        not null
-  , group_name_en                 varchar2(50)                        not null
-  , description                   varchar2(4000)
-  , date_ins                      date                default sysdate not null
-  , operator_id                   integer                             not null
-  , constraint op_group_pk        primary key
+  group_id                                     integer not null
+  , group_name                                 varchar2(50) not null
+  , group_name_en                              varchar2(50) not null
+  , is_unused                                  number(1,0) default 0 not null
+  , description                                varchar2(4000)
+  , date_ins                                   date default sysdate not null
+  , operator_id                                integer not null
+  , constraint op_group_pk                     primary key
       ( group_id)
     using index tablespace
       &indexTablespace
+  , constraint op_group_ck_unused              check (is_unused in (0,1) )
 )
 /
 
 comment on table op_group is
-  'Группы [SVN root: Oracle/Module/AccessOperator]'
+  'Группы [SVN root: Module/AccessOperator]'
 /
 comment on column op_group.group_id is
-  'Id группы'
+  'primary key. идентификатор группы'
 /
 comment on column op_group.group_name is
-  'Наименование группы на языке по-умолчанию'
+  'Наименование группы на языке по умолчанию'
 /
 comment on column op_group.group_name_en is
   'Наименование группы на английском языке'
 /
+comment on column op_group.is_unused is
+  'Признак неиспользуемой группы 1-неиспользуемая, 0–используемая (группа НЕ должна включаться в список групп для назначения операторам и в грант группы)'
+/
 comment on column op_group.description is
-  'Описание группы на языке по-умолчанию'
+  'Описание группы на языке по умолчанию'
 /
 comment on column op_group.date_ins is
   'Дата создания записи'
 /
 comment on column op_group.operator_id is
-  'Идентификатор оператора, создавшего запись'
+  'ИД оператора, создавшего запись'
 /
 
 -- index: op_group_ix_name
@@ -43,8 +48,7 @@ comment on column op_group.operator_id is
 create index
   op_group_ix_name
 on
-  op_group ( upper( group_name))
+  op_group ( upper( group_name ) )
 tablespace
   &indexTablespace
 /
-

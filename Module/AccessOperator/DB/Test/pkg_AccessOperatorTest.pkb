@@ -60,17 +60,30 @@ is
   procedure createOperator
   is
   begin
+
+    -- Определяем operatorId, т.к. в public-части не предусмотрено изменение
+    -- данных и нет последовательностей
+    select
+      max( t.operator_id)
+    into operatorId
+    from
+      op_operator t
+    ;
+    operatorId := greatest( coalesce( operatorId, 0), 1000000) + 1;
+
     insert into
       op_operator
     (
-      login
+      operator_id
+      , login
       , operator_name
       , password
       , operator_id_ins
     )
     values
     (
-      operatorLogin
+      operatorId
+      , operatorLogin
       , coalesce( login, baseName) || ' ( тестовый оператор)'
       , case when
           login is null
@@ -91,9 +104,7 @@ is
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
-          'Ошибка при создании тестового оператора ('
-          || 'operatorLogin="' || operatorLogin || '"'
-          || ').'
+          'Ошибка при создании тестового оператора.'
         )
       , true
     );
@@ -209,6 +220,44 @@ exception when others then
     , true
   );
 end getTestOperatorId;
+
+/* pfunc: isUserAdmin
+  Возвращает:
+    1 в случае успеха <pkg_Operator.isUserAdmin>
+    0 в случае исключения в <pkg_Operator.isUserAdmin>
+
+  Параметры:
+    ..
+    [список параметров <pkg_Operator.isUserAdmin>]
+    ..
+
+  Возврат:
+    1 в случае успеха <pkg_Operator.isUserAdmin>
+    0 в случае исключения в <pkg_Operator.isUserAdmin>
+
+  ( <body::getTestOperatorId>)
+*/
+function isUserAdmin(
+ OPERATORID INTEGER
+ , TARGETOPERATORID INTEGER := null
+ , ROLEID INTEGER := null
+ , GROUPID INTEGER := null
+)
+return integer
+is
+-- isUserAdmin
+begin
+  pkg_operator.isUserAdmin(
+    OPERATORID => OPERATORID
+    , TARGETOPERATORID => TARGETOPERATORID
+    , ROLEID => ROLEID
+    , GROUPID => GROUPID
+   );
+   return 1;
+exception when others then 
+  return 0;
+end isUserAdmin;
+
 
 end pkg_AccessOperatorTest;
 /

@@ -1,0 +1,11 @@
+-- script: Install/Schema/Last/Local/Private/Common/op_role.con
+-- ¬нешние ограничени€ целостности pivate части таблицы <op_role>
+
+alter table
+  op_role
+add
+  constraint op_role_fk_chg_op foreign key
+    ( change_operator_id )
+  references op_operator
+    ( operator_id )
+/

@@ -1,5 +1,5 @@
 -- script: Install/Schema/Last/op_role.con
--- ¬нешние ограничени€ целостности дл€ таблицы <op_role>.
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_role>
 
 alter table
   op_role

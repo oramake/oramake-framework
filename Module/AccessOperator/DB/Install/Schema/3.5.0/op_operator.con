@@ -1,0 +1,11 @@
+-- script: Install/Schema/3.5.0/op_operator.con
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_operator>
+
+alter table 
+  op_operator
+add 
+  constraint op_operator_fk_log_attmpt_grp foreign key 
+    ( login_attempt_group_id)
+  references op_login_attempt_group 
+    ( login_attempt_group_id)
+/

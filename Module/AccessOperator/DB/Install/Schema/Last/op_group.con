@@ -1,5 +1,5 @@
 -- script: Install/Schema/Last/op_group.con
--- ¬нешние ограничени€ целостности дл€ таблицы <op_group>.
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_group>
 
 alter table
   op_group

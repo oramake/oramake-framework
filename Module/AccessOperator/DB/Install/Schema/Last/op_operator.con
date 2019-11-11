@@ -1,11 +1,19 @@
 -- script: Install/Schema/Last/op_operator.con
--- ¬нешние ограничени€ целостности дл€ таблицы <op_operator>.
+-- ¬нешние ограничени€ целостности дл€ таблицы <op_operator>
 
-alter table
+alter table 
   op_operator
-add
-  constraint op_operator_op_operator_fk foreign key
+add 
+  constraint op_operator_op_operator_fk foreign key 
     ( operator_id_ins)
-  references op_operator
+  references op_operator 
     ( operator_id)
+/
+alter table 
+  op_operator
+add 
+  constraint op_operator_fk_log_attmpt_grp foreign key 
+    ( login_attempt_group_id)
+  references op_login_attempt_group 
+    ( login_attempt_group_id)
 /

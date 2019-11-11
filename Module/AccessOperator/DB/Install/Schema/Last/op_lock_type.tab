@@ -1,0 +1,41 @@
+-- table: op_lock_type
+-- Типы блокировок
+
+create table op_lock_type
+(
+  lock_type_code varchar2(20) not null
+  , lock_type_name varchar2(150) not null
+  , date_ins date default sysdate not null
+  , operator_id integer not null
+  , constraint op_lock_type_pk primary key
+      ( lock_type_code )
+    using index tablespace
+      &indexTablespace
+)
+/
+
+comment on table op_lock_type is
+  'Типы блокировок [SVN root: Module/AccessOperator]'
+/
+comment on column op_lock_type.lock_type_code is
+  'Код типа блокировки'
+/
+comment on column op_lock_type.lock_type_name is
+  'Наименование типа'
+/
+comment on column op_lock_type.date_ins is
+  'Дата вставки записи'
+/
+comment on column op_lock_type.operator_id is
+  'Идентификатор оператора'
+/
+
+-- index: op_lock_type_ux_name
+-- Индекс для контроля униальности по наименованию типа
+create unique index
+  op_lock_type_ux_name
+on
+  op_lock_type ( upper( trim( lock_type_name ) ) )
+tablespace
+  &indexTablespace
+/

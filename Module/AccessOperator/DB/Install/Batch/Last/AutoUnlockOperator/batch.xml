@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch short_name="AutoUnlockOperator">
+  <name>Автоматическая разблокировка пользователей</name>
+  <batch_config>
+    <retry_count>3</retry_count>
+    <retry_interval>1</retry_interval>
+    <schedule>
+      <name>каждую минуту</name>
+      <interval type="mi">
+        <min_value>0</min_value>
+        <max_value>59</max_value>
+        <step>1</step>
+      </interval>
+    </schedule>
+  </batch_config>
+  <content id="1" job="initialization" module="Scheduler"/>
+  <content id="2" job="auto_unlock_operator">
+    <condition id="1">true</condition>
+  </content>
+  <content id="3" job="commit" module="Scheduler">
+    <condition id="2">true</condition>
+  </content>
+  <content id="4" job="retry_batch" module="Scheduler">
+    <condition id="3">skip</condition>
+    <condition id="3">error</condition>
+  </content>
+</batch>

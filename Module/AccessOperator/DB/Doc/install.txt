@@ -4,31 +4,146 @@ title: Установка
 group: Общие замечания
 
 Параметры установки:
-INSTALL_VERSION               - устанавливаемая версия модуля ( Last при
-                                первоначальной установке или номер при
-                                обновлении)
-LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
-                                ( формат: login/password)
-LOAD_USERID                   - основной пользователь для установки в БД
-                                ( формат: username/password@dbName)
-TO_USERNAME                   - имя пользователя, которому выдаются права
-                                ( формат: username)
+
+LOAD_USERID                   - Пользователь для загрузки ( формат: [userName[/password]][@dbName] )
+
+LOAD_USERID2                  - Пользователь для установки на базы для репликации
+
+LOAD_USERID4                  - Пользователь для установки механизма репликации и пакета для работы с функциями редактирования
+
+LOAD_USERID5                  - Пользователь для установки пакетных заданий в БД источник
+
+LOAD_OPERATORID               - Оператор для загрузки ( формат: operatorName[/password] )
+
+Public часть                  - Общая для всех БД часть
+
+Private Часть                 - Часть, которая устанавливается только в БД-источник
 
 
 
-group: 3.16.0
-(<Версии::3.16.0 ( 2016-10-24)>)
+Замечания к установке public части:
 
-Порядок установки:
+Объекты, которые не модифицировались в текущей версии релиза, не должны устанавливаться в БД (представления и т.п.),
+чтобы не инвалидировать ссылающиеся на них объекты других схем. Для этого в команде установки необходимо использовать
+параметр SKIP_FILE_MASK.
 
-- установка в основную схему;
+Выдача прав:
+
+Для выдачи прав на public часть модуля используется команда
 
 (code)
 
-make install INSTALL_VERSION=3.16.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make grant INSTALL_VERSION=Last LOAD_USERID4=???/???@??? LOAD_OPERATORID=operatorLogin/operatorPassword TO_USERNAME=ocrm
 
-(end code)
+(end)
 
+Для выдачи всех прав на все объекты модуля (для "супер пользователей") используется команда
+
+(code)
+
+$ make grant INSTALL_VERSION=Last LOAD_USERID=userLogin/userPassword@DbName LOAD_OPERATORID=operatorLogin/operatorPassword GRANT_SCRIPT=grant-all.sql TO_USERNAME=userName
+
+(end)
+
+
+
+group: 4.1.0
+(<Версии::4.1.0 ( 2018-06-08)>)
+
+Порядок установки:
+
+- Установка private части;
+(code)
+
+make install INSTALL_VERSION=4.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- Установка в БД, в которые реплицируются операторы
+
+(code)
+
+$ make install INSTALL_VERSION=4.1.0 LOAD_USERID2=???/??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 4.0.0
+(<Версии::4.0.0 ( 2018-03-26)>)
+
+Порядок установки:
+
+Установка private части в БД *PrivateDb**
+
+(code)
+make install INSTALL_VERSION=4.0.0 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=???/???
+(end)
+
+отключение пакетных заданий
+(code)
+make install-before INSTALL_VERSION=4.0.0 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=???/???
+(end)
+
+включение пакетных заданий
+(code)
+make install-after INSTALL_VERSION=4.0.0 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=???/???
+end)
+
+
+
+group: 3.17.1
+(<Версии::3.17.1 ( 2017-10-23)>)
+
+
+- установка должна происходить в БД *PrivateDb**;
+
+Порядок установки:
+
+- Отключение job, необходимое для корректной установки public части модуля, устанавливается под основным пользователем,
+  в схему которого установлен модуль Scheduler и пользователь имеет права на выполнение опции "alter system"
+(code)
+
+make install-before INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+- Установка public части в БД *PrivateDb** (все схемы)
+(code)
+
+make install INSTALL_VERSION=3.17.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+- Включение job, отключенных командой выше, для корректной установки public части модуля
+(code)
+
+make install-after INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+group: 3.16.0
+(<Версии::3.16.0 ( 2017-05-22)>)
+
+
+- установка должна происходить в основную схему;
+
+
+(code)
+
+-- Отключение job, необходимое для корректной установки public части модуля, устанавливается под основным пользователем,
+-- в схему которого установлен модуль Scheduler и пользователь имеет права на выполнение опции "alter system"
+$ make install-before INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+-- Установка public части
+$ make install INSTALL_VERSION=3.16.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+-- Включение job, отключенных командой выше, для корректной установки public части модуля
+$ make install-after INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
 
 
 group: 3.14.0
@@ -36,13 +151,34 @@ group: 3.14.0
 
 Порядок установки:
 
-- установка в основную схему;
+- установка в основную схему основной БД;
 
 (code)
 
-make install INSTALL_VERSION=3.14.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=3.14.0 LOAD_USERID4=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
+
+
+
+group: 3.13.0
+(<Версии::3.13.0>)
+
+Предварительные требования:
+
+- установка зависимых модулей;
+
+Порядок установки:
+
+- установка private части;
+
+(code)
+
+-- Установка private части;
+$ make install INSTALL_VERSION=3.13.0 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=???/??? LOAD_FILE_MASK=*run.sql,*.pks,*.pkb
+
+(end)
+
 
 
 
@@ -51,7 +187,7 @@ group: 3.12.1
 
 Порядок установки:
 
-- установка в основную схему;
+- установка во все БД, в основную схему;
 
 (code)
 
@@ -61,48 +197,401 @@ make install INSTALL_VERSION=3.12.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/
 
 
 
-group: Первоначальная установка
+group: 3.12.0
+(<Версии::3.12.0>)
 
-Порядок установки:
-
-- установка в основную схему
-
-(code)
-
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID= SKIP_FILE_MASK=*/oms-save-install-info.sql
-
-$ make install-save-info INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end code)
-
-
-
-group: Выдача прав на использование модуля
-
-Команда для выдачи прав:
+Команда для установки:
 
 (code)
 
-$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+-- Создание ролей
+$ make install-data INSTALL_VERSION=3.12.0 LOAD_USERID=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.12.0 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*pkg_AccessOperator.pks,*pkg_AccessOperator.pkb
+
+(end)
+
+
+
+group: 3.11.0
+(<Версии::3.11.0>)
+
+Команда для установки:
+
+(code)
+
+-- Создание ролей
+$ make install-data INSTALL_VERSION=3.11.0 LOAD_USERID=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.11.0 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*pkg_AccessOperator.pks,*pkg_AccessOperator.pkb
+
+(end)
+
+
+
+group: 3.10.3
+(<Версии::3.10.3>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- убедиться, что у пользователя, в схему которого происходит установка public части модуля, есть права на просмотр dba_jobs_running,
+права на выполнение пакетов dbms_lock и pkg_Scheduler, и права на создание public синонимов.
+
+Команда для установки:
+
+(code)
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.10.3 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*run.sql,*pkg_AccessOperator.pks,*pkg_AccessOperator.pkb
+
+(end)
+
+
+
+group: 3.10.1
+(<Версии::3.10.1>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+
+
+Команда для установки:
+
+(code)
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.10.1 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*.pks,*.pkb
+
+(end)
+
+
+
+group: 3.10.0
+(<Версии::3.10.0>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- убедиться, что у пользователя, в схему которого происходит установка public части модуля, есть права на просмотр dba_jobs_running,
+права на выполнение пакетов dbms_lock и pkg_Scheduler, и права на создание public синонимов.
+
+Команда для установки:
+
+(code)
+
+-- Отключение job, необходимое для корректной установки public части модуля, устанавливается под основным пользователем,
+-- в схему которого установлен модуль Scheduler и пользователь имеет права на выполнение опции "alter system"
+$ make install-before INSTALL_VERSION=Last LOAD_USERID2=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка public части модуля
+$ make install INSTALL_VERSION=3.10.0 LOAD_USERID=userLogin/userPassword@<DatabaseTns> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0 LOAD_FILE_MASK=*run.sql,*.pks,*.pkb
+
+-- Включение job, отключенных командой выше, для корректной установки public части модуля
+$ make install-after INSTALL_VERSION=Last LOAD_USERID2=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Регистрация установки public части модуля
+$ make install-save-info INSTALL_VERSION=3.10.0 LOAD_USERID=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.10.0 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*run.sql,*.pks,*.pkb
+
+-- Установка пакетных заданий в БД источник
+$ make install-batch LOAD_USERID5=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+
+
+group: 3.9.0
+(<Версии::3.9.0>)
+
+
+Версия устанавливается в основную БД;
+
+Команда для установки:
+
+(code)
+
+-- Отключение пакетных заданий
+$ make install-before INSTALL_VERSION=Last LOAD_USERID=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- private часть
+$ make install INSTALL_VERSION=3.9.0 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*.sql,*.pks,*.pkb OMS_SAVE_FILE_INSTALL_INFO=0
+
+-- Включение пакетных заданий
+$ make install-after INSTALL_VERSION=Last LOAD_USERID=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- public часть
+$ make install INSTALL_VERSION=3.9.0 LOAD_USERID=???/userPassword@<PrivateDb> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0 LOAD_FILE_MASK=*pkg_Operator.pks,*pkg_Operator.pkb
+
+-- Регистрация установки модуля
+$ make install-save-info INSTALL_VERSION=3.9.0 LOAD_USERID=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+group: 3.7.1
+(<Версии::3.7.1>)
+
+
+Версия устанавливается в основную БД;
+
+Команда для установки:
+
+(code)
+
+-- public часть
+$ make install INSTALL_VERSION=3.7.1 LOAD_USERID=userLogin/userPassword@<PrivateDb> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0 LOAD_FILE_MASK=*pkg_Operator.pks,*pkg_Operator.pkb
+
+-- Регистрация установки public части модуля
+$ make install-save-info INSTALL_VERSION=3.7.1 LOAD_USERID=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+group: 3.7.0
+(<Версии::3.7.0>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- убедиться, что у пользователя, в схему которого происходит установка public части модуля, есть права на просмотр dba_jobs_running,
+права на выполнение пакетов dbms_lock и pkg_Scheduler, и права на создание public синонимов.
+- убедиться, что установлен модуль Scheduler (SVN root: Oracle/Module/Scheduler) версии не ниже 4.0.3
+и связанные модули.
+
+Команда для установки:
+
+(code)
+
+-- Установка public части модуля
+$ make install INSTALL_VERSION=3.7.0 LOAD_USERID=userLogin/userPassword@<DatabaseTns> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0
+
+-- Регистрация установки public части модуля
+$ make install-save-info INSTALL_VERSION=3.7.0 LOAD_USERID=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.7.0 LOAD_USERID4=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*run.sql,*.pks,*.pkb
+
+-- Выдача прав на новые объекты и создание синонимов (пользователь, от которого происходит установка должен иметь
+-- права create any synonym) пользователю, под которым настроен ДБ линк для репликации операторов
+$ make grant INSTALL_VERSION=Last LOAD_USERID=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword GRANT_SCRIPT=grant-all.sql TO_USERNAME=userName
+
+-- Выдача прав acl
+$ make grant INSTALL_VERSION=Last LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword GRANT_SCRIPT=acl-connect.sql TO_USERNAME=???
+
+-- Установка данных в основую схему приватной БД;
+$ make install-data INSTALL_VERSION=3.7.0 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+Замечания:
+- установка public части модуля должна происходить во все БД;
+
+
+group: 3.6.2
+(<Версии::3.6.2>)
+
+-- Установка private части;
+
+(code)
+
+$ make install INSTALL_VERSION=3.6.2 LOAD_USERID4=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*pkg_AccessOperator.pks,*pkg_AccessOperator.pkb
+
+(end)
+
+
+
+group: 3.6.1
+(<Версии::3.6.1>)
+
+Установка public части модуля должна происходить во все БД, на которых он установлен;
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=3.6.1 LOAD_USERID=userLogin/userPassword@<DatabaseTns> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0 LOAD_FILE_MASK=*pkg_Operator.pks,*pkg_Operator.pkb
+
+(end)
+
+
+
+group: 3.5.0
+(<Версии::3.5.0>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- убедиться, что у пользователя, в схему которого происходит установка public части модуля, есть права на просмотр dba_jobs_running,
+права на выполнение пакетов dbms_lock и pkg_Scheduler, и права на создание public синонимов.
+- убедиться, что установлен модуль Scheduler (SVN root: Oracle/Module/Scheduler) версии не ниже 4.0.3
+и связанные модули.
+
+
+Команда для установки:
+
+(code)
+
+-- Установка public части модуля
+$ make install INSTALL_VERSION=3.5.0 LOAD_USERID=userLogin/userPassword@<DatabaseTns> SKIP_FILE_MASK=*oms-check-lock.sql OMS_SAVE_FILE_INSTALL_INFO=0
+
+-- Установка private части
+$ make install INSTALL_VERSION=3.5.0 LOAD_USERID4=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*run.sql,*.pks,*.pkb
+
+-- Выдача прав на новые объекты и создание синонимов (пользователь, от которого происходит установка должен иметь
+-- права create any synonym) пользователю, под которым настроен ДБ линк для репликации операторов
+$ make grant INSTALL_VERSION=Last LOAD_USERID=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword GRANT_SCRIPT=grant-all.sql TO_USERNAME=userName
+
+-- Установка пакетных заданий в БД источник
+$ make install-batch LOAD_USERID5=userLogin/userPassword@<DatabaseTns> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+Замечания:
+- установка public части модуля должна происходить во все БД, на которых он установлен;
+
+
+group: 3.4.22
+(<Версии::3.4.22>)
+
+Команда для установки:
+
+(code)
+
+-- Деактивация пакетного задания по репликации операторов
+$ make install-before INSTALL_VERSION=3.4.22 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+-- Установка private части в основную схему приватной БД.
+$ make install INSTALL_VERSION=3.4.22 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword LOAD_FILE_MASK=*run.sql,*pks,*pkb
+
+-- Активация пакетного задания по репликации операторов
+$ make install-after INSTALL_VERSION=3.4.22 LOAD_USERID4=???/userPassword@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+
+group: 3.4.19
+(<Версии::3.4.19>)
+
+Перед установкой данной версии модуля необходимо:
+- убедиться, что у оператора (operator_id = 1) есть права на деактивацию/активацию пакетных заданий и,
+в случае отсутствия этих прав, выдать их ему.
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- убедиться, что у пользователя, в схему которого происходит установка public части модуля, есть права на просмотр dba_jobs_running,
+права на выполнение пакетов dbms_lock и pkg_Scheduler, и права на создание public синонимов.
+
+Команда для установки:
+
+(code)
+
+-- Установка public части модуля в основной части <PrivateDb>
+$ make install INSTALL_VERSION=3.4.19 LOAD_USERID=???/???@??? SKIP_FILE_MASK=*Last/op_operator.sql,*Last/op_role.sql,*Last/op_group.sql
+
+-- Установка механизма репликации и пакета для работы с функциями редактирования
+$ make install INSTALL_VERSION=3.4.19 LOAD_USERID4=???/???@<PrivateDb> LOAD_OPERATORID=operatorLogin/operatorPassword SKIP_FILE_MASK=*after-action.sql
+
+-- Установка public части модуля в БД, указанных в замечаниях
+$ make install INSTALL_VERSION=3.4.19 LOAD_USERID=userlogin/userPassword@DbName SKIP_FILE_MASK=*Last/op_operator.sql,*Last/op_role.sql,*Last/op_group.sql
+
+-- Выдача прав на public часть модуля в БД, указанных в замечаниях
+$ make grant INSTALL_VERSION=3.4.19 LOAD_USERID=userlogin/userPassword@DbName
 
 (end)
 
 Замечания:
-- для выдачи прав всем пользователям в качестве значения TO_USERNAME нужно
-  указать PUBLIC ( при этом у пользователя должно быть право на создание
-  публичных синонимов, "create public synonym");
-- выдача прав на использование тестовых утилит AccessOperator выполняется с
-  помощью скрипта <Test/Grant/run.sql> с указанием в качестве первого параметра
-  пользователя, которому выдаются права;
+- установка public части модуля должна происходить на все БД, на которых он установлен ;
 
 
 
-group: Удаление модуля из БД
+group: 3.4.18
+(<Версии::3.4.18>)
 
-Команда для удаления модуля из БД:
+Версия устанавливается в основную схему;
+
+Команда для установки:
 
 (code)
 
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+$ make load INSTALL_VERSION=3.4.18 LOAD_USERID4=???/???@??? LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+group: 3.4.17
+(<Версии::3.4.17>)
+
+Версия устанавливается в *БД PrivateDb*.
+
+Команда для установки:
+
+(code)
+
+-- Установка в основную схему приватной части
+
+(code)
+
+$ make install INSTALL_VERSION=3.4.17 LOAD_USERID4=???/???@??? LOAD_OPERATORID=operatorLogin/operatorPassword
+
+(end)
+
+
+
+group: Last
+(<Версии::Last>)
+
+Перед установкой public части данной версии модуля необходимо:
+- установить модуль DynamicSql (SVN root: Oracle/Module/DynamicSql).
+- установить модуль Common (SVN root: Oracle/Module/Common).
+- создать в устанавливаемой БД пользователя со следующими правами:
+
+(code)
+
+- create any synonym
+- create procedure
+- create sequence
+- create table
+- create trigger
+- create view
+
+(end)
+
+Команда для установки на базы, синхронизирующиеся с целевой БД( *public* часть)
+
+(code)
+
+-- Установка public части модуля
+$ make install INSTALL_VERSION=Last LOAD_USERID=userLogin/userPassword@<DBTns> OMS_SAVE_FILE_INSTALL_INFO=0
+
+-- Выдача public прав на объекты модуля
+$ make grant INSTALL_VERSION=Last LOAD_USERID=userlogin/userPassword@<DBTns> LOAD_OPERATORID=operatorLogin/operatorPassword TO_USERNAME=PUBLIC
+
+(end)
+
+Перед установкой private части данной версии модуля необходимо:
+- установить public часть по описанию выше.
+
+Команда для установки в целевую БД, с которой синхронизируются остальные базы ( *private* часть)
+
+(code)
+
+-- Установка private части модуля
+$ make install-schema INSTALL_VERSION=Last LOAD_USERID4=userLogin/userPassword@<DBTns> OMS_SAVE_FILE_INSTALL_INFO=0
+
+-- Установка private части модуля
+$ make load INSTALL_VERSION=Last LOAD_USERID4=userLogin/userPassword@<DBTns> OMS_SAVE_FILE_INSTALL_INFO=0
 
 (end)

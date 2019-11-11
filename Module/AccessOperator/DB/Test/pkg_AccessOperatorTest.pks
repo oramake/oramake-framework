@@ -1,8 +1,8 @@
 create or replace package pkg_AccessOperatorTest is
 /* package: pkg_AccessOperatorTest
-  Тестовый пакет модуля.
+  Тестовый пакет для public части модуля.
 
-  SVN root: Oracle/Module/AccessOperator
+  SVN root: Module/AccessOperator
 */
 
 /* const: TestOperator_LoginPrefix
@@ -40,6 +40,30 @@ function getTestOperatorId(
   baseName        varchar2           := null
   , login         varchar2           := null
   , roleSNameList cmn_string_table_t := null
+)
+return integer;
+
+/* pfunc: isUserAdmin
+  Возвращает:
+    1 в случае успеха <pkg_Operator.isUserAdmin>
+    0 в случае исключения в <pkg_Operator.isUserAdmin>
+
+  Параметры:
+    ..
+    [список параметров <pkg_Operator.isUserAdmin>]
+    ..
+
+  Возврат:
+    1 в случае успеха <pkg_Operator.isUserAdmin>
+    0 в случае исключения в <pkg_Operator.isUserAdmin>
+
+  ( <body::getTestOperatorId>)
+*/
+function isUserAdmin(
+ OPERATORID INTEGER
+ , TARGETOPERATORID INTEGER := null
+ , ROLEID INTEGER := null
+ , GROUPID INTEGER := null
 )
 return integer;
 

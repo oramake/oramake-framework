@@ -1,12 +1,12 @@
 -- table: op_group_role
--- Группы и роли.
+-- Группы и роли
 
 create table op_group_role
 (
-  group_id                    integer                                 not null
-  , role_id                   integer                                 not null
-  , date_ins                  date default sysdate                    not null
-  , operator_id               integer                                 not null
+  group_id integer not null
+  , role_id integer not null
+  , date_ins date default sysdate not null
+  , operator_id integer not null
   , constraint op_group_role_pk primary key
       ( group_id, role_id)
     using index tablespace
@@ -15,19 +15,19 @@ create table op_group_role
 /
 
 comment on table op_group_role is
-  'Группы и роли [SVN root: Oracle/Module/AccessOperator]'
+  'Группы и роли [SVN root: Module/AccessOperator]'
 /
 comment on column op_group_role.group_id is
-  'Идентификатор группы'
+  'ИД группы'
 /
 comment on column op_group_role.role_id is
-  'Идентификатор роли'
+  'ИД роли'
 /
 comment on column op_group_role.date_ins is
   'Дата создания записи'
 /
 comment on column op_group_role.operator_id is
-  'Идентификатор оператора, создавшего запись'
+  'ИД оператора, создавшего запись'
 /
 
 -- index: op_group_role_ix_op_id

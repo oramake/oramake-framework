@@ -1,0 +1,5 @@
+-- scripts: op_role_seq.sqs
+-- Последователньость для заполнения таблицы <op_role>
+
+create sequence op_role_seq
+/
