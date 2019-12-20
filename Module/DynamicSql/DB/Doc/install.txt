@@ -17,33 +17,8 @@ LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
 LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
 
-Дополнительные параметры:
-BATCH_WAIT                    - ожидание окончания работы батчей в секундах
-                                ( по умолчанию 60)
-JOB_QUEUE_PROCESSES           - новое значение параметра JOB_QUEUE_PROCESSES
-                                после завершения установки ( по умолчанию
-                                используется сохранненое перед установкой)
-
-В случае наличия в БД модуля Scheduler перед установкой модуль останавливает
-выполнение заданий в БД ( см. <Install/Config/before-action.sql>), а после
-успешной установки восстанавливает их выполнение ( см.
-<Install/Config/after-action.sql>).
-При повторном запуске установки возможно появление сообщения
-"Warning. There's a non-zero value saved in view...",
-которое говорит о том, что используется значение параметра JOB_QUEUE_PROCESSES,
-запомненного при предыдущем запуске установки.
-
-<<<<<<< .mine
-Перед установкой модуль деактивирует пакетные задания модуля Scheduler в
-БД, а после успешной установки восстанавливает активацию.
-
-Команда для восстановления выполнения заданий в БД:
-
-(code)
-
-make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end)
+Перед установкой модуль деактивирует пакетные задания в БД, а после успешной
+установки восстанавливает активацию.
 
 
 
@@ -53,54 +28,19 @@ group: 1.1.2
 
 (code)
 
-$ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 (end)
 
 
 
-=======
-В случае ошибки при установке "Batch stop waiting timed out" батчей, можно
-попробовать увеличить BATCH_WAIT.
-Пример запуска установки со временем ожидания 1000 секунд
-
-(code)
-
-$ make install INSTALL_VERSION=??? LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? BATCH_WAIT=1000
-
-(end)
-
-В случае невозможности в данный момент выполнить установку можно восстановить
-запуск заданий в БД:
-
-(code)
-
-$ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end)
-
-
-
-group: 1.1.2
-
-Команда для установки обновления:
-
-(code)
-
-$ make install INSTALL_VERSION=1.1.2 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
-
-(end)
-
-
-
->>>>>>> .r3609
 group: 1.1.1
 
 To upgrade module:
 
 (code)
 
-$ make install INSTALL_VERSION=1.1.1 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.1.1 LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -114,7 +54,7 @@ group: Первоначальная установка модуля
 
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=Last LOAD_USERID=???/??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -126,7 +66,7 @@ group: Выдача прав на использование модуля
 
 (code)
 
-$ make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
+make grant LOAD_USERID=???/??? LOAD_OPERATORID=???/??? TO_USERNAME=???
 
 (end)
 
@@ -143,6 +83,6 @@ group: Удаление модуля из БД
 
 (code)
 
-$ make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
