@@ -47,7 +47,7 @@ public class IntervalDao extends SchedulerDao implements Interval {
         record.set(MIN_VALUE, getInteger(rs, MIN_VALUE));
         record.set(MAX_VALUE, getInteger(rs, MAX_VALUE));
         record.set(STEP, getInteger(rs, STEP));
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(OPERATOR_NAME, rs.getString(OPERATOR_NAME));
       }
     };

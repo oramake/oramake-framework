@@ -32,7 +32,7 @@ public class RootLogDao extends JepDao implements RootLog {
     ResultSetMapper<JepRecord> resultSetMapper = new ResultSetMapper<JepRecord>() {
       public void map(ResultSet rs, JepRecord record) throws SQLException {
         record.set(LOG_ID, rs.getLong(LOG_ID));
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(MESSAGE_TYPE_NAME, rs.getString(MESSAGE_TYPE_NAME));
         record.set(MESSAGE_TEXT, rs.getString(MESSAGE_TEXT));
         record.set(OPERATOR_NAME, rs.getString(OPERATOR_NAME));

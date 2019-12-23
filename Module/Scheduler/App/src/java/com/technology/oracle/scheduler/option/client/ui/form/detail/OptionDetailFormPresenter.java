@@ -85,6 +85,11 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
   public void onSearch(SearchEvent event) {
     // Проинициализируем поисковый шаблон (независимо откуда был осуществлен переход: с формы поиска или с главной формы на подчиненную).
     searchTemplate = event.getPagingConfig().getTemplateRecord();
+    Integer batchIdsc = BatchScope.instance.getBatchId();
+    Integer batchId = searchTemplate.<Integer>get(BATCH_ID);
+    if(batchIdsc==null && batchId!=null) {
+      BatchScope.instance.setBatchId(batchId);
+    }
     searchTemplate.set(BATCH_ID, BatchScope.instance.getBatchId());
   }
 

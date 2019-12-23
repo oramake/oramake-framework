@@ -68,7 +68,7 @@ public class OptionDao extends SchedulerDao implements Option {
           record.set(OPTION_DESCRIPTION, rs.getString(OPTION_DESCRIPTION));
           record.set(STRING_VALUE, rs.getString(STRING_VALUE));
 
-          Date date = getTimestamp(rs, DATE_VALUE);
+          Date date = rs.getTimestamp(DATE_VALUE);
           record.set(DATE_VALUE, date);
           record.set(TIME_VALUE, JepRiaUtil.isEmpty(date) ? null : new JepTime(date));
 

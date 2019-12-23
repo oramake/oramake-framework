@@ -33,7 +33,7 @@ public class ScheduleDao extends SchedulerDao implements Schedule {
       public void map(ResultSet rs, JepRecord record) throws SQLException {
         record.set(SCHEDULE_ID, getInteger(rs, SCHEDULE_ID));
         record.set(SCHEDULE_NAME, rs.getString(SCHEDULE_NAME));
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(OPERATOR_NAME, rs.getString(OPERATOR_NAME));
       }
     };

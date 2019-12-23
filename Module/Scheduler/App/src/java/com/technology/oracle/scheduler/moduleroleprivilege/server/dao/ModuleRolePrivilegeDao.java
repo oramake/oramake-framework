@@ -59,7 +59,7 @@ public class ModuleRolePrivilegeDao extends SchedulerDao implements ModuleRolePr
         record.set(ROLE_ID, jepOption);
         record.set(ROLE_NAME, jepOption.getName());
 
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(OPERATOR_NAME, rs.getString(OPERATOR_NAME));
       }
     };

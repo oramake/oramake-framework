@@ -50,7 +50,7 @@ public class BatchRoleDao extends SchedulerDao implements BatchRole {
         jepOption = new JepOption(rs.getString(ROLE_NAME), getInteger(rs, ROLE_ID));
         record.set(ROLE_NAME, jepOption.getName());
         record.set(ROLE_ID, jepOption);
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(OPERATOR_NAME, rs.getString(OPERATOR_NAME));
       }
     };

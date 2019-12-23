@@ -45,7 +45,7 @@ public class DetailedLogDao extends JepDao implements DetailedLog {
 
         record.set(LOG_ID, rs.getLong(LOG_ID));
         record.set(PARENT_LOG_ID, rs.getLong(PARENT_LOG_ID));
-        record.set(DATE_INS, getTimestamp(rs, DATE_INS));
+        record.set(DATE_INS, rs.getTimestamp(DATE_INS));
         record.set(MESSAGE_TEXT, messageText + rs.getString(MESSAGE_TEXT));
         record.set(MESSAGE_VALUE, rs.getString(MESSAGE_VALUE));
         record.set(MESSAGE_TYPE_NAME, rs.getString(MESSAGE_TYPE_NAME));
