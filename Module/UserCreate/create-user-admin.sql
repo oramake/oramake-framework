@@ -115,6 +115,13 @@ grant javasyspriv to &userName with admin option
 -- Module: Option
 grant execute on sys.dbms_crypto to &userName with grant option
 /
+
+-- Module: Scheduler
+grant create job to &userName with admin option
+/
+grant manage scheduler to &userName with admin option
+/
+
 -- Module: TaskHandler
 grant select on sys.v_$db_pipes to &userName with grant option
 /

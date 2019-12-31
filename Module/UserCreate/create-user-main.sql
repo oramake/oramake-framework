@@ -68,6 +68,12 @@ grant select on dba_objects to &userName
 grant select on dba_jobs_running to &userName
 /
 
+-- Module: Scheduler
+grant create job to &userName
+/
+grant manage scheduler to &userName
+/
+
 -- Module: TaskHandler
 grant select on sys.v_$db_pipes to &userName
 /
