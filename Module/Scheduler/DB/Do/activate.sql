@@ -1,21 +1,15 @@
---script: Do/activate.sql
---Активирует пакеты.
+-- script: Do/activate.sql
+-- Активирует пакеты.
 --
---Параметры:
---batchPattern                - маска для имени пакетов ( batch_short_name),
+-- Параметры:
+-- batchPattern               - маска для имени пакетов ( batch_short_name),
 --                              по умолчанию любые ( "%")
---batchTypePattern            - маска для типа пакетов ( batch_type_name),
+-- batchTypePattern           - маска для типа пакетов ( batch_type_name),
 --                              по умолчанию любые ( "%")
---usedDayCount                - только пакеты, которые выполнялись или
+-- usedDayCount               - только пакеты, которые выполнялись или
 --                              управлялись в последние usedDayCount дней
 --                              ( 0 текущий день, по умолчанию null ( без
 --                              ограничения))
---
---Замечания:
---  - в случае ошибки commit не выполняется и ни один пакет не активируется;
---  - в случае, если пакет уже активирован, время очередного запуска будет
---    перерасчитано по расписанию и текущий номер повтора ( если есть) будет
---    сброшен;
 --
 
 define batchPattern     = "&1"
@@ -84,30 +78,15 @@ declare
   -- Id оператора, от имени которого выполняется операция
   operatorId integer := pkg_Operator.getCurrentUserId();
 
-
   nChecked integer := 0;
-
-  nDone integer := 0;
 
 begin
   for rec in curBatch loop
     nChecked := nChecked + 1;
-    if rec.activated_flag = 0 then
-      pkg_Scheduler.activateBatch(
-        batchId       => rec.batch_id
-        , operatorId  => operatorId
-      );
-      nDone := nDone + 1;
-    else
-      logger.info(
-        'Пакет уже был активирован: "'
-        || rec.batch_name_rus || '" [' || rec.batch_short_name ||  ']'
-        || ' ( batch_id=' || rec.batch_id
-        || ', дата запуска '
-          || to_char( rec.next_date, 'dd.mm.yyyy hh24:mi:ss')
-        || ').'
-      );
-    end if;
+    pkg_Scheduler.activateBatch(
+      batchId       => rec.batch_id
+      , operatorId  => operatorId
+    );
   end loop;
   if nChecked = 0 then
     raise_application_error(
@@ -115,7 +94,6 @@ begin
       , 'Не найдены пакеты для активации.'
     );
   end if;
-  commit;
 end;
 /
 

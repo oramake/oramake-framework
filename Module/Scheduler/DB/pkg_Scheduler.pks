@@ -179,6 +179,9 @@ procedure updateBatch(
   batchId                     - Id задания
   operatorId                  - Id оператора
 
+  Замечания:
+  - в процедуре выполняется commit;
+
   ( <body::activateBatch>)
 */
 procedure activateBatch(
@@ -244,14 +247,14 @@ procedure setNextDate(
 );
 
 /* pproc: abortBatch
-  Прерывает выполнение пакета заданий.
+  Прерывает выполнение пакетного задания.
 
   Параметры:
   batchId                     - Id задания
   operatorId                  - Id оператора
 
   Замечание:
-  - в случае успешного выполнения внутри процедуры выполняется commit.
+  - внутри процедуры выполняется commit.
 
   ( <body::abortBatch>)
 */

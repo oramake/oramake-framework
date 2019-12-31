@@ -52,6 +52,22 @@ WaitAbsentSession_OperCode constant varchar2(20) := 'SESSION_ABSENT';
 
 /* group: Функции */
 
+/* pproc: killBatchSession
+  Прерывает выполнение сессии батча.
+
+  Параметры:
+  batchShortName              - Краткое наименование пакетного задания
+  waitSecond                  - Максимальное время ожидания завершения сессии
+                                в секундах
+                                (по умолчанию без ожидания)
+
+  ( <body::killBatchSession>)
+*/
+procedure killBatchSession(
+  batchShortName varchar2
+  , waitSecond number := null
+);
+
 /* pproc: testBatchOperation
   Тестирует корректность выполнения операций над пакетными заданиями.
 

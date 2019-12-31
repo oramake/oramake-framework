@@ -88,7 +88,12 @@ end getBatchId;
   batchOperationLabel         - Метка операции
   expectedMessageMask         - Маска сообщения, которое должно быть в логе
   failMessageText             - Сообщение о неуспешном результате теста
-                                (можно использовать макрос $(waitSecond))
+                                (можно использовать макрос $(waitSecond)
+                                и $(sessionId))
+  expectedExistsFlag          - Флаг наличия сообщения для успешного результата
+                                проверки
+                                (1 если должно быть (по умолчанию), 0 если
+                                должно отсутствовать)
   waitSecond                  - Время ожидания появления сообщения
                                 (по умолчанию без ожидания)
 */
@@ -97,6 +102,7 @@ procedure checkLog(
   , batchOperationLabel varchar2
   , expectedMessageMask varchar2
   , failMessageText varchar2
+  , expectedExistsFlag integer := null
   , waitSecond number := null
 )
 is
@@ -108,6 +114,7 @@ is
   batchId integer;
 
   existsFlag integer;
+  sessionId integer;
 
 -- checkLog
 begin
@@ -115,7 +122,8 @@ begin
   loop
     select
       count(*)
-    into existsFlag
+      , max( lg.sessionid) as sessionid
+    into existsFlag, sessionId
     from
       v_lg_context_change_log ccl
       inner join lg_log lg
@@ -139,9 +147,13 @@ begin
     exit when existsFlag = 1 or coalesce( systimestamp >= endTime, true);
     dbms_lock.sleep(1);
   end loop;
-  if existsFlag = 0 then
+  if existsFlag != coalesce( expectedExistsFlag, 1) then
     pkg_TestUtility.failTest(
-      replace( failMessageText, '$(waitSecond)', waitSecond)
+      replace(
+      replace(
+        failMessageText
+        , '$(sessionId)', sessionId)
+        , '$(waitSecond)', waitSecond)
     );
   end if;
 exception when others then
@@ -152,6 +164,7 @@ exception when others then
         || 'batchShortName="' || batchShortName || '"'
         || ', batchOperationLabel="' || batchOperationLabel || '"'
         || ', expectedMessageMask="' || expectedMessageMask || '"'
+        || ', expectedExistsFlag=' || expectedExistsFlag
         || ', failMessageText="' || failMessageText || '"'
         || ').'
       )
@@ -227,7 +240,7 @@ exception when others then
   );
 end checkBatchSession;
 
-/* iproc: killBatchSession
+/* proc: killBatchSession
   Прерывает выполнение сессии батча.
 
   Параметры:
@@ -334,20 +347,46 @@ end killBatchSession;
                                 (по умолчанию 60 секунд)
   nextDate                    - Дата следующего запуска для SET_NEXT_DATE
                                 (по умолчанию немедленно)
+  ignoreMarkedForKillError    - Игнорировать ошибку
+                                "ORA-00031: session marked for kill"
+                                при прерывании пакетного задания
+                                (1 да, 0 нет (по умолчанию))
 */
 procedure execOperation(
   batchShortName varchar2
   , operationCode varchar2
   , waitSecond number := 60
   , nextDate date := null
+  , ignoreMarkedForKillError integer := null
 )
 is
 
   operatorId integer := pkg_Operator.getCurrentUserId();
 
+  pkgLogger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => pkg_Scheduler.Module_Name
+    , objectName  => 'pkg_Scheduler'
+  );
+
+  oldLevel varchar2(10) := pkgLogger.getLevel();
+
 -- execOperation
 begin
   case operationCode
+    when 'ABORT' then
+      -- исключаем вывод ошибки при прерывании
+      if ignoreMarkedForKillError = 1
+          and lg_logger_t.getLogger( pkg_Scheduler.Module_Name)
+              .getEffectiveLevel()
+            = lg_logger_t.getWarnLevelCode()
+          then
+        pkgLogger.setLevel( lg_logger_t.getFatalLevelCode());
+      end if;
+      pkg_Scheduler.abortBatch(
+        batchId       => getBatchId( batchShortName)
+        , operatorId  => operatorId
+      );
+      commit;
     when 'ACTIVATE' then
       pkg_Scheduler.activateBatch(
         batchId       => getBatchId( batchShortName)
@@ -381,16 +420,28 @@ begin
       );
   end case;
 exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при выполнении операции ('
-        || 'batchShortName="' || batchShortName || '"'
-        || ', operationCode="' || operationCode || '"'
-        || ').'
-      )
-    , true
-  );
+  pkgLogger.setLevel( oldLevel);
+  if ignoreMarkedForKillError = 1
+        and operationCode = 'ABORT'
+        and logger.getErrorStack( isStackPreserved => 1) like '%ORA-00031:%'
+      then
+    logger.trace(
+      'Ignored exception during abortBatch:'
+      || logger.getErrorStack()
+    );
+    rollback;
+  else
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выполнении операции ('
+          || 'batchShortName="' || batchShortName || '"'
+          || ', operationCode="' || operationCode || '"'
+          || ').'
+        )
+      , true
+    );
+  end if;
 end execOperation;
 
 /* proc: testBatchOperation
@@ -614,6 +665,68 @@ end;'
 
 
   /*
+    Проверка прерывания выполнения батча.
+  */
+  procedure checkAbortBatch
+  is
+
+    restartLabel varchar2(100) :=
+      'RestartAfterAbort:' || dbms_utility.get_time()
+    ;
+
+    btr v_sch_batch%rowtype;
+
+  begin
+    if skipCheckCase( 'Проверка прерывания выполнения батча') then
+      return;
+    end if;
+    bopt.setNumber( 'WorktimeSecond', 120);
+    commit;
+    execOperation( batchSName, 'START');
+    bopt.setNumber( 'WorktimeSecond', 0);
+    bopt.setString( 'RunLabel', restartLabel);
+    commit;
+    execOperation( batchSName, 'ABORT', ignoreMarkedForKillError => 1);
+    checkBatchSession( batchSName, existsFlag => 0, waitSecond => 120);
+    checkLog(
+      batchShortName        => batchSName
+      , batchOperationLabel => pkg_SchedulerMain.Exec_BatchMsgLabel
+      , expectedMessageMask => '%RunLabel := "' || restartLabel || '"%'
+      , expectedExistsFlag  => 0
+      , waitSecond          => 90
+      , failMessageText     =>
+          cinfo || 'Неожиданный запуск батча после прерывания'
+          || ' (sessionid=$(sessionId))'
+    );
+    select
+      bt.*
+    into btr
+    from
+      v_sch_batch bt
+    where
+      bt.batch_short_name = batchSName
+    ;
+    pkg_TestUtility.compareChar(
+      actualString      =>
+          to_char( btr.next_date, 'dd.mm.yyyy hh24:mi:ss tzh:tzm')
+      , expectedString  =>
+          to_char( trunc(sysdate + 1), 'dd.mm.yyyy')
+          || ' 04:18:00'
+          || to_char( systimestamp, ' tzh:tzm')
+      , failMessageText =>
+          cinfo || 'Дата следующего запуска установлена не по расписанию'
+    );
+  exception when others then
+    rollback;
+    pkg_TestUtility.failTest(
+      cinfo || 'Ошибка при проверке тестового случая:'
+      || chr(10) || logger.getErrorStack()
+    );
+  end checkAbortBatch;
+
+
+
+  /*
     Проверка рестарта батча после kill session.
   */
   procedure checkRestartAfterKill
@@ -679,6 +792,7 @@ end;'
 begin
   prepareTestData();
   pkg_TestUtility.beginTest( 'batch operation');
+  checkAbortBatch();
   checkRestartAfterKill();
   if coalesce( saveDataFlag, 0) != 1 then
     clearTestData();

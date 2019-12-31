@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Scheduler
-SubTitle: Версия 5.2.0
+SubTitle: Версия 5.2.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -158,6 +158,11 @@ Group: Скрипты  {
             File: manage-batch  (no auto-title, Install/Grant/Last/manage-batch.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
+
+         Group: 5.2.1  {
+
+            File: sys-privs  (no auto-title, Install/Grant/5.2.1/sys-privs.sql)
+            }  # Group: 5.2.1
 
          Group: 5.0.0  {
 

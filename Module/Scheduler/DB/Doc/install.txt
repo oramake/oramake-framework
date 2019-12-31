@@ -48,6 +48,32 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 5.2.1
+
+Порядок установки:
+
+- выдача системных привилегий и прав на системные объекты пользователю,
+  под которым будет установлен модуль;
+
+(code)
+
+make grant INSTALL_VERSION=5.2.1 LOAD_USERID=sys/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs
+
+(end)
+
+(либо вручную выдать пользователю, в схему которого установлен модуль, права,
+указанные в скрипте <Install/Grant/5.2.1/sys-privs.sql>)
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=5.2.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
 group: 5.2.0
 (<Версии::5.2.0 ( 2019-05-08)>)
 
