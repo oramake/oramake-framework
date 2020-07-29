@@ -16,7 +16,7 @@ begin
 'execute immediate
   ''alter table
     lg_log
-  enable validate lg_log_fk_operator_id
+  enable validate constraint lg_log_fk_operator_id
 ''
 ;
 '

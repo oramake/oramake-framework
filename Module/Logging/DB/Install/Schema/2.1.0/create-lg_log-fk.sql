@@ -31,8 +31,8 @@ begin
 'execute immediate
   ''alter table
     lg_log
-  enable validate lg_log_fk_level_code
-  enable validate lg_log_fk_module_id
+  enable validate constraint lg_log_fk_level_code
+  enable validate constraint lg_log_fk_module_id
 ''
 ;
 '
