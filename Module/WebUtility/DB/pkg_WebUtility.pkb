@@ -594,43 +594,43 @@ is
       , method        => reqMethod
       , http_version  => utl_http.HTTP_VERSION_1_1
     );
-    begin
-      if logger.isTraceEnabled() then
-        logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
-        logger.trace( '* HTTP request header: start');
-      end if;
+    if logger.isTraceEnabled() then
+      logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
+      logger.trace( '* HTTP request header: start');
+    end if;
 
-      if headerList is not null then
-        processHeaderList();
-      end if;
+    if headerList is not null then
+      processHeaderList();
+    end if;
 
-      writeBody(
-        case
-          when
-              reqMethod = Post_HttpMethod and nPart > 0
-            then
-              multipartData
-          when
-              reqMethod = Post_HttpMethod and nParameter > 0
-            then
-              parameterData
-          else
-              requestText
-        end
-      );
+    writeBody(
+      case
+        when
+            reqMethod = Post_HttpMethod and nPart > 0
+          then
+            multipartData
+        when
+            reqMethod = Post_HttpMethod and nParameter > 0
+          then
+            parameterData
+        else
+            requestText
+      end
+    );
 
-      if parameterData is not null then
-        dbms_lob.freeTemporary( parameterData);
-      end if;
-      if multipartData is not null then
-        dbms_lob.freeTemporary( multipartData);
-      end if;
-    exception when others then
-      -- Close the request in case of an error
-      utl_http.end_request( req);
-      raise;
-    end;
+    if parameterData is not null then
+      dbms_lob.freeTemporary( parameterData);
+    end if;
+    if multipartData is not null then
+      dbms_lob.freeTemporary( multipartData);
+    end if;
   exception when others then
+    if parameterData is not null then
+      dbms_lob.freeTemporary( parameterData);
+    end if;
+    if multipartData is not null then
+      dbms_lob.freeTemporary( multipartData);
+    end if;
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
@@ -698,6 +698,8 @@ is
         || ' (length=' || length( entityBody) || ')'
       );
     when others then
+      -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+      utl_http.end_response( resp);
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
@@ -785,6 +787,8 @@ begin
     logger.trace( 'execSecond         : ' || execSecond);
   end if;
 exception when others then
+  -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+  utl_http.end_request( req);
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
