@@ -227,7 +227,7 @@ procedure execHttpRequest(
   , maxWaitSecond integer := null
 );
 
-/* pproc: execHttpRequest
+/* pproc: execHttpRequest(without responseHeaderList)
   Execute of HTTP request.
 
   Parameters:
@@ -281,7 +281,7 @@ procedure execHttpRequest(
   - data is automatically converted from the database character set to the
     request body character set;
 
-  ( <body::execHttpRequest>)
+  ( <body::execHttpRequest(without responseHeaderList)>)
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
@@ -536,7 +536,6 @@ return xmltype;
                                 'AWS' for Amazon AWS version 2 authentication scheme, or
                                 'AWS4-HMAC-SHA256' for AWS version 4 authentication scheme.
                                 Default is 'Basic'.
-
 
   ( <body::login>)
 */

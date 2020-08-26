@@ -794,7 +794,7 @@ exception when others then
   );
 end execHttpRequest;
 
-/* pproc: execHttpRequest
+/* proc: execHttpRequest(without responseHeaderList)
   Execute of HTTP request.
 
   Parameters:
@@ -847,8 +847,6 @@ end execHttpRequest;
     headerList);
   - data is automatically converted from the database character set to the
     request body character set;
-
-  ( <body::execHttpRequest>)
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
@@ -887,8 +885,6 @@ begin
     , maxWaitSecond           => maxWaitSecond
   );
 end execHttpRequest;
-
-
 
 /* proc: checkResponseError
   Raises an exception when the Web server returns a status code other than
@@ -1418,9 +1414,11 @@ exception when others then
   );
 end getSoapResponse;
 
+
+
 /* group: Authentification  */
 
-/* pproc: login
+/* proc: login
   Perform authentification request
 
   Parameters:
@@ -1431,15 +1429,13 @@ end getSoapResponse;
   walletPath                  - Path to wallet (must have for https)
   walletPassword              - Password for wallet (must have for https)
   proxyServer                 - Name of proxy server
-  schema                      - The HTTP authentication scheme.
+  scheme                      - The HTTP authentication scheme.
                                 Either 'NTLM' for the Microsoft NTLM,
                                 'Basic' for the HTTP basic,
                                 'Digest' for the HTTP digest,
                                 'AWS' for Amazon AWS version 2 authentication scheme, or
                                 'AWS4-HMAC-SHA256' for AWS version 4 authentication scheme.
                                 Default is 'Basic'.
-
-
 */
 procedure login(
   requestUrl                varchar2
