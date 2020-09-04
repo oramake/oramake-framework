@@ -2,6 +2,20 @@ title: Версии
 
 
 
+group: 1.3.4 ( 2020-08-31)
+
+[+] Add in function
+    <pkg_DataSync.appendData>:
+    - support for multiple additional tables;
+    - ability to exclude columns from update (using "excludeColumnList");
+    - writing number of uploaded rows to log;
+    - hint "index" in unload SQL (to stabilize execution plan);
+
+[-] Synonyms are no longer used in function <pkg_DataSync.appendData>
+    (you must specify schema for objects from other schemas).
+
+
+
 group: 1.3.3 ( 2019-08-29)
 
 [+] Add support for tables without field "date_ins" in procedure <pkg_DataSync::appendData>.

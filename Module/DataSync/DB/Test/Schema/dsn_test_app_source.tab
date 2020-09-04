@@ -1,0 +1,65 @@
+-- table: dsn_test_app_source
+create table
+  dsn_test_app_source
+(
+  app_source_id                   integer                             not null
+  , owner                         varchar2(128)                       not null
+  , object_name                   varchar2(128)                       not null
+  , subobject_name                varchar2(128)
+  , object_id                     number                              not null
+  , object_type                   varchar2(100)
+  , last_ddl_time                 date                                not null
+  , clob_column                   clob
+  , blob_column                   blob
+  , date_ins                      date                                not null
+  , object_full_name varchar2(257) as ( owner || '.' || object_name)
+  , constraint dsn_test_app_source_pk primary key
+    ( app_source_id)
+)
+/
+
+
+comment on table dsn_test_app_source is
+  'Тестовый источник данных для appendData [ SVN root: Oracle/Module/DataSync]'
+/
+
+insert /*+ append */ into
+  dsn_test_app_source
+(
+  app_source_id
+  , owner
+  , object_name
+  , subobject_name
+  , object_id
+  , object_type
+  , last_ddl_time
+  , clob_column
+  , blob_column
+  , date_ins
+)
+select
+  rownum as app_source_id
+  , t.owner
+  , t.object_name
+  , t.subobject_name
+  , t.object_id
+  , t.object_type
+  , t.last_ddl_time
+  , to_char( t.object_id) as clob_column
+  , hextoraw( to_char( t.object_id, 'fm' || rpad( 'x', 30, 'x') ))
+    as blob_column
+  , trunc( sysdate) - 10 - (50000 - rownum)/3600 as date_ins
+from
+  all_objects t
+where
+  rownum <= 25000
+/
+
+commit
+/
+
+create index
+  dsn_test_app_source_ix_dt_ins
+on
+  dsn_test_app_source( date_ins)
+/

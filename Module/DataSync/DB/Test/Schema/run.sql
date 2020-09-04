@@ -2,6 +2,9 @@
 -- Создание тестовых объектов схемы.
 --
 
+--
+-- Тестирование обновления данных
+--
 @@dsn_test_source.tab
 
 
@@ -37,3 +40,17 @@
 
 @@v_dsn_test_mview.vw
 @@v_dsn_test_mview_ext.vw
+
+
+--
+-- Тестирование выгрузки данных с помощью appendData
+--
+
+@@dsn_test_app_source.tab
+
+@@dsn_test_app_dst.tab
+@@v_dsn_test_app_dst_src.vw
+
+@@dsn_test_app_dst_a1.tab
+@@v_dsn_test_app_dst_a1_src.vw
+@@dsn_test_app_dst_a2.tab
