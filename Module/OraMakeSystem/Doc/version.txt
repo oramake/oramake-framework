@@ -7,6 +7,10 @@ group: X.X.X ( 2020-09-11)
 [+] Add UTF-8 encoding support for modules: add "encoding" option for
     "oms create-module" command (<oms::create-module>).
 
+[!] Allow value of batchPattern in oms-*-batch scripts longer than 1000 chars
+    (earlier error "ORA-06502: PL/SQL: numeric or value error: character
+    string buffer too small" was raised).
+
 
 
 group: 2.2.0 ( 2019-02-06)
