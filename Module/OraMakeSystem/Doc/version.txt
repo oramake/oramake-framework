@@ -2,7 +2,7 @@ title: Версии
 
 
 
-group: X.X.X ( 2020-09-11)
+group: 2.2.1 ( 2020-09-22)
 
 [+] Add UTF-8 encoding support for modules: add "encoding" option for
     "oms create-module" command (<oms::create-module>).
