@@ -52,6 +52,9 @@ loadUserId=
 # ( result of execution of oms-connection-info for testOperatorId)
 loadOperatorId=
 
+# Имя группы тестовых случаев
+checkCaseGroupName=""
+
 # Serial number of current test case
 checkCaseNumber=0
 
@@ -135,7 +138,7 @@ END
 
 startTestCase()
 {
-  local caseName=$1
+  local caseName=${checkCaseGroupName:+${checkCaseGroupName}: }$1
   local usedCount=$nextCaseUsedCount
   checkCaseNumber=$(( checkCaseNumber + 1 ))
   nextCaseUsedCount=0
@@ -351,32 +354,36 @@ if [[ -d "$modDir" ]]; then
     || die "Existing test module has not been deleted: $modDir"
 fi
 
-# Checks with using test module
-nextCaseUsedCount=999
-if runOms create-module -d "$modDir" TestModule; then
+for isUtf8 in "" 1; do
+  checkCaseGroupName=${isUtf8:+UTF8}
+  # Checks with using test module
+  nextCaseUsedCount=999
+  if runOms create-module \
+      ${isUtf8:+--encoding utf-8} -d "$modDir" TestModule; then
 
-  cd "$modDir" || die "Test module directory not created: $modDir"
+    cd "$modDir" || die "Test module directory not created: $modDir"
 
-  addTestFile
+    addTestFile
 
-  runMake gendoc
-  runOms set-version "1.0.1"
+    runMake gendoc
+    runOms set-version "1.0.1"
 
-  runOms gen-schema-run
-  runOms gen-schema-revert
-  runOms gen-spec "DB/pkg_TestModule.pkb"
+    runOms gen-schema-run
+    runOms gen-schema-revert
+    runOms gen-spec "DB/pkg_TestModule.pkb"
 
-  runMake gendoc-menu
+    runMake gendoc-menu
 
-  runOms update-module
+    runOms update-module
 
-  if (( loadFlag )); then
-    startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
-    checkOutputCyrillic
+    if (( loadFlag && ! isUtf8 )); then
+      startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
+      checkOutputCyrillic
+    fi
+
+    cd - >/dev/null
+    rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
   fi
-
-  cd - >/dev/null
-  rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
-fi
+done
 
 echo result: OK

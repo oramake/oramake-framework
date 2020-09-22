@@ -273,10 +273,20 @@ fileObjectName=""
 #
 fileObjectType=""
 
-# var: moduleGendocEncoding
-# Encoding of module's documentation ( enconding name for iconv)
-# Is set in <getModuleGendocEncoding>.
-moduleGendocEncoding=""
+# var: moduleEncoding
+# Encoding of module's files (enconding name for iconv).
+# Is set in <getModuleEncoding>.
+moduleEncoding=""
+
+# var: moduleNlsLang
+# Value of NLS_LANG for loading module's files.
+# Is set in <getModuleEncoding>.
+moduleNlsLang=""
+
+# var: isConvertModuleEncoding
+# Convert files from UTF-8 enconding to module's enconding?
+# Is set in <getModuleEncoding>.
+isConvertModuleEncoding=0
 
 
 
@@ -723,25 +733,102 @@ getFileObject()
 
 
 
-# func: getModuleGendocEncoding
-# Returns encoding of module's documentation.
+# func: getModuleEncoding
+# Returns encoding of module's files.
 #
 # Parameters:
 # modulePath                  - Path to root directory of module
-#                               ( empty string for new module)
+#                               (empty string for new module)
+# defaultEncoding             - Default encoding (for new module)
 #
 # Return:
-# <moduleGendocEncoding>      - Encoding of module's documentation
-#                               ( enconding name for iconv)
+# <moduleEncoding>            - Encoding of module's files
+#                               (enconding name for iconv)
+# <moduleNlsLang>             - Value of NLS_LANG for loading module's files
+# <isConvertModuleEncoding>   - Convert files from UTF-8 to module's enconding
 #
-getModuleGendocEncoding()
+# Remarks:
+# - return 1 if defaultEncoding is incorrect.
+# - return 2 if encoding for NLS_LANG is unknown
+#
+getModuleEncoding()
 {
-  local modulePath="$1"
+  local modulePath=$1
+  local defaultEncoding=$2
+  local resCode=0
   logDebug3 "start: modulePath='$modulePath'"
+  logDebug3 "start: defaultEncoding='$defaultEncoding'"
+  moduleEncoding=""
+  moduleNlsLang=""
+  isConvertModuleEncoding=0
+
+  if [[ -n $modulePath ]]; then
+    local mkFile="$modulePath/DB/Makefile"
+    if [[ -f $mkFile ]]; then
+      while read line; do
+        if [[ ${line:0:17} == "export NLS_LANG =" ]]; then
+          moduleNlsLang=${line:17}
+          moduleNlsLang=${moduleNlsLang//[[:space:]]/}
+          # remove \r in case of DOS EOL
+          if [[ ${moduleNlsLang: -1} == $'\r' ]]; then
+            moduleNlsLang=${moduleNlsLang::${#moduleNlsLang}-1}
+          fi
+          logDebug3 "module NLS_LANG: '$moduleNlsLang'"
+          break
+        fi
+      done < $mkFile
+    else
+      logError "getModuleEncoding: DB Makefile not found: '$mkFile'"
+    fi
+  elif [[ -n $defaultEncoding ]]; then
+    case ${defaultEncoding,,} in
+      utf-8 | utf8)
+        moduleEncoding="utf-8"
+        moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+        ;;
+      cp1251 | windows-1251)
+        moduleEncoding="cp1251"
+        moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+        ;;
+      *) resCode=1
+        ;;
+    esac
+  fi
+  if [[ -z $moduleNlsLang ]]; then
+    moduleNlsLang=$NLS_LANG
+    logDebug3 "use environment NLS_LANG: '$moduleNlsLang'"
+  fi
+  # set moduleEncoding by moduleNlsLang
+  if [[ -n $moduleNlsLang && -z $moduleEncoding ]]; then
+    case ${moduleNlsLang##*.} in
+      AL32UTF8)
+        moduleEncoding="utf-8"
+        ;;
+      CL8MSWIN1251)
+        moduleEncoding="cp1251"
+        ;;
+      *)
+        logError "getModuleEncoding: Unknown encoding for NLS_LANG: '$moduleNlsLang'"
+        resCode=2
+        moduleNlsLang=""
+        ;;
+    esac
+  fi
+  # use global default values
+  if [[ -z $moduleNlsLang ]]; then
+    moduleEncoding="cp1251"
+    moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+  fi
+
+  isConvertModuleEncoding=$(( moduleEncoding != "utf-8" ))
 
   # return value
-  moduleGendocEncoding="cp1251"
-  logDebug2 "Set moduleGendocEncoding: '$moduleGendocEncoding'"
+  logDebug2 "Set moduleEncoding: '$moduleEncoding'"
+  logDebug2 "Set moduleNlsLang: '$moduleNlsLang'"
+  logDebug2 "Set isConvertModuleEncoding: '$isConvertModuleEncoding'"
+  logDebug2 "return: $resCode"
+
+  return $resCode
 }
 
 

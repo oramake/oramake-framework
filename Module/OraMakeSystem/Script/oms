@@ -353,6 +353,8 @@ execCommandScript()
 #   -d, --directory DIR         - путь к корневому каталогу модуля ( по
 #                                 умолчанию текущий каталог)
 #   -n, --dry-run               - не выполнять команды, а только выводить их
+#       --encoding ENCODING     - кодировка файлов модуля ("cp1251" либо
+#                                 "utf-8", по умолчанию "cp1251")
 #   -h, --help                  - вывести справку по использованию
 #   -p, --package-name NAME     - имя пакета ( по умолчанию: pkg_<moduleName>)
 #   --overwrite                 - переписывать существующие файлы
@@ -391,10 +393,12 @@ Arguments:
 Options:
       --debug-level DBG_LEVEL set level for print debug information ( 0 - 3)
   -d, --directory DIR         used top level directory DIR
-                              ( default: MODULE_NAME)
+                              (default: MODULE_NAME)
   -n, --dry-run               don't actually run any commands; just print them
+      --encoding ENCODING     encoding of module's files ("cp1251" or "utf-8")
+                              (default: "cp1251")
   -h, --help                  show this help
-  -p, --package-name NAME     add package NAME ( default: pkg_<MODULENAME>)
+  -p, --package-name NAME     add package NAME (default: pkg_<MODULENAME>)
       --overwrite             overwrite existing files
 END
 }
@@ -411,6 +415,11 @@ parseOption_create-module()
     processCommonOption "$@"
     if ! (( processCommonOptionCount )); then
       case $1 in
+        --encoding)
+          getModuleEncoding "" "$2" && shift \
+            || exitArgError "Illegal value for encoding: '$2'."
+          logDebug3 "Set moduleEncoding: $moduleEncoding"
+          ;;
         -n | --dry-run)
           setDryRun
           ;;
@@ -483,16 +492,14 @@ exec_create-module()
     fi
   fi
 
-  # Encoding of module's documentation
-  if (( isRootExist && isOverwrite )); then
-    getModuleGendocEncoding "$rootDir"
-  else
-    getModuleGendocEncoding ""
+  # Encoding of module's files
+  if [[ -z "$moduleEncoding" ]]; then
+    if (( isRootExist && ! isOverwrite )); then
+      getModuleEncoding "$rootDir"
+    else
+      getModuleEncoding "" ""
+    fi
   fi
-
-  # Convert files from UTF-8 enconding to module's documentation enconding?
-  local isConvertEncoding=0
-  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
 
   (($isRootExist)) || $runCmd mkdir -p "$rootDir"
   logDebug "Process templateDir: '$templateDir'"
@@ -537,6 +544,7 @@ exec_create-module()
         isUnixFormat=1
         ;;
       Doc/map.xml \
+        | DB/Makefile \
         | DB/loaddeps.mk \
         )
         isExpand=1
@@ -561,26 +569,28 @@ exec_create-module()
           sedOption=" -e s/\x0D//g -e s/$/\x0D/"
         fi
         if ((isDryRun)); then
-          if ((isConvertEncoding)); then
-            $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+          if ((isConvertModuleEncoding)); then
+            $runCmd iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
           else
             $runCmd cat "$srcPath"
           fi
           echo "| sed MACROS: -> \"$dstPath\""
           echo "  \$(moduleName)    : $moduleName"
           echo "  \$(moduleVersion) : $moduleVersion"
+          echo "  \$(moduleNlsLang) : $moduleNlsLang"
           echo "  \$(packageName)   : $packageName"
           echo "  \$(svnModuleRoot) : $svnModuleRoot"
           echo "  \$(svnInitialPath): $svnInitialPath"
         else
-          if ((isConvertEncoding)); then
-            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+          if ((isConvertModuleEncoding)); then
+            iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
           else
             cat "$srcPath"
           fi \
           | sed \
             -e "s/\$(moduleName)/$moduleName/g" \
             -e "s/\$(moduleVersion)/$moduleVersion/g" \
+            -e "s/\$(moduleNlsLang)/$moduleNlsLang/g" \
             -e "s/\$(packageName)/$packageName/g" \
             -e "s|\$(svnModuleRoot)|$svnModuleRoot|g" \
             -e "s|\$(svnInitialPath)|$svnInitialPath|g" \
@@ -588,12 +598,12 @@ exec_create-module()
             > "$dstPath"
         fi
       else
-        if ((isConvertEncoding)); then
+        if ((isConvertModuleEncoding)); then
           if ((isDryRun)); then
-            echo iconv -f "utf-8" -t "$moduleGendocEncoding" \
+            echo iconv -f "utf-8" -t "$moduleEncoding" \
               "$srcPath" \> "$dstPath"
           else
-            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath" > "$dstPath"
+            iconv -f "utf-8" -t "$moduleEncoding" "$srcPath" > "$dstPath"
           fi
         else
           $runCmd cp "$srcPath" "$dstPath"
@@ -827,10 +837,10 @@ exec_gen-schema-revert()
   fi
   local revertFilePath="$schemaDir/revert.sql"
   local revertFilePathTemp=${revertFilePath}".$$"
-  getModuleGendocEncoding "$rootDir"
+  getModuleEncoding "$rootDir"
   gen-schema-revert_file | unix2dos > $revertFilePathTemp
-  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
-    iconv -f "utf-8" -t "$moduleGendocEncoding" \
+  if (( isConvertModuleEncoding )); then
+    iconv -f "utf-8" -t "$moduleEncoding" \
       "$revertFilePathTemp" >"$revertFilePath"
   else
     cp $revertFilePathTemp $revertFilePath
@@ -982,10 +992,10 @@ exec_gen-schema-run()
   fi
   local runFilePath="$schemaDir/run.sql"
   local runFilePathTemp=${runFilePath}".$$"
-  getModuleGendocEncoding "$rootDir"
+  getModuleEncoding "$rootDir"
   gen-schema-run_file | unix2dos > $runFilePathTemp
-  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
-    iconv -f "utf-8" -t "$moduleGendocEncoding" \
+  if (( isConvertModuleEncoding )); then
+    iconv -f "utf-8" -t "$moduleEncoding" \
       "$runFilePathTemp" >"$runFilePath"
   else
     cp $runFilePathTemp $runFilePath
@@ -1258,10 +1268,10 @@ exec_set-version()
       || exitError "error on set version in map file: '$dstFile'"
     dstFile="$rootDir/DB/OmsModule/NaturalDocs/Menu.txt"
     local versionExpr="s|^SubTitle:.*|SubTitle: Версия $moduleVersion|"
-    getModuleGendocEncoding "$rootDir"
-    if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+    getModuleEncoding "$rootDir"
+    if (( isConvertModuleEncoding )); then
       versionExpr=$(
-        iconv -f "utf-8" -t "$moduleGendocEncoding" <<<$versionExpr
+        iconv -f "utf-8" -t "$moduleEncoding" <<<$versionExpr
       )
     fi
     $runCmd sed --in-place \

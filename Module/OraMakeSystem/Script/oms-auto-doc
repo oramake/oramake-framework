@@ -194,10 +194,10 @@ END
 #
 getMenuPart()
 {
-  # Convert menu from UTF-8 enconding to module's documentation enconding?
+  # Convert menu from UTF-8 enconding to module's files enconding?
   local isConvert=$3
   if (( isConvert )); then
-    iconv -f "utf-8" -t "$moduleGendocEncoding" "$1"
+    iconv -f "utf-8" -t "$moduleEncoding" "$1"
   else
     cat "$1"
   fi | \
@@ -235,8 +235,8 @@ processFiles()
 {
   logMessage "processFiles( see log messages in menu file) ...";
   (
-  if (( isConvertEncoding )); then
-    iconv -f "utf-8" -t "$moduleGendocEncoding" "$configPath"
+  if (( isConvertModuleEncoding )); then
+    iconv -f "utf-8" -t "$moduleEncoding" "$configPath"
   else
     cat $configPath
   fi
@@ -282,10 +282,7 @@ function initMenuGenerator()
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
 
-  # Convert files from UTF-8 enconding to module's documentation enconding?
-  isConvertEncoding=0
-  getModuleGendocEncoding "$rootDir"
-  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+  getModuleEncoding "$rootDir"
 
   logMessage "menuPath = "$menuPath
   logMessage "menuOutputFile = "$menuOutputFile
@@ -316,7 +313,7 @@ function generateMenu()
                                        # Генерируем меню
   ( getMenuPart "$menuPath" 1 0 \
     && processFiles $menuPath \
-    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertEncoding \
+    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertModuleEncoding \
   ) > ${menuTempPath};
   menuResult=$?
   logMessage "menuResult = $menuResult"
@@ -335,7 +332,7 @@ function replaceMenuIndex()
   initMenuGenerator;
   ( getMenuPart "$menuPath" 1 0 \
     && getMenuPart "$menuPath" 2 0 \
-    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertEncoding \
+    && getMenuPart "$moduleConfigMenuPath" 3 $isConvertModuleEncoding \
   ) > ${menuTempPath};
   if [[ -z $menuOutputFile ]] && [[ $? -eq 0 ]]; then
     cp $menuTempPath $menuPath
@@ -403,7 +400,7 @@ function runNaturalDocs()
     -i ${sourceDir} \
     -o ${outputFormat} ${outputDir} \
     -p ${gendocConfigDir} \
-    --charset Windows-1251 \
+    --charset "${moduleEncoding}" \
     --style small \
     -xi "${rootDir}/Db/OmsModule" \
     "${excludeRevert}" \

@@ -166,7 +166,7 @@ gendoc-menu: gendoc-menu.oms
 
 # build var: NLS_LANG
 # Настройки локали, используемые при загрузке файлов в БД.
-export NLS_LANG = AMERICAN_CIS.CL8MSWIN1251
+export NLS_LANG = $(moduleNlsLang)
 
 # build var: PLSQL_WARNINGS
 # Уровни предупреждения компилятора PL/SQL.
@@ -307,7 +307,7 @@ LOAD_OPERATORID := $(ORACLE_OPERATOR)
 # build var: COMMON_SCHEMA
 # Наименование схемы БД, в которой размещены общие модули.
 # (AccessOperator, ModuleInfo, etc)
-COMMON_SCHEMA := 
+COMMON_SCHEMA :=
 
 
 

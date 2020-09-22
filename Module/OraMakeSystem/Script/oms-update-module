@@ -88,9 +88,6 @@ isUseSubversion=0
 # обновления.
 isNeedGendoc=0
 
-# Convert files from UTF-8 enconding to module's documentation enconding?
-isConvertEncoding=0
-
 
 
 # group: Функции
@@ -309,8 +306,8 @@ expandFile()
   fi
                                         # Создаем файл
   if ((isDryRun)); then
-    if ((isConvertEncoding)); then
-      $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    if ((isConvertModuleEncoding)); then
+      $runCmd iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
     else
       $runCmd cat "$srcPath"
     fi
@@ -321,8 +318,8 @@ expandFile()
     echo "  \$(svnInitialPath): $svnInitialPath"
     echo "  \$sedOption[${#sedOption[@]}]    :" "${sedOption[@]}"
   else
-    if ((isConvertEncoding)); then
-      iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    if ((isConvertModuleEncoding)); then
+      iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
     else
       cat "$srcPath"
     fi \
@@ -441,8 +438,8 @@ patchFile()
           $runCmd dos2unix "$dstFile" 2>/dev/null
         fi
         local catCmd
-        if (( isConvertEncoding )); then
-          catCmd="iconv -f utf-8 -t $moduleGendocEncoding"
+        if (( isConvertModuleEncoding )); then
+          catCmd="iconv -f utf-8 -t $moduleEncoding"
         else
           catCmd="cat"
         fi
@@ -562,9 +559,7 @@ updateModule()
     isUseSubversion=1
   fi
 
-  # Encoding of module's documentation
-  getModuleGendocEncoding "$rootDir"
-  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+  getModuleEncoding "$rootDir"
 
                                         # Ветки .svn игнорируются для удобства
                                         # тестирования ( запуск на текущей
@@ -617,12 +612,12 @@ updateModule()
       elif ((isExpand)) && ! [[ -f "$dstPath" ]] ; then
         expandFile "$file" "$dstPath" "$srcPath" "$isUnixFormat"
       elif ((isCopyFile)) || ! [[ -f "$dstPath" ]] ; then
-        if ((isConvertEncoding)); then
+        if ((isConvertModuleEncoding)); then
           if ((isDryRun)); then
-            echo iconv -f "utf-8" -t "$moduleGendocEncoding" \
+            echo iconv -f "utf-8" -t "$moduleEncoding" \
               "$srcPath" \> "$dstPath"
           else
-            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath" > "$dstPath"
+            iconv -f "utf-8" -t "$moduleEncoding" "$srcPath" > "$dstPath"
           fi
         else
           $runCmd cp "$srcPath" "$dstPath"

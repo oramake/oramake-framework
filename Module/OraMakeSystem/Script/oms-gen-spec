@@ -288,17 +288,17 @@ BEGIN \
 generateSpec()
 {
   logDebug3 "Set tmpFileDir: '$tmpFileDir'"
-  getModuleGendocEncoding "$rootDir"
-  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+  getModuleEncoding "."
+  if (( isConvertModuleEncoding )); then
     functionGroupExprLC=$(
-      iconv -f "utf-8" -t "$moduleGendocEncoding" <<<$FUNCTION_GROUP_EXPR
+      iconv -f "utf-8" -t "$moduleEncoding" <<<$FUNCTION_GROUP_EXPR
     )
   else
     functionGroupExprLC=$FUNCTION_GROUP_EXPR
   fi
 
   if [[ -z $(cat $specFileName | getPlsqlObjectPart 3) ]]; then
-    exitError "Incorrect specification: Must be expressions: \"$functionGroupExprLC\" and \"$END_OBJECT_EXPR\"!"
+    exitError "Incorrect specification (encoding: $moduleEncoding): Must be expressions: \"$functionGroupExprLC\" and \"$END_OBJECT_EXPR\"!"
   fi;
 
   # Временный файл - тела функций.

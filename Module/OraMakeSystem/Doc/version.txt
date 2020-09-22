@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: X.X.X ( 2020-09-11)
+
+[+] Add UTF-8 encoding support for modules: add "encoding" option for
+    "oms create-module" command (<oms::create-module>).
+
+
+
 group: 2.2.0 ( 2019-02-06)
 
 [+] Add dropjava support. Use consequently current user, public and "-" for
