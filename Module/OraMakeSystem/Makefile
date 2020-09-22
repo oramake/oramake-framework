@@ -384,9 +384,9 @@ set-oms-version:
 			-e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
 			$(buildDir)/NaturalDocs/Menu.txt \
 		&& sed --in-place \
-			-e 's/^group: X.X.X /group: $(OMS_VERSION) /' \
-			-e 's/$$/\x0D/' \
+			-e "s/^group: X\.X\.X.*$$/group: $(OMS_VERSION) ( $${versionDate:0:10})/" \
 			Doc/version.txt \
+		&& unix2dos Doc/version.txt 2>/dev/null \
 		&& $(MAKE) gendoc \
 		; \
 	else \
