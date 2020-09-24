@@ -1019,7 +1019,7 @@ return xmltype
 is
 
   -- Response in XML format
-  responseXml xmltype;
+  responseXml xmltype;
 
 begin
   return xmltype( entityBody);
@@ -1487,6 +1487,7 @@ begin
     resp := utl_http.get_response(req);
     statusCode := resp.status_code;
     reasonPhrase := resp.reason_phrase;
+    utl_http.end_response(resp);
     if statusCode != utl_http.HTTP_OK then
       raise_application_error(
         pkg_Error.ProcessError
@@ -1498,6 +1499,8 @@ begin
     end if;
   end if;
 exception when others then
+  -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+  utl_http.end_request( req);
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
