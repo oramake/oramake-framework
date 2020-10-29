@@ -740,6 +740,7 @@ getFileObject()
 # modulePath                  - Path to root directory of module
 #                               (empty string for new module)
 # defaultEncoding             - Default encoding (for new module)
+# isCreateModule              - Is create module (1 - yes, else no)
 #
 # Return:
 # <moduleEncoding>            - Encoding of module's files
@@ -755,6 +756,7 @@ getModuleEncoding()
 {
   local modulePath=$1
   local defaultEncoding=$2
+  local isCreateModule=$3
   local resCode=0
   logDebug3 "start: modulePath='$modulePath'"
   logDebug3 "start: defaultEncoding='$defaultEncoding'"
@@ -777,7 +779,7 @@ getModuleEncoding()
           break
         fi
       done < $mkFile
-    else
+    elif (( ! isCreateModule )); then
       logError "getModuleEncoding: DB Makefile not found: '$mkFile'"
     fi
   elif [[ -n $defaultEncoding ]]; then

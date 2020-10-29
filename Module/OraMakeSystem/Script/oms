@@ -495,9 +495,9 @@ exec_create-module()
   # Encoding of module's files
   if [[ -z "$moduleEncoding" ]]; then
     if (( isRootExist && ! isOverwrite )); then
-      getModuleEncoding "$rootDir"
+      getModuleEncoding "$rootDir" "" 1
     else
-      getModuleEncoding "" ""
+      getModuleEncoding ""
     fi
   fi
 

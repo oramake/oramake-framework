@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: X.X.X
+
+[*] Exclude warning "oms: getModuleEncoding: DB Makefile not found: ..." on
+    module creation.
+
+
+
 group: 2.2.1 ( 2020-09-22)
 
 [+] Add UTF-8 encoding support for modules: add "encoding" option for
