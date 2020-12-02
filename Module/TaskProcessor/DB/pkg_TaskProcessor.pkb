@@ -1349,7 +1349,7 @@ from (
     , t.start_number
     , t.line_number
     , t.level_code
-    , lv.level_description as level_name
+    , lv.level_name
     , t.message_text
     , t.date_ins
   from
@@ -1499,7 +1499,7 @@ from
     , t.start_number
     , t.line_number
     , t.level_code
-    , lv.level_description as level_name
+    , lv.level_name
     , t.message_text
     , t.date_ins
   from
@@ -1729,14 +1729,11 @@ begin
   open rc for
     select
       t.level_code
-      , t.level_description as level_name
+      , t.level_name
     from
       lg_level t
     where
-      t.level_code not in (
-        pkg_Logging.All_LevelCode
-        , pkg_Logging.Off_LevelCode
-      )
+      t.message_level_code is not null
     order by
       t.level_code
   ;
