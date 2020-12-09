@@ -1070,13 +1070,11 @@ end fillInstallResult;
   installScript               - стартовый установочный скрипт ( может
                                 отсутствовать, если использовался тривиальный
                                 вариант, например run.sql)
-  resultVersion               - версия, получившаяся в результате выполнения
+  resultVersion               - версия, получившаяся результате выполнения
                                 установки, должна быть обязательно указана при
                                 отмене установки обновления ( по умолчанию
                                 installVersion в случае установки, null в
                                 случае отмены полной установки)
-  overwriteCurrentVersionFlag - признак возможности перезаписи уже установленной текущей версии
-                                (1 - да (по-умолчанию), 0 - нет)
 */
 procedure checkInstallVersion(
   moduleSvnRoot varchar2
@@ -1091,7 +1089,6 @@ procedure checkInstallVersion(
   , privsUser varchar2 := null
   , installScript varchar2 := null
   , resultVersion varchar2 := null
-  , overwriteCurrentVersionFlag integer := null
 )
 is
 
@@ -1211,8 +1208,6 @@ begin
     erm := case
       when rec.is_revert_install = 0 and resultDirection = -1 then
         'Устанавливаемая версия младше, чем установленная ранее'
-      when rec.is_revert_install = 0 and resultDirection = 0 and overwriteCurrentVersionFlag = 0 then
-        'Запрошенная версия уже была установлена ранее'
       when rec.is_revert_install = 1 and resultDirection = 1 then
         'После отмены установки версии не можеть остаться более'
         || ' старшая версия'
@@ -1251,7 +1246,6 @@ exception when others then
     );
   end if;
 end checkInstallVersion;
-
 
 /* func: createInstallResult
   Добавляет результат установки для действия по установке модуля.
