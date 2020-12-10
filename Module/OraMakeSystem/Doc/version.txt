@@ -2,13 +2,6 @@ title: Версии
 
 
 
-group: X.X.X
-
-[*] Exclude warning "oms: getModuleEncoding: DB Makefile not found: ..." on
-    module creation.
-
-
-
 group: 2.3.0 (2020-12-10)
 
 [+] Add an option not to overwrite the installed version of a module in the database when the version
@@ -16,6 +9,19 @@ group: 2.3.0 (2020-12-10)
     установлена ранее" error raised. This behaviour is controlled by setting the
     OMS_OVERWRITE_CURRENT_VERSION environment variable before running a "make install" command.
     It is set to 1 by default. *ModuleInfo 1.4.0 or later is required for this feature*
+
+
+
+group: 2.2.2 ( 2020-12-10)
+
+[!] Fix incorrect value of NLS_LANG in DB/Makefile for new modules
+    in case of "cp1251" encoding and without value of NLS_LANG in environment.
+
+[!] Exclude error "moduleEncoding != "utf-8" : syntax error: operand expected"
+    when executing "make set-version" using OraMakeSystem for Windows.
+
+[*] Exclude warning "oms: getModuleEncoding: DB Makefile not found: ..." on
+    module creation.
 
 
 

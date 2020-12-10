@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=2.2.1
+OMS_VERSION=2.2.2
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 26679630 $'
+commonRevisionValue='$Revision:: 26793401 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2020-09-22 12:30:12 +0000 #$'
+commonChangeDateValue='$Date:: 2020-12-10 12:41:50 +0000 #$'
 
 
 # var: commonRevision
@@ -790,7 +790,7 @@ getModuleEncoding()
         ;;
       cp1251 | windows-1251)
         moduleEncoding="cp1251"
-        moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+        moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
         ;;
       *) resCode=1
         ;;
@@ -819,10 +819,12 @@ getModuleEncoding()
   # use global default values
   if [[ -z $moduleNlsLang ]]; then
     moduleEncoding="cp1251"
-    moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+    moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
   fi
 
-  isConvertModuleEncoding=$(( moduleEncoding != "utf-8" ))
+  if [[ $moduleEncoding != "utf-8" ]]; then
+    isConvertModuleEncoding=1
+  fi
 
   # return value
   logDebug2 "Set moduleEncoding: '$moduleEncoding'"
