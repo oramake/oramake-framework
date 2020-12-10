@@ -790,7 +790,7 @@ getModuleEncoding()
         ;;
       cp1251 | windows-1251)
         moduleEncoding="cp1251"
-        moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+        moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
         ;;
       *) resCode=1
         ;;
@@ -819,7 +819,7 @@ getModuleEncoding()
   # use global default values
   if [[ -z $moduleNlsLang ]]; then
     moduleEncoding="cp1251"
-    moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+    moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
   fi
 
   if [[ $moduleEncoding != "utf-8" ]]; then

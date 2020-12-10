@@ -4,6 +4,9 @@ title: Версии
 
 group: X.X.X
 
+[!] Fix incorrect value of NLS_LANG in DB/Makefile for new modules
+    in case of "cp1251" encoding and without value of NLS_LANG in environment.
+
 [!] Exclude error "moduleEncoding != "utf-8" : syntax error: operand expected"
     when executing "make set-version" using OraMakeSystem for Windows.
 
