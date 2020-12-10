@@ -2,7 +2,7 @@ title: Версии
 
 
 
-group: X.X.X
+group: 2.2.2 ( 2020-12-10)
 
 [!] Fix incorrect value of NLS_LANG in DB/Makefile for new modules
     in case of "cp1251" encoding and without value of NLS_LANG in environment.
