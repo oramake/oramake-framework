@@ -431,6 +431,13 @@ loadFile=""
 declare -a loadArgList
 loadArgList=()
 
+# var: overwriteCurrentVersionFlag
+# Признак перезаписи текущей версии модуля в БД, если она совпадает с устанавливаемой.
+# Определяется на основе переменной окружения OMS_OVERWRITE_CURRENT_VERSION.
+# (1 - да (по-умолчанию), 0 - нет)
+#
+overwriteCurrentVersionFlag=${OMS_OVERWRITE_CURRENT_VERSION:-1}
+
 
 
 # group: Параметры выполнения
@@ -1144,6 +1151,7 @@ begin
   :oms_file_mask                  := '$fileMask';
   :oms_skip_file_mask             := '$skipFileMask';
   :oms_common_schema              := '$commonSchema';
+  :oms_overwrite_current_version  := $overwriteCurrentVersionFlag;
 end;
 /
 "

@@ -9,6 +9,16 @@ group: X.X.X
 
 
 
+group: 2.3.0 (2020-12-10)
+
+[+] Add an option not to overwrite the installed version of a module in the database when the version
+    is the same as the requested one. In this case, there will be a "Запрошенная версия уже была
+    установлена ранее" error raised. This behaviour is controlled by setting the
+    OMS_OVERWRITE_CURRENT_VERSION environment variable before running a "make install" command.
+    It is set to 1 by default. *ModuleInfo 1.4.0 or later is required for this feature*
+
+
+
 group: 2.2.1 ( 2020-09-22)
 
 [+] Add UTF-8 encoding support for modules: add "encoding" option for
