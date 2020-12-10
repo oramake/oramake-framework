@@ -822,7 +822,9 @@ getModuleEncoding()
     moduleNlsLang="AMERICAN_CIS.AL32UTF8"
   fi
 
-  isConvertModuleEncoding=$(( moduleEncoding != "utf-8" ))
+  if [[ $moduleEncoding != "utf-8" ]]; then
+    isConvertModuleEncoding=1
+  fi
 
   # return value
   logDebug2 "Set moduleEncoding: '$moduleEncoding'"

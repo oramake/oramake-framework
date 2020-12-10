@@ -4,6 +4,9 @@ title: Версии
 
 group: X.X.X
 
+[!] Exclude error "moduleEncoding != "utf-8" : syntax error: operand expected"
+    when executing "make set-version" using OraMakeSystem for Windows.
+
 [*] Exclude warning "oms: getModuleEncoding: DB Makefile not found: ..." on
     module creation.
 
