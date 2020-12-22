@@ -98,6 +98,10 @@ ImageJPEGData_MimeType constant varchar2(40) := 'image/jpeg';
   attachmentData              - данные вложения
   smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
                                 используется сервер из pkg_Common.getSmtpServer)
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   isHtml                      - отправлять ли письмо как HTML;
                                 по-умолчанию письмо отправляется как обычный текст
 
@@ -113,6 +117,8 @@ procedure sendMail(
   , attachmentType varchar2 := null
   , attachmentData blob := null
   , smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , isHtml boolean := null
 );
 
@@ -129,6 +135,8 @@ procedure sendMail(
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -163,6 +171,8 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -195,6 +205,8 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

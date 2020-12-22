@@ -140,6 +140,8 @@ end parseSmtpServerList;
 */
 function sendMessageJava(
   smtpServer varchar2
+  , username varchar2
+  , password varchar2
   , maxMessageCount number
 )
 return number
@@ -147,6 +149,8 @@ is
 language java name '
 Mail.sendMessage(
   java.lang.String
+  , java.lang.String
+  , java.lang.String
   , java.math.BigDecimal
 )
 return java.math.BigDecimal
@@ -160,6 +164,10 @@ return java.math.BigDecimal
   smtpServer                  - имя ( или ip-адрес) SMTP-сервера
                                 Значение null приравнивается к
                                 pkg_Common.getSmtpServer.
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
@@ -173,6 +181,8 @@ return java.math.BigDecimal
 */
 function sendMessage(
   smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , maxMessageCount integer := null
 )
 return integer
@@ -187,6 +197,8 @@ is
 begin
   nSend := sendMessageJava(
     coalesce( smtpServer, pkg_Common.getSmtpServer())
+    , username
+    , password
     , maxMessageCount - nSend
   );
   commit;
@@ -197,6 +209,7 @@ exception when others then
     , logger.errorStack(
         'Ошибка при отправке ожидающих отправки сообщений ('
         || ' smtpServer="' || smtpServer || '"'
+        || ', username="' || username || '"'
         || ').'
       )
     , true
@@ -210,6 +223,10 @@ end sendMessage;
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
                                 через ",".
                                 Значение null приравнивается к pkg_Common.getSmtpServer.
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
@@ -219,6 +236,8 @@ end sendMessage;
 */
 procedure sendHandler(
   smtpServerList varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , maxMessageCount integer := null
 )
 is
@@ -438,6 +457,8 @@ is
     for i in 1..colSmtpServer.count loop
       nSend := sendMessage(
         smtpServer => colSmtpServer(i)
+        , username => username
+        , password => password
         , maxMessageCount => maxMessageCount - sentMessageCount
       );
       logger.trace( 'sent count: ' || nSend);

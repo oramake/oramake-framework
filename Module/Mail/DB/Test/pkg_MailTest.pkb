@@ -202,6 +202,8 @@ is
         , attachmentType        => null
         , attachmentData        => null
         , smtpServer            => opt.getString( TestSmtpServer_OptSName)
+        , username              => opt.getString( TestSmtpUsername_OptSName)
+        , password              => opt.getString( TestSmtpPassword_OptSName)
         , isHTML                => null
       );
       if errorMessageMask is not null then
@@ -418,7 +420,11 @@ is
       if not coalesce( pkg_TestUtility.isTestFailed(), false) then
 
         -- Отправляем все ожидающие отправки сообщения
-        nSend := pkg_MailHandler.sendMessage();
+        nSend := pkg_MailHandler.sendMessage(
+          smtpServer    => opt.getString( TestSmtpServer_OptSName)
+          , username    => opt.getString( TestSmtpUsername_OptSName)
+          , password    => opt.getString( TestSmtpPassword_OptSName)
+        );
 
         select
           t.*
@@ -657,7 +663,11 @@ is
       if not coalesce( pkg_TestUtility.isTestFailed(), false) then
 
         -- Отправляем все ожидающие отправки сообщения
-        nSend := pkg_MailHandler.sendMessage();
+        nSend := pkg_MailHandler.sendMessage(
+          smtpServer    => opt.getString( TestSmtpServer_OptSName)
+          , username    => opt.getString( TestSmtpUsername_OptSName)
+          , password    => opt.getString( TestSmtpPassword_OptSName)
+        );
 
         select
           t.*
@@ -875,6 +885,8 @@ is
         , attachmentType        => null
         , attachmentData        => null
         , smtpServer            => opt.getString( TestSmtpServer_OptSName)
+        , username              => opt.getString( TestSmtpUsername_OptSName)
+        , password              => opt.getString( TestSmtpPassword_OptSName)
       );
 
       -- Получение отправленного письма

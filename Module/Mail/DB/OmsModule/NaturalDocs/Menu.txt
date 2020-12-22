@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Mail
-SubTitle: Версия 2.5.0
+SubTitle: Версия 2.6.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -156,6 +156,11 @@ Group: Скрипты  {
             File: revoke-sys  (no auto-title, Install/Grant/Last/revoke-sys.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
+
+         Group: 2.6.0  {
+
+            File: sys-privs  (no auto-title, Install/Grant/2.6.0/sys-privs.sql)
+            }  # Group: 2.6.0
 
          }  # Group: Grant
 

@@ -2,6 +2,12 @@ title: Версии
 
 
 
+group: 2.6.0 ( 2020-12-19)
+
+[+] Добавлена возможность использовать SMTP-сервер с SSL-авторизацией.
+
+
+
 group: 2.5.0 ( 2019-01-18)
 
 [*] Изменение размера полей таблицы <ml_message>: sender_address varchar2(100), recipient_address varchar2(100).

@@ -52,6 +52,14 @@ begin
     , '*:25'
     , 'connect'
   );
+
+  -- Подключение по SMTP с авторизацией по SSL
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.net.SocketPermission'
+    , '*:465'
+    , 'connect'
+  );
 end;
 /
 

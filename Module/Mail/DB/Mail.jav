@@ -279,10 +279,15 @@ throws SQLException
  * Параметры:
  * smtpServer                 - используемый SMTP-сервер ( обязательно должен
  *                              быть указан)
+ * username                   - имя пользователя для авторизации на SMTP-сервере
+ *                              (null без авторизации)
+ * password                   - пароль для авторизации на SMTP-сервере
  **/
 static Session
 getSmtpSession(
   String smtpServer
+  , String username
+  , String password
 )
 throws SQLException
 {
@@ -292,13 +297,33 @@ throws SQLException
       throw new java.lang.IllegalArgumentException(
         "No SMTP sever to use."
       );
+
+
     Properties props = initProperties();
-                                        //Устанавливаем SMTP-сервер
-    props.put(
-      "mail.smtp.host"
-      , smtpServer
-    );
-    return ( Session.getDefaultInstance( props, null));
+    props.put( "mail.smtp.host", smtpServer);
+
+    boolean isAuth = username != null;
+    if ( isAuth) {
+      props.put( "mail.smtp.port", "465");
+      props.put( "mail.smtp.auth", "true");
+      props.put( "mail.smtp.socketFactory.port", "465");
+      props.put(
+        "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory"
+      );
+    }
+
+    return
+      Session.getDefaultInstance(
+        props
+        , isAuth
+            ? new javax.mail.Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                  return new PasswordAuthentication(username, password);
+                }
+              }
+            : null
+      )
+    ;
   }
   catch( Exception e) {
     throw new RuntimeException(
@@ -417,6 +442,8 @@ send(
   , String attachmentType
   , oracle.sql.BLOB attachmentData
   , String smtpServer
+  , String username
+  , String password
   , oracle.sql.NUMBER isHTML
 )
 throws java.lang.Exception
@@ -425,7 +452,7 @@ try
 {
   boolean isMultipart = attachmentData != null;
   Message msg = makeMessage(
-    getSmtpSession( smtpServer)
+    getSmtpSession( smtpServer, username, password)
     , sender
     , recipient
     , copyRecipient
@@ -1683,6 +1710,8 @@ try
 public static java.math.BigDecimal
 sendMessage(
   String smtpServer
+  , String username
+  , String password
   , java.math.BigDecimal maxMessageCount
 )
 throws java.lang.Exception
@@ -1731,7 +1760,7 @@ try
     if ( lockSendingMessage( messageId)) {
       // Открываем SMTP-соединение
       if ( tr == null) {
-        ss = getSmtpSession( smtpServer);
+        ss = getSmtpSession( smtpServer, username, password);
         tr = ss.getTransport( "smtp");
         tr.connect();
       }

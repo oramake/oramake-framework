@@ -12,6 +12,8 @@
 @oms-default TestSender ""
 @oms-default TestRecipient ""
 @oms-default TestSmtpServer ""
+@oms-default TestSmtpUsername ""
+@oms-default TestSmtpPassword ""
 @oms-default TestFetchUrl ""
 @oms-default TestFetchPassword ""
 @oms-default TestFetchSendAddress ""
@@ -73,6 +75,17 @@ begin
     optionShortName   => pkg_MailTest.TestSmtpServer_OptSName
     , optionName      => 'Тесты: SMTP сервер'
     , stringValue     => '&TestSmtpServer'
+  );
+  addString(
+    optionShortName   => pkg_MailTest.TestSmtpUsername_OptSName
+    , optionName      => 'Тесты: Пользователь для авторизации на SMTP-сервере'
+    , stringValue     => '&TestSmtpUsername'
+  );
+  addString(
+    optionShortName   => pkg_MailTest.TestSmtpPassword_OptSName
+    , optionName      => 'Тесты: Пароль для авторизации на SMTP-сервере'
+    , stringValue     => '&TestSmtpPassword'
+    , encryptionFlag  => 1
   );
   addString(
     optionShortName   => pkg_MailTest.TestFetchUrl_OptSName

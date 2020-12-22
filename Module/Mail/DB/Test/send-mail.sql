@@ -10,6 +10,10 @@ begin
     , attachmentFileName    => null
     , attachmentType        => null
     , attachmentData        => null
+    , smtpServer            => null
+    , username              => null
+    , password              => null
+    , isHtml                => null
   );
 end;
 /
