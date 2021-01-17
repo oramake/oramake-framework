@@ -68,7 +68,7 @@
 #       --operatorid STR        - задает оператора для регистрации после
 #                                 подключения ( формат: operatorName[/passwd])
 #       --common-schema         - наименование схемы БД, в которой размещены
-#                                 общие модули.                          
+#                                 общие модули.
 #       --plsql-warnings  STR   - задаёт параметр Oracle сессии PLSQL_WARNINGS
 #                                 ( уровень предупреждений компилятора PLSQL,
 #                                 по-умолчанию из переменной окрузения
@@ -545,7 +545,7 @@ Options:
   --module-version STR            current module version
   --operatorid STR                operator for registration
                                   ( operatorName[/passwd])
-  --common-schema STR             Database scheme of common modules 
+  --common-schema STR             Database scheme of common modules
                                   (AccessOperator, ModuleInfo, etc)
   --plsql-warnings STR            PLSQL_WARNINGS compilation Oracle parameter
   --process-id N                  main host process ID
@@ -956,7 +956,7 @@ outSqlSchedulerJob()
   local jobShortName=${loadFile##*/}
   jobShortName=${jobShortName%%.job.sql}
   local parentDirectoryPath=$(dirname $loadFile)
-  local parentDirectory=$(baseName $parentDirectoryPath)
+  local parentDirectory=$(basename $parentDirectoryPath)
   local batchShortName=""
   local publicFlag=""
   # Если в директории рядом есть batch.xml, то считаем что job
@@ -1008,7 +1008,7 @@ outSqlSchedulerJob()
 outSqlSchedulerBatch()
 {
   local parentDirectoryPath=$(dirname $loadFile)
-  local batchShortName=$(baseName $parentDirectoryPath);
+  local batchShortName=$(basename $parentDirectoryPath);
   logDebug3 "Set batchShortName: '$batchShortName'"
   # Отключаем подстановку макропеременных
   echo "set define off"

@@ -151,7 +151,7 @@ usage()
 Generates auto-documentation for module.
 
 Usage:
-  $(baseName $0) [options]
+  $(basename $0) [options]
 
     -с, --clean               - delete temporary files,
                                 used by generation process
@@ -203,7 +203,7 @@ getMenuPart()
   fi | \
     gawk \
       -v neededPart=$2 \
-      -v commentLabel=$(baseName "$processFilesAwkPath" .awk) \
+      -v commentLabel=$(basename "$processFilesAwkPath" .awk) \
 '
 BEGIN { partNumber = 1 }
 {
@@ -246,7 +246,7 @@ processFiles()
   | gawk -f $processFilesAwkPath \
       -v debugLevel=$debugLevel \
       -v isItemFirst=$isItemFirst \
-      -v commentLabel=$(baseName "$processFilesAwkPath" .awk) \
+      -v commentLabel=$(basename "$processFilesAwkPath" .awk) \
       --re-interval
   if ! [[ $? -eq 0 ]]; then
     exit 3;
@@ -477,7 +477,7 @@ parseArgument()
         ;;
       *)
       echo "Illegal option: \"$1\"" >&2;
-      echo "Use $(baseName $0) --help"
+      echo "Use $(basename $0) --help"
       exit 1
       ;;
     esac
