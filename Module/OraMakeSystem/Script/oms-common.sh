@@ -145,9 +145,18 @@ scriptArgumentList=( "$@" )
 # Исполняемый файл Subversion.
 svnCmd="svn"
 
+# var: installPrefix
+# Общий префикс для инсталляционных каталогов.
+installPrefix="${OMS_INSTALL_PREFIX}"
+if [[ -z $installPrefix ]]; then
+  installPrefix=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+  installPrefix=${installPrefix%/*}
+  installPrefix=${installPrefix:-/usr/local}
+fi
+
 # var: installShareDir
 # Путь к каталогу с данными OMS ( за исключением скриптов и настроек)
-installShareDir="${OMS_INSTALL_SHARE_DIR:-/usr/local/share/oms}"
+installShareDir="${OMS_INSTALL_SHARE_DIR:-${installPrefix}/share/oms}"
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
@@ -155,7 +164,7 @@ sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: configDir
 # Каталог с настройками.
-configDir="${OMS_CONFIG_DIR:-/usr/local/etc/oms}"
+configDir="${OMS_INSTALL_CONFIG_DIR:-${installPrefix}/etc/oms}"
 
 # var: templateDir
 # Каталог с шаблоном нового модуля.

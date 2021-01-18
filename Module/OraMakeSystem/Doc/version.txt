@@ -4,6 +4,8 @@ title: Версии
 
 group: ?.?.?
 
+[!] Fix bugs in case of use custom install <prefix>.
+
 [*] Clarify shell scripts.
 
 
