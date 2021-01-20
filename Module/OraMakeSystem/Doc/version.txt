@@ -4,6 +4,8 @@ title: Версии
 
 group: ?.?.?
 
+[+] Add ability to install for Linux.
+
 [!] Fix bugs in case of use custom install <prefix>.
 
 [*] Clarify shell scripts.

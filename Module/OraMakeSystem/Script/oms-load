@@ -1101,17 +1101,28 @@ outSqlCommon()
     fi
     echo "$loginString"
   fi
-  # Путь к каталогу с собственными SQL-скриптами ( mixed-формат)
-  local sqlScriptDirMixed="${sqlScriptDirWin//\\//}"
+  # Путь к каталогу с собственными SQL-скриптами (mixed-формат в случае Windows)
+  local sqlScriptDirMixed=$sqlScriptDirNative
+  if (( isWindows )); then
+    # меняем вручную (экономим один вызов cygpath)
+    sqlScriptDirMixed="${sqlScriptDirMixed//\\//}"
+  fi
   # Инициализация используемых переменных значениями по умолчанию
   echo "@\"$sqlScriptDirMixed/oms-init-var.sql\""
   # Установка значений переменных
   echo "define OMS_SCRIPT_DIR=\"$sqlScriptDirMixed\""
   # Устанавливаем префикс временных файлов
+  local tempFilePrefix="${tmpFileDir}/${tmpSqlFileNamePrefix}"
+  if (( isWindows )); then
+    tempFilePrefix=$(cygpath --mixed "$tempFilePrefix")
+  fi
   echo \
-    "define OMS_TEMP_FILE_PREFIX=\"$(cygpath --mixed "${tmpFileDir}/${tmpSqlFileNamePrefix}")\""
-  # Путь к загружаемому скрипту в mixed-формате
-  local loadFileMixed="$(cygpath --mixed "$loadFile")"
+    "define OMS_TEMP_FILE_PREFIX=\"$tempFilePrefix\""
+  # Путь к загружаемому скрипту (в mixed-формате в случае Windows)
+  local loadFileMixed=$loadFile
+  if (( isWindows )); then
+    loadFileMixed=$(cygpath --mixed "$loadFileMixed")
+  fi
 
   # Параметры установки для OMS-скриптов
   local oldIFS=$IFS
@@ -1241,13 +1252,16 @@ outSqlLog()
 execSql()
 {
   logDebug "Use SQL*Plus for load: loadFile='$loadFile'"
-  # Путь к собственным SQL-скриптам # ( также используется в outSqlScriptRun)
-  local sqlScriptDirWin="$(cygpath --windows "$sqlScriptDir")"
+  # Путь к собственным SQL-скриптам (также используется в outSqlScriptRun)
+  local sqlScriptDirNative=$sqlScriptDir
+  if (( isWindows )); then
+    sqlScriptDirNative="$(cygpath --windows "$sqlScriptDirNative")"
+  fi
 
   # Обеспечиваем доступность только собственных скриптов чтобы исключить
   # влияние сторонних скриптов на результат выполнения ( например, скрипта
   # login.sql, автоматически выполняемого SQL*Plus после подключения)
-  SQLPATH="${sqlScriptDirWin}"
+  SQLPATH="${sqlScriptDirNative}"
   export SQLPATH
   # Подготовка информации об установке
   prepareInstallInfo
@@ -1319,11 +1333,15 @@ checkLoadJavaOutput()
 #
 loadJava()
 {
+  local loadjavaCmd="loadjava"
+  if (( isWindows )); then
+    loadjavaCmd="${loadjavaCmd}.bat"
+  fi
   # Получаем общий код завершения канала
   set -o pipefail
   # sed используется для обхода бага с  зависанием команды read при наличии
   # двух подряд символов возврата каретки
-  ( loadjava.bat -user "$userId" "$loadFile" -resolve \
+  ( $loadjavaCmd -user "$userId" "$loadFile" -resolve \
     -resolver  "((* ${userId/%\/*/}) (* PUBLIC) (* -))" \
     2>&1 \
   ) | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput

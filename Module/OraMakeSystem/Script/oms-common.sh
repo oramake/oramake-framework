@@ -194,6 +194,13 @@ tmpFileDir="${TEMP:-/tmp}"
 # Временный файл для использования в скрипте.
 tmpFile="${tmpFileDir}/${scriptName}.$$"
 
+# var: isWindows
+# Run in Windows OS?
+isWindows=0
+if [[ $OS == "Windows_NT" ]]; then
+  isWindows=1
+fi
+
 # var: fileExtensionList
 # Список настроек по расширениям файлов ( в соответствии с соглашениями
 # <Файлы>).

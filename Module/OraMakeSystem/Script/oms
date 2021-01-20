@@ -619,10 +619,14 @@ exec_create-module()
           if (( isDryRun )); then
             $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
           else
+            local tmpFileNative=$tmpFile
+            if (( isWindows )); then
+              tmpFileNative=$(cygpath --windows "$tmpFileNative")
+            fi
             trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
             echo "*" > "$tmpFile" \
               && $svnCmd propset svn:ignore \
-                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+                -F "$tmpFileNative" "$dstFile" >/dev/null \
               || exitError "Cannot set snv:ignore on file \"$dstFile\"."
             rm -f "$tmpFile"
           fi
