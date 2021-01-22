@@ -269,7 +269,7 @@ loadFile()
 
   runCmd ${omsPrefix}oms-load \
         --userid "$loadUserId" \
-        --operatorid "$loadOperatorId" \
+        ${loadOperatorId:+--operatorid \"$loadOperatorId\"} \
         "$@"
 }
 
@@ -292,7 +292,10 @@ end;
 /
 quit
 END
+  local oldNlsLang=$NLS_LANG
+  export NLS_LANG=AMERICAN_CIS.CL8MSWIN1251
   local outStr=$(loadFile DB/Test/out-cyrillic.sql)
+  NLS_LANG=$oldNlsLang
   if [[ ${outStr:0:54} \
         != $'first 4 characters of Cyrillic alphabet in CP1251: \xc0\xc1\xc2' \
       ]]; then
