@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 26794352 $
-# $Date:: 2020-12-11 15:32:46 +1100 #$
+# $Revision:: 26855766 $
+# $Date:: 2021-01-22 20:06:16 +0000 #$
 #
 
 
@@ -274,12 +274,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 26794352 $$
+omsRevisionKeyword    := \$$Revision:: 26855766 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2020-12-11 15:32:46 +1100 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-01-22 20:06:16 +0000 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 

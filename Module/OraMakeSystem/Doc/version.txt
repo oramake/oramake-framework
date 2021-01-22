@@ -2,7 +2,7 @@ title: Версии
 
 
 
-group: ?.?.?
+group: 2.4.0 ( 2021-01-22)
 
 [+] Add ability to install for Linux.
 
