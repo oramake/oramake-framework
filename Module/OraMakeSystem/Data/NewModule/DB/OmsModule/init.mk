@@ -66,6 +66,13 @@ ifeq ($(OMS_INSTALL_CONFIG_DIR),)
 endif
 export OMS_INSTALL_CONFIG_DIR
 
+# build var isWindows
+# Флаг выполнения в операционной системе Windows (1 да, 0 нет)
+isWindows = 0
+ifeq ($(OS),Windows_NT)
+  isWindows = 1
+endif
+
 
 
 # build var: exportOmsInstallDir

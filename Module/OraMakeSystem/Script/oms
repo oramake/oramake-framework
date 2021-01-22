@@ -842,7 +842,8 @@ exec_gen-schema-revert()
   local revertFilePath="$schemaDir/revert.sql"
   local revertFilePathTemp=${revertFilePath}".$$"
   getModuleEncoding "$rootDir"
-  gen-schema-revert_file | unix2dos > $revertFilePathTemp
+  gen-schema-revert_file \
+    | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $revertFilePathTemp
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" \
       "$revertFilePathTemp" >"$revertFilePath"
@@ -997,7 +998,8 @@ exec_gen-schema-run()
   local runFilePath="$schemaDir/run.sql"
   local runFilePathTemp=${runFilePath}".$$"
   getModuleEncoding "$rootDir"
-  gen-schema-run_file | unix2dos > $runFilePathTemp
+  gen-schema-run_file \
+    | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $runFilePathTemp
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" \
       "$runFilePathTemp" >"$runFilePath"

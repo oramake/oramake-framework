@@ -190,7 +190,7 @@ createPatch()
   local filePath="$1"
   local changeRevision="$2"
   local patchNumber="$3"
-                                        # в правке 273 выполнялся unix2dos
+  # в правке 273 выполнялась конвертация Unix EOL в Dos EOL
   if [[ "$changeRevision" != "273" ]]; then
     local patchDir="$updateDir/$filePath"
     local patchFileName="p---------"
@@ -206,7 +206,7 @@ createPatch()
           $runCmd "svn diff${diffArg} \"$templateDir/$filePath\" > \"$patchFile\""
         else
           svn diff${diffArg} "$templateDir/$filePath" > "$patchFile" \
-            && unix2dos "$patchFile" 2>/dev/null
+            && sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$patchFile"
                                           # Удаляем пустой файл
           if [[ $? == 0 ]]; then
             if [[ -s "$patchFile" ]]; then

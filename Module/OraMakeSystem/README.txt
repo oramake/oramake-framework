@@ -39,7 +39,6 @@ Run-time dependencies:
 - make
 - coreutils
 - findutils
-- dos2unix
 - gawk
 - sed
 - grep

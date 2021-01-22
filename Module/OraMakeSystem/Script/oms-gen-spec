@@ -326,7 +326,7 @@ generateSpec()
     && ( cat $tmpBodyFunction | gawk -v objectTypeFlag=$objectTypeFlag -f "${0%.*}.awk") \
     && echo \
     && cat $tmpSpecFileCopy | getPlsqlObjectPart 3 \
-  ) | unix2dos > $specFileName
+  ) | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $specFileName
 
   if (( $skipDeleteTemp == 0)); then
     logDebug3 "Delete temporary files..."

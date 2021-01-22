@@ -181,7 +181,6 @@ group: Установка для Cygwin
 - make
 - coreutils
 - findutils
-- dos2unix
 - gawk
 - sed
 - grep

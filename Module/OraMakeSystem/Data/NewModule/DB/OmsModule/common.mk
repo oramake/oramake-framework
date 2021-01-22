@@ -1079,12 +1079,19 @@ endif
 ifeq ($(loadFileLog),)
   toLoadLogCmd     =
   copyToLoadLogCmd =
-else
-  toLoadLogCmd     = 2>&1 | unix2dos >> "$(loadFileLog)"
+else ifeq ($(isWindows),1)
+  toLoadLogCmd     = 2>&1 | sed -e "s/\x0D//g" -e "s/$$/\x0D/" >> "$(loadFileLog)"
   copyToLoadLogCmd = \
 		2>&1 | gawk '{ \
 			print; fflush(); \
 			printf( "%s\r\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
+			}'
+else
+  toLoadLogCmd     = 2>&1 >> "$(loadFileLog)"
+  copyToLoadLogCmd = \
+		2>&1 | gawk '{ \
+			print; fflush(); \
+			printf( "%s\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
 			}'
 endif
 
