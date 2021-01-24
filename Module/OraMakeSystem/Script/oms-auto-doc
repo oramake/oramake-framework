@@ -401,7 +401,7 @@ function runNaturalDocs()
     -o ${outputFormat} ${outputDir} \
     -p ${gendocConfigDir} \
     --charset "${moduleEncoding}" \
-    --style small \
+    --style Small \
     -xi "${rootDir}/Db/OmsModule" \
     "${excludeRevert}" \
     -hl off \

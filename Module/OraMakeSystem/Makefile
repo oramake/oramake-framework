@@ -314,7 +314,7 @@ gendoc:
 		-o HTML "$(GENDOC_DIR)" \
 		-p "$(gendocConfigDir)" \
 		--charset utf-8 \
-		--style small \
+		--style Small \
 		$(GENDOC_FLAGS) \
 		-hl off \
 
