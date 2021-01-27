@@ -259,7 +259,7 @@ processFiles()
 #
 function initMenuGenerator()
 {
-  menuPath=${menuPath:-${rootDir}/Db/OmsModule/NaturalDocs/Menu.txt}
+  menuPath=${menuPath:-${rootDir}/DB/OmsModule/NaturalDocs/Menu.txt}
   if ! [[ -f $menuPath ]]; then
     echo "Could not find menu file \"$menuPath\"">&2;
     exit 1;
@@ -274,13 +274,13 @@ function initMenuGenerator()
     exit 1;
   fi;
                                         # Путь к временному файлу
-  menuTempPath=${menuOutputFile:-${rootDir}/Db/OmsModule/Load/MenuTemp.txt};
+  menuTempPath=${menuOutputFile:-${rootDir}/DB/OmsModule/Load/MenuTemp.txt};
   if ! [[ -d $(dirname menuTempPath) ]]; then
     menuTempPath="/tmp/oms-menu.MenuCopy.$$";
   fi;
                                        # Пути к настроечным файлам
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
-  moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
+  moduleConfigPath="${rootDir}/DB/OmsModule/menu-config.txt";
 
   getModuleEncoding "$rootDir"
 
@@ -352,11 +352,11 @@ function initNaturalDocs()
   # Путь для автодокументации
   gendocDir="${gendocDir:-${rootDir}/Doc/DB/AutoGen}"
   # Каталог с настройками утилиты генерации
-  gendocConfigDir="${rootDir}/Db/OmsModule/NaturalDocs"
+  gendocConfigDir="${rootDir}/DB/OmsModule/NaturalDocs"
   # Каталог с временными файлами утилиты генерации
   gendocCacheDir="${gendocConfigDir}/Data"
   # Каталог с файлами - источниками для документации
-  sourceDir=${rootDir}/Db
+  sourceDir=${rootDir}/DB
 }
 
 # func: clean
@@ -386,9 +386,9 @@ function runNaturalDocs()
 {
   initNaturalDocs;
   excludeRevert="";
-  if [[ -d "${rootDir}/Db/Install/Schema" ]]; then
+  if [[ -d "${rootDir}/DB/Install/Schema" ]]; then
     excludeRevert=$( \
-      find "${rootDir}"/Db/Install/Schema \
+      find "${rootDir}"/DB/Install/Schema \
         -name Revert      \
         -type d           \
         -printf " -xi %p" \
@@ -402,7 +402,7 @@ function runNaturalDocs()
     -p ${gendocConfigDir} \
     --charset "${moduleEncoding}" \
     --style Small \
-    -xi "${rootDir}/Db/OmsModule" \
+    -xi "${rootDir}/DB/OmsModule" \
     "${excludeRevert}" \
     -hl off \
     $1";
@@ -489,7 +489,7 @@ parseArgument()
 # Устанавливаем значения по умолчанию.
 #
 rootDir=${rootDir:-.}
-outputDir=${outputDir:-"${rootDir}/Doc/Db/Autogen"}
+outputDir=${outputDir:-"${rootDir}/Doc/DB/AutoGen"}
 
                                        # Инициализация
 parseArgument "$@";
