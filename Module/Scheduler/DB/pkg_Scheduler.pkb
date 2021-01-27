@@ -13,9 +13,12 @@ create or replace package body pkg_Scheduler is
 BatchRepeat_Second constant integer := 60;
 
 /* const: Default_RunDate
-  Дата запуска пакета, используемая по умолчанию при отсутствии расписания.
+  Дата запуска пакета, используемая по умолчанию при отсутствии расписания
+  (очень далекая дата в будущем).
 */
-Default_RunDate constant date := date '4000-01-01';
+Default_RunDate constant timestamp with time zone :=
+  TIMESTAMP '4000-01-01 00:00:00 +00:00'
+;
 
 /* iconst: Default_NlsLanguage
   Значение NLS_LANGUAGE по-умолчанию.
@@ -353,7 +356,7 @@ is
   batchLogName varchar2(500);
   info varchar2(4000);
   -- Информационное сообщение Новая дата запуска пакета
-  newDate date;
+  newDate timestamp with time zone;
 
   -- Сохранённые NLS-параметры сессии
   sessionNlsLanguage varchar2(40);
@@ -462,13 +465,6 @@ begin
     '"' || rec.batch_name_rus || '" [' || rec.batch_short_name || ']';
   -- Опеределяем дату запуска
   newDate := calcNextDate(batchId);
-  -- Ошибка, если расписание не задано
-  if newDate is null then
-    raise_application_error(
-      pkg_Error.ScheduleNotSet
-      , 'Не задано расписание запуска пакета.'
-    );
-  end if;
   oracleJobName := getOracleJobName(batchId => rec.batch_id);
   -- Добавляем новое задание Oracle
   if rec.enabled_job_flag is null then
@@ -484,7 +480,8 @@ begin
     , enabled => true
     , comments => 'Scheduler: ' || rec.batch_short_name
     , repeat_interval =>
-        'sysdate + ' || to_char( BatchRepeat_Second) || '/24/60/60'
+        'systimestamp'
+        || ' + INTERVAL ''' || to_char( BatchRepeat_Second) || ''' SECOND'
     );
     dbms_scheduler.set_attribute(
       name => oracleJobName
@@ -517,7 +514,7 @@ begin
     info := 'Активирован пакет ' || batchLogName
       || ' ( batch_id=' || rec.batch_id
       || ', дата запуска '
-      || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || ').'
+      || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm') || ').'
       ;
   -- Устанавливаем новую дату запуска
   elsif newDate != rec.next_date and rec.running_flag is null then
@@ -531,7 +528,7 @@ begin
     rec.enabled_job_flag := 1;
     info := 'Дата запуска пакета ' || batchLogName
       || ' изменена на '
-        || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
+        || to_char( newDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm') || '.'
     ;
   elsif rec.enabled_job_flag = 0 then
     dbms_scheduler.enable(name => oracleJobName);
@@ -541,7 +538,7 @@ begin
             ' (дата запуска будет определена после завершения выполнения)'
           else
             ' (дата запуска '
-            || to_char( rec.next_date, 'dd.mm.yyyy hh24:mi:ss')
+            || to_char( rec.next_date, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
             || ')'
           end
         || '.'
@@ -978,19 +975,28 @@ begin
 end deactivateBatchAll;
 
 /* proc: setNextDate
-  Устанавливает дату следующего запуска активированного пакета.
+  Устанавливает дату следующего запуска активированного пакетного задания.
 
-  batchId                     - Id пакета
+  batchId                     - Id пакетного задания
   operatorId                  - Id оператора
-  nextDate                    - дата следующего запуска
-                                ( по умолчанию немедленно)
+  nextDate                    - Дата следующего запуска
+                                (по умолчанию немедленно)
 */
 procedure setNextDate(
   batchId integer
   , operatorId integer
-  , nextDate date := sysdate
+  , nextDate timestamp with time zone := null
 )
 is
+
+  -- Дата следующего запуска (с учетом значения по умолчанию)
+  startDate timestamp with time zone :=
+    case when nextDate is not null then
+      nextDate at time zone to_char( systimestamp,'tzh:tzm')
+    else
+      systimestamp
+    end
+  ;
 
   -- Данные пакетного задания
   bth sch_batch%rowtype;
@@ -1018,7 +1024,7 @@ begin
     dbms_scheduler.set_attribute(
       name      => oracleJobName
     , attribute => 'START_DATE'
-    , value     => nextDate
+    , value     => startDate
     );
     dbms_scheduler.enable(name => oracleJobName);
     -- Пишем информационное сообщение
@@ -1027,7 +1033,7 @@ begin
           'Дата запуска пакета '
           || batchLogName
           || ' изменена на '
-          || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
+          || to_char( startDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
           || '.'
       , messageLabel          => pkg_SchedulerMain.SetNextDate_BatchMsgLabel
       , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
@@ -1050,7 +1056,7 @@ exception when others then
           end
         || ' ('
         || ' batch_id=' || batchId
-        || ', nextDate=' || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
+        || ', nextDate=' || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
         || ').'
       )
     , true
@@ -1118,7 +1124,7 @@ is
   oracleJobName varchar(1000);
 
   -- Дата следующего запуска
-  nextDate date;
+  nextDate timestamp with time zone;
 
   -- An attempt was made to stop a job that was not running
   JobNotRunning exception;
@@ -1195,7 +1201,7 @@ begin
           'Выполнение сессии прервано'
         end
         || ' (дата следующего запуска '
-        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
+        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
         || ').'
     , contextTypeShortName  => pkg_SchedulerMain.Batch_CtxTpSName
     , contextValueId        => batchId
@@ -3280,18 +3286,27 @@ end getValueType;
 /* group: Выполнение батчей */
 
 /* func: calcNextDate
-  Вычисляет дату следующего запуска пакета заданий.
+  Вычисляет дату следующего запуска пакетного задания по расписанию.
 
   Параметры:
-  batchId              - Id пакета
-  startDate            - начальная дата (начиная с которой выполняется расчет)
+  batchId                     - Id пакетного задания
+  startDate                   - Минимально допустимая дата запуска
+                                (по умолчанию systimestamp)
+
+  Возврат:
+  дата следующего запуска (константа <body::Default_RunDate> если расписание
+  не задано)
 */
 function calcNextDate(
   batchId integer
-  , startDate date := sysdate
+  , startDate timestamp with time zone := null
 )
-return date
+return timestamp with time zone
 is
+
+  -- Минимально допустимая дата запуска с учетом значения по умолчанию
+  stDate timestamp with time zone := coalesce( startDate, systimestamp);
+
   -- Расписание запуска
   cursor curInterval( batchId integer) is
     select
@@ -3329,14 +3344,14 @@ is
   colInterval TColInterval := TColInterval();
 
   -- Возвращаемое значение
-  nextDate date := null;
+  nextDate timestamp with time zone := null;
 
   -- Индекс первого интервала расписания
   iBeginInterval integer;
   -- Индекс следующего за последним интервала расписания
   iEndInterval integer;
   -- Рассчитанная дата по расписанию
-  scheduleDate date;
+  scheduleDate timestamp with time zone;
 
 
 
@@ -3422,7 +3437,7 @@ is
 
 
 
-  procedure CalcScheduleDate( iBeginInterval integer, iEndInterval integer) is
+  procedure calcScheduleDate( iBeginInterval integer, iEndInterval integer) is
   --Пытается рассчитать ближайшую дату по расписанию.
   --
   --Параметры:
@@ -3435,12 +3450,12 @@ is
     -- Начальное значение
     colStartValue constant TColValue :=
       TColValue(
-        to_number( to_char( startDate, 'ss'))
-        , to_number( to_char( startDate, 'mi'))
-        , to_number( to_char( startDate, 'hh24'))
-        , to_number( to_char( startDate, 'dd'))
-        , to_number( to_char( startDate, 'mm'))
-        , to_number( to_char( startDate, 'yyyy'))
+        to_number( to_char( stDate, 'ss'))
+        , to_number( to_char( stDate, 'mi'))
+        , to_number( to_char( stDate, 'hh24'))
+        , to_number( to_char( stDate, 'dd'))
+        , to_number( to_char( stDate, 'mm'))
+        , to_number( to_char( stDate, 'yyyy'))
       )
     ;
     -- Минимальные значения
@@ -3589,27 +3604,32 @@ is
 
 
 
-  --CalcScheduleDate
+  --calcScheduleDate
   begin
     scheduleDate :=
       case
         when colInterval( iBeginInterval).interval_type_code is null then
-          startDate
+          stDate
         when CalcValue( 6, iBeginInterval) then
-          to_date(
+          to_timestamp_tz(
             to_char( colValue( 6), '0999')
             || to_char( colValue( 5), '09')
             || to_char( colValue( 4), '09')
             || to_char( colValue( 3), '09')
             || to_char( colValue( 2), '09')
             || to_char( colValue( 1), '09')
-            , 'yyyymmddhh24miss'
+            || to_char( stDate, ' tzh:tzm')
+            , 'yyyymmddhh24miss tzh:tzm'
           )
         else
           null
       end
     ;
-  end CalcScheduleDate;
+    logger.trace(
+      'calcScheduleDate: iBeginInterval=' || iBeginInterval || ': '
+      || to_char( scheduleDate, 'dd.mm.yyyy hh24:mi:ss.ff tzh:tzm')
+    );
+  end calcScheduleDate;
 
 
 --CalcNextDate
@@ -3633,14 +3653,14 @@ begin
     end loop;
 
     -- Рассчитываем дату по расписанию
-    CalcScheduleDate( iBeginInterval, iEndInterval);
+    calcScheduleDate( iBeginInterval, iEndInterval);
     -- Берем минимальную дату по расписаниям
     if scheduleDate is not null
         and ( nextDate is null or scheduleDate < nextDate)
         then
       nextDate := scheduleDate;
       -- Выход, если это лучший вариант
-      if nextDate = startDate then
+      if nextDate = stDate then
         exit;
       end if;
     end if;
@@ -3651,7 +3671,7 @@ exception when others then
     pkg_Error.ErrorInfo
     , 'Ошибка при расчете даты следующего запуска пакета ('
       || ' batch_id=' || to_char( batchId)
-      || ', startDate=' || to_char( startDate, 'yyyy-mm-dd hh24:mi:ss')
+      || ', startDate=' || to_char( startDate, 'yyyy-mm-dd hh24:mi:ss.ff3 tzh:tzm')
       || ').'
     , true
   );
@@ -3794,7 +3814,7 @@ end stopHandler;
 procedure execBatch(
   batchId integer := null
   , oracleJobId number := null
-  , nextDate in out date
+  , nextDate in out timestamp with time zone
   , resultId out integer
 )
 is
@@ -3807,7 +3827,9 @@ is
 
   lIsJob boolean := batchId is null;    --Флаг периодического выполнения (job)
   lBatchId sch_batch.batch_id%type;     --Id исполняемого пакета
-  lStartDate date := sysdate;           --Дата начала выполнения пакета
+
+  -- Дата начала выполнения пакета
+  lStartDate timestamp with time zone := systimestamp;
   lStartLogId integer;                  --Id лога о запуске пакета
 
   -- Уровень выполняемого пакета (с 1)
@@ -3827,7 +3849,8 @@ is
   batchRetrialTimeout sch_batch.retrial_timeout%type;
   batchRetrialNumber sch_batch.retrial_number%type;
 
-  batchScheduleDate date;               --Дата запуска по расписанию
+  -- Дата запуска по расписанию
+  batchScheduleDate timestamp with time zone;
 
 
 
@@ -3935,10 +3958,14 @@ is
     end;
   end CheckLoggingAvailable;
 
-  function getJobScheduleDate return date is
-  --Возвращает дату старта по расписанию текущего исполняемого задания
+  /*
+    Возвращает дату старта по расписанию текущего исполняемого задания
+  */
+  function getJobScheduleDate
+  return timestamp with time zone
+  is
 
-    vDate date;                         --возвращаемая дата
+    vDate timestamp with time zone;
 
   begin
     select
@@ -4433,16 +4460,21 @@ end;'
   --Устанавливает дату следующего автоматического запуска пакета
 
     -- Минимально возможная дата следующего запуска
-    vMinDate constant date := lStartDate + 1/24/60/60;
+    vMinDate constant timestamp with time zone :=
+      lStartDate + INTERVAL '1' SECOND
+    ;
 
     -- Возможено ли повторное выполнение
     isAllowRetrial boolean := nvl( batchRetrialNumber, 0) < batchRetrialCount;
 
     -- Номер повтора
     vRetrialNumber sch_batch.retrial_number%type := null;
-    vRetrialDate date;                  --Дата повторного выполнения
 
-    vDate date;                         --Дата следующего запуска
+    -- Дата повторного выполнения
+    vRetrialDate timestamp with time zone;
+
+    -- Дата следующего запуска
+    vDate timestamp with time zone;
 
   begin
     -- Дата следующего запуска по расписанию
@@ -4468,9 +4500,9 @@ end;'
       -- Определяем дату повторного выполнения
       vRetrialDate := greatest(
         nvl( batchScheduleDate, lStartDate)
-          + coalesce( batchRetrialTimeout, interval '0' second)
-        , sysdate + 1 / 24 / 60 / 60    --Ограничиваем снизу следующей секундой
-        );
+          + coalesce( batchRetrialTimeout, INTERVAL '0' SECOND)
+        , systimestamp + INTERVAL '1' SECOND
+      );
       -- Не используем дату повтора, если она больше или равна дате очередного
       -- запуска, отличной от минимальной
       if vRetrialDate >= vDate and vDate > vMinDate then
@@ -4491,9 +4523,10 @@ end;'
     end if;
     -- Максимальная дата запуска (чтобы job не исчез и не выполнялся)
     if vDate is null then
-      vDate := to_date( '01.01.4000', 'dd.mm.yyyy');
-    elsif vDate < sysdate then          --Ограничиваем дату снизу текущей датой
-      vDate := sysdate;
+      vDate := Default_RunDate;
+    -- Ограничиваем дату снизу текущей датой
+    elsif vDate < systimestamp then
+      vDate := systimestamp;
     end if;
     nextDate := vDate;                  --Присваиваем рассчитанную дату
 
@@ -4506,7 +4539,7 @@ end;'
             else 'повторного (N' || vRetrialNumber || ')'
             end
         || ' запуска пакета установлена в '
-        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss') || '.'
+        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm') || '.'
     );
   exception when others then            --Дополняем информацию об ошибке
     raise_application_error(
@@ -4594,7 +4627,8 @@ end;'
 
       -- Длительность выполнения пакета
       duration interval day to second :=
-        numtodsinterval( sysdate - lStartDate, 'day');
+        systimestamp - lStartDate
+      ;
 
     begin
       -- Тема сообщения
@@ -4636,7 +4670,7 @@ end;'
           end
         || 'Дата запуска'
           || valueSpace
-          || to_char( lStartDate, 'dd.mm.yyyy hh24:mi:ss')
+          || to_char( lStartDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
           || chr(10)
         || 'Длительность выполнения'
           || valueSpace
@@ -4657,7 +4691,7 @@ end;'
           || chr(10)
         || 'Дата следующего запуска'
           || valueSpace
-          || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss')
+          || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
           || chr(10)
       ;
       -- Добавляем информацию о кол-ве ошибок
@@ -4859,7 +4893,7 @@ function execBatch(
 )
 return integer
 is
-  nextDate date;                        --Временная переменная
+  nextDate timestamp with time zone;
   resultId sch_result.result_id%type;   --Результат выполнения пакета
 
 begin
@@ -4878,7 +4912,7 @@ function execBatch(
 )
 return integer
 is
-  nextDate date;                        --Временная переменная
+  nextDate timestamp with time zone;
   batchId sch_batch.batch_id%type;      --Id выполняемого задания
   resultId sch_result.result_id%type;   --Результат выполнения пакета
 
@@ -5190,7 +5224,6 @@ end setContext;
 
 /* proc: setContext( DATE)
   Устанавливает значение переменной пакетного задания типа дата.
-  заданий.
 
   Параметры:
   varName                     - имя переменной ( без учета регистра)
@@ -5719,7 +5752,7 @@ end deleteContext;
 */
 procedure execBatch(
   oracleJobId number
-  , nextDate in out date
+  , nextDate in out timestamp with time zone
 )
 is
   resultId sch_result.result_id%type;   --Результат выполнения пакета

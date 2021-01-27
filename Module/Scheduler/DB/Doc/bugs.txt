@@ -16,6 +16,3 @@ ORA-01400: cannot insert NULL into ("<DbName>"."SCH_LOG"."MESSAGE_TEXT")
 (end)
     Необходимо добавить установку текста сообщения по умолчанию для
     Skip_ResultId ( во внутренней процедуре ExecJob процедуры ExecBatch).
-
-[!] В процедуре SetNextDate использовать по умолчанию значение null и
-    обрабатывать его, подставляя sysdate.

@@ -4,6 +4,12 @@ Title: Доработки
 
 group: Общие
 
+[*] В представлении <v_sch_batch> изменить тип колонок last_start_date и
+    last_log_date на timestamp with time zone.
+
+[*] В функции <pkg_Scheduler.clearLog> изменить тип параметра toDate на
+    timestamp with time zone.
+
 [+] Добавлить в <pkg_SchedulerLoad> функцию переименования пакетного
     задания ( изменения batch_short_name) для использования в скриптах
     установки модулей.

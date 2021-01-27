@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>Scheduler</name>
   <description>Выполнение пакетных заданий в БД Oracle по расписанию.</description>
-  <version>5.2.1</version>
+  <version>5.2.2</version>
   <prefix>sch</prefix>
   <team>
     <programmerDB></programmerDB>

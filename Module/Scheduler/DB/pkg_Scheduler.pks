@@ -231,19 +231,19 @@ procedure activateBatchAll(
 procedure deactivateBatchAll;
 
 /* pproc: setNextDate
-  Устанавливает дату следующего запуска активированного пакета.
+  Устанавливает дату следующего запуска активированного пакетного задания.
 
-  batchId                     - Id пакета
+  batchId                     - Id пакетного задания
   operatorId                  - Id оператора
-  nextDate                    - дата следующего запуска
-                                ( по умолчанию немедленно)
+  nextDate                    - Дата следующего запуска
+                                (по умолчанию немедленно)
 
   ( <body::setNextDate>)
 */
 procedure setNextDate(
   batchId integer
   , operatorId integer
-  , nextDate date := sysdate
+  , nextDate timestamp with time zone := null
 );
 
 /* pproc: abortBatch
@@ -1176,19 +1176,24 @@ return sys_refcursor;
 /* group: Выполнение батчей */
 
 /* pfunc: calcNextDate
-  Вычисляет дату следующего запуска пакета заданий.
+  Вычисляет дату следующего запуска пакетного задания по расписанию.
 
   Параметры:
-  batchId              - Id пакета
-  startDate            - начальная дата (начиная с которой выполняется расчет)
+  batchId                     - Id пакетного задания
+  startDate                   - Минимально допустимая дата запуска
+                                (по умолчанию systimestamp)
+
+  Возврат:
+  дата следующего запуска (константа <body::Default_RunDate> если расписание
+  не задано)
 
   ( <body::calcNextDate>)
 */
 function calcNextDate(
   batchId integer
-  , startDate date := sysdate
+  , startDate timestamp with time zone := null
 )
-return date;
+return timestamp with time zone;
 
 /* pproc: stopHandler
   Останавливает сессию обработчика с помощью отправки команды остановки.
@@ -1324,7 +1329,6 @@ procedure setContext(
 
 /* pproc: setContext( DATE)
   Устанавливает значение переменной пакетного задания типа дата.
-  заданий.
 
   Параметры:
   varName                     - имя переменной ( без учета регистра)
@@ -1530,7 +1534,7 @@ procedure deleteContext(
 */
 procedure execBatch(
   oracleJobId number
-  , nextDate in out date
+  , nextDate in out timestamp with time zone
 );
 
 
