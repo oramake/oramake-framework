@@ -273,6 +273,54 @@ Windows ( в примерах ниже предполагается станда
 
 
 
+group: Установка для Linux
+
+Порядок установки:
+
+- в терминале в корневом каталоге модуля выполнить
+
+(code)
+
+$ su
+
+# make install
+
+# exit
+
+(end)
+
+Пример
+
+(code)
+
+[oracle@localhost OraMakeSystem]$ su
+Password:
+[root@localhost OraMakeSystem]# make install
+installed with prefix: /usr/local
+(use "make install FORCE=1" to rewrite config files in /usr/local/etc/oms)
+[root@localhost OraMakeSystem]# exit
+exit
+[oracle@localhost OraMakeSystem]$
+
+(end)
+
+Замечания:
+
+- с помощью параметра <prefix> можно выполнить установку в свой домашний
+  каталог, для чего не требуются права суперпользователя (root). Например, для
+  установки в домашний каталог пользователя oracle (/home/oracle) нужно
+  выполнить команду:
+
+(code)
+
+$ make install prefix=/home/oracle
+installed with prefix: /home/oracle
+(use "make install FORCE=1" to rewrite config files in /home/oracle/etc/oms)
+
+(end)
+
+
+
 group: Общие замечания по установке
 
 Замечания:
