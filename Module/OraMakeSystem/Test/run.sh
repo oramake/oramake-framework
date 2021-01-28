@@ -290,7 +290,7 @@ checkOutputCyrillic()
 set feedback off
 begin
   dbms_output.put_line(
-    'first 4 characters of Cyrillic alphabet in CP1251: '
+    'first 4 characters of Cyrillic alphabet: '
     || utl_i18n.raw_to_char( hextoraw('c0c1c2c3'), 'CL8MSWIN1251')
     || ':' || '$cyrChars'
   );
@@ -302,8 +302,8 @@ END
   export NLS_LANG=$newNlsLang
   local outStr=$(loadFile DB/Test/out-cyrillic.sql)
   NLS_LANG=$oldNlsLang
-  if [[ ${outStr:51} != "${cyrChars}:${cyrChars}" ]]; then
-    die "Output of the command [${outStr:51}] differs from expected:" "$outStr"
+  if [[ ${outStr:41} != "${cyrChars}:${cyrChars}" ]]; then
+    die "Output of the command [${outStr:41}] differs from expected:" "$outStr"
   else
     echo "$outStr"
     echo "!!! necessary to check the correctness of the output visually !!!"
