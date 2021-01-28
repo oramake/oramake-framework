@@ -2,7 +2,7 @@
 setlocal
 
 rem OMS version ( changed by "make set-oms-version")
-set omsVersion=2.4.0a
+set omsVersion=2.4.0
 
 rem Save path to root installation directory ( without slash)
 set OMS_ROOT=%~dp0
@@ -314,7 +314,7 @@ if not defined OMS_CMD_ARGS (
 :make_args_end
 
 rem Delete temporary variables
-set omsVersion=2.4.0a
+set omsVersion=2.4.0
 set scriptName=
 set useTruncatedPathFlag=
 set changeCodepage=
