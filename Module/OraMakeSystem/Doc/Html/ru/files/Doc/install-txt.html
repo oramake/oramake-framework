@@ -58,7 +58,7 @@ svn, version 1.8.10 (r1615264)
 
 &gt; C:\cygwin\bin\bash -c '/usr/local/bin/oms create-module -d &quot;C:\tmp\TestModule&quot; TestModule'</pre></blockquote><p>В обоих случаях предварительно выполняется корректировка значения переменной окружения PATH для исключения использования системной утилиты FIND вместо find из состава Cygwin ( иначе при выполнении будет возникать ошибка &ldquo;FIND: Неправильный формат параметра&rdquo;).</p></div></div></div>
 
-<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УстановкадляLinux"></a>Установка для Linux</h3><div class=CBody><h4 class=CHeading>Порядок установки</h4><ul><li>в терминале в корневом каталоге модуля выполнить</li></ul><blockquote><pre>$ su
+<div class="CGroup"><div class=CTopic><h3 class=CTitle><a name="Установка.УстановкадляLinux"></a>Установка для Linux</h3><div class=CBody><h4 class=CHeading>В Linux может потребоваться установить пакеты</h4><ul><li>patch (используется при выполнении &ldquo;oms update-module&rdquo;)</li></ul><h4 class=CHeading>Порядок установки</h4><ul><li>в терминале в корневом каталоге модуля выполнить</li></ul><blockquote><pre>$ su
 
 # make install
 

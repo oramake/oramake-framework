@@ -416,10 +416,7 @@ patchFile()
   if ! ((isUnixFormat)) && (( fromRevision < 273 )); then
     $runCmd sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$dstFile"
   fi
-  local patchOption="--forward --batch --silent"
-  if (( isUseSubversion)) ; then
-    patchOption="$patchOption --no-backup-if-mismatch"
-  fi
+  local patchOption="--forward --batch --no-backup-if-mismatch --silent"
   for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
     patchRevision="${patchFile%%.*}"
