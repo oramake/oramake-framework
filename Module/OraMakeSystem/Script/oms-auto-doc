@@ -224,6 +224,11 @@ BEGIN { partNumber = 1 }
 processFiles()
 {
   logDebug "processFiles( see log messages in menu file) ...";
+  # is single byte encoding?
+  local isSingleByte=
+  if (( isConvertModuleEncoding )); then
+    isSingleByte=1
+  fi
   (
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" "$configPath"
@@ -237,7 +242,7 @@ processFiles()
       -v debugLevel=$debugLevel \
       -v isItemFirst=$isItemFirst \
       -v commentLabel=$(basename "$processFilesAwkPath" .awk) \
-      --re-interval
+      --re-interval ${isSingleByte:+--characters-as-bytes}
   if ! [[ $? -eq 0 ]]; then
     exit 3;
   fi;
