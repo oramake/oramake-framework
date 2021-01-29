@@ -132,16 +132,6 @@ processFilesAwkPath="$(dirname $0)/oms-file-menu.awk";
 # Корневой каталог модуля
 rootDir=""
 
-# func: logMessage
-# Выводит отладочное сообщение
-#
-logMessage()
-{
-  if [[ $debugLevel -gt 0 ]]; then
-    echo "$1" >&2;
-  fi;
-}
-
 # func: usage
 # Выводит информацию об использовании.
 #
@@ -233,7 +223,7 @@ BEGIN { partNumber = 1 }
 # и записывает в стандартный выходной поток
 processFiles()
 {
-  logMessage "processFiles( see log messages in menu file) ...";
+  logDebug "processFiles( see log messages in menu file) ...";
   (
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" "$configPath"
@@ -251,7 +241,7 @@ processFiles()
   if ! [[ $? -eq 0 ]]; then
     exit 3;
   fi;
-  logMessage "processFiles: finish";
+  logDebug "processFiles: finish";
 }
 
 # func: initMenuGenerator
@@ -282,10 +272,10 @@ function initMenuGenerator()
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/DB/OmsModule/menu-config.txt";
 
-  logMessage "menuPath = "$menuPath
-  logMessage "menuOutputFile = "$menuOutputFile
-  logMessage "menuTempPath = "$menuTempPath
-  logMessage "processFilesAwkPath = "$processFilesAwkPath
+  logDebug "menuPath = "$menuPath
+  logDebug "menuOutputFile = "$menuOutputFile
+  logDebug "menuTempPath = "$menuTempPath
+  logDebug "processFilesAwkPath = "$processFilesAwkPath
 }
 
 # func: generateMenu
@@ -307,16 +297,16 @@ function generateMenu()
       exit 1;
     fi;
   fi;
-  logMessage "configPath = "$configPath
+  logDebug "configPath = "$configPath
                                        # Генерируем меню
   ( getMenuPart "$menuPath" 1 0 \
     && processFiles $menuPath \
     && getMenuPart "$moduleConfigMenuPath" 3 $isConvertModuleEncoding \
   ) > ${menuTempPath};
   menuResult=$?
-  logMessage "menuResult = $menuResult"
+  logDebug "menuResult = $menuResult"
   if [[ -z $menuOutputFile ]] && [[ $menuResult -eq 0 ]]; then
-    logMessage "copying result menu ..."
+    logDebug "copying result menu ..."
     cp $menuTempPath $menuPath
     rm -f $menuTempPath;
   fi;
@@ -368,7 +358,7 @@ function clean()
       echo "Directory \"${gendocCacheDir}\" not found";
       exit 3;
     fi;
-    logMessage "remove ${gendocCacheDir}/*"
+    logDebug "remove ${gendocCacheDir}/*"
     rm -rf ${gendocCacheDir}/*;
   fi;
 }
@@ -408,7 +398,7 @@ function runNaturalDocs()
     "${excludeRevert}" \
     -hl off \
     $1";
-  logMessage "$naturalDocsCommand";
+  logDebug "$naturalDocsCommand";
   $naturalDocsCommand;
 }
 
@@ -418,7 +408,7 @@ function runNaturalDocs()
 # Изменение режима запуска скрипта
 #
 changeRunMode() {
-  logMessage "changeRunMode $1"
+  logDebug "changeRunMode $1"
   if [[ -n $runMode ]] && ! [[ $runMode -eq $1 ]]; then
     echo "Option set is illegal" 1>&2;
     echo "Use $(basename $0) --help"
@@ -442,7 +432,7 @@ parseArgument()
         rootDir="$2"; shift;
         ;;
       --debug-level )
-        debugLevel=$2; shift;
+        setDebugLevel "$2"; debugLevel=$2; shift;
         ;;
       -h | --help)
         changeRunMode $RUN_MODE_HELP;
@@ -495,7 +485,7 @@ outputDir=${outputDir:-"${rootDir}/Doc/DB/AutoGen"}
 
                                        # Инициализация
 parseArgument "$@";
-logMessage "runMode=$runMode";
+logDebug "runMode=$runMode";
 
                                        # Различные варианты выполнения
 if (( runMode != RUN_MODE_CLEAN \
