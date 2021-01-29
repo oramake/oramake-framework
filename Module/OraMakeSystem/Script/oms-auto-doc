@@ -282,8 +282,6 @@ function initMenuGenerator()
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
   moduleConfigPath="${rootDir}/DB/OmsModule/menu-config.txt";
 
-  getModuleEncoding "$rootDir"
-
   logMessage "menuPath = "$menuPath
   logMessage "menuOutputFile = "$menuOutputFile
   logMessage "menuTempPath = "$menuTempPath
@@ -395,12 +393,16 @@ function runNaturalDocs()
       );
   fi;
   outputFormat=$2;
+  local htmlCharset=$moduleEncoding
+  if [[ $htmlCharset == "cp1251" ]]; then
+    htmlCharset="Windows-1251"
+  fi
   naturalDocsCommand="\
     ${gendocRun} \
     -i ${sourceDir} \
     -o ${outputFormat} ${outputDir} \
     -p ${gendocConfigDir} \
-    --charset "${moduleEncoding}" \
+    --charset "${htmlCharset}" \
     --style Small \
     -xi "${rootDir}/DB/OmsModule" \
     "${excludeRevert}" \
@@ -494,7 +496,14 @@ outputDir=${outputDir:-"${rootDir}/Doc/DB/AutoGen"}
                                        # Инициализация
 parseArgument "$@";
 logMessage "runMode=$runMode";
+
                                        # Различные варианты выполнения
+if (( runMode != RUN_MODE_CLEAN \
+    && runMode != RUN_MODE_HELP \
+    && runMode != RUN_MODE_VERSION \
+    )); then
+  getModuleEncoding "$rootDir"
+fi
 case $runMode in
   $RUN_MODE_CLEAN )
     clean;
