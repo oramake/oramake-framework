@@ -62,6 +62,8 @@ grant create view to &userName with admin option
 /
 grant connect to &userName with admin option
 /
+grant drop public synonym to &userName with admin option
+/
 grant query rewrite to &userName with admin option
 /
 -- administration
@@ -140,7 +142,13 @@ grant select on sys.v_$parameter to &userName with grant option
 /
 grant execute on sys.dbms_system to &userName with grant option
 /
+
+-- Explore running sql
+grant select on sys.v_$sqltext_with_newlines to &userName with grant option
+/
 grant select on sys.v_$sqltext to &userName with grant option
+/
+grant select on sys.v_$session_wait to &userName with grant option
 /
 grant select on sys.v_$sql_plan to &userName with grant option
 /
