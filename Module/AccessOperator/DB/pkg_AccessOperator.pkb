@@ -48,7 +48,7 @@ is
 -- mergeRole
 begin
   merge into
-    op_role r
+    v_op_role r
   using
   (
   select
@@ -65,7 +65,7 @@ begin
     , role_name_en
     , description
   from
-    op_role
+    v_op_role
   ) s
   on (
     s.role_short_name = r.role_short_name
