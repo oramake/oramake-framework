@@ -24,6 +24,14 @@ TO_USERNAME                   - имя пользователя, которому выдаются права
 
 
 
+group: 2.7.0
+
+Команда для установки:
+
+> make install INSTALL_VERSION=2.7.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+
 group: 2.6.0
 
 Команда для установки:

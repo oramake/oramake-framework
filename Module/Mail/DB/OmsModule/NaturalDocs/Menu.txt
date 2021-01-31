@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Mail
-SubTitle: Версия 2.6.0
+SubTitle: Версия 2.7.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -187,6 +187,11 @@ Group: Скрипты  {
             File: v_ml_fetch_request_wait  (no auto-title, Install/Schema/Last/v_ml_fetch_request_wait.vw)
             File: v_ml_message  (no auto-title, Install/Schema/Last/v_ml_message.vw)
             }  # Group: Last
+
+         Group: 2.7.0  {
+
+            File: run  (no auto-title, Install/Schema/2.7.0/run.sql)
+            }  # Group: 2.7.0
 
          Group: 2.5.0  {
 
