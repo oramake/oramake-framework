@@ -44,6 +44,16 @@ PRODUCTION_DB_NAME            - может быть использован для явного задания
 
 
 
+group: 5.3.0
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=5.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+
 group: 5.2.2
 
 Порядок установки:
