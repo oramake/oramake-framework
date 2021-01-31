@@ -339,6 +339,11 @@ loadJavaUsedLibJar  =                    \
 # Формирование Java-исходника на основе Java-классов
 Java/Lib/NetFile.jav: $(wildcard Java/Source/com/technology/oramake/file/netfile/*.java)
 
+# build var: COMMON_SCHEMA
+# Наименование схемы БД, в которой размещены общие модули.
+# (AccessOperator, ModuleInfo, etc)
+COMMON_SCHEMA := 
+
 
 
 # build var: LOCAL_DB_DIR
