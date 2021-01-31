@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Scheduler
-SubTitle: Версия 5.2.1
+SubTitle: Версия 5.2.2
 
 # You can add a footer to your documentation like this:
 # Footer: [text]

@@ -356,7 +356,7 @@ procedure execOperation(
   batchShortName varchar2
   , operationCode varchar2
   , waitSecond number := 60
-  , nextDate date := null
+  , nextDate timestamp with time zone := null
   , ignoreMarkedForKillError integer := null
 )
 is
@@ -403,7 +403,7 @@ begin
       pkg_Scheduler.setNextDate(
         batchId       => getBatchId( batchShortName)
         , operatorId  => operatorId
-        , nextDate    => coalesce( nextDate, sysdate)
+        , nextDate    => coalesce( nextDate, systimestamp)
       );
       commit;
     when 'START' then
@@ -470,8 +470,14 @@ is
     'TestBatchOperation'
   ;
 
+  -- Id тестового батча
+  testBatchId integer;
+
   -- Параметры тестового батча
   bopt sch_batch_option_t;
+
+  -- Часовой пояс сессии (до изменения в moveSessionTimeZone)
+  oldSessionTimeZone varchar2(100);
 
 
 
@@ -651,6 +657,14 @@ end;'
   begin
     clearTestData();
     loadBatch();
+    select
+      t.batch_id
+    into testBatchId
+    from
+      sch_batch t
+    where
+      t.batch_short_name = batchSName
+    ;
     bopt := sch_batch_option_t( batchSName);
   exception when others then
     raise_application_error(
@@ -661,6 +675,174 @@ end;'
       , true
     );
   end prepareTestData;
+
+
+
+  /*
+    Изменяет часовой пояс сессии, чтобы он отличался от часового пояса
+    системы (systimestamp).
+  */
+  procedure moveSessionTimeZone
+  is
+
+    tzh integer;
+    newTimeZone varchar2(100);
+
+  begin
+    oldSessionTimeZone := to_char( current_timestamp, 'tzh:tzm');
+    tzh := extract( timezone_hour from current_timestamp);
+    tzh := mod( tzh + 4, 24);
+    newTimeZone := to_char( tzh, 's09') || ':00';
+    execute immediate
+      'alter session set time_zone = ''' || newTimeZone || ''''
+    ;
+    logger.trace(
+      'moveSessionTimeZone: set session time zone: '
+      || newTimeZone || ' (old: ' || oldSessionTimeZone || ')'
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при изменении часового пояса сессии.'
+        )
+      , true
+    );
+  end moveSessionTimeZone;
+
+
+
+  /*
+    Восстанавливает исходное значение часового пояса сессии.
+  */
+  procedure restoreSessionTimeZone
+  is
+
+    tzh integer;
+    newTimeZone varchar2(100);
+
+  begin
+    if oldSessionTimeZone is not null then
+      execute immediate
+        'alter session set time_zone = ''' || oldSessionTimeZone || ''''
+      ;
+      logger.trace(
+        'restoreSessionTimeZone: set session time zone: ' || oldSessionTimeZone
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при восстановлении часового пояса сессии.'
+        )
+      , true
+    );
+  end restoreSessionTimeZone;
+
+
+
+  /*
+    Проверка расчета даты следующего запуска.
+  */
+  procedure checkCalcNextDate
+  is
+
+    btr v_sch_batch%rowtype;
+
+
+    /*
+      Проверяет тестовый случай.
+    */
+    procedure checkCase(
+      caseDesc varchar2
+      , startDate timestamp with time zone
+      , nextDate timestamp with time zone
+    )
+    is
+
+      caseDescription varchar2(100) :=
+        'Проверка calcNextDate: ' || caseDesc
+      ;
+
+      -- Описание тестового случая
+      cinfo varchar2(200);
+
+      retVal timestamp with time zone;
+
+    begin
+      if skipCheckCase( 'Проверка calcNextDate: ' || caseDesc) then
+        return;
+      end if;
+      cinfo :=
+        'CASE ' || to_char( checkCaseNumber)
+        || ' "' || caseDescription || '": '
+      ;
+      begin
+        retVal := pkg_Scheduler.calcNextDate(
+          batchId       => testBatchId
+          , startDate   => startDate
+        );
+      exception when others then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Выполнение завершилось с ошибкой:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end;
+      if not pkg_TestUtility.isTestFailed() then
+        pkg_TestUtility.compareChar(
+          actualString        =>
+              to_char( retVal, 'yyyy-mm-dd hh24:mi:ss.ff tzh:tzm')
+          , expectedString    =>
+              to_char( nextDate, 'yyyy-mm-dd hh24:mi:ss.ff tzh:tzm')
+          , failMessageText   =>
+              cinfo || 'Неожиданный результат выполнения функции'
+        );
+      end if;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при проверке calcNextDate ('
+            || ' caseDesc="' || caseDesc || '"'
+            || ').'
+          )
+        , true
+      );
+    end checkCase;
+
+
+
+  -- checkCalcNextDate
+  begin
+    checkCase(
+      'time zone 01:00'
+      , startDate => TIMESTAMP '2018-03-05 18:42:03.08543 +01:00'
+      , nextDate  => TIMESTAMP '2018-03-06 04:18:00.00000 +01:00'
+    );
+    checkCase(
+      'time zone 02:00'
+      , startDate => TIMESTAMP '2019-08-08 19:52:03.08543 +02:00'
+      , nextDate  => TIMESTAMP '2019-08-09 04:18:00.00000 +02:00'
+    );
+    checkCase(
+      'startDate is NULL'
+      , startDate => null
+      , nextDate  =>
+          to_timestamp_tz(
+            to_char( sysdate + 1, 'yyyy-mm-dd') || ' 04:18:00 '
+              || to_char( systimestamp, 'tzh:tzm')
+            , 'yyyy-mm-dd hh24:mi:ss tzh:tzm'
+          )
+    );
+  exception when others then
+    rollback;
+    pkg_TestUtility.failTest(
+      cinfo || 'Ошибка при проверке тестового случая:'
+      || chr(10) || logger.getErrorStack()
+    );
+  end checkCalcNextDate;
 
 
 
@@ -790,15 +972,19 @@ end;'
 
 -- testBatchOperation
 begin
+  moveSessionTimeZone();
   prepareTestData();
   pkg_TestUtility.beginTest( 'batch operation');
+  checkCalcNextDate();
   checkAbortBatch();
   checkRestartAfterKill();
   if coalesce( saveDataFlag, 0) != 1 then
     clearTestData();
   end if;
   pkg_TestUtility.endTest();
+  restoreSessionTimeZone();
 exception when others then
+  restoreSessionTimeZone();
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -1010,14 +1196,14 @@ procedure execBatchOperation(
   , retryBatchCount out integer
   , batchShortNameList varchar2
   , operationCode varchar2
-  , operationStartDate date
+  , operationStartDate timestamp with time zone
 )
 is
   pragma autonomous_transaction;
 
   operatorId integer := pkg_Operator.getCurrentUserId();
 
-  nextDate date;
+  nextDate timestamp with time zone;
 
   -- Общее количество батчей
   batchCount integer;
@@ -1031,7 +1217,9 @@ is
       batch_short_name
       , batch_id
       , activated_flag
-      , last_start_date
+      -- нужно вернуться к использованию last_start_date, когда оно будет типа
+      -- timestamp with time zone
+      , coalesce( this_date, last_date) as last_start_date
       , sid
       , batch_result_id
     from
@@ -1108,7 +1296,7 @@ begin
     when
       Run_OperCode
     then
-      nextDate := sysdate;
+      nextDate := systimestamp;
       pkg_Scheduler.setNextDate(
         batchId => batch.batch_id
         , operatorId => operatorId
@@ -1118,7 +1306,7 @@ begin
         rpad( batch.batch_short_name, 30)
         || ' ( batch_id =' || lpad( batch.batch_id, 3)
         || ')   - set date '
-        || to_char( nextDate, 'dd.mm.yy hh24:mi:ss')
+        || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
       );
     when
       ShowLog_OperCode
@@ -1131,8 +1319,8 @@ begin
     then
       logger.trace(
         'batch: ' || batch.batch_short_name
-        || ': last_start_date={' || to_char( batch.last_start_date, 'dd.mm.yyyy hh24:mi:ss') || '}'
-        || ', operationStartDate={' || to_char( operationStartDate, 'dd.mm.yyyy hh24:mi:ss') || '}'
+        || ': last_start_date={' || to_char( batch.last_start_date, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm') || '}'
+        || ', operationStartDate={' || to_char( operationStartDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm') || '}'
         || ', sid=' || to_char( batch.sid)
       );
       if
@@ -1212,9 +1400,9 @@ is
   retryBatchCount integer;
 
     -- Время завершения ожидания
-  limitDate date := sysdate + 1 / 24 / 60;
+  limitDate timestamp with time zone := systimestamp + INTERVAL '1' MINUTE;
   -- Дата начала операции
-  operationStartDate date := sysdate;
+  operationStartDate timestamp with time zone := systimestamp;
 begin
   if operationCode in
   (
@@ -1239,7 +1427,7 @@ begin
         );
       end if;
       exit when
-        waitBatchCount = 0 or sysdate >= limitDate
+        waitBatchCount = 0 or systimestamp >= limitDate
       ;
       dbms_lock.sleep( 1);
     end loop;
@@ -1293,10 +1481,10 @@ procedure testBatch(
 )
 is
 
-
-    -- Время завершения ожидания
-  limitDate date := sysdate
-    + coalesce( batchWaitSecond, 60) / 24 / 60 / 60;
+  -- Время завершения ожидания
+  limitDate timestamp with time zone :=
+    systimestamp + numtodsinterval( coalesce( batchWaitSecond, 60), 'SECOND')
+  ;
 
   -- Количество батчей, для которых мы ожидаем завершение выполнения
   waitBatchCount integer;
@@ -1305,7 +1493,7 @@ is
   retryBatchCount integer;
 
   -- Дата / время запуска батчей
-  operationStartDate date;
+  operationStartDate timestamp with time zone;
 
 -- testBatch
 begin
@@ -1313,7 +1501,7 @@ begin
     batchShortNameList => batchShortNameList
     , operationCode => Activate_OperCode
   );
-  operationStartDate := sysdate;
+  operationStartDate := systimestamp;
   execBatchOperation(
     batchShortNameList => batchShortNameList
     , operationCode => Run_OperCode
@@ -1338,7 +1526,7 @@ begin
       );
     end if;
     exit when
-      waitBatchCount = 0 or sysdate >= limitDate
+      waitBatchCount = 0 or systimestamp >= limitDate
     ;
     dbms_lock.sleep( 1);
   end loop;

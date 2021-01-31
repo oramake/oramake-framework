@@ -2,6 +2,14 @@ title: Версии
 
 
 
+group: 5.2.2 ( 2021-01-26)
+
+[!] Fix set incorrect next run date on batch operations (caused by implicit
+    conversion DATE to TIMESTAMP WITH TIME ZONE with session time zone on
+    using dbms_scheduler).
+
+
+
 group: 5.2.1 ( 2019-12-30)
 
 [!] Исключен немедленный перезапуск пакетного задания после прерывания его
