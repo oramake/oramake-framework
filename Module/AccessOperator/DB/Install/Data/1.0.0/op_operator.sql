@@ -14,6 +14,7 @@ using
     , k.change_password
     , k.date_begin
     , k.date_finish
+    , 3 as login_attempt_group_id
     , 1 as operator_id_ins
   from
     (

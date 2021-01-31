@@ -250,8 +250,6 @@ Group: Скрипты  {
 
                }  # Group: Local
 
-            File: run  (no auto-title, Install/Data/3.5.0/run.sql)
-            File: op_lock_type  (no auto-title, Install/Data/3.5.0/op_lock_type.sql)
             }  # Group: 3.5.0
 
          Group: 3.4.19  {
@@ -295,6 +293,7 @@ Group: Скрипты  {
                }  # Group: Local
 
             File: op_group  (no auto-title, Install/Data/1.0.0/op_group.sql)
+            File: op_lock_type  (no auto-title, Install/Data/1.0.0/op_lock_type.sql)
             File: op_operator  (no auto-title, Install/Data/1.0.0/op_operator.sql)
             File: op_role  (no auto-title, Install/Data/1.0.0/op_role.sql)
             }  # Group: 1.0.0

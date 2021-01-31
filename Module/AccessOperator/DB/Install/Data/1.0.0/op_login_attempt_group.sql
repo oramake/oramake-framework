@@ -1,10 +1,5 @@
--- Install/Data/3.5.0/op_login_attempt_group.sql
+-- Install/Data/1.0.0/op_login_attempt_group.sql
 -- Установка начальных данных в таблицу <op_login_attempt_group>
-
-alter table
-  op_login_attempt_group
-disable all triggers
-/
 
 merge into
   op_login_attempt_group dst
@@ -32,17 +27,6 @@ using
       dual
     union all
     select
-      2 as login_attempt_group_id
-      , 'Пользователи Инфо банка' as login_attempt_group_name
-      , 0 as is_default
-      , 'TEMPORAL' as lock_type_code
-      , 5 as max_login_attempt_count
-      , 1800 as locking_time
-      , 0 as used_for_cl
-    from
-      dual
-    union all
-    select
       3 as login_attempt_group_id
       , 'Системные сервисы' as login_attempt_group_name
       , 0 as is_default
@@ -50,17 +34,6 @@ using
       , null as max_login_attempt_count
       , null as locking_time
       , 0 as used_for_cl
-    from
-      dual
-    union all
-    select
-      4 as login_attempt_group_id
-      , 'Для Credilogic' as login_attempt_group_name
-      , 0 as is_default
-      , 'PERMANENT' as lock_type_code
-      , 5 as max_login_attempt_count
-      , null as locking_time
-      , 1 as used_for_cl
     from
       dual
     ) t
@@ -102,9 +75,4 @@ when not matched then
 /
 
 commit
-/
-
-alter table
-  op_login_attempt_group
-enable all triggers
 /

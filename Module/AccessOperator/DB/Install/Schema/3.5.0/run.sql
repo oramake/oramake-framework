@@ -9,7 +9,7 @@
 
 
 -- Запуск скритов
-@oms-run Install/Data/3.5.0/op_lock_type.sql
+@oms-run Install/Data/1.0.0/op_lock_type.sql
 @oms-run Install/Data/3.5.0/Local/Private/Main/op_login_attempt_group.sql
 @oms-run op_operator.sql
 
