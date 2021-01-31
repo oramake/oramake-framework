@@ -1,23 +1,22 @@
 -- Перезапуск пакетов обработки задач
 -- Перезапускает обработчики задач, выполняющиеся в сессиях указанных пакетов.
---
--- BatchList                     - список пакетов для перезапуска
--- RestartTimeout                - интервал между перезапуском пакетов
--- CheckTimeout                  - ожидание перед проверкой завершения сессий
 declare
-                                        --Список пакетов для перезапуска
+
+  -- Список пакетов для перезапуска
   batchList varchar2(4000) := pkg_Scheduler.GetContextString(
     'BatchList', riseException => 1
   );
-                                        --Время ожидания между перезапусками
+
+  -- Время ожидания между перезапусками
   restartTimeout number := pkg_Scheduler.GetContextInteger(
     'RestartTimeout'
   );
-                                        --Время ожидания перед проверкой
+
+  -- Время ожидания перед проверкой
   checkTimeout number := pkg_Scheduler.GetContextInteger(
     'CheckTimeout'
   );
-                                        --Сессии пакетов
+
   cursor curBatch( batchList varchar2) is
 select
   b.batch_short_name
@@ -70,12 +69,12 @@ order by
   ss.list_position
 ;
 
-  nSend pls_integer := 0;               --Число останавливаемых сессий
+  nSend pls_integer := 0;
 
-  restartTime date := sysdate - 1/86400;--Время начала перезапуска
-  sessionList varchar2( 4000);          --Список сессий
-  workingSessionList varchar2( 4000);   --Список работающих сессий
-  sleepTimeout integer := 10;           --Интревал между проверками
+  restartTime date := sysdate - 1/86400;
+  sessionList varchar2( 4000);
+  workingSessionList varchar2( 4000);
+  sleepTimeout integer := 10;
   errorMessage varchar2( 4000);
 
 begin
@@ -101,7 +100,7 @@ begin
     end;
   end loop;
   if nSend > 0 then
-    if checkTimeout > 0 then            --Проверка остановки сессий
+    if checkTimeout > 0 then
       loop
         workingSessionList := null;
         for rec in curSession( sessionList) loop

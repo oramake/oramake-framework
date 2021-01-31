@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TaskHandler
-SubTitle: Версия 1.2.4
+SubTitle: Версия 1.2.5
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
