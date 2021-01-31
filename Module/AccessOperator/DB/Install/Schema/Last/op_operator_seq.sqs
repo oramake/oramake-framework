@@ -3,4 +3,5 @@
 -- <op_operator>.
 create sequence
   op_operator_seq
+start with 6
 /

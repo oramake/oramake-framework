@@ -3,4 +3,5 @@
 -- <op_group>.
 create sequence
   op_group_seq
+start with 2
 /
