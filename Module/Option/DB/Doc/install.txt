@@ -21,8 +21,8 @@ TO_USERNAME                   - им€ пользовател€, которому выдаютс€ права
 MODULE_CONFIG_DIR             -  аталог с пользовательскими настроечными
                                 файлами
                                 (по умолчанию
-                                /usr/local/etc/oms/ModuleConfig/Option, а при
-                                его отсутствии подкаталог OmsConfig)
+                                $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Option,
+                                а при его отсутствии подкаталог OmsConfig)
 PRODUCTION_DB_NAME            - может быть использован дл€ €вного задани€
                                 промышленной Ѕƒ, к которой относитс€ установка
                                 ( при установке в тестовую Ѕƒ
@@ -49,6 +49,16 @@ PRODUCTION_DB_NAME            - может быть использован дл€ €вного задани€
 make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
+
+
+
+group: 3.5.0
+
+ѕор€док установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=3.5.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
