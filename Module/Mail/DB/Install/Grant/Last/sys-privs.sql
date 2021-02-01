@@ -18,6 +18,18 @@ declare
 begin
   dbms_java.grant_permission(
     userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'getClassLoader'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'setFactory'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
     , 'SYS:java.util.PropertyPermission'
     , '*'
     , 'read,write'

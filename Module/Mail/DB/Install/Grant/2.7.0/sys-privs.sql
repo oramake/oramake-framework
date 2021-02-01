@@ -1,6 +1,5 @@
--- script: Install/Grant/2.6.0/sys-privs.sql
--- Выдает права на подключение по порту 465 (требуется для SSL-авторизации
--- на SMTP-сервере).
+-- script: Install/Grant/2.7.0/sys-privs.sql
+-- Выдает дополнительные права типа "SYS:java.lang.RuntimePermission".
 --
 -- Параметры:
 -- userName                   - имя пользователя, которому выдаются права
@@ -15,13 +14,17 @@ declare
   userName varchar2(30) := upper( '&userName');
 
 begin
-
-  -- Подключение по SMTP с авторизацией по SSL
   dbms_java.grant_permission(
     userName
-    , 'SYS:java.net.SocketPermission'
-    , '*:465'
-    , 'connect'
+    , 'SYS:java.lang.RuntimePermission'
+    , 'getClassLoader'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'setFactory'
+    , ''
   );
 end;
 /

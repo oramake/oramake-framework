@@ -157,6 +157,11 @@ Group: Скрипты  {
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
+         Group: 2.7.0  {
+
+            File: sys-privs  (no auto-title, Install/Grant/2.7.0/sys-privs.sql)
+            }  # Group: 2.7.0
+
          Group: 2.6.0  {
 
             File: sys-privs  (no auto-title, Install/Grant/2.6.0/sys-privs.sql)
