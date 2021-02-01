@@ -285,9 +285,9 @@ throws SQLException
  **/
 static Session
 getSmtpSession(
-  String smtpServer
-  , String username
-  , String password
+  final String smtpServer
+  , final String username
+  , final String password
 )
 throws SQLException
 {
