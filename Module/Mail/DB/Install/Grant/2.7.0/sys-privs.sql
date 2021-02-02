@@ -17,6 +17,12 @@ begin
   dbms_java.grant_permission(
     userName
     , 'SYS:java.lang.RuntimePermission'
+    , 'accessClassInPackage.sun.security.x509'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.lang.RuntimePermission'
     , 'getClassLoader'
     , ''
   );
