@@ -271,9 +271,6 @@ install:
 			TextParser) \
 				isUseOperator=""; \
 				;; \
-			WebUtility) \
-				grantSysPrivsFlag=1; \
-				;; \
 		esac \
 		&& if (( $$grantSysPrivsFlag )); then \
 			case "$${module}" in \
