@@ -550,15 +550,5 @@ procedure login(
   , scheme                  varchar2 default null
 );
 
-/* pproc: logoff
-  Perform authentification logoff.
-
-  Parameters:
-
-  ( <body::logoff>)
-*/
-procedure logoff
-;
-
 end pkg_WebUtility;
 /

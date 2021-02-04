@@ -13,46 +13,10 @@ logger lg_logger_t := lg_logger_t.getLogger(
   , objectName  => 'pkg_WebUtility'
 );
 
-
-
-/* group: Authentication variables */
-
-/* ivar: username
-  User name.
-*/
-username varchar2(1024);
-
-/* ivar: password
-  User password.
-*/
-password varchar2(1024);
-
-/* ivar: domain
-  User domain.
-*/
-domain varchar2(1024);
-
-/* ivar: scheme
-  Authentication schema.
-*/
-scheme varchar2(1024);
-
-/* ivar: walletPath
-  Path to Oracle Database wallet with certificate for https authentication.
-*/
-walletPath varchar2(1024);
-
-/* ivar: walletPassword
-  Password for Oracle Database wallet.
-*/
-walletPassword varchar2(1024);
-
 /* ivar: ntlmToken
   ntlmToken for all requests.
 */
 ntlmToken varchar2(1024);
-
-
 
 /* group: Functions */
 
@@ -532,19 +496,8 @@ is
         'message body: source length=' || length( bodyText)
         || ', set body charset: ' || usedBodyCharset
       );
-      if scheme = NTLM_scheme then
+      if ntlmToken is not null then
         addHeader(Authorization_HttpHeader, ntlmToken);
-      elsif scheme = Basic_scheme
-            or scheme = Digest_scheme
-            or scheme = AWS_Scheme
-            or scheme = AWS4_HMAC_SHA256_Scheme
-      then
-        utl_http.set_authentication(
-          r => req
-          , username => userName
-          , password => password
-          , scheme => scheme
-        );
       end if;
 
       if len > 0 then
@@ -1066,8 +1019,7 @@ return xmltype
 is
 
   -- Response in XML format
-  responseXml xmltype;
-
+  responseXml xmltype;
 
 begin
   return xmltype( entityBody);
@@ -1517,17 +1469,13 @@ begin
 
   -- NTLM authentication
   if scheme = NTLM_scheme then
-    pkg_webUtility.ntlmToken := pkg_WebUtilityNtlm.ntlmLogin(
+    ntlmToken := pkg_WebUtilityNtlm.ntlmLogin(
         requestUrl       => requestUrl
         , username       => username
         , password       => password
         , domain         => domain
     );
-  elsif coalesce(scheme, Basic_scheme) = Basic_scheme
-        or scheme = Digest_scheme
-        or scheme = AWS_Scheme
-        or scheme = AWS4_HMAC_SHA256_Scheme
-  then
+  else
   -- others authentications
     req := utl_http.begin_request(requestUrl);
     utl_http.set_authentication(
@@ -1549,20 +1497,7 @@ begin
           || '.'
       );
     end if;
-  else
-    raise_application_error(
-      pkg_Error.ProcessErrors
-      , 'Unsupported authentication scheme'
-    );
   end if;
-  
-  -- Save authentications parametaers
-  pkg_webUtility.username := username;
-  pkg_webUtility.password := password;
-  pkg_webUtility.domain := domain;
-  pkg_webUtility.scheme := scheme;
-  pkg_webUtility.walletPath := walletPath;
-  pkg_webUtility.walletPassword := walletPassword;
 exception when others then
   -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
   utl_http.end_request( req);
@@ -1583,38 +1518,6 @@ exception when others then
     , true
   );
 end login;
-
-/* pproc: logoff
-  Perform authentification logoff.
-
-  Parameters:
-
-*/
-procedure logoff
-is
-begin
-  -- NTLM authentication
-  if scheme = NTLM_scheme then
-    pkg_webutilityntlm.ntlmLogoff();
-  end if;
-
-  -- Reset authentications parametaers
-  pkg_webUtility.username := null;
-  pkg_webUtility.password := null;
-  pkg_webUtility.domain := null;
-  pkg_webUtility.scheme := null;
-  pkg_webUtility.walletPath := null;
-  pkg_webUtility.walletPassword := null;
-  pkg_webUtility.ntlmToken := null;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Error while user logoff.'
-      )
-    , true
-  );
-end logoff;
 
 end pkg_WebUtility;
 /
