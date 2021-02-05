@@ -90,7 +90,7 @@ exportOmsInstallDir = export \
 #
 getRevisionFromKeyword = $(strip $(shell \
     keyString='$(1)'; \
-    echo "$${keyString:12:$${\#keyString}-13}" \
+    echo "$${keyString:12:`expr length "$${keyString}"`-13}" \
   ))
 
 
