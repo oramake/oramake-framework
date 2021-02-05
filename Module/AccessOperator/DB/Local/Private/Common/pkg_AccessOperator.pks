@@ -669,8 +669,8 @@ return sys_refcursor;
   Входные параметры:
     operatorId                             - ИД оператора
     roleId                                 - ИД роли
-    userAccessFlag                         - право на использование группы
-    grantOptionFlag                        - право на выдачу группы другим операторам
+    userAccessFlag                         - право на использование роли
+    grantOptionFlag                        - право на выдачу роли другим операторам
     operatorIdIns                          - ИД текущего оператора
     computerName                           - Имя компьютера, с которого производится действие
     ipAddress                              - IP адрес компьютера, с которого производится действие
@@ -702,6 +702,8 @@ procedure createOperatorRole(
     ipAddress                              - IP адрес компьютера, с которого производится действие
 
   Выходные параметры отсутсвуют.
+
+  ( <body::updateOperatorRole>)
 
   ( <body::updateOperatorRole>)
 */
@@ -813,6 +815,8 @@ procedure createOperatorGroup(
     ipAddress                              - IP адрес компьютера, с которого производится действие
 
   Выходные параметры отсутствуют.
+
+  ( <body::updateOperatorGroup>)
 
   ( <body::updateOperatorGroup>)
 */
@@ -1018,16 +1022,19 @@ function operatorLoginReport(
 return sys_refcursor;
 
 /* pfunc: autoUnlockOperator
-   Функция автоматической разбокировки операторов.
+   Функция автоматической разбокировки операторов, у которых назначена группа временной блокировки.
 
-   Входные параметры отсутствуют.
+   Входные параметры:
+     operatorId                   - Идентификтаор оператора
 
    Возврат:
      operator_unlocked_count      - Количество разблокированных операторов
 
   ( <body::autoUnlockOperator>)
 */
-function autoUnlockOperator
+function autoUnlockOperator(
+  operatorId integer
+)
 return integer;
 
 

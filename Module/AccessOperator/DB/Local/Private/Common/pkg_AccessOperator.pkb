@@ -2041,7 +2041,7 @@ exception
   );
 end createOperatorRole;
 
-/* pproc: updateOperatorRole
+/* proc: updateOperatorRole
   Процедура редактирования связи пользователя и роли.
 
   Входные параметры:
@@ -2074,9 +2074,9 @@ begin
     , roleId => roleId
   );
 
-  update 
+  update
     op_operator_role
-  set 
+  set
     user_access_flag = coalesce( userAccessFlag, 1 )
     , grant_option_flag = coalesce( grantOptionFlag, 0 )
     , action_type_code = pkg_AccessOperator.UpdateOperatorRole_ActTpCd
@@ -2357,7 +2357,7 @@ exception
     );
 end createOperatorGroup;
 
-/* pproc: updateOperatorGroup
+/* proc: updateOperatorGroup
   Процедура редактирования связи группы и оператора.
 
   Входные параметры:
@@ -2404,7 +2404,7 @@ begin
   where
     operator_id = operatorId
     and group_id = groupId
-  ;  
+  ;
 
 exception
   when others then
@@ -3158,51 +3158,43 @@ exception
 end operatorLoginReport;
 
 /* func: autoUnlockOperator
-   Функция автоматической разбокировки операторов.
+   Функция автоматической разбокировки операторов, у которых назначена группа временной блокировки.
 
-   Входные параметры отсутствуют.
+   Входные параметры:
+     operatorId                   - Идентификтаор оператора
 
    Возврат:
      operator_unlocked_count      - Количество разблокированных операторов
 */
-function autoUnlockOperator
+function autoUnlockOperator(
+  operatorId integer
+)
 return integer
 is
-  operatorUnlockedCount integer := 0;
-
-  -- Курсор с группами, у которых код блокировки "TEMPORAL"
-  cursor curTempGroup
-  is
-  select
-    *
-  from
-    v_op_login_attempt_group grp
-  where
-    grp.lock_type_code = pkg_operator.Temporal_LockTypeCode
-  ;
-
 -- unlockOperator
 begin
-  -- Идем в цикле по всем группам из курсора
-  for curRec in curTempGroup loop
-    -- Разблокируем операторов
-    update
-      op_operator op
-    set
-      op.date_finish = null
-      , op.curr_login_attempt_count = 0
-    where
-      op.login_attempt_group_id = curRec.login_attempt_group_id
-      and op.curr_login_attempt_count > curRec.max_login_attempt_count
-      and ( sysdate - op.date_finish ) * 24 * 60 * 60 > curRec.Locking_Time
-    ;
-
-    -- Увеличиваем счетчик
-    operatorUnlockedCount := operatorUnlockedCount + sql%rowcount;
-  end loop;
-
-  return operatorUnlockedCount;
-
+  -- Разблокируем операторов
+  update
+    op_operator op
+  set
+    op.date_finish = null
+    , op.curr_login_attempt_count = 0
+    , op.change_operator_id = operatorId
+  where
+    exists(
+      select
+        null
+      from
+        v_op_login_attempt_group g
+      where
+        -- Временная блокировка
+        g.lock_type_code = pkg_Operator.Temporal_LockTypeCode
+        and g.login_attempt_group_id = op.login_attempt_group_id
+        and g.max_login_attempt_count < op.curr_login_attempt_count
+        and g.locking_time < ( sysdate - op.date_finish ) * 24 * 60 * 60
+    )
+  ;
+  return sql%rowcount;
 exception
   when others then
     raise_application_error(
