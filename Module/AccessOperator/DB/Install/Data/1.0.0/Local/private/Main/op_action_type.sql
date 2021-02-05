@@ -30,6 +30,14 @@ using
       dual
     union all
     select
+      'UPDATEOPERATORROLE' as action_type_code
+      , 'Изменения роли у оператора' as action_type_name_rus
+      , 'Update role for operator' as action_type_name_en
+      , 'Изменения уровня доступа' as action_type_comment
+    from
+      dual
+    union all
+    select
       'DELETEOPERATORROLE' as action_type_code
       , 'Удаление роли у оператора' as action_type_name_rus
       , 'Remove role from operator' as action_type_name_en
@@ -42,6 +50,14 @@ using
       , 'Выдача группы оператору' as action_type_name_rus
       , 'Add group to operator' as action_type_name_en
       , 'Добавление уровня доступа' as action_type_comment
+    from
+      dual
+    union all
+    select
+      'UPDATEOPERATORGROUP' as action_type_code
+      , 'Изменение группы у оператора' as action_type_name_rus
+      , 'Update group for operator' as action_type_name_en
+      , 'Изменение уровня доступа' as action_type_comment
     from
       dual
     union all
