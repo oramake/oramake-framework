@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: 1.3.5 ( 2021-02-05)
+
+[!] Refine parseConfigString function to exclude error on install for
+    Oracle 12.1.0.2.
+
+
+
 group: 1.3.4 ( 2020-08-31)
 
 [+] Add in function

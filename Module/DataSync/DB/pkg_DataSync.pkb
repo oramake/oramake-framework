@@ -442,7 +442,6 @@ is
   procedure fillOptionList
   is
   begin
-    optionList := ConfigOptionListT();
     for i in optionNameList.first .. optionNameList.last loop
       optionList( optionNameList( i)) := null;
     end loop;
