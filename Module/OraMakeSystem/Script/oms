@@ -1274,17 +1274,25 @@ exec_set-version()
       || exitError "error on set version in map file: '$dstFile'"
     dstFile="$rootDir/DB/OmsModule/NaturalDocs/Menu.txt"
     local versionExpr="s|^SubTitle:.*|SubTitle: Версия $moduleVersion|"
+    local oldLcAll=$LC_ALL
     getModuleEncoding "$rootDir"
     if (( isConvertModuleEncoding )); then
       versionExpr=$(
         iconv -f "utf-8" -t "$moduleEncoding" <<<$versionExpr
       )
+      # sed’s regular expressions do not match invalid multibyte sequences in a
+      # multibyte locale
+      $runCmd export LC_ALL=C
     fi
-    $runCmd sed --in-place \
-      -e "$versionExpr" \
-      "$dstFile" \
-      || exitError \
+    $runCmd sed --in-place -e "$versionExpr" "$dstFile"
+    execResult=$?
+    if (( isConvertModuleEncoding )); then
+      $runCmd export LC_ALL=$oldLcAll
+    fi
+    if [[ $execResult != 0 ]]; then
+      exitError \
         "error on set version in SubTitle of documentation menu: '$dstFile'"
+    fi
     execResult=0
     logDebug "set module version: '$moduleVersion'"
     if (( isQuiet )); then
