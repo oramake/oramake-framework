@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=2.2.0
+OMS_VERSION=2.4.0
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 26056103 $'
+commonRevisionValue='$Revision:: 26867076 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2019-07-17 15:23:16 +0300 #$'
+commonChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 # var: commonRevision
@@ -145,9 +145,18 @@ scriptArgumentList=( "$@" )
 # Исполняемый файл Subversion.
 svnCmd="svn"
 
+# var: installPrefix
+# Общий префикс для инсталляционных каталогов.
+installPrefix="${OMS_INSTALL_PREFIX}"
+if [[ -z $installPrefix ]]; then
+  installPrefix=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+  installPrefix=${installPrefix%/*}
+  installPrefix=${installPrefix:-/usr/local}
+fi
+
 # var: installShareDir
 # Путь к каталогу с данными OMS ( за исключением скриптов и настроек)
-installShareDir="${OMS_INSTALL_SHARE_DIR:-/usr/local/share/oms}"
+installShareDir="${OMS_INSTALL_SHARE_DIR:-${installPrefix}/share/oms}"
 
 # var: sqlScriptDir
 # Каталог со стандартными SQL-скриптами
@@ -155,7 +164,7 @@ sqlScriptDir="${installShareDir}/SqlScript"
 
 # var: configDir
 # Каталог с настройками.
-configDir="${OMS_CONFIG_DIR:-/usr/local/etc/oms}"
+configDir="${OMS_INSTALL_CONFIG_DIR:-${installPrefix}/etc/oms}"
 
 # var: templateDir
 # Каталог с шаблоном нового модуля.
@@ -184,6 +193,13 @@ tmpFileDir="${TEMP:-/tmp}"
 # var: tmpFile
 # Временный файл для использования в скрипте.
 tmpFile="${tmpFileDir}/${scriptName}.$$"
+
+# var: isWindows
+# Run in Windows OS?
+isWindows=0
+if [[ $OS == "Windows_NT" ]]; then
+  isWindows=1
+fi
 
 # var: fileExtensionList
 # Список настроек по расширениям файлов ( в соответствии с соглашениями
@@ -273,10 +289,20 @@ fileObjectName=""
 #
 fileObjectType=""
 
-# var: moduleGendocEncoding
-# Encoding of module's documentation ( enconding name for iconv)
-# Is set in <getModuleGendocEncoding>.
-moduleGendocEncoding=""
+# var: moduleEncoding
+# Encoding of module's files (enconding name for iconv).
+# Is set in <getModuleEncoding>.
+moduleEncoding=""
+
+# var: moduleNlsLang
+# Value of NLS_LANG for loading module's files.
+# Is set in <getModuleEncoding>.
+moduleNlsLang=""
+
+# var: isConvertModuleEncoding
+# Convert files from UTF-8 enconding to module's enconding?
+# Is set in <getModuleEncoding>.
+isConvertModuleEncoding=0
 
 
 
@@ -723,25 +749,106 @@ getFileObject()
 
 
 
-# func: getModuleGendocEncoding
-# Returns encoding of module's documentation.
+# func: getModuleEncoding
+# Returns encoding of module's files.
 #
 # Parameters:
 # modulePath                  - Path to root directory of module
-#                               ( empty string for new module)
+#                               (empty string for new module)
+# defaultEncoding             - Default encoding (for new module)
+# isCreateModule              - Is create module (1 - yes, else no)
 #
 # Return:
-# <moduleGendocEncoding>      - Encoding of module's documentation
-#                               ( enconding name for iconv)
+# <moduleEncoding>            - Encoding of module's files
+#                               (enconding name for iconv)
+# <moduleNlsLang>             - Value of NLS_LANG for loading module's files
+# <isConvertModuleEncoding>   - Convert files from UTF-8 to module's enconding
 #
-getModuleGendocEncoding()
+# Remarks:
+# - return 1 if defaultEncoding is incorrect.
+# - return 2 if encoding for NLS_LANG is unknown
+#
+getModuleEncoding()
 {
-  local modulePath="$1"
+  local modulePath=$1
+  local defaultEncoding=$2
+  local isCreateModule=$3
+  local resCode=0
   logDebug3 "start: modulePath='$modulePath'"
+  logDebug3 "start: defaultEncoding='$defaultEncoding'"
+  moduleEncoding=""
+  moduleNlsLang=""
+  isConvertModuleEncoding=0
+
+  if [[ -n $modulePath ]]; then
+    local mkFile="$modulePath/DB/Makefile"
+    if [[ -f $mkFile ]]; then
+      while read line; do
+        if [[ ${line:0:17} == "export NLS_LANG =" ]]; then
+          moduleNlsLang=${line:17}
+          moduleNlsLang=${moduleNlsLang//[[:space:]]/}
+          # remove \r in case of DOS EOL
+          if [[ ${moduleNlsLang: -1} == $'\r' ]]; then
+            moduleNlsLang=${moduleNlsLang::${#moduleNlsLang}-1}
+          fi
+          logDebug3 "module NLS_LANG: '$moduleNlsLang'"
+          break
+        fi
+      done < $mkFile
+    elif (( ! isCreateModule )); then
+      logError "getModuleEncoding: DB Makefile not found: '$mkFile'"
+    fi
+  elif [[ -n $defaultEncoding ]]; then
+    case ${defaultEncoding,,} in
+      utf-8 | utf8)
+        moduleEncoding="utf-8"
+        moduleNlsLang="AMERICAN_CIS.AL32UTF8"
+        ;;
+      cp1251 | windows-1251)
+        moduleEncoding="cp1251"
+        moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
+        ;;
+      *) resCode=1
+        ;;
+    esac
+  fi
+  if [[ -z $moduleNlsLang ]]; then
+    moduleNlsLang=$NLS_LANG
+    logDebug3 "use environment NLS_LANG: '$moduleNlsLang'"
+  fi
+  # set moduleEncoding by moduleNlsLang
+  if [[ -n $moduleNlsLang && -z $moduleEncoding ]]; then
+    case ${moduleNlsLang##*.} in
+      AL32UTF8)
+        moduleEncoding="utf-8"
+        ;;
+      CL8MSWIN1251)
+        moduleEncoding="cp1251"
+        ;;
+      *)
+        logError "getModuleEncoding: Unknown encoding for NLS_LANG: '$moduleNlsLang'"
+        resCode=2
+        moduleNlsLang=""
+        ;;
+    esac
+  fi
+  # use global default values
+  if [[ -z $moduleNlsLang ]]; then
+    moduleEncoding="cp1251"
+    moduleNlsLang="AMERICAN_CIS.CL8MSWIN1251"
+  fi
+
+  if [[ $moduleEncoding != "utf-8" ]]; then
+    isConvertModuleEncoding=1
+  fi
 
   # return value
-  moduleGendocEncoding="cp1251"
-  logDebug2 "Set moduleGendocEncoding: '$moduleGendocEncoding'"
+  logDebug2 "Set moduleEncoding: '$moduleEncoding'"
+  logDebug2 "Set moduleNlsLang: '$moduleNlsLang'"
+  logDebug2 "Set isConvertModuleEncoding: '$isConvertModuleEncoding'"
+  logDebug2 "return: $resCode"
+
+  return $resCode
 }
 
 

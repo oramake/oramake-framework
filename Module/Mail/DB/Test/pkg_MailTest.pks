@@ -30,6 +30,18 @@ TestRecipient_OptSName constant varchar2(50) := 'TestRecipient';
 */
 TestSmtpServer_OptSName constant varchar2(50) := 'TestSmtpServer';
 
+/* const: TestSmtpUsername_OptSName
+  Наименование настроечного параметра
+  "Тесты: Пользователь для авторизации на SMTP-сервере"
+*/
+TestSmtpUsername_OptSName constant varchar2(50) := 'TestSmtpUsername';
+
+/* const: TestSmtpPassword_OptSName
+  Наименование настроечного параметра
+  "Тесты: Пароль для авторизации на SMTP-сервере"
+*/
+TestSmtpPassword_OptSName constant varchar2(50) := 'TestSmtpPassword';
+
 /* const: TestFetchUrl_OptSName
   Наименование настроечного параметра
   "Тесты: URL почтового ящика в URL-encoded формате ( pop3://user@server.domen)"

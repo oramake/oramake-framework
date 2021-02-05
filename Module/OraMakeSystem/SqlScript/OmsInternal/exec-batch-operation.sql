@@ -44,7 +44,7 @@
 --
 
 var oms_operationCode varchar2(10)
-var oms_patternList varchar2(1000)
+var oms_patternList varchar2(4000)
 var oms_batchWaitSecond number
 
 var oms_resumeBatchIdList varchar2(4000)
@@ -112,7 +112,7 @@ declare
   mainOperationCode constant varchar2(10) := :oms_operationCode;
 
   -- List of masks
-  patternList constant varchar2(1000) := :oms_patternList;
+  patternList constant varchar2(4000) := :oms_patternList;
 
   -- List of processed batch Id (separated by commas)
   resumeBatchIdList varchar2(4000);

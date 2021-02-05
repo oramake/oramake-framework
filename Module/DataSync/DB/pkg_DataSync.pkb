@@ -3,6 +3,64 @@ create or replace package body pkg_DataSync is
 
 
 
+/* group: Типы */
+
+/* itype: NameT
+  Имя объекта в БД.
+*/
+subtype NameT is varchar2(128);
+
+/* itype: FullNameT
+  Полное имя объекта (возможно с указанием владельца) в БД.
+*/
+subtype FullNameT is varchar2(257);
+
+/* itype: ObjectFullNameT
+  Полное имя объекта (имя объекта и владелец).
+*/
+type ObjectFullNameT is record (
+  -- владелец объекта
+  owner NameT
+  -- имя объекта
+  , objectName NameT
+);
+
+/* itype: ConfigStringT
+  Строка с настройками.
+*/
+subtype ConfigStringT is varchar2(4000);
+
+/* itype: ConfigItemListT
+  Список настроек из строки с настройками.
+*/
+type ConfigItemListT is table of ConfigStringT;
+
+/* itype: ConfigOptionListT
+  Список дополнительных опций из строки с настройками.
+*/
+type ConfigOptionListT is table of ConfigStringT index by NameT;
+
+/* itype: ColumnInfoT
+  Информация по колонкам для обновления.
+*/
+type ColumnInfoT is record (
+
+  -- Список ключевых колонок в формате
+  -- ",<columnName>[,<columnName2>][,<columnName3>]...."
+  keyColumn varchar2(1000)
+
+  -- Список колонок для обновления за исключением ключевых колонок в формате
+  -- ",<columnName>[,<columnName2>][,<columnName3>]...."
+  , regularColumn varchar2(10000)
+
+  -- Условия для where, возвращающие истину в случае идентичности данных в
+  -- исходной записи ( алиас "a") и конечной записи ( алиас "t"), заполняется
+  -- в случае необходимости обновления колонок типа LOB ( CLOB или BLOB)
+  , equalWhereSql varchar2(32500)
+);
+
+
+
 /* group: Константы */
 
 /* iconst: List_Separator
@@ -18,6 +76,12 @@ List_Separator constant varchar2(1) := ':';
   имени репозитария), указанный в параметре процедуры <createMLog>.
 */
 MLog_CommentTail constant varchar2(100) := ' [ SVN Root: $(moduleSvnRoot)]';
+
+/* iconst: ExcludeColumnList_OptName
+  Имя дополнительной опции "Список колонок, исключаемых из обновления (через
+  запятую, без учета регистра)".
+*/
+ExcludeColumnList_OptName constant NameT := 'excludeColumnList';
 
 
 
@@ -52,33 +116,38 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка при выполнении SQL ( первые 100 символов): "'
-        || substr( execSql, 1, 100)
-        || '".'
+        'Ошибка при выполнении SQL'
+        || case when length( execSql) > 500 then
+            ' (первые 500 символов): "'
+            || chr(10) || substr( execSql, 1, 500) || '..."'
+          else
+            ': "' || chr(10) || execSql || chr(10) || '".'
+          end
       )
     , true
   );
 end execSql;
 
-/* iproc: getLocalFullName
+/* ifunc: getLocalFullName
   Возвращает имя владельца и имя объекта по строке с именем объекта.
   Если имя владельца не задано явно, то используется текущий пользователь
   ( под правами которого выполняется пакет).
 
   Параметры:
-  objectOwner                 - строка с именем владельца
-                                ( возврат)
-  objectName                  - строка с именем объекта
-                                ( возврат)
   localObject                 - строка с именем, и возможно схемой, локального
                                 объекта
+
+  Возврат:
+  имя владельца и имя объекта (тип <ObjectFullNameT>)
 */
-procedure getLocalFullName(
-  objectOwner out varchar2
-  , objectName out varchar2
-  , localObject varchar2
+function getLocalFullName(
+  localObject varchar2
 )
+return ObjectFullNameT
 is
+
+  ofn ObjectFullNameT;
+
 begin
   if instr( localObject, '@') > 0 then
     raise_application_error(
@@ -87,12 +156,13 @@ begin
     );
   end if;
   if localObject like '%.%' then
-    objectOwner := substr( localObject, 1, instr( localObject, '.') - 1);
-    objectName := substr( localObject, instr( localObject, '.') + 1);
+    ofn.owner := substr( localObject, 1, instr( localObject, '.') - 1);
+    ofn.objectName := substr( localObject, instr( localObject, '.') + 1);
   else
-    objectOwner := lower( sys_context( 'USERENV', 'CURRENT_USER'));
-    objectName := localObject;
+    ofn.owner := lower( sys_context( 'USERENV', 'CURRENT_USER'));
+    ofn.objectName := localObject;
   end if;
+  return ofn;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -104,6 +174,1280 @@ exception when others then
     , true
   );
 end getLocalFullName;
+
+/* iproc: getColumnInfo
+  Возвращает информацию по колонкам для обновления.
+
+  Параметры:
+  colInfo                     - информация по колонкам для обновления
+                                (возврат)
+  columnTableOwner            - имя владельца таблицы (представления) для
+                                получения списка колонок (без учета регистра)
+  columnTableName             - имя таблицы (представления) для получения
+                                списка колонок (без учета регистра)
+  keyTableName                - имя владельца таблицы для определения колонок
+                                первичного ключа (без учета регистра)
+                                (по умолчанию columnTableOwner)
+  keyTableName                - имя таблицы для определения колонок
+                                первичного ключа (без учета регистра)
+                                (по умолчанию columnTableName)
+  excludeColumnList           - список колонок, исключаемых из обновления
+                                (через запятую, без учета регистра)
+                                (по умолчанию отсутствует)
+  fillEqualWhereSqlFlag       - заполнять colInfo.equalWhereSql
+                                (1 заполнять при необходимости (по умолчанию),
+                                 0 не заполнять)
+  raiseKeyNotFoundFlag        - выбрасывать исключение при отсутствии колонок
+                                первичного ключа
+                                (1 да (по умолчанию), 0 нет)
+
+  Возврат:
+  информация по колонкам (тип <ColumnInfoT>).
+*/
+procedure getColumnInfo(
+  colInfo out nocopy ColumnInfoT
+  , columnTableOwner varchar2
+  , columnTableName varchar2
+  , keyTableOwner varchar2 := null
+  , keyTableName varchar2 := null
+  , excludeColumnList varchar2 := null
+  , fillEqualWhereSqlFlag pls_integer := null
+  , raiseKeyNotFoundFlag pls_integer := null
+)
+is
+
+  cursor columnCur is
+    select
+      lower( tc.column_name) as column_name
+      , case when b.column_name is not null then 1 else 0 end
+        as key_column_flag
+      , case when
+            excludeColumnList is not null
+            and instr(
+                ',' || lower( excludeColumnList) || ','
+                , ',' || lower( tc.column_name) || ','
+              )
+              > 0
+          then 1 else 0
+        end
+        as exclude_flag
+      , case when tc.data_type in ( 'CLOB', 'BLOB')  then 1 else 0 end
+        as lob_type_flag
+      , case when tc.nullable = 'Y' then 1 else 0 end
+        as nullable_flag
+      , max( case when tc.data_type in ( 'CLOB', 'BLOB') then 1 else 0 end)
+        over()
+        as exists_lob_column_flag
+    from
+      all_tab_columns tc
+      left outer join
+        (
+        select
+          ic.column_name
+          , ic.column_position
+        from
+          all_constraints cn
+          inner join all_ind_columns ic
+            on ic.index_owner = cn.owner
+              and ic.index_name = cn.index_name
+        where
+          cn.owner = upper( coalesce( keyTableOwner, columnTableOwner))
+          and cn.table_name = upper( coalesce( keyTableName, columnTableName))
+          and cn.constraint_type = 'P'
+        ) b
+        on b.column_name = tc.column_name
+    where
+      tc.owner = upper( columnTableOwner)
+      and tc.table_name = upper( columnTableName)
+    order by
+      b.column_position nulls last
+      , tc.column_id nulls last
+      , tc.column_name
+  ;
+
+-- getColumnInfo
+begin
+  for rec in columnCur loop
+    if rec.key_column_flag = 1 then
+      colInfo.keyColumn := colInfo.keyColumn || ',' || rec.column_name;
+      if rec.exclude_flag = 1 then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Невозможно исключить из обновления колонку первичного ключа ('
+            || ' column_name="' || rec.column_name || '"'
+            || ').'
+        );
+      end if;
+    elsif rec.exclude_flag = 0 then
+      colInfo.regularColumn := colInfo.regularColumn || ',' || rec.column_name;
+    end if;
+    if coalesce( fillEqualWhereSqlFlag, 1) != 0
+          and rec.exists_lob_column_flag = 1 and rec.exclude_flag = 0
+        then
+      colInfo.equalWhereSql :=
+        case when colInfo.equalWhereSql is not null then
+          colInfo.equalWhereSql || chr(10) || ' and '
+        end
+        || replace(
+            case when rec.nullable_flag = 0 and rec.lob_type_flag = 0 then
+              't.$cn = a.$cn'
+            else
+              '( coalesce( t.$cn, a.$cn) is null'
+                || case when rec.lob_type_flag = 1 then
+                    ' or dbms_lob.compare( t.$cn, a.$cn) = 0'
+                  else
+                    ' or t.$cn = a.$cn'
+                  end
+                || ')'
+            end
+            , '$cn', rec.column_name
+          )
+      ;
+    end if;
+  end loop;
+  if colInfo.keyColumn is null and colInfo.regularColumn is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Не удалось определить список колонок для обновления'
+        || ' (таблица не существует, недоступна либо принадлежит'
+        || ' другому пользователю).'
+    );
+  end if;
+  if coalesce( raiseKeyNotFoundFlag, 1) != 0 and colInfo.keyColumn is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Не удалось определить колоноки первичного ключа.'
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при заполнении информации по колонокам для обновления ('
+        || ' columnTableOwner="' || columnTableOwner || '"'
+        || ', columnTableName="' || columnTableName || '"'
+        || ', keyTableOwner="' || keyTableOwner || '"'
+        || ', keyTableName="' || keyTableName || '"'
+        || ').'
+      )
+    , true
+  );
+end getColumnInfo;
+
+/* iproc: parseConfigString
+  Разбирает строку с настройками.
+  Строка с настройками должна быть в формате:
+
+  <item1>[:[<item2>][:...[:[<itemN>]...]]][:[<optionList>]]
+
+  где
+
+  item1 ... itemN       - настройки
+  optionList            - список дополнительных опций (с разделителем пробел)
+                          в формате "<optName>=<optValue>"
+
+  Параметры:
+  itemList                    - список настроек (maxItemCount элементов,
+                                не указанные в конфигурационной строке
+                                имеют значение NULL)
+                                (возврат)
+  optionList                  - список опций (все указанные в optionNameList,
+                                не указанные в конфигурационной строке
+                                имеют значение NULL)
+                                (возврат)
+  cfgString                   - строка с настройками
+  maxItemCount                - максимальное число настроек
+                                (без учета optionList)
+  optionNameList              - допустимые имена дополнительных опций
+
+  Замечания:
+  - при сохранении значений некоторых опций (например,
+    <ExcludeColumnList_OptName>) выполняются дополнительные преобразования;
+*/
+procedure parseConfigString(
+  itemList out nocopy ConfigItemListT
+  , optionList out nocopy ConfigOptionListT
+  , cfgString varchar2
+  , maxItemCount pls_integer
+  , optionNameList cmn_string_table_t
+)
+is
+
+  -- Пробельные символы
+  Space_Char constant varchar2(10) :=
+    ' ' || chr(9) || chr(10) || chr(13)
+  ;
+
+  -- Число элементов списка без учета элемента со списком опций
+  itemCount pls_integer;
+
+  -- Наличие элемента со списком опций (он всегда последний)
+  isOptionList boolean;
+
+
+
+  /*
+    Удаляет пробельные символы с начала и хвоста строки.
+  */
+  function trimSpace(
+    srcStr varchar2
+  )
+  return varchar2
+  is
+  begin
+    return
+      ltrim(
+        rtrim(
+          srcStr
+          , Space_Char
+        )
+        , Space_Char
+      )
+    ;
+  end trimSpace;
+
+
+
+  /*
+    Заполняет itemList.
+  */
+  procedure fillItemList
+  is
+
+    i pls_integer := 1;
+
+  begin
+    itemList := ConfigItemListT();
+    itemList.extend( maxItemCount);
+    for i in 1 .. itemCount loop
+      itemList( i) := trimSpace(
+        pkg_Common.getStringByDelimiter( cfgString, List_Separator, i)
+      );
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при заполнении itemList.'
+        )
+      , true
+    );
+  end fillItemList;
+
+
+
+  /*
+    Заполняет optionList опциями с NULL-значениями.
+  */
+  procedure fillOptionList
+  is
+  begin
+    for i in optionNameList.first .. optionNameList.last loop
+      optionList( optionNameList( i)) := null;
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при заполнении optionList опциями с NULL-значениями.'
+        )
+      , true
+    );
+  end fillOptionList;
+
+
+
+  /*
+    Устанавливает значение опции.
+  */
+  procedure setOption(
+    optionName varchar2
+    , optionValue varchar2
+  )
+  is
+  begin
+    if optionList.exists( optionName) then
+      optionList( optionName) :=
+        case when optionName = ExcludeColumnList_OptName then
+          lower( translate( optionValue, '.' || Space_Char, '.'))
+        else
+          optionValue
+        end
+      ;
+    else
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Неизвестное имя опции: "' || optionName || '".'
+      );
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при установке значения опции ('
+          || ' optionName="' || optionName || '"'
+          || ', optionValue="' || optionValue || '"'
+          || ').'
+        )
+      , true
+    );
+  end setOption;
+
+
+
+  /*
+    Разбор строки опций.
+  */
+  procedure parseOptionString(
+    optStr varchar2
+  )
+  is
+
+    -- Длина разбираемой строки
+    len pls_integer := length( optStr);
+
+    -- Позиция первого символа опции
+    iBegin pls_integer := 1;
+
+    -- Позиция разделителя имени и значения
+    iSep pls_integer;
+
+    -- Позиция последнего символа опции
+    iLast pls_integer;
+
+    -- Имя текущей опции
+    optionName NameT;
+
+  begin
+    while iBegin < len loop
+      iSep := instr( optStr, '=', iBegin);
+      if iSep = 0 then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Не указано значение опции ('
+            || ' optionString="'
+              || trimSpace( substr( optStr, iBegin)) || '"'
+            || ').'
+        );
+      end if;
+
+      -- находим разделитель следующей опции
+      iLast := instr( optStr, '=', iSep + 1);
+      if iLast = 0 then
+        iLast := len;
+      else
+
+        -- пропускаем "=" и пробельные символы
+        iLast := length( rtrim( substr( optStr, 1, iLast - 1), Space_Char));
+
+        -- пропускаем имя следующей опции
+        while iLast > iSep
+              and instr( Space_Char, substr( optStr, iLast, 1)) = 0
+            loop
+          iLast := iLast - 1;
+        end loop;
+      end if;
+
+      setOption(
+        optionName => trimSpace( substr( optStr, iBegin, iSep - iBegin))
+        , optionValue => trimSpace( substr( optStr, iSep + 1, iLast - iSep))
+      );
+
+      iBegin := iLast + 1;
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при разборе строки опций ('
+          || ' optStr="' || optStr || '"'
+          || ').'
+        )
+      , true
+    );
+  end parseOptionString;
+
+
+
+-- parseConfigString
+begin
+  itemCount := least(
+    coalesce( length( cfgString), 0)
+      - coalesce( length( replace( cfgString, List_Separator, '')), 0)
+      + 1
+    , maxItemCount + 1
+  );
+  isOptionList :=
+    itemCount > maxItemCount
+    or itemCount > 1
+      -- последний элемент содержит "="
+      and instr(
+          cfgString
+          , '='
+          , instr( cfgString, List_Separator, 1, itemCount - 1)
+        ) > 0
+  ;
+  if isOptionList then
+    itemCount := itemCount - 1;
+  end if;
+  fillItemList();
+  fillOptionList();
+  if isOptionList then
+    parseOptionString(
+      substr( cfgString, instr( cfgString, List_Separator, 1, itemCount) + 1)
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при разборе строки с настройками ('
+        || ' cfgString="' || cfgString || '"'
+        || ', maxItemCount=' || maxItemCount
+        || ').'
+      )
+    , true
+  );
+end parseConfigString;
+
+
+
+/* group: Догрузка по первичному ключу */
+
+/* func: appendData
+  Догрузка данных в таблицу(ы) в удалённой БД по первичному ключу.
+
+  Параметры:
+  targetDbLink                - линк к БД назначения
+  tableName                   - таблица для догрузки
+                                (без учета регистра, возможно с указанием схемы)
+  idTableName                 - наименование исходной таблицы для поиска
+                                значений первичного ключа
+                                (без учета регистра, возможно с указанием схемы)
+                                (по умолчанию tableName)
+  addonTableList              - дополнительные таблицы для догрузки
+                                (формат см. ниже)
+                                (по умолчанию отсутствуют)
+  sourceTableName             - таблица (представление) с исходными данными
+                                (без учета регистра, возможно с указанием схемы)
+                                (по умолчанию tableName)
+  excludeColumnList           - список колонок таблицы, исключаемых из
+                                обновления (с разделителем запятая, без учета
+                                регистра)
+                                (по умолчанию пустой, т.е. обновляются все
+                                колонки таблицы)
+  toDate                      - дата, до которой доливаются данные
+                                (date_ins < toDate)
+                                (по умолчанию до начала предыдущего часа)
+  maxExecTime                 - максимальное время выполнения функции (в
+                                случае, если время превышено и остались данные
+                                для обработки, функция завершает работу
+                                с выводом предпреждения в лог)
+                                (по умолчанию без ограничений)
+
+  Возврат:
+  - число добавленных записей (без учета дополнительных таблиц);
+
+  Элементы списка дополнительных таблиц (параметр addonTableList) указываются в формате:
+
+  <addonTableName>[:[<addonSourceTableName>]][:[<optionList>]]
+
+  addonTableName        - дополнительная таблица для догрузки
+                          (без учета регистра, возможно с указанием схемы)
+  addonSourceTableName  - исходная дополнительная таблица для догрузки
+                          (без учета регистра, возможно с указанием схемы)
+                          (по умолчанию addonTableName)
+  optionList            - список дополнительных опций (с разделителем пробел)
+                          в формате "<optName>=<optValue>", допустимые опции
+                          перечислены ниже;
+
+  Возможные дополнительные
+  опции (указываемые в <optionList>):
+
+  excludeColumnList     - список колонок дополнительной таблицы, исключаемых
+                          из обновления (с разделителем запятая, без учета
+                          регистра, пробельные символы игнорируются)
+                          (по умолчанию в обновлении участвуют все колонки)
+
+  Символы табуляции (0x09), возврата каретки (0x0D), перевода строки (0x0A)
+  рассматриваются как пробельные и игнорируются, если они указаны до или после
+  элементов списка.
+
+  Замечания:
+  - функция выполняется в автономной транзакции и делает commit после выгрузки
+    существенного числа записей;
+*/
+function appendData(
+  targetDbLink                varchar2
+, tableName                   varchar2
+, idTableName                 varchar2 := null
+, addonTableList              cmn_string_table_t := null
+, sourceTableName             varchar2 := null
+, excludeColumnList           varchar2 := null
+, toDate                      date := null
+, maxExecTime                 interval day to second := null
+)
+return integer
+is
+
+  -- Число записей, обрабатываемых в одном блоке
+  Block_RowCount constant integer := 10000;
+
+  -- Число записей, после выгрузки которых выполняется commit
+  Commit_RowCount constant integer := 100000;
+
+  -- Число обработанных записей
+  nProcessed integer := 0;
+
+  -- Число обработанных записей в дополнительных таблицах
+  nAddonProcessed integer := 0;
+
+  -- Максимальный Id выгруженных записей
+  maxProcessedId integer;
+
+  -- Максимальный Id записи для выгрузки
+  maxUnloadId integer;
+
+  -- Время прекращения обработки (case предотвращает ошибку при отсутствии
+  -- ограничения)
+  stopProcessDate date :=
+    case when maxExecTime is not null then current_date + maxExecTime end
+  ;
+
+  -- Наименование колонки первичного ключа (1-й в случае составного ключа)
+  idColumnName NameT;
+
+  -- Имя таблицы для получения значений Id для выгрузки
+  idSourceTable FullNameT;
+
+  -- Таблицы для выгрузки данных (1-я - основная, остальные - дополнительные)
+  type TableListItemT is record (
+    -- Имя таблицы (возможно с указанием владельца)
+    tableName FullNameT
+    -- Текст SQL для выгрузки данных в таблицу
+    , unloadSql varchar2(32000)
+  );
+  type TableListT is table of TableListItemT;
+  tableList TableListT := TableListT();
+
+
+
+  /*
+    Выполняет подготовительные действия.
+  */
+  procedure initialize is
+  begin
+    pkg_TaskHandler.initTask(
+      moduleName  => Module_Name
+    , processName => 'appendData'
+    );
+  end initialize;
+
+
+
+  /*
+    Выполняет очистку перед завершением работы.
+  */
+  procedure clean is
+  begin
+    pkg_TaskHandler.cleanTask();
+  end clean;
+
+
+
+  /*
+    Подготавливает список таблиц для выгрузки данных.
+  */
+  procedure prepareTableList
+  is
+
+    ci ColumnInfoT;
+
+    tab ObjectFullNameT;
+    idTab ObjectFullNameT;
+
+    iAddon integer;
+
+    -- Настройки дополнительной таблицы
+    addonItemList ConfigItemListT;
+    addonOptionList ConfigOptionListT;
+
+
+
+    /*
+      Добавляет таблицу в список.
+    */
+    procedure addTable(
+      tableName varchar2
+      , srcTableName varchar2
+    )
+    is
+
+      ti TableListItemT;
+
+    begin
+      ti.tableName := tableName;
+      ti.unloadSql :=
+'insert into
+  ' || tableName || '@' || targetDbLink || '
+(
+  ' || substr(
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , ')
+        , 6
+      ) || '
+)
+select /*+ index( t) */
+  ' || substr(
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , t.')
+        , 6
+      ) || '
+from
+  ' || coalesce( srcTableName, tableName) || ' t
+where
+  t.' || idColumnName || ' > :beforeStartId
+  and t.' || idColumnName || ' <= :maxId
+'
+      ;
+      tableList.extend(1);
+      tableList( tableList.last()) := ti;
+    end addTable;
+
+
+
+    /*
+      Разбирает строку с настройками для дополнительной таблицы.
+    */
+    procedure parseAddonTableString(
+      cfgString varchar2
+    )
+    is
+    begin
+      parseConfigString(
+        itemList          => addonItemList
+        , optionList      => addonOptionList
+        , cfgString       => cfgString
+        , maxItemCount    => 2
+        , optionNameList  =>
+            cmn_string_table_t(
+              ExcludeColumnList_OptName
+            )
+      );
+      if addonItemList(1) is null then
+        raise_application_error(
+          pkg_Error.IllegalArgument
+          , 'Не указана таблица для обновления.'
+        );
+      end if;
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при разборе строки с настройками дополнительной таблицы ('
+            || 'cfgString="' || cfgString || '"'
+            || ').'
+          )
+        , true
+      );
+    end parseAddonTableString;
+
+
+
+  -- prepareTableList
+  begin
+    tab := getLocalFullName( coalesce( sourceTableName, tableName));
+    idTab := getLocalFullName( coalesce( idTableName, tableName));
+    getColumnInfo(
+      colInfo                   => ci
+      , columnTableOwner        => tab.owner
+      , columnTableName         => tab.objectName
+      , keyTableOwner           => idTab.owner
+      , keyTableName            => idTab.objectName
+      , excludeColumnList       => excludeColumnList
+      , fillEqualWhereSqlFlag   => 0
+    );
+    idColumnName :=
+      substr( ci.keyColumn, 2, instr( ci.keyColumn || ',', ',', 2) - 2)
+    ;
+    idSourceTable := coalesce( idTableName, sourceTableName, tableName);
+    addTable( tableName, sourceTableName);
+    if addonTableList is not null then
+      iAddon := addonTableList.first();
+      while iAddon is not null loop
+        parseAddonTableString( addonTableList( iAddon));
+        tab := getLocalFullName( coalesce( addonItemList(2), addonItemList(1)));
+        getColumnInfo(
+          colInfo                   => ci
+          , columnTableOwner        => tab.owner
+          , columnTableName         => tab.objectName
+          , excludeColumnList       =>
+              addonOptionList( ExcludeColumnList_OptName)
+          , fillEqualWhereSqlFlag   => 0
+          , raiseKeyNotFoundFlag    => 0
+        );
+        addTable( addonItemList(1), addonItemList(2));
+        iAddon := addonTableList.next( iAddon);
+      end loop;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при подготовке списка таблиц для выгрузки данных.'
+        )
+      , true
+    );
+  end prepareTableList;
+
+
+
+  /*
+    Возвращает максимальный Id выгруженных записей.
+  */
+  function getMaxUnloadedId
+  return integer
+  is
+
+    -- Максимальный Id выгруженных записей.
+    maxId integer;
+
+  begin
+    execute immediate
+      'select max(t.' || idColumnName || ') from '
+      || tableName || '@' || targetDbLink || ' t'
+    into
+      maxId
+    ;
+    return maxId;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id выгруженных записей ('
+          || ' targetDbLink="' || targetDbLink || '"'
+          || ', tableName="' || tableName || '"'
+          || ', idColumnName="' || idColumnName || '"'
+          || ').'
+        )
+      , true
+    );
+  end getMaxUnloadedId;
+
+
+
+  /*
+    Определяет максимальный Id обработанных записей.
+  */
+  procedure setMaxProcessedId
+  is
+  begin
+    logger.trace( 'setMaxProcessedId: start...');
+    maxProcessedId := coalesce( getMaxUnloadedId(), 0);
+    logger.debug(
+      'setMaxProcessedId: maxProcessedId=' || maxProcessedId
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id обработанных записей.'
+        )
+      , true
+    );
+  end setMaxProcessedId;
+
+
+
+  /*
+    Проверяет наличие в таблице поля date_ins
+  */
+  function existsFieldDateIns
+  return boolean
+  is
+
+    idTab ObjectFullNameT;
+    countDateIns integer;
+
+  begin
+    idTab := getLocalFullName( idSourceTable);
+    select
+      count(1)
+    into
+      countDateIns
+    from
+      all_tab_columns tc
+    where
+      tc.owner = upper( idTab.owner)
+      and tc.table_name = upper( idTab.objectName)
+      and tc.column_name = 'DATE_INS'
+    ;
+    return
+      case countDateIns
+        when 0 then false
+        else true
+      end;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке наличия в таблице поля date_ins ('
+          || 'idSourceTable="' || idSourceTable || '"'
+          || ').'
+        )
+      , true
+    );
+  end existsFieldDateIns;
+
+
+
+  /*
+    Определяет максимальный Id записи для выгрузки.
+  */
+  procedure setMaxUnloadId
+  is
+
+    toUnloadDate date;
+
+    sqlText varchar2(32767);
+
+  begin
+    logger.trace( 'setMaxUnloadId: start...');
+    -- проверяем налице в таблице поля date_ins
+    if existsFieldDateIns() then
+      toUnloadDate :=
+         coalesce( toDate, trunc(sysdate, 'hh24') - 1/24)
+      ;
+      logger.trace('toUnloadDate=' || to_char(toUnloadDate));
+      -- если поле date_ins присутствует в таблице, то попробуем вычислить
+      -- максимальный Id записи для выгрузки изходя из него
+      sqlText :=
+      '
+        select
+          min(a.' || idColumnName || ') - 1 as max_period_id
+        from
+          (
+          select /*+ first_rows */
+            t.' || idColumnName || '
+          from
+            ' || idSourceTable || ' t
+          where
+            t.date_ins > :toUnloadDate
+          order by
+            t.date_ins
+          ) a
+        where
+          rownum <= 1000
+      ';
+      logger.trace(sqlText);
+      execute immediate
+        sqlText
+      into
+        maxUnloadId
+      using
+        toUnloadDate
+      ;
+    end if;
+    if maxUnloadId is null then
+      -- если не удалось вычислить максимальный Id записи для выгрузки
+      -- исходя из значений поля date_ins, берем максимальное значение из таблицы
+      sqlText :=
+      '
+        select
+          max(t.' || idColumnName || ') as max_id
+        from
+          ' || idSourceTable || ' t
+      ';
+      logger.trace(sqlText);
+      execute immediate
+        sqlText
+      into
+        maxUnloadId
+      ;
+    end if;
+    logger.debug('setMaxUnloadId: maxUnloadId=' || maxUnloadId);
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id записи для выгрузки ('
+          || 'idSourceTable="' || idSourceTable || '"'
+          || ').'
+        )
+      , true
+    );
+  end setMaxUnloadId;
+
+
+
+  /*
+    Возвращает максимальный id для блока записей.
+
+    Параметры:
+    beforeStartId             - Id записи, начиная с которой ( не включая ее)
+                                выполняется выгрузка
+    maxId                     - максимальный Id записи, до которой
+                                (включительно) выполняется выгрузка
+    maxRowCount               - максимальное число выгружаемых записей
+
+    Возврат:
+    максимальный Id блока записей.
+  */
+  function getBlockMaxId(
+    beforeStartId integer
+    , maxId integer
+    , maxRowCount integer
+  )
+  return integer
+  is
+
+    -- Текст SQL
+    getSql varchar2(32000);
+
+    -- Результат функции
+    blockMaxId integer;
+
+  begin
+    getSql := '
+select
+  max(' || idColumnName || ') as block_max_id
+from
+  (
+  select
+    b.' || idColumnName || '
+  from
+    (
+    select
+      a.' || idColumnName || '
+    from
+      ' || coalesce( sourceTableName, tableName) || ' a
+    where
+      a.' || idColumnName || ' > :beforeStartId
+      and a.' || idColumnName || ' <= :maxId
+    order by
+      a.' || idColumnName || '
+    ) b
+  where
+    rownum <= :maxRowCount
+  )
+';
+    logger.trace('getSql="' || getSql || '"');
+    execute immediate
+      getSql
+    into
+      blockMaxId
+    using
+      beforeStartId
+      , maxId
+      , maxRowCount
+    ;
+    return blockMaxId;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при определении максимального Id блока данных ('
+          || ' beforeStartId=' || beforeStartId
+          || ', maxId=' || maxId
+          || ', maxRowCount=' || maxRowCount
+          || ').'
+        )
+      , true
+    );
+  end getBlockMaxId;
+
+
+
+  /*
+    Выгружает данные в таблицу.
+
+    Параметры:
+    iTable                    - индекс таблицы в tableList
+    beforeStartId             - Id записи, начиная с которой (не включая ее)
+                                выполняется выгрузка
+    maxId                     - максимальный Id записи, до которой
+                                (включительно) выполняется выгрузка
+
+    Возврат:
+    число выгруженных записей.
+  */
+  function unloadBlock(
+    iTable integer
+  , beforeStartId integer
+  , maxId integer
+  )
+  return integer
+  is
+
+    -- Число выгруженных записей
+    nUnload integer;
+
+  begin
+    logger.trace('unloadSql="' || tableList( iTable).unloadSql || '"');
+    execute immediate
+      tableList( iTable).unloadSql
+    using
+      beforeStartId
+      , maxId
+    ;
+    nUnload := sql%rowcount;
+    logger.trace(
+      'unloadBlock: ' || tableList( iTable).tableName
+      || ': выгружено записей: ' || nUnload
+    );
+    return nUnload;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных ('
+          || 'tableName="' || tableList( iTable).tableName || '"'
+          || ', beforeStartId=' || beforeStartId
+          || ', maxId=' || maxId
+          || ').'
+        )
+      , true
+    );
+  end unloadBlock;
+
+
+
+  /*
+    Выполняет выгрузку данных.
+  */
+  procedure unloadData
+  is
+
+    pragma autonomous_transaction;
+
+    -- Признак завершения выгрузки
+    isFinish boolean := false;
+
+    -- Число выгруженных в текущей транзакции записей
+    nTransactionUnload integer;
+
+    -- Число выгруженных в текущем блоке записей
+    nBlockUnload integer;
+    nAddonUnload integer;
+
+    -- Максимальный Id выгруженных в предыдущем блоке записей
+    prevMaxId integer := maxProcessedId;
+
+    -- Максимальный Id выгруженных в текущем блоке записей
+    blockMaxId integer;
+
+  -- unloadData
+  begin
+    while not isFinish loop
+      nTransactionUnload := 0;
+      while not isFinish
+            and nTransactionUnload < Commit_RowCount
+          loop
+        logger.trace(
+          'unloadData: start unload block: prevMaxId=' || prevMaxId
+        );
+        blockMaxId := getBlockMaxId(
+          beforeStartId  => prevMaxId
+        , maxId          => maxUnloadId
+        , maxRowCount    => Block_RowCount
+        );
+        nBlockUnload := unloadBlock(
+          iTable         => 1
+        , beforeStartId  => prevMaxId
+        , maxId          => blockMaxId
+        );
+        if nBlockUnload > 0 then
+          blockMaxId := getMaxUnloadedId();
+          for iTable in 2 .. tableList.last() loop
+            nAddonUnload := unloadBlock(
+              iTable        => iTable
+            , beforeStartId => prevMaxId
+            , maxId         => blockMaxId
+            );
+            nAddonProcessed := nAddonProcessed + nAddonUnload;
+          end loop;
+          prevMaxId := blockMaxId;
+          nTransactionUnload := nTransactionUnload + nBlockUnload;
+          if stopProcessDate is not null then
+            if current_date >= stopProcessDate then
+              isFinish := true;
+              logger.info(
+                'Выгрузка прекращена в связи с достижением лимита времени.'
+              );
+            end if;
+          end if;
+        else
+          isFinish := true;
+        end if;
+      end loop;
+      commit;
+      nProcessed := nProcessed + nTransactionUnload;
+      maxProcessedId := prevMaxId;
+      logger.debug(
+        'unloadData: commit transaction: nTransactionUnload='
+        || nTransactionUnload
+        || ', maxProcessedId=' || maxProcessedId
+      );
+    end loop;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при выгрузке данных ('
+          || ' nProcessed=' || nProcessed
+          || ', maxProcessedId=' || maxProcessedId
+          || ', maxUnloadId=' || maxUnloadId
+          || ').'
+        )
+      , true
+    );
+  end unloadData;
+
+
+
+-- unloadData
+begin
+  initialize();
+  prepareTableList();
+  setMaxProcessedId();
+  setMaxUnloadId();
+  if maxProcessedId < maxUnloadId then
+    unloadData();
+  end if;
+  clean();
+  logger.info(
+    'Выгружено записей в ' || tableName || ': ' || nProcessed
+    || case when tableList.count() > 1 then
+        ' (а также в '
+        || case when tableList.count() = 2 then
+            tableList(2).tableName || ': '
+          else
+            'дополнительные таблицы: '
+          end
+        || nAddonProcessed || ')'
+      end
+  );
+  return nProcessed;
+exception when others then
+  clean();
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при догрузке данных ('
+      || 'targetDbLink="' || targetDbLink || '"'
+      || ', tableName="' || tableName || '"'
+      || ', sourceTableName="' || sourceTableName|| '"'
+      || ', idTableName="' || idTableName || '"'
+      || ', addonTableList.count='
+        || case when addonTableList is not null then
+          to_char( addonTableList.count())
+        end
+      || ', sourceTableName="' || sourceTableName || '"'
+      || ', excludeColumnList="' || excludeColumnList || '"'
+      || ', toDate={' || to_char(toDate, 'dd.mm.yyyy hh24:mi:ss') || '}'
+      || ', maxExecTime=' || to_char(maxExecTime)
+      || ').'
+      )
+    , true
+  );
+end appendData;
+
+/* func: appendData( SIMPLE)
+  Догрузка данных в таблицу (и возможно в одну дополнительную таблицу) в
+  удалённой БД по первичному ключу.
+
+  Параметры:
+  targetDbLink                - линк к БД назначения
+  tableName                   - таблица для догрузки
+  idTableName                 - наименование исходной таблицы для поиска
+                                значений первичного ключа (по умолчанию
+                                tableName)
+  addonTableName              - дополнительная таблица для догрузки
+                                (по умолчанию отсутствует)
+  addonSourceTableName        - исходная дополнительная таблица для догрузки
+                                (по умолчанию addonTableName)
+  addonExcludeColumnList      - список колонок дополнительной таблицы,
+                                исключаемых из обновления
+                                (с разделителем запятая, без учета регистра,
+                                 пробельные символы игнорируются)
+                                (по умолчанию в участвуют все колонки)
+  sourceTableName             - таблица (представление) с исходными данными
+                                (по умолчанию tableName)
+  excludeColumnList           - список колонок таблицы, исключаемых из
+                                обновления (с разделителем запятая, без учета
+                                регистра)
+                                (по умолчанию пустой, т.е. обновляются все
+                                колонки таблицы)
+  toDate                      - дата, до которой доливаются данные
+                                (date_ins < toDate)
+                                (по умолчанию до начала предыдущего часа)
+  maxExecTime                 - максимальное время выполнения функции (в
+                                случае, если время превышено и остались данные
+                                для обработки, функция завершает работу
+                                с выводом предпреждения в лог)
+                                (по умолчанию без ограничений)
+
+  Возврат:
+  - число добавленных записей;
+
+  Замечания:
+  - является оберткой для основной функции <appendData> (с параметром
+    addonTableList);
+*/
+function appendData(
+  targetDbLink                varchar2
+, tableName                   varchar2
+, idTableName                 varchar2 := null
+, addonTableName              varchar2
+, addonSourceTableName        varchar2 := null
+, addonExcludeColumnList      varchar2 := null
+, sourceTableName             varchar2 := null
+, excludeColumnList           varchar2 := null
+, toDate                      date := null
+, maxExecTime                 interval day to second := null
+)
+return integer
+is
+begin
+  return
+    appendData(
+      targetDbLink                => targetDbLink
+      , tableName                 => tableName
+      , idTableName               => idTableName
+      , addonTableList            =>
+          case when
+            addonTableName is not null
+            or addonSourceTableName is not null
+            or addonExcludeColumnList is not null
+          then
+            cmn_string_table_t(
+              addonTableName
+              || case when addonSourceTableName is not null then
+                  ':' || addonSourceTableName
+                end
+              || case when addonExcludeColumnList is not null then
+                  ':' || ExcludeColumnList_OptName
+                  || '=' || addonExcludeColumnList
+                end
+            )
+          end
+      , sourceTableName           => sourceTableName
+      , excludeColumnList         => excludeColumnList
+      , toDate                    => toDate
+      , maxExecTime               => maxExecTime
+    )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при догрузке данных ('
+      || 'addonTableName="' || addonTableName || '"'
+      || ', addonSourceTableName="' || addonSourceTableName || '"'
+      || ', addonExcludeColumnList="' || addonExcludeColumnList || '"'
+      || ').'
+      )
+    , true
+  );
+end appendData;
 
 
 
@@ -149,18 +1493,8 @@ procedure refreshByCompare(
 )
 is
 
-  -- Список ключевых колонок в формате
-  -- ",<columnName>[,<columnName2>][,<columnName3>]...."
-  keyColumn varchar2(1000);
-
-  -- Список колонок для обновления за исключением ключевых колонок в формате
-  -- ",<columnName>[,<columnName2>][,<columnName3>]...."
-  regularColumn varchar2(10000);
-
-  -- Условия для where, возвращающие истину в случае идентичности данных в
-  -- исходной записи ( алиас "a") и конечной записи ( алиас "t"), заполняется
-  -- в случае необходимости обновления колонок типа LOB ( CLOB или BLOB)
-  equalWhereSql varchar2(32500);
+  -- Информация по колонкам для обновления
+  ci ColumnInfoT;
 
   -- Дата обновления
   refreshDate date;
@@ -181,132 +1515,31 @@ is
   )
   is
 
-    -- Владелец и имя обновляемой таблицы
-    tableOwner varchar2(100);
-    tableName varchar2(100);
+    -- Таблица (представление) для получения списка колонок
+    colTab ObjectFullNameT;
 
-    cursor columnCur is
-      select
-        lower( tc.column_name) as column_name
-        , case when b.column_name is not null then 1 else 0 end
-          as key_column_flag
-        , case when
-              excludeColumn is not null
-              and instr( excludeColumn, ',' || lower( tc.column_name) || ',')
-                > 0
-            then 1 else 0
-          end
-          as exclude_flag
-        , case when tc.data_type in ( 'CLOB', 'BLOB')  then 1 else 0 end
-          as lob_type_flag
-        , case when tc.nullable = 'Y' then 1 else 0 end
-          as nullable_flag
-        , max( case when tc.data_type in ( 'CLOB', 'BLOB') then 1 else 0 end)
-          over()
-          as exists_lob_column_flag
-      from
-        all_tab_columns tc
-        left outer join
-          (
-          select
-            ic.column_name
-          from
-            all_constraints cn
-            inner join all_ind_columns ic
-              on ic.index_owner = cn.owner
-                and ic.index_name = cn.index_name
-          where
-            cn.owner = upper( tableOwner)
-            and cn.table_name =
-              case when
-                instr(targetTable, '@') > 0
-              then
-                substr(upper(targetTable), 1, instr(targetTable, '@') - 1)
-              else
-                upper(tableName)
-              end
-            and cn.constraint_type = 'P'
-          ) b
-          on b.column_name = tc.column_name
-      where
-        tc.owner = upper( tableOwner)
-        and tc.table_name = upper( tableName)
-      order by
-        tc.column_id
-    ;
-
-  -- fillColumn
   begin
-    getLocalFullName(
-      objectOwner   => tableOwner
-      , objectName  => tableName
-      , localObject =>
-      case when
-        instr(targetTable, '@') > 0
-      then
-        dataSource
-      else
-        targetTable
-      end
+    colTab := getLocalFullName(
+      localObject =>
+        case when
+          instr( targetTable, '@') > 0
+        then
+          dataSource
+        else
+          targetTable
+        end
     );
-    for rec in columnCur loop
-      if rec.key_column_flag = 1 then
-        keyColumn := keyColumn || ',' || rec.column_name;
-        if rec.exclude_flag = 1 then
-          raise_application_error(
-            pkg_Error.IllegalArgument
-            , 'Невозможно исключить из обновления колонку первичного ключа ('
-              || ' column_name="' || rec.column_name || '"'
-              || ').'
-          );
-        end if;
-      elsif rec.exclude_flag = 0 then
-        regularColumn := regularColumn || ',' || rec.column_name;
-      end if;
-      if rec.exists_lob_column_flag = 1 and rec.exclude_flag = 0 then
-        equalWhereSql :=
-          case when equalWhereSql is not null then
-            equalWhereSql || chr(10) || ' and '
+    getColumnInfo(
+      colInfo               => ci
+      , columnTableOwner    => colTab.owner
+      , columnTableName     => colTab.objectName
+      , keyTableName        =>
+          case when
+            instr( targetTable, '@') > 0
+          then
+            substr( targetTable, 1, instr( targetTable, '@') - 1)
           end
-          || replace(
-              case when rec.nullable_flag = 0 and rec.lob_type_flag = 0 then
-                't.$cn = a.$cn'
-              else
-                '( coalesce( t.$cn, a.$cn) is null'
-                  || case when rec.lob_type_flag = 1 then
-                      ' or dbms_lob.compare( t.$cn, a.$cn) = 0'
-                    else
-                      ' or t.$cn = a.$cn'
-                    end
-                  || ')'
-              end
-              , '$cn', rec.column_name
-            )
-        ;
-      end if;
-    end loop;
-    if keyColumn is null then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , case when regularColumn is null then
-            'Не удалось определить список колонок для обновления'
-            || ' ( таблица не существует, недоступна либо принадлежит'
-            || ' другому пользователю).'
-          else
-            'Не удалось определить список ключевых колонок для обновления.'
-          end
-      );
-    end if;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при заполнении списков колонок для обновления ('
-          || ' tableOwner="' || tableOwner || '"'
-          || ', tableName="' || tableName || '"'
-          || ').'
-        )
-      , true
+      , excludeColumnList   => excludeColumnList
     );
   end fillColumn;
 
@@ -324,13 +1557,13 @@ is
   ' || tempTableName || '
 (
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , ')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , ')
         , 6
       ) || '
 )
 select
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , a.')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , a.')
         , 6
       ) || '
 from
@@ -367,12 +1600,12 @@ using
 (
 select
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , a.')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , a.')
         , 6
       ) || '
 from
   ' || recordSource || ' a'
-|| case when equalWhereSql is not null then
+|| case when ci.equalWhereSql is not null then
 '
 where
   not exists
@@ -382,14 +1615,14 @@ where
     from
       ' || targetTable || ' t
     where
-      ' || equalWhereSql || '
+      ' || ci.equalWhereSql || '
     )'
 else
 '
 minus
 select
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , t.')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , t.')
         , 6
       ) || '
 from
@@ -400,26 +1633,26 @@ end
 on
 (
   ' || substr(
-        regexp_replace( keyColumn, ',([^,]+)', chr(10) || '  and d.\1 = s.\1')
+        regexp_replace( ci.keyColumn, ',([^,]+)', chr(10) || '  and d.\1 = s.\1')
         , 8
       ) || '
 )
 when matched then update set
   ' || substr(
-        regexp_replace( regularColumn, ',([^,]+)', chr(10) || '  , d.\1 = s.\1')
+        regexp_replace( ci.regularColumn, ',([^,]+)', chr(10) || '  , d.\1 = s.\1')
         , 6
       ) || '
 when not matched then insert
 (
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , ')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , ')
         , 6
       ) || '
 )
 values
 (
   ' || substr(
-        replace( keyColumn || regularColumn, ',', chr(10) || '  , s.')
+        replace( ci.keyColumn || ci.regularColumn, ',', chr(10) || '  , s.')
         , 6
       ) || '
 )
@@ -432,7 +1665,7 @@ values
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка при слиянии добавленных/измененных записей ('
-          || ' keyColumn="' || keyColumn || '"'
+          || ' keyColumn="' || ci.keyColumn || '"'
           || ', recordSource="' || recordSource || '"'
           || ').'
         )
@@ -456,7 +1689,7 @@ values
 where
 (
   ' || substr(
-        replace( keyColumn , ',', chr(10) || '  , d.')
+        replace( ci.keyColumn , ',', chr(10) || '  , d.')
         , 6
       ) || '
 )
@@ -464,7 +1697,7 @@ not in
 (
 select
   ' || substr(
-        replace( keyColumn , ',', chr(10) || '  , a.')
+        replace( ci.keyColumn , ',', chr(10) || '  , a.')
         , 6
       ) || '
 from
@@ -472,7 +1705,7 @@ from
 where
   ' || substr(
         regexp_replace(
-          keyColumn
+          ci.keyColumn
           , ',([^,]+)'
           , chr(10) || '  and d.\1 is not null'
         )
@@ -488,7 +1721,7 @@ where
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
           'Ошибка при удалени лишних записей ('
-          || ' keyColumn="' || keyColumn || '"'
+          || ' keyColumn="' || ci.keyColumn || '"'
           || ', recordSource="' || recordSource || '"'
           || ').'
         )
@@ -545,694 +1778,6 @@ exception when others then
     , true
   );
 end refreshByCompare;
-
-
-
-/* group: Обновление с использованием первичного ключа */
-
-/* ifunc: substituteColumnList
-  Возвращает текст SQL-запроса, подставляя вместо макросов список колонок
-  из указанной таблицы ( представления).
-
-  Параметры:
-  baseSql                     - базовый текст SQL
-  tableName                   - имя таблицы ( представления) для получения
-                                списка колонок
-
-  Возврат:
-  текст SQL с подстановкой списка колонок вместо макросов
-
-  Подставляемые значения макросов вида $(NAME):
-  insertColumnList            - список колонк вида
-                                "<column1>[, <column2>[...]]"
-  selectColumnList            - список колонк вида
-                                "t.<column1>[, t.<column2>[...]]"
-*/
-function substituteColumnList(
-  baseSql varchar2
-  , tableName varchar2
-)
-return varchar2
-is
-
-  -- Колонки таблицы
-  cursor tableColumnCur is
-    select
-      tc.column_name
-    from
-      all_tab_columns tc
-    where
-      tc.table_name = upper( tableName)
-      and (
-        tc.owner = sys_context( 'userenv', 'current_user')
-        -- Таблица другого пользователя, на которую создан одноименный
-        -- личный синоним
-        or tc.owner =
-          (
-          select
-            sn.table_owner
-          from
-            all_synonyms sn
-          where
-            sn.synonym_name = tc.table_name
-            and sn.table_name = tc.table_name
-            and sn.owner = sys_context( 'userenv', 'current_user')
-          )
-      )
-    order by
-      tc.column_id
-  ;
-
-  -- Список колонок таблицы ( через запятую и пробел)
-  columnList varchar2(32000);
-
--- substituteColumnList
-begin
-  for rec in tableColumnCur loop
-    columnList :=
-      columnList
-      || case when columnList is not null then ', ' end
-      || rec.column_name
-    ;
-  end loop;
-  if columnList is null then
-    raise_application_error(
-      pkg_Error.IllegalArgument
-      , 'Таблица не найдена.'
-    );
-  end if;
-  return
-    replace( replace(
-      baseSql
-      , '$(insertColumnList)', columnList)
-      , '$(selectColumnList)', 't.' || replace( columnList, ', ', ', t.'))
-  ;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при формировании текста SQL-запроса ('
-        || ' tableName="' || tableName || '"'
-        || ').'
-      )
-    , true
-  );
-end substituteColumnList;
-
-/* proc: appendData
-  Догрузка данных в таблицу(ы) в удалённой БД по первичному ключу.
-
-  Параметры:
-  targetDbLink                - линк к БД назначения
-  tableName                   - таблица для догрузки
-  idTableName                 - наименование исходной таблицы для поиска
-                                значений первичного ключа (по-умолчанию
-                                tableName)
-  addonTableName              - дополнительная таблица для догрузки
-  addonSourceTableName        - исходная дополнительная таблица для догрузки
-  sourceTableName             - таблица(представление) с исходными данными
-                                (по-умолчанию tableName)
-  toDate                      - дата, до которой доливаются данные
-                                ( date_ins < toDate, по умолчанию до начала
-                                  предыдущего часа)
-  maxExecTime                 - максимальное время выполнения процедуры ( в
-                                случае, если время превышено и остались данные
-                                для обработки, процедура завершает работу
-                                с выводом предпреждения в лог, по умолчанию
-                                без ограничений)
-
-  Возврат:
-  - число добавленных записей;
-
-  Замечания:
-  - функция выполняется в автономной транзакции и делает commit после выгрузки
-    существенного числа записей;
-*/
-function appendData(
-  targetDbLink                varchar2
-, tableName                   varchar2
-, idTableName                 varchar2 := null
-, addonTableName              varchar2 := null
-, addonSourceTableName        varchar2 := null
-, sourceTableName             varchar2 := null
-, toDate                      date := null
-, maxExecTime                 interval day to second := null
-)
-return integer
-is
-  -- Число обработанных записей
-  nProcessed integer := 0;
-
-  -- Максимальный Id выгруженных записей
-  maxProcessedId integer;
-
-  -- Максимальный Id записи для выгрузки
-  maxUnloadId integer;
-
-  -- Число записей, после выгрузки которых в процедуре <unloadData>
-  -- выполняется фиксация автономной транзакции.
-  UnloadCheckReq_CommitRowCount constant integer := 100000;
-
-  -- Число записей, обрабатываемых в одном блоке в процедуре
-  -- <unloadCheckRequest>.
-  UnloadCheckReq_BlockRowCount constant integer := 10000;
-
-  -- Время прекращения обработки (case предотвращает ошибку при отсутствии
-  -- ограничения)
-  stopProcessDate date :=
-    case when maxExecTime is not null then current_date + maxExecTime end
-  ;
-
-  -- наиенование id колонки
-  idColumnName varchar2(30);
-
-
-  /*
-    Получение наименования исходной таблицы
-  */
-  function getSourceTable(tableName varchar2)
-  return varchar2
-  is
-  begin
-    return
-      case when
-        tableName = addonTableName
-      then
-        coalesce(addonSourceTableName, tableName)
-      else
-        coalesce(sourceTableName, tableName)
-      end
-    ;
-  end getSourceTable;
-
-
-
-  /*
-    Получение наименования колонки первичного ключа.
-  */
-  procedure getIdColumn
-  is
-    idColumnTableName varchar2(30);
-  begin
-    idColumnTableName :=
-      coalesce(idTableName, tableName);
-    select
-      -- Исключаем копию таблицы
-      distinct cols.column_name
-    into
-      idColumnName
-    from
-      all_constraints cons
-    inner join
-      all_cons_columns cols
-    on
-      cons.constraint_type = 'P'
-      and cons.constraint_name = cols.constraint_name
-      and cons.owner = cols.owner
-      and cols.position = 1
-    where
-      cols.table_name = upper(idColumnTableName)
-    ;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка получения наименования колонки первичного ключа ('
-        || 'idColumnTableName="' || idColumnTableName || '"'
-        || ')'
-        )
-      , true
-    );
-  end getIdColumn;
-
-
-
-  /*
-    Выполняет подготовительные действия.
-  */
-  procedure initialize is
-  begin
-    pkg_TaskHandler.initTask(
-      moduleName  => Module_Name
-    , processName => 'unloadData'
-    );
-    getIdColumn();
-  end initialize;
-
-
-
-  /*
-    Выполняет очистку перед завершением работы.
-  */
-  procedure clean is
-  begin
-    pkg_TaskHandler.cleanTask();
-  end clean;
-
-
-
-  /*
-    Возвращает максимальный Id выгруженных записей.
-  */
-  function getMaxUnloadedId
-  return integer
-  is
-
-    -- Максимальный Id выгруженных записей.
-    maxId integer;
-
-  begin
-    execute immediate
-      'select max(t.' || idColumnName || ') from '
-      || tableName || '@' || targetDbLink || ' t'
-    into
-      maxId
-    ;
-    return maxId;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при определении максимального Id выгруженных записей'
-          || ' записей ('
-          || ' targetDbLink="' || targetDbLink || '"'
-          || ', tableName="' || tableName || '"'
-          || ', idColumnName="' || idColumnName || '"'
-          || ').'
-        )
-      , true
-    );
-  end getMaxUnloadedId;
-
-
-
-  /*
-    Определяет максимальный Id обработанных записей.
-  */
-  procedure setMaxProcessedId
-  is
-  begin
-    logger.trace( 'setMaxProcessedId: start...');
-    maxProcessedId := coalesce( getMaxUnloadedId(), 0);
-    logger.debug(
-      'setMaxProcessedId: maxProcessedId=' || maxProcessedId
-    );
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при определении максимального Id обработанных записей.'
-        )
-      , true
-    );
-  end setMaxProcessedId;
-
-  /*
-    Проверяет наличие в таблице поля date_ins
-  */
-  function existsFieldDateIns
-  return boolean
-  is
-    idColumnTableName varchar2(30);
-    countDateIns integer;
-  begin
-    idColumnTableName :=
-      coalesce(idTableName, tableName);
-    select
-      count(cols.column_name)
-    into
-      countDateIns
-    from
-      all_tab_columns cols
-    where
-      cols.table_name = upper(idColumnTableName)
-      and cols.COLUMN_NAME = 'DATE_INS'
-    ;
-    return
-      case countDateIns 
-        when 0 then false
-        else true
-      end;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при проверке наличия в таблице поля date_ins ('
-        || 'idColumnTableName="' || idColumnTableName || '"'
-        || ')'
-        )
-      , true
-    );
-  end existsFieldDateIns;
- 
-  /*
-    Определяет максимальный Id записи для выгрузки.
-  */
-  procedure setMaxUnloadId
-  is
-
-    toUnloadDate date;
-
-    sqlText varchar2(32767);
-
-  begin
-    logger.trace( 'setMaxUnloadId: start...');
-    toUnloadDate :=
-       coalesce( toDate, trunc(sysdate, 'hh24') - 1/24)
-    ;
-    logger.trace('toUnloadDate=' || to_char(toUnloadDate));
-    -- проверяем налице в таблице поля date_ins
-    if existsFieldDateIns then
-      -- если поле date_ins присутствует в таблице, то попробуем вычислить 
-      -- максимальный Id записи для выгрузки изходя из него
-      sqlText :=
-      '
-        select
-          min(a.' || idColumnName || ') - 1 as max_period_id
-        from
-          (
-          select /*+ first_rows */
-            t.' || idColumnName || '
-          from
-            ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
-          where
-            t.date_ins > :toUnloadDate
-          order by
-            t.date_ins
-          ) a
-        where
-          rownum <= 1000
-      ';
-      logger.trace(sqlText);
-      execute immediate
-        sqlText
-      into
-        maxUnloadId
-      using
-        toUnloadDate
-      ;
-    end if;
-    if maxUnloadId is null then 
-      -- если не удалось вычислить максимальный Id записи для выгрузки
-      -- исходя из значений поля date_ins, берем максимальное значение из таблицы
-      sqlText :=
-      '
-        select
-          max(t.' || idColumnName || ') as max_id
-        from
-          ' || coalesce(idTableName, getSourceTable(tableName)) || ' t
-      ';
-      logger.trace(sqlText);
-      execute immediate
-        sqlText
-      into
-        maxUnloadId
-      ;
-    end if;
-    logger.debug('setMaxUnloadId: maxUnloadId=' || maxUnloadId);
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при определении максимального Id записи для выгрузки.'
-        )
-      , true
-    );
-  end setMaxUnloadId;
-
-
-
-  /*
-    Получает текущий максимальный id для блока записей.
-
-    Параметры:
-    beforeStartId             - Id записи, начиная с которой ( не включая ее)
-                                выполняется выгрузка
-    maxId                     - максимальный Id записи, до которой
-                                ( включительно) выполняется выгрузка
-    maxRowCount               - максимальное число выгружаемых записей
-
-    Возврат:
-    число выгруженных записей.
-  */
-  function getBlockMaxId(
-    beforeStartId integer
-    , maxId integer
-    , maxRowCount integer
-  )
-  return integer
-  is
-
-    -- Текст SQL
-    getSql varchar2(32000);
-
-    -- Результат функции
-    blockMaxId integer;
-
-  begin
-    getSql := '
-select
-  max(' || idColumnName || ') as block_max_id
-from
-  (
-  select
-    b.' || idColumnName || '
-  from
-    (
-    select
-      a.' || idColumnName || '
-    from
-      ' || getSourceTable(tableName) || ' a
-    where
-      a.' || idColumnName || ' > :beforeStartId
-      and a.' || idColumnName || ' <= :maxId
-    order by
-      a.' || idColumnName || '
-    ) b
-  where
-    rownum <= :maxRowCount
-  )
-';
-    logger.trace('getSql="' || getSql || '"');
-    execute immediate
-      getSql
-    into
-      blockMaxId
-    using
-      beforeStartId
-      , maxId
-      , maxRowCount
-    ;
-    return blockMaxId;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при выгрузке данных ('
-          || ' beforeStartId=' || beforeStartId
-          || ', maxId=' || maxId
-          || ', maxRowCount=' || maxRowCount
-          || ').'
-        )
-      , true
-    );
-  end getBlockMaxId;
-
-
-
-  /*
-    Выгружает данные в основную таблицу.
-
-    Параметры:
-    beforeStartId             - Id записи, начиная с которой ( не включая ее)
-                                выполняется выгрузка
-    maxId                     - максимальный Id записи, до которой
-                                ( включительно) выполняется выгрузка
-    maxRowCount               - максимальное число выгружаемых записей
-
-    Возврат:
-    число выгруженных записей.
-  */
-  function unloadBlock(
-    tableName varchar2
-  , beforeStartId integer
-  , maxId integer
-  )
-  return integer
-  is
-
-    -- Число выгруженных записей
-    nUnload integer;
-    -- Текст SQL для выгрузки данных в главную таблицу
-    unloadSql varchar2(32000);
-
-  begin
-    if unloadSql is null then
-      unloadSql := substituteColumnList( '
-insert into
-  ' || tableName || '@' || targetDbLink || '
-(
-  $(insertColumnList)
-)
-select
-  $(selectColumnList)
-from
-  ' || getSourceTable(tableName) || ' t
-where
-  t.' || idColumnName || ' > :beforeStartId
-  and t.' || idColumnName || ' <= :maxId
-'
-        , getSourceTable(tableName)
-      );
-    end if;
-    logger.trace('unloadSql="' || unloadSql || '"');
-    execute immediate
-      unloadSql
-    using
-      beforeStartId
-      , maxId
-    ;
-    nUnload := sql%rowcount;
-    logger.trace( 'unloadBlock: выгружено записей: ' || nUnload);
-    return nUnload;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при выгрузке данных ('
-          || 'tableName="' || tableName || '"'
-          || ', beforeStartId=' || beforeStartId
-          || ', maxId=' || maxId
-          || ').'
-        )
-      , true
-    );
-  end unloadBlock;
-
-
-
-  /*
-    Выполняет выгрузку данных.
-  */
-  procedure unloadData
-  is
-
-    pragma autonomous_transaction;
-
-    -- Признак завершения выгрузки
-    isFinish boolean := false;
-
-    -- Число выгруженных в текущей транзакции записей
-    nTransactionUnload integer;
-
-    -- Число выгруженных в текущем блоке записей
-    nBlockUnload integer;
-    nAddonUnload integer;
-
-    -- Максимальный Id выгруженных в предыдущем блоке записей
-    prevMaxId integer := maxProcessedId;
-
-    -- Максимальный Id выгруженных в текущем блоке записей
-    blockMaxId integer;
-
-  -- unloadData
-  begin
-    while not isFinish loop
-      nTransactionUnload := 0;
-      while not isFinish
-            and nTransactionUnload < UnloadCheckReq_CommitRowCount
-          loop
-        logger.trace(
-          'unloadData: start unload block: prevMaxId=' || prevMaxId
-        );
-        blockMaxId := getBlockMaxId(
-          beforeStartId  => prevMaxId
-        , maxId          => maxUnloadId
-        , maxRowCount    => UnloadCheckReq_BlockRowCount
-        );
-        nBlockUnload := unloadBlock(
-          tableName      => tableName
-        , beforeStartId  => prevMaxId
-        , maxId          => blockMaxId
-        );
-        if nBlockUnload > 0 then
-          blockMaxId := getMaxUnloadedId();
-          if addonTableName is not null then
-            nAddonUnload := unloadBlock(
-              tableName     => addonTableName
-            , beforeStartId => prevMaxId
-            , maxId         => blockMaxId
-            );
-          end if;
-          prevMaxId := blockMaxId;
-          nTransactionUnload := nTransactionUnload + nBlockUnload;
-          if stopProcessDate is not null then
-            if current_date >= stopProcessDate then
-              isFinish := true;
-              logger.info(
-                'Выгрузка прекращена в связи с достижением лимита времени.'
-              );
-            end if;
-          end if;
-        else
-          isFinish := true;
-        end if;
-      end loop;
-      commit;
-      nProcessed := nProcessed + nTransactionUnload;
-      maxProcessedId := prevMaxId;
-      logger.debug(
-        'unloadData: commit transaction: nTransactionUnload='
-        || nTransactionUnload
-        || ', maxProcessedId=' || maxProcessedId
-      );
-    end loop;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при выгрузке данных ('
-          || ' nProcessed=' || nProcessed
-          || ', maxProcessedId=' || maxProcessedId
-          || ', maxUnloadId=' || maxUnloadId
-          || ').'
-        )
-      , true
-    );
-  end unloadData;
-
-
-
--- unloadData
-begin
-  initialize();
-  setMaxProcessedId();
-  setMaxUnloadId();
-  if maxProcessedId < maxUnloadId then
-    unloadData();
-  end if;
-  clean();
-  return nProcessed;
-exception when others then
-  clean();
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при догрузке данных ('
-      || 'targetDbLink="' || targetDbLink || '"'
-      || ', tableName="' || tableName || '"'
-      || ', sourceTableName="' || sourceTableName|| '"'
-      || ', idTableName="' || idTableName || '"'
-      || ', addonTableName="' || addonTableName || '"'
-      || ', sourceTableName="' || sourceTableName || '"'
-      || ', toDate={' || to_char(toDate, 'dd.mm.yyyy hh24:mi:ss') || '}'
-      || ', maxExecTime=' || to_char(maxExecTime)
-      || ').'
-      )
-    , true
-  );
-end appendData;
-
 
 
 /* group: Обновление с помощью материализованного представления */
@@ -1908,8 +2453,7 @@ is
   mviewCreatedDate date;
 
   -- Владелец и имя исходного представления
-  sourceViewOwner varchar2(100);
-  sourceViewName varchar2(100);
+  srcView ObjectFullNameT;
 
 
 
@@ -2076,12 +2620,12 @@ is
       dropDepsMView();
     end if;
     lockTable(
-      sourceViewOwner   => sourceViewOwner
-      , sourceViewName  => sourceViewName
+      sourceViewOwner   => srcView.owner
+      , sourceViewName  => srcView.objectName
     );
     refreshByCompare(
       targetTable           => tableName
-      , dataSource          => sourceViewOwner || '.' || sourceViewName
+      , dataSource          => srcView.owner || '.' || srcView.objectName
       , excludeColumnList   => excludeColumnList
     );
     execSql(
@@ -2092,15 +2636,15 @@ refresh fast on demand
 as
 '
       || getSourceViewText(
-          sourceViewOwner   => sourceViewOwner
-          , sourceViewName  => sourceViewName
+          sourceViewOwner   => srcView.owner
+          , sourceViewName  => srcView.objectName
         )
     );
     logger.info(
       'Создано материализованное представление для обновления таблицы '
       || tableName
       || ' на основе выборки из представления '
-      || sourceViewOwner || '.' || sourceViewName
+      || srcView.owner || '.' || srcView.objectName
       || '.'
     );
   exception when others then
@@ -2172,8 +2716,8 @@ as
             and mlo.object_name = ml.log_table
             and mlo.object_type = 'TABLE'
       where
-        t.owner = upper( sourceViewOwner)
-        and t.name = upper( sourceViewName)
+        t.owner = upper( srcView.owner)
+        and t.name = upper( srcView.objectName)
         and t.referenced_type = 'TABLE'
         and mlo.created >= mviewCreatedDate
       order by
@@ -2295,10 +2839,8 @@ begin
         || ' исходное представление.'
     );
   end if;
-  getLocalFullName(
-    objectOwner   => sourceViewOwner
-    , objectName  => sourceViewName
-    , localObject => sourceView
+  srcView := getLocalFullName(
+    localObject => sourceView
   );
   select
     count(*)
@@ -2377,13 +2919,9 @@ function getTableConfigString(
 return varchar2
 is
 
-  -- Пробельные символы
-  Space_Char constant varchar2(10) :=
-    ' ' || chr(9) || chr(10) || chr(13)
-  ;
-
-  -- Максимальное число элементов списка
-  Max_ItemCount pls_integer := 5;
+  -- Результат разбора строки с настройками
+  itemList ConfigItemListT;
+  optionList ConfigOptionListT;
 
   -- Таблица для обновления ( возможно с указанием схемы)
   tableName varchar2(1000);
@@ -2397,191 +2935,19 @@ is
   -- Имя временной таблицы, используемой при обновлении методом
   tempTableName varchar2(1000);
 
-  -- Список дополнительных опций
-  optionList varchar2(4000);
-
-  -- Список колонок таблицы, исключаемых из обновления
-  excludeColumnList varchar2(4000);
-
-  -- Число элементов списка без учета элемента со списком опций
-  itemCount pls_integer;
-
-  -- Наличие элемента со списком опций ( он всегда последний)
-  isOptionList boolean;
-
-
-
-  /*
-    Удаляет пробельные символы с начала и хвоста строки.
-  */
-  function trimSpace(
-    srcStr varchar2
-  )
-  return varchar2
-  is
-  begin
-    return
-      ltrim(
-        rtrim(
-          srcStr
-          , Space_Char
-        )
-        , Space_Char
-      )
-    ;
-  end trimSpace;
-
-
-
-  /*
-    Возвращает элемент списка.
-  */
-  function getItem(
-    i pls_integer
-  )
-  return varchar2
-  is
-  begin
-    return
-      trimSpace(
-        pkg_Common.getStringByDelimiter( srcString, List_Separator, i)
-      )
-    ;
-  end getItem;
-
-
-  /*
-    Устанавливает значение опции.
-  */
-  procedure setOption(
-    optionName varchar2
-    , optionValue varchar2
-  )
-  is
-  begin
-    case optionName
-      when 'excludeColumnList' then
-        excludeColumnList :=
-          lower( translate( optionValue, '.' || Space_Char, '.'))
-        ;
-      else
-        raise_application_error(
-          pkg_Error.IllegalArgument
-          , 'Неизвестное имя опции: "' || optionName || '".'
-        );
-    end case;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при установке значения опции ('
-          || ' optionName="' || optionName || '"'
-          || ', optionValue="' || optionValue || '"'
-          || ').'
-        )
-      , true
-    );
-  end setOption;
-
-
-
-
-  /*
-    Разбор списка опций.
-  */
-  procedure parseOptionList(
-    optionList varchar2
-  )
-  is
-
-    -- Длина разбираемой строки
-    len pls_integer := length( optionList);
-
-    -- Позиция первого символа опции
-    iBegin pls_integer := 1;
-
-    -- Позиция разделителя имени и значения
-    iSep pls_integer;
-
-    -- Позиция последнего символа опции
-    iLast pls_integer;
-
-  begin
-    while iBegin < len loop
-      iSep := instr( optionList, '=', iBegin);
-      if iSep = 0 then
-        raise_application_error(
-          pkg_Error.IllegalArgument
-          , 'Не указано значение опции ('
-            || ' optionString="'
-              || trimSpace( substr( optionList, iBegin)) || '"'
-            || ').'
-        );
-      end if;
-
-      -- находим разделитель следующей опции
-      iLast := instr( optionList, '=', iSep + 1);
-      if iLast = 0 then
-        iLast := len;
-      else
-
-        -- пропускаем "=" и пробельные символы
-        iLast := length( rtrim( substr( optionList, 1, iLast - 1), Space_Char));
-
-        -- пропускаем имя следующей опции
-        while iLast > iSep
-              and instr( Space_Char, substr( optionList, iLast, 1)) = 0
-            loop
-          iLast := iLast - 1;
-        end loop;
-      end if;
-
-      setOption(
-        optionName =>
-            trimSpace( substr( optionList, iBegin, iSep - iBegin))
-        , optionValue =>
-            trimSpace( substr( optionList, iSep + 1, iLast - iSep))
-      );
-
-      iBegin := iLast + 1;
-    end loop;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , logger.errorStack(
-          'Ошибка при разборе списка опций ('
-          || ' optionList="' || optionList || '"'
-          || ').'
-        )
-      , true
-    );
-  end parseOptionList;
-
-
-
--- getTableConfigString
 begin
-  itemCount := least(
-    coalesce( length( srcString), 0)
-      - coalesce( length( replace( srcString, List_Separator, '')), 0)
-      + 1
-    , Max_ItemCount
+  parseConfigString(
+    itemList          => itemList
+    , optionList      => optionList
+    , cfgString       => srcString
+    , maxItemCount    => 4
+    , optionNameList  =>
+        cmn_string_table_t(
+          ExcludeColumnList_OptName
+        )
   );
-  isOptionList :=
-    itemCount = Max_ItemCount
-    or itemCount > 1
-      -- последний элемент содержит "="
-      and instr(
-          srcString
-          , '='
-          , instr( srcString, List_Separator, 1, itemCount - 1)
-        ) > 0
-  ;
-  if isOptionList then
-    itemCount := itemCount - 1;
-  end if;
 
-  tableName := getItem( 1);
+  tableName := itemList( 1);
   if tableName is null then
     raise_application_error(
       pkg_Error.IllegalArgument
@@ -2589,26 +2955,21 @@ begin
     );
   end if;
 
-  if itemCount >= 2 then
-    refreshMethod := getItem( 2);
-    if refreshMethod not in (
-          Compare_RefreshMethodCode
-          , CompareTemp_RefreshMethodCode
-          , MView_RefreshMethodCode
-        )
-        then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Указан некорректный метод обновления.'
-      );
-    end if;
+  refreshMethod := itemList( 2);
+  if refreshMethod not in (
+        Compare_RefreshMethodCode
+        , CompareTemp_RefreshMethodCode
+        , MView_RefreshMethodCode
+      )
+      then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Указан некорректный метод обновления.'
+    );
   end if;
   refreshMethod := coalesce( refreshMethod, Compare_RefreshMethodCode);
 
-  if itemCount >= 3 then
-    sourceView := getItem( 3);
-  end if;
-  sourceView := coalesce( sourceView, 'v_' || tableName);
+  sourceView := coalesce( itemList( 3), 'v_' || tableName);
   if sourceSchema is not null
         -- схема не указана ( т.е. нет точки, за исключением точек в имени
         -- линка)
@@ -2617,9 +2978,7 @@ begin
     sourceView := sourceSchema || '.' || sourceView;
   end if;
 
-  if itemCount >= 4 then
-    tempTableName := getItem( 4);
-  end if;
+  tempTableName := itemList( 4);
   if refreshMethod = CompareTemp_RefreshMethodCode then
     tempTableName := coalesce( tempTableName, tableName || '_tmp');
   elsif tempTableName is not null then
@@ -2630,18 +2989,12 @@ begin
     );
   end if;
 
-  if isOptionList then
-    parseOptionList(
-      substr( srcString, instr( srcString, List_Separator, 1, itemCount) + 1)
-    );
-  end if;
-
   return
     tableName
     || ':' || refreshMethod
     || ':' || sourceView
     || ':' || tempTableName
-    || ':' || excludeColumnList
+    || ':' || optionList( ExcludeColumnList_OptName)
   ;
 exception when others then
   raise_application_error(

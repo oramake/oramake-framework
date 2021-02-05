@@ -6,7 +6,7 @@ alter table
 disable all triggers
 /
 
-merge into 
+merge into
   op_login_attempt_group dst
 using
   (
@@ -16,8 +16,8 @@ using
     , t.is_default
     , t.lock_type_code
     , t.max_login_attempt_count
-    , t.locking_time  
-    , t.used_for_cl 
+    , t.locking_time
+    , t.used_for_cl
   from
     (
     select
@@ -40,7 +40,7 @@ using
       , 1800 as locking_time
       , 0 as used_for_cl
     from
-      dual    
+      dual
     union all
     select
       3 as login_attempt_group_id
@@ -71,7 +71,7 @@ using
     , k.is_default
     , k.lock_type_code
     , k.max_login_attempt_count
-    , k.locking_time 
+    , k.locking_time
     , k.used_for_cl
   from
     op_login_attempt_group k
@@ -97,7 +97,7 @@ when not matched then
     , src.max_login_attempt_count
     , src.locking_time
     , src.used_for_cl
-    , 1 
+    , 1
   )
 /
 

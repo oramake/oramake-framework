@@ -649,5 +649,409 @@ exception when others then
   );
 end refreshTest;
 
+/* proc: testAppendData
+  Тестирует выгрузку данных функцией <pkg_DataSync.appendData>.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                (по умолчанию без ограничений)
+*/
+procedure testAppendData(
+  testCaseNumber integer := null
+)
+is
+
+  -- Порядковый номер проверяемого тестового случая
+  checkCaseNumber integer := 0;
+
+  -- Имя линка, указывающего на локальные объекты
+  localLinkName varchar2(128);
+
+
+
+  /*
+    Подготовка данных для теста.
+  */
+  procedure prepareTestData
+  is
+
+    pragma autonomous_transaction;
+
+  begin
+    select global_name into localLinkName from global_name;
+    execute immediate 'truncate table dsn_test_app_dst';
+    execute immediate 'truncate table dsn_test_app_dst_a1';
+    execute immediate 'truncate table dsn_test_app_dst_a2';
+    delete dsn_test_app_source where app_source_id > 25000;
+    commit;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при подготовке данных для теста.'
+        )
+      , true
+    );
+  end prepareTestData;
+
+
+  /*
+    Добавляет записи в исходную таблицу.
+  */
+  procedure addSourceRow(
+    rowCount integer
+    , dateIns date := null
+  )
+  is
+
+    pragma autonomous_transaction;
+
+  begin
+    insert /*+ append */ into
+      dsn_test_app_source
+    (
+      app_source_id
+      , owner
+      , object_name
+      , subobject_name
+      , object_id
+      , object_type
+      , last_ddl_time
+      , clob_column
+      , blob_column
+      , date_ins
+    )
+    select
+      t.app_source_id + max_app_source_id as app_source_id
+      , t.owner
+      , t.object_name
+      , t.subobject_name
+      , t.object_id
+      , t.object_type
+      , t.last_ddl_time
+      , t.clob_column
+      , t.blob_column
+      , coalesce( dateIns, t.date_ins) as date_ins
+    from
+      dsn_test_app_source t
+      , (
+        select
+          max( app_source_id) as max_app_source_id
+        from
+          dsn_test_app_source
+        )
+    where
+      t.app_source_id <= rowCount
+    ;
+    commit;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при добавлении записей в исходную таблицу ('
+          || ' rowCount=' || rowCount
+          || ').'
+        )
+      , true
+    );
+  end addSourceRow;
+
+
+
+  /*
+    Проверяет тестовый случай.
+  */
+  procedure checkCase(
+    caseDescription varchar2
+    , targetDbLink varchar2 := localLinkName
+    , tableName varchar2 := null
+    , idTableName varchar2 := null
+    , addonTableList cmn_string_table_t := null
+    , addonTableName varchar2 := null
+    , addonSourceTableName varchar2 := null
+    , addonExcludeColumnList varchar2 := null
+    , sourceTableName varchar2 := null
+    , excludeColumnList varchar2 := null
+    , toDate date := null
+    , maxExecTime interval day to second := null
+    , resultRowCount integer := null
+    , tableRowCount integer := null
+    , addonTableRowCount integer := null
+    , addon1RowCount integer := null
+    , addon2RowCount integer := null
+    , execErrorMessageMask varchar2 := null
+    , nextCaseUsedCount pls_integer := null
+  )
+  is
+
+    -- Описание тестового случая
+    cinfo varchar2(200) :=
+      'CASE ' || to_char( checkCaseNumber + 1)
+      || ': "' || caseDescription || '": '
+    ;
+
+    execErrorMessage varchar2(32000);
+
+    resNum number;
+
+
+
+    /*
+      Проверяет число записей в дополнительной таблице.
+    */
+    procedure checkAddonRowCount(
+      iAddon integer
+      , expectedRowCount integer
+    )
+    is
+
+      tableName varchar2(300);
+
+    begin
+      tableName := substr(
+        addonTableList( iAddon)
+        , 1
+        , instr( addonTableList( iAddon) || ':', ':') - 1
+      );
+      pkg_TestUtility.compareRowCount(
+        tableName           => tableName
+        , expectedRowCount  => expectedRowCount
+        , failMessageText   =>
+            cinfo || 'Неожиданное число записей в дополнительной таблице '
+            || tableName
+      );
+    exception when others then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.errorStack(
+            'Ошибка при проверке числа записей в дополнительной таблице ('
+            || ' iAddon=' || iAddon
+            || ', expectedRowCount=' || expectedRowCount
+            || ').'
+          )
+        , true
+      );
+    end checkAddonRowCount;
+
+
+
+  -- checkCase
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return;
+    end if;
+    logger.info( '*** ' || cinfo);
+    begin
+      if addonTableName is not null
+            or addonSourceTableName is not null
+            or addonExcludeColumnList is not null
+          then
+        resNum := pkg_DataSync.appendData(
+          targetDbLink              => targetDbLink
+          , tableName               => tableName
+          , idTableName             => idTableName
+          , addonTableName          => addonTableName
+          , addonSourceTableName    => addonSourceTableName
+          , addonExcludeColumnList  => addonExcludeColumnList
+          , sourceTableName         => sourceTableName
+          , excludeColumnList       => excludeColumnList
+          , toDate                  => toDate
+          , maxExecTime             => maxExecTime
+        );
+      else
+        resNum := pkg_DataSync.appendData(
+          targetDbLink              => targetDbLink
+          , tableName               => tableName
+          , idTableName             => idTableName
+          , addonTableList          => addonTableList
+          , sourceTableName         => sourceTableName
+          , excludeColumnList       => excludeColumnList
+          , toDate                  => toDate
+          , maxExecTime             => maxExecTime
+        );
+      end if;
+      if execErrorMessageMask is not null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Успешное выполнение вместо ошибки'
+        );
+      end if;
+    exception when others then
+      if execErrorMessageMask is not null then
+        execErrorMessage := logger.getErrorStack();
+        if execErrorMessage not like execErrorMessageMask then
+          pkg_TestUtility.compareChar(
+            actualString        => execErrorMessage
+            , expectedString    => execErrorMessageMask
+            , failMessageText   =>
+                cinfo || 'Сообщение об ошибке не соответствует маске'
+          );
+        end if;
+      else
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Выполнение завершилось с ошибкой:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end if;
+    end;
+
+    -- Проверка успешного результата
+    if execErrorMessageMask is null and not pkg_TestUtility.isTestFailed() then
+      if resultRowCount is not null then
+        pkg_TestUtility.compareChar(
+          actualString        => resNum
+          , expectedString    => resultRowCount
+          , failMessageText   =>
+              cinfo || 'Неожиданное число выгруженных записей'
+        );
+      end if;
+      if tableRowCount is not null then
+        pkg_TestUtility.compareRowCount(
+          tableName           => tableName
+          , expectedRowCount  => tableRowCount
+          , failMessageText   =>
+              cinfo || 'Неожиданное число записей в таблице ' || tableName
+        );
+      end if;
+      if addonTableRowCount is not null then
+        pkg_TestUtility.compareRowCount(
+          tableName           => addonTableName
+          , expectedRowCount  => addonTableRowCount
+          , failMessageText   =>
+              cinfo || 'Неожиданное число записей в таблице ' || addonTableName
+        );
+      end if;
+      if addon1RowCount is not null then
+        checkAddonRowCount(
+          iAddon => 1
+          , expectedRowCount => addon1RowCount
+        );
+      end if;
+      if addon2RowCount is not null then
+        checkAddonRowCount(
+          iAddon => 2
+          , expectedRowCount => addon2RowCount
+        );
+      end if;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке тестового случая ('
+          || ' caseNumber=' || checkCaseNumber
+          || ', caseDescription="' || caseDescription || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkCase;
+
+
+
+-- testAppendData
+begin
+  prepareTestData();
+  pkg_TestUtility.beginTest( 'append data');
+
+  checkCase(
+    'Первоначальная выгрузка (все параметры)'
+    , tableName               => 'dsn_test_app_dst'
+    , idTableName             => 'dsn_test_app_source'
+    , addonTableList          =>
+        cmn_string_table_t(
+          'dsn_test_app_dst_a1 : v_dsn_test_app_dst_a1_src'
+          , 'dsn_test_app_dst_a2 : v_dsn_test_app_dst_a1_src'
+            || ' : excludeColumnList=last_ddl_time'
+        )
+    , sourceTableName         => 'v_dsn_test_app_dst_src'
+    , excludeColumnList       => 'object_Id,subobject_name'
+    , toDate                  => sysdate
+    , maxExecTime             => INTERVAL '5' MINUTE
+    , resultRowCount          => 25000
+    , tableRowCount           => 25000
+    , addon1RowCount          => 50000
+    , addon2RowCount          => 50000
+  );
+
+  checkCase(
+    'Повторая выгрузка (нет новых записей)'
+    , tableName               => 'dsn_test_app_dst'
+    , idTableName             => 'dsn_test_app_source'
+    , addonTableList          =>
+        cmn_string_table_t(
+          'dsn_test_app_dst_a1 : v_dsn_test_app_dst_a1_src'
+          , 'dsn_test_app_dst_a2 : v_dsn_test_app_dst_a1_src'
+            || ' : excludeColumnList=last_ddl_time'
+        )
+    , sourceTableName         => 'v_dsn_test_app_dst_src'
+    , excludeColumnList       => 'object_Id,subobject_name'
+    , toDate                  => sysdate
+    , maxExecTime             => INTERVAL '5' MINUTE
+    , resultRowCount          => 0
+    , tableRowCount           => 25000
+    , addon1RowCount          => 50000
+    , addon2RowCount          => 50000
+  );
+
+  addSourceRow( rowCount => 3, dateIns => sysdate - 3/24);
+  addSourceRow( rowCount => 2, dateIns => sysdate - 3/24/60);
+
+  checkCase(
+    'Повторая выгрузка (слишком новые записи игнорируются)'
+    , tableName               => 'dsn_test_app_dst'
+    , idTableName             => 'dsn_test_app_source'
+    , addonTableList          =>
+        cmn_string_table_t(
+          'dsn_test_app_dst_a1 : v_dsn_test_app_dst_a1_src'
+          , 'dsn_test_app_dst_a2 : v_dsn_test_app_dst_a1_src'
+            || ' : excludeColumnList=last_ddl_time'
+        )
+    , sourceTableName         => 'v_dsn_test_app_dst_src'
+    , excludeColumnList       => 'object_Id,subobject_name'
+    , toDate                  => null
+    , maxExecTime             => INTERVAL '5' MINUTE
+    , resultRowCount          => 3
+    , tableRowCount           => 25003
+    , addon1RowCount          => 50006
+    , addon2RowCount          => 50006
+  );
+
+  checkCase(
+    'Повторая выгрузка (SIMPLE)'
+    , tableName               => 'dsn_test_app_dst'
+    , idTableName             => 'dsn_test_app_source'
+    , addonTableName          => 'dsn_test_app_dst_a2'
+    , addonSourceTableName    => 'v_dsn_test_app_dst_a1_src'
+    , addonExcludeColumnList  => 'last_ddl_time'
+    , sourceTableName         => 'v_dsn_test_app_dst_src'
+    , excludeColumnList       => 'object_Id,subobject_name'
+    , toDate                  => sysdate
+    , maxExecTime             => INTERVAL '5' MINUTE
+    , resultRowCount          => 2
+    , tableRowCount           => 25005
+    , addonTableRowCount      => 50010
+  );
+
+  pkg_TestUtility.endTest();
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при тестировании функции appendData ('
+        || 'testCaseNumber=' || testCaseNumber
+        || ').'
+      )
+    , true
+  );
+end testAppendData;
+
 end pkg_DataSyncTest;
 /

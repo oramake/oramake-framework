@@ -1,0 +1,18 @@
+-- table: dsn_test_app_dst_a1
+create table
+  dsn_test_app_dst_a1
+(
+  app_source_id                   integer                             not null
+  , order_number                  integer                             not null
+  , owner                         varchar2(128)                       not null
+  , object_name                   varchar2(128)                       not null
+  , last_ddl_time                 date                                not null
+  , constraint dsn_test_app_dst_a1_pk primary key
+    ( app_source_id, order_number)
+)
+/
+
+
+comment on table dsn_test_app_dst_a1 is
+  '“естова€ дополнительна€ таблица назначени€ #1 дл€ appendData [ SVN root: Oracle/Module/DataSync]'
+/

@@ -71,33 +71,43 @@ is
 
   defaultDatabaseConfig cmn_database_config%rowtype;
 
+
+
   /*
-    Достает конфигурацию по умолчанию
+    Определяет настройки БД по умолчанию.
   */
   procedure getDefaultDatabaseConfig(
     isProduction integer
   )
   is
-  -- getDefaultDatabaseConfig
-  begin
-    select
-      *
-    into
-      defaultDatabaseConfig
-    from
-      cmn_database_config dc
-    where
-      dc.default_flag = 1
-      and is_production = isProduction
+
+    cursor dataCur is
+      select
+        *
+      from
+        cmn_database_config dc
+      where
+        dc.default_flag = 1
+        and is_production = isProduction
     ;
+
+  begin
+    open dataCur;
+    fetch dataCur into defaultDatabaseConfig;
+    close dataCur;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , 'Ошибка при определении настроек БД по умолчанию.'
+      , 'Ошибка при определении настроек БД по умолчанию ('
+        || 'isProduction=' || isProduction
+        || ').'
       , true
     );
   end getDefaultDatabaseConfig;
 
+
+
+-- getDatabaseConfig
 begin
   if databaseConfig.instance_name is null then
     instanceName := getInstanceName( ignoreMainInstanceNameFlag => 1);

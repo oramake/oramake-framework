@@ -136,7 +136,7 @@ GENDOC_DB_DIR      = ../Doc/DB/AutoGen
 
 # build var: GENDOC_DB_FLAGS
 # Дополнительные параметры генерации документации.
-GENDOC_DB_FLAGS    = -img ../Db/Doc/images
+GENDOC_DB_FLAGS    = -img ../DB/Doc/images
 
 
 # target: gendoc
@@ -303,6 +303,11 @@ override LOAD_DB9 := $(call getDbName,$(LOAD_USERID9),$(LOAD_DB9))
 # По умолчанию используется значение переменной окружения ORACLE_OPERATOR
 # ( если есть).
 LOAD_OPERATORID := $(ORACLE_OPERATOR)
+
+# build var: COMMON_SCHEMA
+# Наименование схемы БД, в которой размещены общие модули.
+# (AccessOperator, ModuleInfo, etc)
+COMMON_SCHEMA :=
 
 
 

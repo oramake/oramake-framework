@@ -68,7 +68,7 @@
 #       --operatorid STR        - задает оператора для регистрации после
 #                                 подключения ( формат: operatorName[/passwd])
 #       --common-schema         - наименование схемы БД, в которой размещены
-#                                 общие модули.                          
+#                                 общие модули.
 #       --plsql-warnings  STR   - задаёт параметр Oracle сессии PLSQL_WARNINGS
 #                                 ( уровень предупреждений компилятора PLSQL,
 #                                 по-умолчанию из переменной окрузения
@@ -217,15 +217,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.2.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26056103 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDate
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2019-07-17 15:23:16 +0300 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -431,6 +431,13 @@ loadFile=""
 declare -a loadArgList
 loadArgList=()
 
+# var: overwriteCurrentVersionFlag
+# Признак перезаписи текущей версии модуля в БД, если она совпадает с устанавливаемой.
+# Определяется на основе переменной окружения OMS_OVERWRITE_CURRENT_VERSION.
+# (1 - да (по-умолчанию), 0 - нет)
+#
+overwriteCurrentVersionFlag=${OMS_OVERWRITE_CURRENT_VERSION:-1}
+
 
 
 # group: Параметры выполнения
@@ -538,7 +545,7 @@ Options:
   --module-version STR            current module version
   --operatorid STR                operator for registration
                                   ( operatorName[/passwd])
-  --common-schema STR             Database scheme of common modules 
+  --common-schema STR             Database scheme of common modules
                                   (AccessOperator, ModuleInfo, etc)
   --plsql-warnings STR            PLSQL_WARNINGS compilation Oracle parameter
   --process-id N                  main host process ID
@@ -949,7 +956,7 @@ outSqlSchedulerJob()
   local jobShortName=${loadFile##*/}
   jobShortName=${jobShortName%%.job.sql}
   local parentDirectoryPath=$(dirname $loadFile)
-  local parentDirectory=$(baseName $parentDirectoryPath)
+  local parentDirectory=$(basename $parentDirectoryPath)
   local batchShortName=""
   local publicFlag=""
   # Если в директории рядом есть batch.xml, то считаем что job
@@ -1001,7 +1008,7 @@ outSqlSchedulerJob()
 outSqlSchedulerBatch()
 {
   local parentDirectoryPath=$(dirname $loadFile)
-  local batchShortName=$(baseName $parentDirectoryPath);
+  local batchShortName=$(basename $parentDirectoryPath);
   logDebug3 "Set batchShortName: '$batchShortName'"
   # Отключаем подстановку макропеременных
   echo "set define off"
@@ -1094,17 +1101,28 @@ outSqlCommon()
     fi
     echo "$loginString"
   fi
-  # Путь к каталогу с собственными SQL-скриптами ( mixed-формат)
-  local sqlScriptDirMixed="${sqlScriptDirWin//\\//}"
+  # Путь к каталогу с собственными SQL-скриптами (mixed-формат в случае Windows)
+  local sqlScriptDirMixed=$sqlScriptDirNative
+  if (( isWindows )); then
+    # меняем вручную (экономим один вызов cygpath)
+    sqlScriptDirMixed="${sqlScriptDirMixed//\\//}"
+  fi
   # Инициализация используемых переменных значениями по умолчанию
   echo "@\"$sqlScriptDirMixed/oms-init-var.sql\""
   # Установка значений переменных
   echo "define OMS_SCRIPT_DIR=\"$sqlScriptDirMixed\""
   # Устанавливаем префикс временных файлов
+  local tempFilePrefix="${tmpFileDir}/${tmpSqlFileNamePrefix}"
+  if (( isWindows )); then
+    tempFilePrefix=$(cygpath --mixed "$tempFilePrefix")
+  fi
   echo \
-    "define OMS_TEMP_FILE_PREFIX=\"$(cygpath --mixed "${tmpFileDir}/${tmpSqlFileNamePrefix}")\""
-  # Путь к загружаемому скрипту в mixed-формате
-  local loadFileMixed="$(cygpath --mixed "$loadFile")"
+    "define OMS_TEMP_FILE_PREFIX=\"$tempFilePrefix\""
+  # Путь к загружаемому скрипту (в mixed-формате в случае Windows)
+  local loadFileMixed=$loadFile
+  if (( isWindows )); then
+    loadFileMixed=$(cygpath --mixed "$loadFileMixed")
+  fi
 
   # Параметры установки для OMS-скриптов
   local oldIFS=$IFS
@@ -1144,6 +1162,7 @@ begin
   :oms_file_mask                  := '$fileMask';
   :oms_skip_file_mask             := '$skipFileMask';
   :oms_common_schema              := '$commonSchema';
+  :oms_overwrite_current_version  := $overwriteCurrentVersionFlag;
 end;
 /
 "
@@ -1233,13 +1252,16 @@ outSqlLog()
 execSql()
 {
   logDebug "Use SQL*Plus for load: loadFile='$loadFile'"
-  # Путь к собственным SQL-скриптам # ( также используется в outSqlScriptRun)
-  local sqlScriptDirWin="$(cygpath --windows "$sqlScriptDir")"
+  # Путь к собственным SQL-скриптам (также используется в outSqlScriptRun)
+  local sqlScriptDirNative=$sqlScriptDir
+  if (( isWindows )); then
+    sqlScriptDirNative="$(cygpath --windows "$sqlScriptDirNative")"
+  fi
 
   # Обеспечиваем доступность только собственных скриптов чтобы исключить
   # влияние сторонних скриптов на результат выполнения ( например, скрипта
   # login.sql, автоматически выполняемого SQL*Plus после подключения)
-  SQLPATH="${sqlScriptDirWin}"
+  SQLPATH="${sqlScriptDirNative}"
   export SQLPATH
   # Подготовка информации об установке
   prepareInstallInfo
@@ -1311,11 +1333,15 @@ checkLoadJavaOutput()
 #
 loadJava()
 {
+  local loadjavaCmd="loadjava"
+  if (( isWindows )); then
+    loadjavaCmd="${loadjavaCmd}.bat"
+  fi
   # Получаем общий код завершения канала
   set -o pipefail
   # sed используется для обхода бага с  зависанием команды read при наличии
   # двух подряд символов возврата каретки
-  ( loadjava.bat -user "$userId" "$loadFile" -resolve \
+  ( $loadjavaCmd -user "$userId" "$loadFile" -resolve \
     -resolver  "((* ${userId/%\/*/}) (* PUBLIC) (* -))" \
     2>&1 \
   ) | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput

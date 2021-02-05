@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Option
-SubTitle: Версия 3.4.0
+SubTitle: Версия 3.5.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -200,6 +200,11 @@ Group: Скрипты  {
             File: v_opt_value  (no auto-title, Install/Schema/Last/v_opt_value.vw)
             File: v_opt_value_history  (no auto-title, Install/Schema/Last/v_opt_value_history.vw)
             }  # Group: Last
+
+         Group: 3.5.0  {
+
+            File: run  (no auto-title, Install/Schema/3.5.0/run.sql)
+            }  # Group: 3.5.0
 
          Group: 3.3.0  {
 

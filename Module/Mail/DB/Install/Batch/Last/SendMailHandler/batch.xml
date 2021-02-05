@@ -13,6 +13,14 @@
     <option short_name="SmtpServerList" type="string" name="Список имен ( ip-адресов) SMTP-серверов ( разделить &quot;,&quot;, по умолчанию используется SMTP-сервер, возвращаемый pkg_Common.getSmtpServer)">
       <value></value>
     </option>
+    <option short_name="Username" type="string" name="Имя пользователя для авторизации на SMTP-сервере">
+      <prod_value></prod_value>
+      <test_value></test_value>
+    </option>
+    <option short_name="Password" type="string" name="Пароль для авторизации на SMTP-сервере" encryption="1">
+      <prod_value></prod_value>
+      <test_value></test_value>
+    </option>
   </batch_config>
   <content id="1" job="initialization" module="Scheduler"/>
   <content id="2" job="send_mail_handler" module="Mail">

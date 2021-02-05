@@ -1,20 +1,16 @@
 # makefile: Инициализация OMS
 
-# Ниже указана версия OMS-шаблона, на основе которого был создан файл.
-#
-# SVN Version Information:
-# OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2132 $
-# $LastChangedDate:: 2014-07-08 19:40:00 +0400 #$
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
-
 
 
 #
 # group: Константы
 #
+
+# build var: OMS_VERSION
+# Версия OMS-файлов, входящих в состав модуля.
+OMS_VERSION=2.4.0
+
+
 
 #
 # group: Спецсимволы
@@ -39,6 +35,90 @@ rrb   := )
 # build var: tab
 # Табуляция.
 tab := $(empty)	$(empty)
+
+
+
+#
+# group: Общие параметры
+#
+
+# build var: OMS_INSTALL_PREFIX
+# Общий префикс для инсталляционных каталогов.
+ifeq ($(OMS_INSTALL_PREFIX),)
+  binDir := $(dir $(shell bash -c "type -p oms"))
+  override OMS_INSTALL_PREFIX := $(if $(filter %/bin/,$(binDir)) \
+    ,$(patsubst %/bin/,%,$(binDir)),/usr/local)
+  undefine binDir
+endif
+export OMS_INSTALL_PREFIX
+
+# build var: OMS_INSTALL_SHARE_DIR
+# Путь к каталогу с установленными файлами OMS.
+ifeq ($(OMS_INSTALL_SHARE_DIR),)
+  override OMS_INSTALL_SHARE_DIR = $(OMS_INSTALL_PREFIX)/share/oms
+endif
+export OMS_INSTALL_SHARE_DIR
+
+# build var: OMS_INSTALL_CONFIG_DIR
+# Путь к каталогу с настройками OMS.
+ifeq ($(OMS_INSTALL_CONFIG_DIR),)
+  override OMS_INSTALL_CONFIG_DIR = $(OMS_INSTALL_PREFIX)/etc/oms
+endif
+export OMS_INSTALL_CONFIG_DIR
+
+# build var isWindows
+# Флаг выполнения в операционной системе Windows (1 да, 0 нет)
+isWindows = 0
+ifeq ($(OS),Windows_NT)
+  isWindows = 1
+endif
+
+
+
+# build var: exportOmsInstallDir
+# Текст команды export для экспорта в shell путей к каталогам, в которые
+# установлен OMS (для использования в функции $(shell ...) перед вызовом
+# OMS-скриптов).
+exportOmsInstallDir = export \
+  OMS_INSTALL_PREFIX="$(OMS_INSTALL_PREFIX)" \
+  OMS_INSTALL_CONFIG_DIR="$(OMS_INSTALL_CONFIG_DIR)" \
+  OMS_INSTALL_SHARE_DIR="$(OMS_INSTALL_SHARE_DIR)"
+
+
+
+# Выделяет из номер ревизии из ключевой строки.
+#
+# Параметры:
+# (1)     - строка с номером ревизии вида "$Revision:: N $", где N номер
+#           ревизии
+#
+# Возврат:
+# строка с номером ревизии.
+#
+getRevisionFromKeyword = $(strip $(shell \
+    keyString='$(1)'; \
+    echo "$${keyString:12:$${\#keyString}-13}" \
+  ))
+
+
+
+# Выделяет дату из ключевой строки.
+#
+# Параметры:
+# (1)     - строка с датой вида
+#           "$Date:: yyyy-mm-dd hh24:mi:ss tzhtzm $"
+#
+# Возврат:
+# строка с датой вида "yyyy-mm-dd hh24:mi:ss tzhtzm"
+#
+getDateFromKeyword = $(strip $(shell \
+    keyString='$(1)'; \
+    echo "$${keyString:9:25}" \
+  ))
+
+
+# Включаем пользовательские настройки БД
+include $(OMS_INSTALL_CONFIG_DIR)/database.mk
 
 
 
@@ -394,16 +474,20 @@ getDbName = $(strip $(call lower, \
 # build func: getProductionDbName
 # Возвращает имя промышленной БД.
 #
-# Для определения имени промышленной БД, в списке тестовых БД
-# ( <getProductionDbName_TestDbList>) выполняется поиск по указанному имени БД
+# Для определения имени промышленной БД, в списке тестовых БД (
+# <cspGetProductionDbName_TestDbList>) выполняется поиск по указанному имени БД
 # и в случае нахождения совпадения ( без учета регистра) вместо переданного
-# имени возвращается имя промышленной БД из <getProductionDbName_ProdDbList>,
-# находящееся в той же позиции в списке, что и найденное совпадение. Также
-# в случае, если исходное имя является именем промышленной БД ( проверяется
-# совпадение без учета регистра с именами, указанными в
-# <getProductionDbName_ProdDbList> и <getProductionDbName_ExtraDbList>), то
-# возвращается точное ( с учетом регистра) имя этой промышленной БД. Если не
-# удалось определить имя промышленной БД, то возвращается пустая строка.
+# имени возвращается имя промышленной БД из
+# <cspGetProductionDbName_ProdDbList>, находящееся в той же позиции в списке,
+# что и найденное совпадение. Аналогичным образом выполняется замена имени
+# согласно спискам <cspGetProductionDbName_AliasDbList> и
+# <cspGetProductionDbName_MainDbList>.
+# Также в случае, если исходное имя является именем промышленной БД
+# ( проверяется совпадение без учета регистра с именами, указанными в
+# <cspGetProductionDbName_ProdDbList>, <cspGetProductionDbName_MainDbList> или
+# <cspGetProductionDbName_ExtraDbList>), то возвращается точное ( с учетом
+# регистра) имя этой промышленной БД. Если не удалось определить имя
+# промышленной БД, то возвращается пустая строка.
 #
 # Параметры:
 # (1)     - исходное имя БД
@@ -417,55 +501,36 @@ getProductionDbName = $(call \
 
 getProductionDbNameInternal = $(strip $(if $(1), \
   $(call nullif,$(call translateWord,$(1), \
-      $(getProductionDbName_TestDbList) \
+      $(cspGetProductionDbName_TestDbList) \
+        $(cspGetProductionDbName_AliasDbList) \
         $(call lower,$(getProductionDbName_AllProdList)), \
-      $(getProductionDbName_ProdDbList) \
+      $(cspGetProductionDbName_ProdDbList) \
+        $(cspGetProductionDbName_MainDbList) \
         $(getProductionDbName_AllProdList) \
     ),$(1)) \
   ,))
 
-# build var: getProductionDbName_TestDbList
-# Список тестовых БД для функции <getProductionDbName>.
-# Имена должны указываться в нижнем регистре, при этом в том же по порядку
-# слове переменной <getProductionDbName_ProdDbList> должно быть указано
-# имя промышленной БД для данной тестовой БД.
-#
-getProductionDbName_TestDbList = \
-  TestDb
-
-# build var: getProductionDbName_ProdDbList
-# Промышленные БД для тестовых БД, указанных в списке
-# <getProductionDbName_TestDbList>.
-# Имена БД должны быть указаны с учетом регистра символов в соответствии
-# с общепринятым написанием имени конкретной БД ( например, первая буква
-# имени в верхнем регистре и т.д.).
-#
-getProductionDbName_ProdDbList = \
-  ProdDb
-
-# build var: getProductionDbName_ExtraDbList
-# Промышленные БД, отсутствующие в списке <getProductionDbName_ProdDbList>
-# ( для которых нет тестовых БД).
-# Имена БД указываются с учетом регистра ( аналогично
-# <getProductionDbName_ProdDbList>).
-#
-getProductionDbName_ExtraDbList = \
-
 # Список всех промышленных БД.
 getProductionDbName_AllProdList = \
-  $(sort $(getProductionDbName_ExtraDbList) $(getProductionDbName_ProdDbList))
+  $(sort $(cspGetProductionDbName_ExtraDbList) $(cspGetProductionDbName_MainDbList) $(cspGetProductionDbName_ExtraDbList) $(cspGetProductionDbName_ProdDbList))
 
 # Проверяем корректность задания списков трансляции имен БД
-ifneq ($(words $(getProductionDbName_TestDbList)),$(words $(getProductionDbName_ProdDbList)))
+ifneq ($(words $(cspGetProductionDbName_TestDbList)),$(words $(cspGetProductionDbName_ProdDbList)))
 
-tmpVar := $(error В переменных getProductionDbName_TestDbList и getProductionDbName_ProdDbList указано различное число имен)
+tmpVar := $(error В переменных cspGetProductionDbName_TestDbList и cspGetProductionDbName_ProdDbList указано различное число имен)
+
+endif
+
+ifneq ($(words $(cspGetProductionDbName_AliasDbList)),$(words $(cspGetProductionDbName_MainDbList)))
+
+tmpVar := $(error В переменных cspGetProductionDbName_AliasDbList и cspGetProductionDbName_MainDbList указано различное число имен)
 
 endif
 
 # Проверяем корректность задания имен промышленных БД
 ifneq ($(words $(getProductionDbName_AllProdList)),$(words $(sort $(call lower,$(getProductionDbName_AllProdList)))))
 
-tmpVar := $(error Имя одной и той же БД в переменных getProductionDbName_ProdDbList и getProductionDbName_ExtraDbList отличается регистром символов)
+tmpVar := $(error Имя одной и той же БД в переменных cspGetProductionDbName_ProdDbList, cspGetProductionDbName_MainDbList и cspGetProductionDbName_ExtraDbList отличается регистром символов)
 
 endif
 

@@ -48,15 +48,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.2.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26056103 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2019-07-17 15:23:16 +0300 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -288,17 +288,17 @@ BEGIN \
 generateSpec()
 {
   logDebug3 "Set tmpFileDir: '$tmpFileDir'"
-  getModuleGendocEncoding "$rootDir"
-  if [[ "$moduleGendocEncoding" != "utf-8" ]]; then
+  getModuleEncoding "."
+  if (( isConvertModuleEncoding )); then
     functionGroupExprLC=$(
-      iconv -f "utf-8" -t "$moduleGendocEncoding" <<<$FUNCTION_GROUP_EXPR
+      iconv -f "utf-8" -t "$moduleEncoding" <<<$FUNCTION_GROUP_EXPR
     )
   else
     functionGroupExprLC=$FUNCTION_GROUP_EXPR
   fi
 
   if [[ -z $(cat $specFileName | getPlsqlObjectPart 3) ]]; then
-    exitError "Incorrect specification: Must be expressions: \"$functionGroupExprLC\" and \"$END_OBJECT_EXPR\"!"
+    exitError "Incorrect specification (encoding: $moduleEncoding): Must be expressions: \"$functionGroupExprLC\" and \"$END_OBJECT_EXPR\"!"
   fi;
 
   # Временный файл - тела функций.
@@ -326,7 +326,7 @@ generateSpec()
     && ( cat $tmpBodyFunction | gawk -v objectTypeFlag=$objectTypeFlag -f "${0%.*}.awk") \
     && echo \
     && cat $tmpSpecFileCopy | getPlsqlObjectPart 3 \
-  ) | unix2dos > $specFileName
+  ) | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $specFileName
 
   if (( $skipDeleteTemp == 0)); then
     logDebug3 "Delete temporary files..."

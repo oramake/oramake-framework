@@ -44,14 +44,6 @@ pkg_OperatorInternal.pkb.$(lu4):         \
   pkg_OperatorInternal.pks.$(lu4)
 
 
-Install/Data/1.0.0/op_group.sql.$(lu):         \
-  Install/Data/1.0.0/op_operator.sql.$(lu)
-
-
-Install/Data/1.0.0/op_role.sql.$(lu):         \
-  Install/Data/1.0.0/op_operator.sql.$(lu)
-
-
 Install/Data/1.0.0/Local/Private/op_group_role.sql.$(lu2):     \
   Install/Data/1.0.0/Local/Private/op_role.sql.$(lu2)
 

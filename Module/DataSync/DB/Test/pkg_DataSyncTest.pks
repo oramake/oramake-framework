@@ -33,5 +33,18 @@ procedure refreshTest(
   refreshMethod varchar2
 );
 
+/* pproc: testAppendData
+  Тестирует выгрузку данных функцией <pkg_DataSync.appendData>.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                (по умолчанию без ограничений)
+
+  ( <body::testAppendData>)
+*/
+procedure testAppendData(
+  testCaseNumber integer := null
+);
+
 end pkg_DataSyncTest;
 /

@@ -1,0 +1,21 @@
+-- table: dsn_test_app_dst
+create table
+  dsn_test_app_dst
+(
+  app_source_id                   integer                             not null
+  , owner                         varchar2(128)                       not null
+  , object_name                   varchar2(128)                       not null
+  , object_type                   varchar2(100)
+  , last_ddl_time                 date                                not null
+  , clob_column                   clob
+  , blob_column                   blob
+  , object_full_name              varchar2(257)                       not null
+  , constraint dsn_test_app_dst_pk primary key
+    ( app_source_id)
+)
+/
+
+
+comment on table dsn_test_app_dst is
+  'Тестовая таблица назначения для appendData [ SVN root: Oracle/Module/DataSync]'
+/

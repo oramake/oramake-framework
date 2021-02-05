@@ -52,6 +52,9 @@ loadUserId=
 # ( result of execution of oms-connection-info for testOperatorId)
 loadOperatorId=
 
+# Имя группы тестовых случаев
+checkCaseGroupName=""
+
 # Serial number of current test case
 checkCaseNumber=0
 
@@ -135,7 +138,7 @@ END
 
 startTestCase()
 {
-  local caseName=$1
+  local caseName=${checkCaseGroupName:+${checkCaseGroupName}: }$1
   local usedCount=$nextCaseUsedCount
   checkCaseNumber=$(( checkCaseNumber + 1 ))
   nextCaseUsedCount=0
@@ -266,7 +269,7 @@ loadFile()
 
   runCmd ${omsPrefix}oms-load \
         --userid "$loadUserId" \
-        --operatorid "$loadOperatorId" \
+        ${loadOperatorId:+--operatorid \"$loadOperatorId\"} \
         "$@"
 }
 
@@ -274,26 +277,33 @@ loadFile()
 
 checkOutputCyrillic()
 {
-  startTestCase "oms-load: output Cyrillic alphabet in CP1251" || return 0
-  local cyr34Char=$'\xc2\xc3'
+  local encName="CP1251"
+  local cyrChars=$'\xc0\xc1\xc2\xc3'
+  local newNlsLang="AMERICAN_CIS.CL8MSWIN1251"
+  if (( isUtf8 )); then
+    encName="UTF8"
+    cyrChars=$'\xD0\x90\xD0\x91\xD0\x92\xD0\x93'
+    newNlsLang="AMERICAN_CIS.AL32UTF8"
+  fi
+  startTestCase "oms-load: output Cyrillic alphabet in $encName" || return 0
   createFile DB/Test/out-cyrillic.sql <<END
 set feedback off
 begin
   dbms_output.put_line(
-    'first 4 characters of Cyrillic alphabet in CP1251: '
-    || chr( to_number( 'c0', 'xx'))
-    || chr( to_number( 'c1', 'xx'))
-    || '$cyr34Char'
+    'first 4 characters of Cyrillic alphabet: '
+    || utl_i18n.raw_to_char( hextoraw('c0c1c2c3'), 'CL8MSWIN1251')
+    || ':' || '$cyrChars'
   );
 end;
 /
 quit
 END
+  local oldNlsLang=$NLS_LANG
+  export NLS_LANG=$newNlsLang
   local outStr=$(loadFile DB/Test/out-cyrillic.sql)
-  if [[ ${outStr:0:54} \
-        != $'first 4 characters of Cyrillic alphabet in CP1251: \xc0\xc1\xc2' \
-      ]]; then
-    die "Output of the command differs from expected:" "$outStr"
+  NLS_LANG=$oldNlsLang
+  if [[ ${outStr:41} != "${cyrChars}:${cyrChars}" ]]; then
+    die "Output of the command [${outStr:41}] differs from expected:" "$outStr"
   else
     echo "$outStr"
     echo "!!! necessary to check the correctness of the output visually !!!"
@@ -351,32 +361,36 @@ if [[ -d "$modDir" ]]; then
     || die "Existing test module has not been deleted: $modDir"
 fi
 
-# Checks with using test module
-nextCaseUsedCount=999
-if runOms create-module -d "$modDir" TestModule; then
+for isUtf8 in "" 1; do
+  checkCaseGroupName=${isUtf8:+UTF8}
+  # Checks with using test module
+  nextCaseUsedCount=999
+  if runOms create-module \
+      ${isUtf8:+--encoding utf-8} -d "$modDir" TestModule; then
 
-  cd "$modDir" || die "Test module directory not created: $modDir"
+    cd "$modDir" || die "Test module directory not created: $modDir"
 
-  addTestFile
+    addTestFile
 
-  runMake gendoc
-  runOms set-version "1.0.1"
+    runMake gendoc
+    runOms set-version "1.0.1"
 
-  runOms gen-schema-run
-  runOms gen-schema-revert
-  runOms gen-spec "DB/pkg_TestModule.pkb"
+    runOms gen-schema-run
+    runOms gen-schema-revert
+    runOms gen-spec "DB/pkg_TestModule.pkb"
 
-  runMake gendoc-menu
+    runMake gendoc-menu
 
-  runOms update-module
+    runOms update-module
 
-  if (( loadFlag )); then
-    startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
-    checkOutputCyrillic
+    if (( loadFlag )); then
+      startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
+      checkOutputCyrillic
+    fi
+
+    cd - >/dev/null
+    rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
   fi
-
-  cd - >/dev/null
-  rm -rf "$modDir" || die "Test module directory not deleted: $modDir"
-fi
+done
 
 echo result: OK

@@ -218,6 +218,8 @@ procedure finishInstallNestedFile;
                                 отмене установки обновления ( по умолчанию
                                 installVersion в случае установки, null в
                                 случае отмены полной установки)
+  overwriteCurrentVersionFlag - признак возможности перезаписи уже установленной текущей версии
+                                (1 - да (по-умолчанию), 0 - нет)
 
   ( <body::checkInstallVersion>)
 */
@@ -234,6 +236,7 @@ procedure checkInstallVersion(
   , privsUser varchar2 := null
   , installScript varchar2 := null
   , resultVersion varchar2 := null
+  , overwriteCurrentVersionFlag integer := null
 );
 
 /* pfunc: createInstallResult

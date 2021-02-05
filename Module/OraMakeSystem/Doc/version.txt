@@ -2,6 +2,53 @@ title: Версии
 
 
 
+group: 2.4.0 ( 2021-01-22)
+
+[+] Add ability to install for Linux.
+
+[!] Fix bugs in case of use custom install <prefix>.
+
+[!] Restore charset information in automatically generated HTML documentation
+    (bug in 2.2.1 version).
+
+[*] Clarify shell scripts.
+
+
+
+group: 2.3.0 (2020-12-10)
+
+[+] Add an option not to overwrite the installed version of a module in the database when the version
+    is the same as the requested one. In this case, there will be a "Запрошенная версия уже была
+    установлена ранее" error raised. This behaviour is controlled by setting the
+    OMS_OVERWRITE_CURRENT_VERSION environment variable before running a "make install" command.
+    It is set to 1 by default. *ModuleInfo 1.4.0 or later is required for this feature*
+
+
+
+group: 2.2.2 ( 2020-12-10)
+
+[!] Fix incorrect value of NLS_LANG in DB/Makefile for new modules
+    in case of "cp1251" encoding and without value of NLS_LANG in environment.
+
+[!] Exclude error "moduleEncoding != "utf-8" : syntax error: operand expected"
+    when executing "make set-version" using OraMakeSystem for Windows.
+
+[*] Exclude warning "oms: getModuleEncoding: DB Makefile not found: ..." on
+    module creation.
+
+
+
+group: 2.2.1 ( 2020-09-22)
+
+[+] Add UTF-8 encoding support for modules: add "encoding" option for
+    "oms create-module" command (<oms::create-module>).
+
+[!] Allow value of batchPattern in oms-*-batch scripts longer than 1000 chars
+    (earlier error "ORA-06502: PL/SQL: numeric or value error: character
+    string buffer too small" was raised).
+
+
+
 group: 2.2.0 ( 2019-02-06)
 
 [+] Add dropjava support. Use consequently current user, public and "-" for

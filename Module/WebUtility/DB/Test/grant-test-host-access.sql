@@ -15,7 +15,15 @@ declare
 
   cursor dataCur is
     select distinct
-      substr( a.host_path_str, 1, instr( a.host_path_str || '/', '/') - 1)
+      substr(
+          a.host_path_str
+          , 1
+          , least(
+              instr( a.host_path_str || '/', '/')
+              , instr( a.host_path_str || ':', ':')
+            )
+            - 1
+        )
         as test_host
     from
       (

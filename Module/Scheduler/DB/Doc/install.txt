@@ -40,11 +40,27 @@ PRODUCTION_DB_NAME            - может быть использован для явного задания
 Команда для восстановления выполнения заданий
 в БД:
 
-(code)
+> make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
-make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
-(end)
+
+group: 5.3.0
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=5.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+
+group: 5.2.2
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=5.2.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 

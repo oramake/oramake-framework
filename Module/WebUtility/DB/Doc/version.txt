@@ -2,6 +2,26 @@ title: Версии
 
 
 
+group: 1.1.3 ( 2021-02-04)
+
+[+] Support Basic and Digest authentication.
+
+
+
+group: 1.1.2 ( 2020-09-24)
+
+[!] Close HTTP request and response on error in Login procedure
+    to prevent exception "ORA-29270: too many open HTTP requests".
+
+
+
+group: 1.1.1 ( 2020-08-26)
+
+[!] Close HTTP request and response on error to prevent exception
+    "ORA-29270: too many open HTTP requests".
+
+
+
 group: 1.1.0. ( 2019-09-09)
 
 [+] HTTP authentication functions.

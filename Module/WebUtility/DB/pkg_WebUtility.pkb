@@ -13,10 +13,46 @@ logger lg_logger_t := lg_logger_t.getLogger(
   , objectName  => 'pkg_WebUtility'
 );
 
+
+
+/* group: Authentication variables */
+
+/* ivar: username
+  User name.
+*/
+username varchar2(1024);
+
+/* ivar: password
+  User password.
+*/
+password varchar2(1024);
+
+/* ivar: domain
+  User domain.
+*/
+domain varchar2(1024);
+
+/* ivar: scheme
+  Authentication schema.
+*/
+scheme varchar2(1024);
+
+/* ivar: walletPath
+  Path to Oracle Database wallet with certificate for https authentication.
+*/
+walletPath varchar2(1024);
+
+/* ivar: walletPassword
+  Password for Oracle Database wallet.
+*/
+walletPassword varchar2(1024);
+
 /* ivar: ntlmToken
   ntlmToken for all requests.
 */
 ntlmToken varchar2(1024);
+
+
 
 /* group: Functions */
 
@@ -496,8 +532,19 @@ is
         'message body: source length=' || length( bodyText)
         || ', set body charset: ' || usedBodyCharset
       );
-      if ntlmToken is not null then
+      if scheme = NTLM_scheme then
         addHeader(Authorization_HttpHeader, ntlmToken);
+      elsif scheme = Basic_scheme
+            or scheme = Digest_scheme
+            or scheme = AWS_Scheme
+            or scheme = AWS4_HMAC_SHA256_Scheme
+      then
+        utl_http.set_authentication(
+          r => req
+          , username => userName
+          , password => password
+          , scheme => scheme
+        );
       end if;
 
       if len > 0 then
@@ -594,43 +641,43 @@ is
       , method        => reqMethod
       , http_version  => utl_http.HTTP_VERSION_1_1
     );
-    begin
-      if logger.isTraceEnabled() then
-        logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
-        logger.trace( '* HTTP request header: start');
-      end if;
+    if logger.isTraceEnabled() then
+      logger.trace( req.method || ' ' || req.url || ' ' || req.http_version);
+      logger.trace( '* HTTP request header: start');
+    end if;
 
-      if headerList is not null then
-        processHeaderList();
-      end if;
+    if headerList is not null then
+      processHeaderList();
+    end if;
 
-      writeBody(
-        case
-          when
-              reqMethod = Post_HttpMethod and nPart > 0
-            then
-              multipartData
-          when
-              reqMethod = Post_HttpMethod and nParameter > 0
-            then
-              parameterData
-          else
-              requestText
-        end
-      );
+    writeBody(
+      case
+        when
+            reqMethod = Post_HttpMethod and nPart > 0
+          then
+            multipartData
+        when
+            reqMethod = Post_HttpMethod and nParameter > 0
+          then
+            parameterData
+        else
+            requestText
+      end
+    );
 
-      if parameterData is not null then
-        dbms_lob.freeTemporary( parameterData);
-      end if;
-      if multipartData is not null then
-        dbms_lob.freeTemporary( multipartData);
-      end if;
-    exception when others then
-      -- Close the request in case of an error
-      utl_http.end_request( req);
-      raise;
-    end;
+    if parameterData is not null then
+      dbms_lob.freeTemporary( parameterData);
+    end if;
+    if multipartData is not null then
+      dbms_lob.freeTemporary( multipartData);
+    end if;
   exception when others then
+    if parameterData is not null then
+      dbms_lob.freeTemporary( parameterData);
+    end if;
+    if multipartData is not null then
+      dbms_lob.freeTemporary( multipartData);
+    end if;
     raise_application_error(
       pkg_Error.ErrorStackInfo
       , logger.errorStack(
@@ -698,6 +745,8 @@ is
         || ' (length=' || length( entityBody) || ')'
       );
     when others then
+      -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+      utl_http.end_response( resp);
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , logger.errorStack(
@@ -785,6 +834,8 @@ begin
     logger.trace( 'execSecond         : ' || execSecond);
   end if;
 exception when others then
+  -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+  utl_http.end_request( req);
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -794,7 +845,7 @@ exception when others then
   );
 end execHttpRequest;
 
-/* pproc: execHttpRequest
+/* proc: execHttpRequest(without responseHeaderList)
   Execute of HTTP request.
 
   Parameters:
@@ -847,8 +898,6 @@ end execHttpRequest;
     headerList);
   - data is automatically converted from the database character set to the
     request body character set;
-
-  ( <body::execHttpRequest>)
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
@@ -887,8 +936,6 @@ begin
     , maxWaitSecond           => maxWaitSecond
   );
 end execHttpRequest;
-
-
 
 /* proc: checkResponseError
   Raises an exception when the Web server returns a status code other than
@@ -1020,6 +1067,7 @@ is
 
   -- Response in XML format
   responseXml xmltype;
+
 
 begin
   return xmltype( entityBody);
@@ -1418,9 +1466,11 @@ exception when others then
   );
 end getSoapResponse;
 
+
+
 /* group: Authentification  */
 
-/* pproc: login
+/* proc: login
   Perform authentification request
 
   Parameters:
@@ -1431,15 +1481,13 @@ end getSoapResponse;
   walletPath                  - Path to wallet (must have for https)
   walletPassword              - Password for wallet (must have for https)
   proxyServer                 - Name of proxy server
-  schema                      - The HTTP authentication scheme.
+  scheme                      - The HTTP authentication scheme.
                                 Either 'NTLM' for the Microsoft NTLM,
                                 'Basic' for the HTTP basic,
                                 'Digest' for the HTTP digest,
                                 'AWS' for Amazon AWS version 2 authentication scheme, or
                                 'AWS4-HMAC-SHA256' for AWS version 4 authentication scheme.
                                 Default is 'Basic'.
-
-
 */
 procedure login(
   requestUrl                varchar2
@@ -1469,13 +1517,17 @@ begin
 
   -- NTLM authentication
   if scheme = NTLM_scheme then
-    ntlmToken := pkg_WebUtilityNtlm.ntlmLogin(
+    pkg_webUtility.ntlmToken := pkg_WebUtilityNtlm.ntlmLogin(
         requestUrl       => requestUrl
         , username       => username
         , password       => password
         , domain         => domain
     );
-  else
+  elsif coalesce(scheme, Basic_scheme) = Basic_scheme
+        or scheme = Digest_scheme
+        or scheme = AWS_Scheme
+        or scheme = AWS4_HMAC_SHA256_Scheme
+  then
   -- others authentications
     req := utl_http.begin_request(requestUrl);
     utl_http.set_authentication(
@@ -1487,6 +1539,7 @@ begin
     resp := utl_http.get_response(req);
     statusCode := resp.status_code;
     reasonPhrase := resp.reason_phrase;
+    utl_http.end_response(resp);
     if statusCode != utl_http.HTTP_OK then
       raise_application_error(
         pkg_Error.ProcessError
@@ -1496,8 +1549,23 @@ begin
           || '.'
       );
     end if;
+  else
+    raise_application_error(
+      pkg_Error.ProcessErrors
+      , 'Unsupported authentication scheme'
+    );
   end if;
+  
+  -- Save authentications parametaers
+  pkg_webUtility.username := username;
+  pkg_webUtility.password := password;
+  pkg_webUtility.domain := domain;
+  pkg_webUtility.scheme := scheme;
+  pkg_webUtility.walletPath := walletPath;
+  pkg_webUtility.walletPassword := walletPassword;
 exception when others then
+  -- to prevent "ORA-29270: too many open HTTP requests" after 5 leaks
+  utl_http.end_request( req);
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -1515,6 +1583,38 @@ exception when others then
     , true
   );
 end login;
+
+/* pproc: logoff
+  Perform authentification logoff.
+
+  Parameters:
+
+*/
+procedure logoff
+is
+begin
+  -- NTLM authentication
+  if scheme = NTLM_scheme then
+    pkg_webutilityntlm.ntlmLogoff();
+  end if;
+
+  -- Reset authentications parametaers
+  pkg_webUtility.username := null;
+  pkg_webUtility.password := null;
+  pkg_webUtility.domain := null;
+  pkg_webUtility.scheme := null;
+  pkg_webUtility.walletPath := null;
+  pkg_webUtility.walletPassword := null;
+  pkg_webUtility.ntlmToken := null;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Error while user logoff.'
+      )
+    , true
+  );
+end logoff;
 
 end pkg_WebUtility;
 /

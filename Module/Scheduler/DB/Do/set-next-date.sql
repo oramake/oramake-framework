@@ -1,17 +1,17 @@
---script: Do/set-next-date.sql
---”станавливает дату следующего запуска активированного пакета.
+-- script: Do/set-next-date.sql
+-- ”станавливает дату следующего запуска активированного пакета.
 --
---ѕараметры:
---batchPattern                - маска дл€ имени пакетов ( batch_short_name),
+-- ѕараметры:
+-- batchPattern               - ћаска дл€ имени пакетов ( batch_short_name),
 --                              по умолчанию любые ( "%")
---nextDate                    - дата следующего запуска ( null по умолчанию
+-- nextDate                   - ƒата следующего запуска ( null по умолчанию
 --                              немедленно)
 --
---«амечание:
--- - в случае ошибки commit не выполн€етс€ и дата не мен€етс€;
+-- «амечание:
+--  - в случае ошибки commit не выполн€етс€ и дата не мен€етс€;
 
 define batchPattern = "coalesce( '&1', '%')"
-define nextDate = "coalesce( &2, sysdate)"
+define nextDate = "&2"
 
 
 
@@ -30,22 +30,25 @@ declare
       b.batch_short_name
   ;
 
-  nextDate date := &nextDate;
+  nextDate timestamp with time zone :=
+    cast( &nextDate as timestamp with time zone)
+    at time zone to_char( systimestamp, 'tzh:tzm')
+  ;
 
   nDone integer := 0;
 
 begin
   for rec in curBatch loop
-    pkg_Scheduler.SetNextDate(
+    pkg_Scheduler.setNextDate(
       batchID => rec.batch_id
       , nextDate => nextDate
-      , operatorID => pkg_Operator.GetCurrentUserID()
+      , operatorID => pkg_Operator.getCurrentUserID()
     );
     dbms_output.put_line(
       rpad( rec.batch_short_name, 30)
       || ' ( batch_id =' || lpad( rec.batch_id, 3)
       || ')   - set date '
-      || to_char( nextDate, 'dd.mm.yy hh24:mi:ss')
+      || to_char( nextDate, 'dd.mm.yyyy hh24:mi:ss.ff3 tzh:tzm')
     );
     nDone := nDone + 1;
   end loop;

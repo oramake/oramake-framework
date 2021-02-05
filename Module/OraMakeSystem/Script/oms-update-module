@@ -47,15 +47,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.2.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26056103 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2019-07-17 15:23:16 +0300 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -87,9 +87,6 @@ isUseSubversion=0
 # Флаг необходимости обновления автодокументации модуля после выполнения
 # обновления.
 isNeedGendoc=0
-
-# Convert files from UTF-8 enconding to module's documentation enconding?
-isConvertEncoding=0
 
 
 
@@ -309,8 +306,8 @@ expandFile()
   fi
                                         # Создаем файл
   if ((isDryRun)); then
-    if ((isConvertEncoding)); then
-      $runCmd iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    if ((isConvertModuleEncoding)); then
+      $runCmd iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
     else
       $runCmd cat "$srcPath"
     fi
@@ -321,8 +318,8 @@ expandFile()
     echo "  \$(svnInitialPath): $svnInitialPath"
     echo "  \$sedOption[${#sedOption[@]}]    :" "${sedOption[@]}"
   else
-    if ((isConvertEncoding)); then
-      iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath"
+    if ((isConvertModuleEncoding)); then
+      iconv -f "utf-8" -t "$moduleEncoding" "$srcPath"
     else
       cat "$srcPath"
     fi \
@@ -417,12 +414,9 @@ patchFile()
   local patchFile=""
   local patchRevision=""
   if ! ((isUnixFormat)) && (( fromRevision < 273 )); then
-    $runCmd unix2dos "$dstFile" 2>/dev/null
+    $runCmd sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$dstFile"
   fi
-  local patchOption="--forward --batch --silent"
-  if (( isUseSubversion)) ; then
-    patchOption="$patchOption --no-backup-if-mismatch"
-  fi
+  local patchOption="--forward --batch --no-backup-if-mismatch --silent"
   for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
     patchRevision="${patchFile%%.*}"
@@ -438,11 +432,11 @@ patchFile()
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
-          $runCmd dos2unix "$dstFile" 2>/dev/null
+          $runCmd sed --in-place -e "s/\x0D//g" "$dstFile"
         fi
         local catCmd
-        if (( isConvertEncoding )); then
-          catCmd="iconv -f utf-8 -t $moduleGendocEncoding"
+        if (( isConvertModuleEncoding )); then
+          catCmd="iconv -f utf-8 -t $moduleEncoding"
         else
           catCmd="cat"
         fi
@@ -486,7 +480,7 @@ patchFile()
             || logError "error patch: $dstFile, $patchFile"
           fi
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
-          $runCmd unix2dos "$dstFile" 2>/dev/null
+          $runCmd sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$dstFile"
         fi
       fi
     fi
@@ -562,9 +556,7 @@ updateModule()
     isUseSubversion=1
   fi
 
-  # Encoding of module's documentation
-  getModuleGendocEncoding "$rootDir"
-  [[ "$moduleGendocEncoding" != "utf-8" ]] && isConvertEncoding=1
+  getModuleEncoding "$rootDir"
 
                                         # Ветки .svn игнорируются для удобства
                                         # тестирования ( запуск на текущей
@@ -617,12 +609,12 @@ updateModule()
       elif ((isExpand)) && ! [[ -f "$dstPath" ]] ; then
         expandFile "$file" "$dstPath" "$srcPath" "$isUnixFormat"
       elif ((isCopyFile)) || ! [[ -f "$dstPath" ]] ; then
-        if ((isConvertEncoding)); then
+        if ((isConvertModuleEncoding)); then
           if ((isDryRun)); then
-            echo iconv -f "utf-8" -t "$moduleGendocEncoding" \
+            echo iconv -f "utf-8" -t "$moduleEncoding" \
               "$srcPath" \> "$dstPath"
           else
-            iconv -f "utf-8" -t "$moduleGendocEncoding" "$srcPath" > "$dstPath"
+            iconv -f "utf-8" -t "$moduleEncoding" "$srcPath" > "$dstPath"
           fi
         else
           $runCmd cp "$srcPath" "$dstPath"
@@ -642,10 +634,14 @@ updateModule()
           if (( isDryRun )); then
             $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
           else
+            local tmpFileNative=$tmpFile
+            if (( isWindows )); then
+              tmpFileNative=$(cygpath --windows "$tmpFileNative")
+            fi
             trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
             echo "*" > "$tmpFile" \
               && $runCmd $svnCmd propset svn:ignore \
-                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+                -F "$tmpFileNative" "$dstFile" >/dev/null \
               || exitError "Cannot set snv:ignore on file \"$dstFile\"."
             rm -f "$tmpFile"
           fi

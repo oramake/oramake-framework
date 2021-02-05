@@ -75,6 +75,12 @@ Group: Пакеты  {
 
       }  # Group: Local
 
+   Group: pkg_AccessOperator  {
+
+      File: Спецификация  (no auto-title, pkg_AccessOperator.pks)
+      File: Реализация  (no auto-title, pkg_AccessOperator.pkb)
+      }  # Group: pkg_AccessOperator
+
    Group: pkg_Operator  {
 
       File: Спецификация  (no auto-title, pkg_Operator.pks)
@@ -244,8 +250,6 @@ Group: Скрипты  {
 
                }  # Group: Local
 
-            File: run  (no auto-title, Install/Data/3.5.0/run.sql)
-            File: op_lock_type  (no auto-title, Install/Data/3.5.0/op_lock_type.sql)
             }  # Group: 3.5.0
 
          Group: 3.4.19  {
@@ -289,6 +293,7 @@ Group: Скрипты  {
                }  # Group: Local
 
             File: op_group  (no auto-title, Install/Data/1.0.0/op_group.sql)
+            File: op_lock_type  (no auto-title, Install/Data/1.0.0/op_lock_type.sql)
             File: op_operator  (no auto-title, Install/Data/1.0.0/op_operator.sql)
             File: op_role  (no auto-title, Install/Data/1.0.0/op_role.sql)
             }  # Group: 1.0.0
@@ -387,22 +392,31 @@ Group: Скрипты  {
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
             File: op_group  (no auto-title, Install/Schema/Last/op_group.tab)
             File: op_group  (no auto-title, Install/Schema/Last/op_group.con)
+            File: op_group_bi_define  (no auto-title, Install/Schema/Last/op_group_bi_define.trg)
             File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.tab)
             File: op_group_role  (no auto-title, Install/Schema/Last/op_group_role.con)
+            File: op_group_role_bi_define  (no auto-title, Install/Schema/Last/op_group_role_bi_define.trg)
+            File: op_group_seq  (no auto-title, Install/Schema/Last/op_group_seq.sqs)
             File: op_lock_type  (no auto-title, Install/Schema/Last/op_lock_type.con)
             File: op_lock_type  (no auto-title, Install/Schema/Last/op_lock_type.tab)
             File: op_login_attempt_group  (no auto-title, Install/Schema/Last/op_login_attempt_group.con)
             File: op_login_attempt_group  (no auto-title, Install/Schema/Last/op_login_attempt_group.tab)
             File: op_operator  (no auto-title, Install/Schema/Last/op_operator.tab)
             File: op_operator  (no auto-title, Install/Schema/Last/op_operator.con)
+            File: op_operator_bi_define  (no auto-title, Install/Schema/Last/op_operator_bi_define.trg)
             File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.tab)
             File: op_operator_group  (no auto-title, Install/Schema/Last/op_operator_group.con)
+            File: op_operator_group_bi_define  (no auto-title, Install/Schema/Last/op_operator_group_bi_define.trg)
             File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.tab)
             File: op_operator_role  (no auto-title, Install/Schema/Last/op_operator_role.con)
+            File: op_operator_role_bi_define  (no auto-title, Install/Schema/Last/op_operator_role_bi_define.trg)
+            File: op_operator_seq  (no auto-title, Install/Schema/Last/op_operator_seq.sqs)
             File: op_password_hist  (no auto-title, Install/Schema/Last/op_password_hist.tab)
             File: op_password_hist  (no auto-title, Install/Schema/Last/op_password_hist.con)
             File: op_role  (no auto-title, Install/Schema/Last/op_role.tab)
             File: op_role  (no auto-title, Install/Schema/Last/op_role.con)
+            File: op_role_bi_define  (no auto-title, Install/Schema/Last/op_role_bi_define.trg)
+            File: op_role_seq  (no auto-title, Install/Schema/Last/op_role_seq.sqs)
             File: v_op_login_attempt_group  (no auto-title, Install/Schema/Last/v_op_login_attempt_group.vw)
             File: v_op_operator  (no auto-title, Install/Schema/Last/v_op_operator.vw)
             File: v_op_operator_role  (no auto-title, Install/Schema/Last/v_op_operator_role.vw)

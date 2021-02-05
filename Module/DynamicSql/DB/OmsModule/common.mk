@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 25461251 $
-# $Date:: 2018-05-30 13:11:25 +0300 #$
+# $Revision:: 26867076 $
+# $Date:: 2021-01-30 11:36:30 -0500 #$
 #
 
 
@@ -130,14 +130,6 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_SHARE_DIR
-# Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
-
-# build var: OMS_INSTALL_CONFIG_DIR
-# Путь к каталогу с настройками OMS.
-export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
-
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
 # Информация сохраняется в случае загрузки файлов скриптом <oms-load> с помощью
@@ -189,6 +181,7 @@ ifeq ($(MODULE_VERSION),)
       ifeq ($(call compareVersion,$(INSTALL_VERSION),$(moduleVersion)),1)
 
         moduleVersionNew := $(shell \
+          $(exportOmsInstallDir); \
           oms set-version --directory .. \
             --used-only --quiet "$(INSTALL_VERSION)" \
           && echo \
@@ -257,7 +250,10 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms show-svn-info --directory .. --quiet)
+getSvnInfo := $(shell \
+  $(exportOmsInstallDir); \
+  oms show-svn-info --directory .. --quiet)
+
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 
@@ -278,12 +274,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 25461251 $$
+omsRevisionKeyword    := \$$Revision:: 26867076 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2018-05-30 13:11:25 +0300 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-01-30 11:36:30 -0500 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -488,7 +484,7 @@ checkFileMaskScript = \
 				isNeedProcess=1; break; ;; \
 			esac; \
 		done; \
-  fi;
+	fi;
 
 # Исключает из списка файлы, которые подпадают под маски игнорируемых файлов из
 # переменной SKIP_FILE_MASK и не подпадают под маски FILE_MASK в случае
@@ -559,6 +555,7 @@ runFunction  = \
 			$(if $(subst 0,,$(UPDATE_SCHEDULE)), --update-schedule,) \
 			--userid "$${loadUserId:-$$loadUser}" \
 			--operatorid "$$loadOperatorId" \
+			$(if $(COMMON_SCHEMA),--common-schema $(COMMON_SCHEMA)) \
 			--log-path-prefix "$(loadLogDir)/$$loadUser" \
 			"$$loadFile" $(getLoadArgument); \
 		} $(copyToLoadLogCmd); \
@@ -632,7 +629,7 @@ checkLoadFileMaskScript = \
 filterLoadFileTarget = \
   $(if $(strip $(LOAD_FILE_MASK) $(SKIP_FILE_MASK) $(FILE_MASK)),$(strip $(shell \
     loadFileTargetList="$(strip $(1))"; \
-	  $(call checkFileTargetScript, $(checkLoadFileMaskScript)) \
+    $(call checkFileTargetScript, $(checkLoadFileMaskScript)) \
   )),$1)
 
 # Проверяет присутствие загружаемого файла в списке загрузки для цели load.
@@ -670,7 +667,7 @@ loadFunction  =  \
 #
 # Переменные:
 # loadFile                    - имя проверяемого файла предполагается, что
-#								директория файла совпадает с именем батча
+#                               директория файла совпадает с именем батча
 # isNeedLoad                  - результат проверки ( 1 если подпадает под
 #                               маску, иначе 0)
 #
@@ -762,6 +759,7 @@ loadOperatorId    := $(LOAD_OPERATORID)
 ifneq ($(loadOperatorId),)
   ifeq ($(patsubst %/,%@,$(loadOperatorId)),$(subst /,@,$(loadOperatorId)))
     loadOperatorId    := $(shell            \
+      $(exportOmsInstallDir);               \
       oms-connect-info                      \
         --operatorid "$(loadOperatorId)"    \
         --out-operatorid                    \
@@ -780,6 +778,7 @@ loadOperatorName  := $(firstword $(subst /, ,$(loadOperatorId)))
 # (2)     - имя БД по умолчанию ( используется, если в (1) БД не указана)
 #
 getConnectInfo = $(shell                \
+  $(exportOmsInstallDir);               \
   oms-connect-info                      \
     --userid '$(1)'                     \
     --default-db '$(2)'                 \
@@ -1080,12 +1079,19 @@ endif
 ifeq ($(loadFileLog),)
   toLoadLogCmd     =
   copyToLoadLogCmd =
-else
-  toLoadLogCmd     = 2>&1 | unix2dos >> "$(loadFileLog)"
+else ifeq ($(isWindows),1)
+  toLoadLogCmd     = 2>&1 | sed -e "s/\x0D//g" -e "s/$$/\x0D/" >> "$(loadFileLog)"
   copyToLoadLogCmd = \
 		2>&1 | gawk '{ \
 			print; fflush(); \
 			printf( "%s\r\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
+			}'
+else
+  toLoadLogCmd     = 2>&1 >> "$(loadFileLog)"
+  copyToLoadLogCmd = \
+		2>&1 | gawk '{ \
+			print; fflush(); \
+			printf( "%s\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
 			}'
 endif
 
@@ -1131,6 +1137,9 @@ load-start-log.oms:
 			&& echo "INSTALL_VERSION     : $(INSTALL_VERSION)" \
 			&& echo "loadUserList        :$(loadUserList)" \
 			&& echo "loadOperator        : $(loadOperatorName)" \
+			&& if [[ -n "$(COMMON_SCHEMA)" ]]; then \
+			   echo "COMMON_SCHEMA       : $(COMMON_SCHEMA)"; \
+			   fi \
 			&& if [[ -n "$(grantGoals)" ]]; then \
 			   echo "GRANT_SCRIPT        : $(GRANT_SCRIPT)" \
 			&& echo "TO_USERNAME         : $(TO_USERNAME)"; \
@@ -1616,6 +1625,14 @@ uninstall-after.oms: \
 
 
 
+# target: uninstall-clean.oms
+# Удаляет временные файлы, созданные при загрузке в БД.
+
+uninstall-clean.oms:
+	-@rm -rf $(loadDir)/State/*
+
+
+
 # target: uninstall-save-info.oms
 # Сохраняет в БД информацию об отмене установки модуля.
 
@@ -1642,6 +1659,7 @@ uninstall.oms:                            \
     uninstall-load.oms                    \
     uninstall-data.oms                    \
     uninstall-after.oms                   \
+    uninstall-clean.oms                   \
     $(call getSaveInfoGoal,uninstall)     \
 
 	@echo -e "\nuninstall: finished" $(toLoadLogCmd)

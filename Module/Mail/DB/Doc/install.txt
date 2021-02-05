@@ -20,11 +20,43 @@ TO_USERNAME                   - имя пользователя, которому выдаются права
 
 Команда для восстановления выполнения заданий в БД на случай ошибок:
 
-(code)
+> make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
-make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
-(end)
+
+group: 2.7.0
+
+Команда для установки:
+
+> make install INSTALL_VERSION=2.7.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+Замечания:
+- в случае ошибки из-за отсутствия прав типа "SYS:java.lang.RuntimePermission" на уровне Java
+   можно выдать права командой (в LOAD_USERID указывается привилегированный
+   пользователь, в TO_USERNAME указывается пользователь, под которым
+   установлен модуль):
+
+> make grant INSTALL_VERSION=2.7.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs OMS_SAVE_FILE_INSTALL_INFO=0 SKIP_FILE_MASK=*/oms-check-grant-version.sql,*/oms-save-grant-info.sql
+
+
+
+group: 2.6.0
+
+Команда для установки:
+
+> make install INSTALL_VERSION=2.6.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+Замечания:
+- для выполнения SSL-авторизации на SMTP-сервере нужно в пакетном задании
+  SendMailHandler указать значения параметров авторизации (Username, Password)
+  либо задавать эти значения при вызове функции <pkg_Mail.sendMail>;
+- в случае ошибки из-за отсутствия прав на уровне Java на подключение по порту
+  465 (используется при SSL-авторизации на SMTP-сервере, выданные права можно
+  посмотреть в USER_JAVA_POLICY) можно выдать права командой
+  (в LOAD_USERID указывается привилегированный пользователь, в TO_USERNAME
+  указывается пользователь, под которым установлен модуль):
+
+> make grant INSTALL_VERSION=2.6.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=sys-privs TO_USERNAME=??? SKIP_FILE_MASK=*/oms-check-grant-version.sql
 
 
 
@@ -40,44 +72,6 @@ group: 2.5.0
 make install INSTALL_VERSION=2.5.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
-
-
-
-group: 2.4.0
-(<Версии::2.4.0 ( 2019-01-17)>)
-
-Внимание:
-
-- Данное обновление пересоздает таблицы <ml_message> и <ml_attachment>. На время пересоздания
-  (ориентировочно три минуты) попытки записи в таблицы *будут
-  завершаться ошибкой*.
-- Для установки необходимо выбрать период *наименее* интенсивной работы с email.
-- Время восстановления записей  об email (перенос из архивных таблиц в рабочие)
-  может составлять до *двух часов*.
-  В течение данного времени снижена скорость отправки email.
-
-
-Порядок установки:
-
-- установка в основную схему:
-
-(code)
-
-make install INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? SKIP_FILE_MASK=Install/Config/2.4.0/after-action.sql,*/copy-*,*/drop-*,Install/Data/*,Install/Batch/*
-
-(end code)
-
-После установки версии 2.4.0 модуля Mail необходимо:
-
-- восстановить записи об email за 60 дней (DaysBefore - количество дней начиная от текущей даты, за которые будут восстановлены email)
-
-> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/* SKIP_FILE_MASK=*/drop* SQL_DEFINE=DaysBefore=60
-
-- удалить архивные таблицы
-
-> make install-after INSTALL_VERSION=2.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? FILE_MASK=*/2.4.0/after-action.sql,*/2.4.0/drop-*,*compile*
-
-- во всех зависимых модулях пересоздать внешние ограничения целостности, ссылающиеся на таблицы <ml_message> и <ml_attachment>.
 
 
 

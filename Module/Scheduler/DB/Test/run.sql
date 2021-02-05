@@ -2,14 +2,18 @@
 -- ¬ыполн€ет все тесты
 --
 -- »спользуемые макромеременные:
--- loggingLevelCode           - ”ровень логировани€ (по-умолчанию WARN)
+-- loggingLevelCode           - ”ровень логировани€ дл€ модул€
+--                              (по умолчанию из rootLoggingLevelCode либо WARN)
+-- rootLoggingLevelCode       - ”ровень логировани€ дл€ других модулей
+--                              (по умолчанию WARN)
 -- testCaseNumber             - Ќомер провер€емого тестового случа€
 --                              (по умолчанию без ограничений)
 -- saveDataFlag               - ‘лаг сохранени€ тестовых данных
 --                              (1 да, 0 нет (по умолчанию))
 --
 
-@oms-default loggingLevelCode WARN
+@oms-default loggingLevelCode ""
+@oms-default rootLoggingLevelCode ""
 @oms-default testCaseNumber ""
 @oms-default saveDataFlag ""
 
@@ -17,9 +21,17 @@ set feedback off
 
 declare
   loggingLevelCode varchar2(10) := '&loggingLevelCode';
+  rootLoggingLevelCode varchar2(10) := '&rootLoggingLevelCode';
 begin
   lg_logger_t.getRootLogger().setLevel(
-    coalesce( loggingLevelCode, pkg_Logging.Warning_LevelCode)
+    coalesce( rootLoggingLevelCode, pkg_Logging.Warning_LevelCode)
+  );
+  lg_logger_t.getLogger( 'Scheduler').setLevel(
+    coalesce(
+      loggingLevelCode
+      , rootLoggingLevelCode
+      , pkg_Logging.Warning_LevelCode
+    )
   );
 end;
 /

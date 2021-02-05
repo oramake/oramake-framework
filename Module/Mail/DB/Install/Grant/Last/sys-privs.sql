@@ -18,6 +18,24 @@ declare
 begin
   dbms_java.grant_permission(
     userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'accessClassInPackage.sun.security.x509'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'getClassLoader'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.lang.RuntimePermission'
+    , 'setFactory'
+    , ''
+  );
+  dbms_java.grant_permission(
+    userName
     , 'SYS:java.util.PropertyPermission'
     , '*'
     , 'read,write'
@@ -50,6 +68,14 @@ begin
     userName
     , 'SYS:java.net.SocketPermission'
     , '*:25'
+    , 'connect'
+  );
+
+  -- Подключение по SMTP с авторизацией по SSL
+  dbms_java.grant_permission(
+    userName
+    , 'SYS:java.net.SocketPermission'
+    , '*:465'
     , 'connect'
   );
 end;

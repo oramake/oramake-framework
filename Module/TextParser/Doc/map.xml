@@ -17,10 +17,7 @@
   <initialPath>Oracle/Module/CSVFile@249</initialPath>
   <db>
     <database>
-      <instance>Exchange</instance>
-      <instance>ExchangeP</instance>
-      <instance>Nic</instance>
-      <instance>RFInfoP</instance>
+      <instance></instance>
       <table></table>
       <package></package>
     </database>

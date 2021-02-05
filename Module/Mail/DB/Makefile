@@ -319,6 +319,11 @@ loadJavaUsedLibJar  =                    \
   $(wildcard $(JAVAMAIL_DIR)/mail.jar)
 
 
+# build var: COMMON_SCHEMA
+# Наименование схемы БД, в которой размещены общие модули.
+# (AccessOperator, ModuleInfo, etc)
+COMMON_SCHEMA := 
+
 
 
 # build var: LOCAL_DB_DIR

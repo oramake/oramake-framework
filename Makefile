@@ -19,6 +19,7 @@ baseModuleList = \
 	ModuleInfo \
 	Common \
 	Logging \
+	TextParser \
 	TestUtility \
 
 
@@ -267,8 +268,8 @@ install:
 			TestUtility) \
 				isUseOperator=""; \
 				;; \
-			WebUtility) \
-				grantSysPrivsFlag=1; \
+			TextParser) \
+				isUseOperator=""; \
 				;; \
 		esac \
 		&& if (( $$grantSysPrivsFlag )); then \
@@ -279,7 +280,7 @@ install:
 						GRANT_SCRIPT=sys-privs \
 						TO_USERNAME="$(call getUserName,$(MAIN_USERID))" \
 						OMS_SAVE_FILE_INSTALL_INFO=0 \
-						SKIP_FILE_MASK=*/oms-save-grant-info.sql \
+						SKIP_FILE_MASK=*/oms-check-grant-version.sql,*/oms-save-grant-info.sql \
 					;; \
 			esac \
 		fi \

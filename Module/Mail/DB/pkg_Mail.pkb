@@ -54,6 +54,8 @@ procedure sendMailJava(
   , attachmentType varchar2
   , attachmentData blob
   , smtpServer varchar2
+  , username varchar2
+  , password varchar2
   , isHtml number
 )
 is
@@ -67,6 +69,8 @@ Mail.send(
   , java.lang.String
   , java.lang.String
   , oracle.sql.BLOB
+  , java.lang.String
+  , java.lang.String
   , java.lang.String
   , oracle.sql.NUMBER
 )
@@ -86,6 +90,10 @@ Mail.send(
   attachmentData              - данные вложения
   smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
                                 используется сервер из pkg_Common.getSmtpServer)
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   isHtml                      - отправлять ли письмо как HTML;
                                 по-умолчанию письмо отправляется как обычный текст
 */
@@ -99,6 +107,8 @@ procedure sendMail(
   , attachmentType varchar2 := null
   , attachmentData blob := null
   , smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , isHtml boolean := null
 )
 is
@@ -125,6 +135,8 @@ begin
                              else
                                pkg_Common.getSmtpServer()
                              end
+    , username            => username
+    , password            => password
     , isHtml =>
         case when isHtml
            then 1
@@ -141,6 +153,9 @@ exception when others then
         || ', subject="' || subject || '"'
         || case when smtpServer is not null then
             ', smtpServer="' || smtpServer || '"'
+          end
+        || case when username is not null then
+            ', username="' || username || '"'
           end
         || ').'
       )
@@ -221,6 +236,8 @@ end createAttachment;
   attachmentType              - тип вложения
   attachmentData              - данные вложения
   sourceMessageId             - Id сообщения, на которое посылается ответ
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
   isHtml                      - создавать сообщение как HTML
                                 ( 1 да, 0 нет ( по-умолчанию))
@@ -346,6 +363,8 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -396,6 +415,8 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -445,6 +466,8 @@ end sendHtmlMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

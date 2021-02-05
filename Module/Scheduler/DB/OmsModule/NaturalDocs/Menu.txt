@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Scheduler
-SubTitle: Версия 5.2.1
+SubTitle: Версия 5.3.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -209,6 +209,11 @@ Group: Скрипты  {
             File: v_sch_operator_batch  (no auto-title, Install/Schema/Last/v_sch_operator_batch.vw)
             File: v_sch_role_privilege  (no auto-title, Install/Schema/Last/v_sch_role_privilege.vw)
             }  # Group: Last
+
+         Group: 5.3.0  {
+
+            File: run  (no auto-title, Install/Schema/5.3.0/run.sql)
+            }  # Group: 5.3.0
 
          Group: 5.2.0  {
 

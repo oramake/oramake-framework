@@ -19,6 +19,10 @@ create or replace package pkg_MailHandler is
   smtpServer                  - имя ( или ip-адрес) SMTP-сервера
                                 Значение null приравнивается к
                                 pkg_Common.getSmtpServer.
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
@@ -34,6 +38,8 @@ create or replace package pkg_MailHandler is
 */
 function sendMessage(
   smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , maxMessageCount integer := null
 )
 return integer;
@@ -45,6 +51,10 @@ return integer;
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
                                 через ",".
                                 Значение null приравнивается к pkg_Common.getSmtpServer.
+  username                    - имя пользователя для авторизации на SMTP-сервере
+                                (null без авторизации (по умолчанию))
+  password                    - пароль для авторизации на SMTP-сервере
+                                (по умолчанию отсутствует)
   maxMessageCount             - ограничение по количеству отправляемых сообщений
                                 за один запуск процедуры. В случае передачи
                                 null, ограничение не используется.
@@ -56,6 +66,8 @@ return integer;
 */
 procedure sendHandler(
   smtpServerList varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
   , maxMessageCount integer := null
 );
 
@@ -79,6 +91,7 @@ procedure sendHandler(
                                 полученные сообщения ( при отсутствии выделяется
                                 из URL как user@domen)
   isGotMessageDeleted         - удалять ли из ящика полученные сообщения
+                                ( 1 да ( по умолчанию), 0 нет)
   fetchRequestId              - id запроса извлечения из ящика
 
   Возврат:

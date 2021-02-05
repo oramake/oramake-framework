@@ -31,3 +31,19 @@ drop table dsn_test_mview_ext
 /
 drop view v_dsn_test_mview
 /
+
+
+drop table dsn_test_app_source
+/
+
+drop table dsn_test_app_dst
+/
+drop view v_dsn_test_app_dst_src
+/
+
+drop table dsn_test_app_dst_a1
+/
+drop view v_dsn_test_app_dst_a1_src
+/
+drop table dsn_test_app_dst_a2
+/

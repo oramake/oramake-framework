@@ -6,7 +6,7 @@
 -- createInstallResult для сохранения).
 --
 -- Требования:
--- установка в БД модуля ModuleInfo версии 1.3.0;
+-- установка в БД модуля ModuleInfo версии 1.4.0;
 --
 -- Параметры:
 -- modulePartNumberList       - список номеров частей модулей в виде строки с
@@ -104,16 +104,17 @@ declare
 begin
 ' || case when :oms_common_schema is not null then :oms_common_schema || '.' end
   || 'pkg_ModuleInstall.checkInstallVersion(
-    moduleSvnRoot               => :oms_module_svn_root
-    , moduleInitialSvnPath      => :oms_module_initial_svn_path
-    , modulePartNumber          => :modulePartNumber
-    , installVersion            => :installVersion
-    , installTypeCode           => :installTypeCode
-    , isFullInstall             => :isFullInstall
-    , isRevertInstall           => :isRevertInstall
-    , resultVersion             => :resultVersion
-    , installScript             => :installScript
-    , privsUser                 => :privsUser
+    moduleSvnRoot                 => :oms_module_svn_root
+    , moduleInitialSvnPath        => :oms_module_initial_svn_path
+    , modulePartNumber            => :modulePartNumber
+    , installVersion              => :installVersion
+    , installTypeCode             => :installTypeCode
+    , isFullInstall               => :isFullInstall
+    , isRevertInstall             => :isRevertInstall
+    , resultVersion               => :resultVersion
+    , installScript               => :installScript
+    , privsUser                   => :privsUser
+    , overwriteCurrentVersionFlag => :oms_overwrite_current_version
   );
 end;
 '
@@ -128,6 +129,7 @@ end;
       , in resultVersion
       , in installScript
       , in privsUser
+      , in :oms_overwrite_current_version
     ;
   end checkInstallVersion;
 
