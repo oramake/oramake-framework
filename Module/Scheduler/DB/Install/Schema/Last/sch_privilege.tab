@@ -4,7 +4,7 @@ create table
   sch_privilege
 (
   privilege_code                  varchar2(10)                        not null
-  , privilege_name                varchar2(100)                       not null
+  , privilege_name                varchar2(200)                       not null
   , date_ins                      date                default sysdate not null
   , operator_id                   integer                             not null
   , constraint sch_privilege_pk primary key

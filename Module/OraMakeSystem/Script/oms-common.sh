@@ -36,7 +36,7 @@
 # Обеспечивает изменение файла при изменении версии программы.
 # В функциях используется переменная OMS_VERSION из основного скрипта.
 :<<END
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 END
 
 # var: omsSvnRoot
@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 26794352 $'
+commonRevisionValue='$Revision:: 26867076 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2020-12-11 15:32:46 +1100 #$'
+commonChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 # var: commonRevision
@@ -193,6 +193,13 @@ tmpFileDir="${TEMP:-/tmp}"
 # var: tmpFile
 # Временный файл для использования в скрипте.
 tmpFile="${tmpFileDir}/${scriptName}.$$"
+
+# var: isWindows
+# Run in Windows OS?
+isWindows=0
+if [[ $OS == "Windows_NT" ]]; then
+  isWindows=1
+fi
 
 # var: fileExtensionList
 # Список настроек по расширениям файлов ( в соответствии с соглашениями

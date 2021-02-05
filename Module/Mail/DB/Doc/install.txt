@@ -24,6 +24,22 @@ TO_USERNAME                   - им€ пользовател€, которому выдаютс€ права
 
 
 
+group: 2.7.0
+
+ оманда дл€ установки:
+
+> make install INSTALL_VERSION=2.7.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+«амечани€:
+- в случае ошибки из-за отсутстви€ прав типа "SYS:java.lang.RuntimePermission" на уровне Java
+   можно выдать права командой (в LOAD_USERID указываетс€ привилегированный
+   пользователь, в TO_USERNAME указываетс€ пользователь, под которым
+   установлен модуль):
+
+> make grant INSTALL_VERSION=2.7.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs OMS_SAVE_FILE_INSTALL_INFO=0 SKIP_FILE_MASK=*/oms-check-grant-version.sql,*/oms-save-grant-info.sql
+
+
+
 group: 2.6.0
 
  оманда дл€ установки:

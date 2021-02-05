@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 26794352 $
-# $Date:: 2020-12-11 15:32:46 +1100 #$
+# $Revision:: 26867076 $
+# $Date:: 2021-01-30 11:36:30 -0500 #$
 #
 
 
@@ -274,12 +274,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 26794352 $$
+omsRevisionKeyword    := \$$Revision:: 26867076 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2020-12-11 15:32:46 +1100 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-01-30 11:36:30 -0500 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -1079,12 +1079,19 @@ endif
 ifeq ($(loadFileLog),)
   toLoadLogCmd     =
   copyToLoadLogCmd =
-else
-  toLoadLogCmd     = 2>&1 | unix2dos >> "$(loadFileLog)"
+else ifeq ($(isWindows),1)
+  toLoadLogCmd     = 2>&1 | sed -e "s/\x0D//g" -e "s/$$/\x0D/" >> "$(loadFileLog)"
   copyToLoadLogCmd = \
 		2>&1 | gawk '{ \
 			print; fflush(); \
 			printf( "%s\r\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
+			}'
+else
+  toLoadLogCmd     = 2>&1 >> "$(loadFileLog)"
+  copyToLoadLogCmd = \
+		2>&1 | gawk '{ \
+			print; fflush(); \
+			printf( "%s\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
 			}'
 endif
 

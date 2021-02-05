@@ -8,7 +8,7 @@
 
 # build var: OMS_VERSION
 # Версия OMS-файлов, входящих в состав модуля.
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 
 
 
@@ -65,6 +65,13 @@ ifeq ($(OMS_INSTALL_CONFIG_DIR),)
   override OMS_INSTALL_CONFIG_DIR = $(OMS_INSTALL_PREFIX)/etc/oms
 endif
 export OMS_INSTALL_CONFIG_DIR
+
+# build var isWindows
+# Флаг выполнения в операционной системе Windows (1 да, 0 нет)
+isWindows = 0
+ifeq ($(OS),Windows_NT)
+  isWindows = 1
+endif
 
 
 

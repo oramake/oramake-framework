@@ -2,9 +2,14 @@ title: Версии
 
 
 
-group: ?.?.?
+group: 2.4.0 ( 2021-01-22)
+
+[+] Add ability to install for Linux.
 
 [!] Fix bugs in case of use custom install <prefix>.
+
+[!] Restore charset information in automatically generated HTML documentation
+    (bug in 2.2.1 version).
 
 [*] Clarify shell scripts.
 

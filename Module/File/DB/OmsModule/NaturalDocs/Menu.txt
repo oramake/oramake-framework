@@ -208,11 +208,6 @@ Group: Скрипты  {
 
    Group: Test  {
 
-      Group: 3.4.0  {
-
-         File: cyrillic-test-2  (no auto-title, Test/3.4.0/cyrillic-test-2.sql)
-         }  # Group: 3.4.0
-
       Group: Data  {
 
          File: opt_option  (no auto-title, Test/Data/opt_option.sql)

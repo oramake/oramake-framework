@@ -314,7 +314,7 @@ gendoc:
 		-o HTML "$(GENDOC_DIR)" \
 		-p "$(gendocConfigDir)" \
 		--charset utf-8 \
-		--style small \
+		--style Small \
 		$(GENDOC_FLAGS) \
 		-hl off \
 
@@ -375,18 +375,17 @@ set-oms-version:
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
 			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
-		&& unix2dos \
+		&& sed --in-place -e "s/\x0D//g" -e "s/$$/\x0D/" \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
 			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
-			2>/dev/null \
 		&& sed --in-place \
 			-e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
 			$(buildDir)/NaturalDocs/Menu.txt \
 		&& sed --in-place \
-			-e "s/^group: X\.X\.X.*$$/group: $(OMS_VERSION) ( $${versionDate:0:10})/" \
+			-e "s/^group: [?X]\.[?X]\.[?X].*$$/group: $(OMS_VERSION) ( $${versionDate:0:10})/" \
 			Doc/version.txt \
-		&& unix2dos Doc/version.txt 2>/dev/null \
+		&& sed --in-place -e "s/\x0D//g" -e "s/$$/\x0D/" Doc/version.txt \
 		&& $(MAKE) gendoc \
 		; \
 	else \

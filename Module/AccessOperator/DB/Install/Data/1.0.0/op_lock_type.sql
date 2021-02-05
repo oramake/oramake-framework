@@ -1,4 +1,4 @@
--- script: Install/Data/3.5.0/op_lock_type.sql
+-- script: Install/Data/1.0.0/op_lock_type.sql
 -- Установка начальных данных в таблицу <op_lock_type>
 
 merge into
@@ -20,7 +20,7 @@ using
       'TEMPORAL' as lock_type_code
       , 'Временная' as lock_type_name
     from
-      dual  
+      dual
     union all
     select
       'UNUSED' as lock_type_code
@@ -48,7 +48,7 @@ when not matched then
   )
   values(
     src.lock_type_code
-    , src.lock_type_name 
+    , src.lock_type_name
     , 1
   )
 /

@@ -48,15 +48,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26794352 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2020-12-11 15:32:46 +1100 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -326,7 +326,7 @@ generateSpec()
     && ( cat $tmpBodyFunction | gawk -v objectTypeFlag=$objectTypeFlag -f "${0%.*}.awk") \
     && echo \
     && cat $tmpSpecFileCopy | getPlsqlObjectPart 3 \
-  ) | unix2dos > $specFileName
+  ) | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $specFileName
 
   if (( $skipDeleteTemp == 0)); then
     logDebug3 "Delete temporary files..."

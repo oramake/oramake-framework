@@ -114,7 +114,7 @@ option_name                       varchar2(250),
 /* var: option_description
   Описание параметра
 */
-option_description                varchar2(1000),
+option_description                varchar2(2000),
 
 /* var: prod_value_flag
   Флаг использования значения только в промышленных ( либо тестовых) БД ( 1 только в промышленных БД, 0 только в тестовых БД, null без ограничений)

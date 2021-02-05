@@ -269,7 +269,7 @@ loadFile()
 
   runCmd ${omsPrefix}oms-load \
         --userid "$loadUserId" \
-        --operatorid "$loadOperatorId" \
+        ${loadOperatorId:+--operatorid \"$loadOperatorId\"} \
         "$@"
 }
 
@@ -277,26 +277,33 @@ loadFile()
 
 checkOutputCyrillic()
 {
-  startTestCase "oms-load: output Cyrillic alphabet in CP1251" || return 0
-  local cyr34Char=$'\xc2\xc3'
+  local encName="CP1251"
+  local cyrChars=$'\xc0\xc1\xc2\xc3'
+  local newNlsLang="AMERICAN_CIS.CL8MSWIN1251"
+  if (( isUtf8 )); then
+    encName="UTF8"
+    cyrChars=$'\xD0\x90\xD0\x91\xD0\x92\xD0\x93'
+    newNlsLang="AMERICAN_CIS.AL32UTF8"
+  fi
+  startTestCase "oms-load: output Cyrillic alphabet in $encName" || return 0
   createFile DB/Test/out-cyrillic.sql <<END
 set feedback off
 begin
   dbms_output.put_line(
-    'first 4 characters of Cyrillic alphabet in CP1251: '
-    || chr( to_number( 'c0', 'xx'))
-    || chr( to_number( 'c1', 'xx'))
-    || '$cyr34Char'
+    'first 4 characters of Cyrillic alphabet: '
+    || utl_i18n.raw_to_char( hextoraw('c0c1c2c3'), 'CL8MSWIN1251')
+    || ':' || '$cyrChars'
   );
 end;
 /
 quit
 END
+  local oldNlsLang=$NLS_LANG
+  export NLS_LANG=$newNlsLang
   local outStr=$(loadFile DB/Test/out-cyrillic.sql)
-  if [[ ${outStr:0:54} \
-        != $'first 4 characters of Cyrillic alphabet in CP1251: \xc0\xc1\xc2' \
-      ]]; then
-    die "Output of the command differs from expected:" "$outStr"
+  NLS_LANG=$oldNlsLang
+  if [[ ${outStr:41} != "${cyrChars}:${cyrChars}" ]]; then
+    die "Output of the command [${outStr:41}] differs from expected:" "$outStr"
   else
     echo "$outStr"
     echo "!!! necessary to check the correctness of the output visually !!!"
@@ -376,7 +383,7 @@ for isUtf8 in "" 1; do
 
     runOms update-module
 
-    if (( loadFlag && ! isUtf8 )); then
+    if (( loadFlag )); then
       startTestCase "oms-load: connection" && loadFile DB/Test/connection.sql
       checkOutputCyrillic
     fi

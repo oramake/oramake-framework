@@ -38,15 +38,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26794352 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2020-12-11 15:32:46 +1100 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -619,10 +619,14 @@ exec_create-module()
           if (( isDryRun )); then
             $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
           else
+            local tmpFileNative=$tmpFile
+            if (( isWindows )); then
+              tmpFileNative=$(cygpath --windows "$tmpFileNative")
+            fi
             trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
             echo "*" > "$tmpFile" \
               && $svnCmd propset svn:ignore \
-                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+                -F "$tmpFileNative" "$dstFile" >/dev/null \
               || exitError "Cannot set snv:ignore on file \"$dstFile\"."
             rm -f "$tmpFile"
           fi
@@ -838,7 +842,8 @@ exec_gen-schema-revert()
   local revertFilePath="$schemaDir/revert.sql"
   local revertFilePathTemp=${revertFilePath}".$$"
   getModuleEncoding "$rootDir"
-  gen-schema-revert_file | unix2dos > $revertFilePathTemp
+  gen-schema-revert_file \
+    | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $revertFilePathTemp
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" \
       "$revertFilePathTemp" >"$revertFilePath"
@@ -993,7 +998,8 @@ exec_gen-schema-run()
   local runFilePath="$schemaDir/run.sql"
   local runFilePathTemp=${runFilePath}".$$"
   getModuleEncoding "$rootDir"
-  gen-schema-run_file | unix2dos > $runFilePathTemp
+  gen-schema-run_file \
+    | sed -e "s/\x0D//g" -e "s/$/\x0D/" > $runFilePathTemp
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" \
       "$runFilePathTemp" >"$runFilePath"

@@ -1,4 +1,4 @@
--- script: Install/Grant/Last/sys-privs.sql
+-- script: Install/Grant/2.6.0/sys-privs.sql
 -- Выдает права на подключение по порту 465 (требуется для SSL-авторизации
 -- на SMTP-сервере).
 --

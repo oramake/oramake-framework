@@ -3,7 +3,7 @@
 - mkdir
 - find
 - iconv
-- unix2dos
+- unix2dos (не требуется начиная с OMS версии 2.4.0)
 - gawk
 - sed
 - grep

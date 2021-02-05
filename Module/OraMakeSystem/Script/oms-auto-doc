@@ -97,14 +97,14 @@
 # var: OMS_VERSION
 # Версия программы
 #
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 
 #
 # Информация о версии файла из SVN
 #
 omsSvnRoot='Oracle/Module/OraMakeSystem'
-fileRevisionValue='$Revision:: 26794352 $'
-fileChangeDateValue='$Date:: 2020-12-11 15:32:46 +1100 #$'
+fileRevisionValue='$Revision:: 26867076 $'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 fileRevision=${fileRevisionValue:12:${#fileRevisionValue}-13}
 fileChangeDate=${fileChangeDateValue:8:26}
 
@@ -131,16 +131,6 @@ processFilesAwkPath="$(dirname $0)/oms-file-menu.awk";
 # var: rootDir
 # Корневой каталог модуля
 rootDir=""
-
-# func: logMessage
-# Выводит отладочное сообщение
-#
-logMessage()
-{
-  if [[ $debugLevel -gt 0 ]]; then
-    echo "$1" >&2;
-  fi;
-}
 
 # func: usage
 # Выводит информацию об использовании.
@@ -233,7 +223,12 @@ BEGIN { partNumber = 1 }
 # и записывает в стандартный выходной поток
 processFiles()
 {
-  logMessage "processFiles( see log messages in menu file) ...";
+  logDebug "processFiles( see log messages in menu file) ...";
+  # is single byte encoding?
+  local isSingleByte=
+  if (( isConvertModuleEncoding )); then
+    isSingleByte=1
+  fi
   (
   if (( isConvertModuleEncoding )); then
     iconv -f "utf-8" -t "$moduleEncoding" "$configPath"
@@ -247,11 +242,11 @@ processFiles()
       -v debugLevel=$debugLevel \
       -v isItemFirst=$isItemFirst \
       -v commentLabel=$(basename "$processFilesAwkPath" .awk) \
-      --re-interval
+      --re-interval ${isSingleByte:+--characters-as-bytes}
   if ! [[ $? -eq 0 ]]; then
     exit 3;
   fi;
-  logMessage "processFiles: finish";
+  logDebug "processFiles: finish";
 }
 
 # func: initMenuGenerator
@@ -259,7 +254,7 @@ processFiles()
 #
 function initMenuGenerator()
 {
-  menuPath=${menuPath:-${rootDir}/Db/OmsModule/NaturalDocs/Menu.txt}
+  menuPath=${menuPath:-${rootDir}/DB/OmsModule/NaturalDocs/Menu.txt}
   if ! [[ -f $menuPath ]]; then
     echo "Could not find menu file \"$menuPath\"">&2;
     exit 1;
@@ -274,20 +269,18 @@ function initMenuGenerator()
     exit 1;
   fi;
                                         # Путь к временному файлу
-  menuTempPath=${menuOutputFile:-${rootDir}/Db/OmsModule/Load/MenuTemp.txt};
+  menuTempPath=${menuOutputFile:-${rootDir}/DB/OmsModule/Load/MenuTemp.txt};
   if ! [[ -d $(dirname menuTempPath) ]]; then
     menuTempPath="/tmp/oms-menu.MenuCopy.$$";
   fi;
                                        # Пути к настроечным файлам
   commonConfigPath=$installShareDir/Data/Doc/menu-config.txt;
-  moduleConfigPath="${rootDir}/Db/OmsModule/menu-config.txt";
+  moduleConfigPath="${rootDir}/DB/OmsModule/menu-config.txt";
 
-  getModuleEncoding "$rootDir"
-
-  logMessage "menuPath = "$menuPath
-  logMessage "menuOutputFile = "$menuOutputFile
-  logMessage "menuTempPath = "$menuTempPath
-  logMessage "processFilesAwkPath = "$processFilesAwkPath
+  logDebug "menuPath = "$menuPath
+  logDebug "menuOutputFile = "$menuOutputFile
+  logDebug "menuTempPath = "$menuTempPath
+  logDebug "processFilesAwkPath = "$processFilesAwkPath
 }
 
 # func: generateMenu
@@ -309,16 +302,16 @@ function generateMenu()
       exit 1;
     fi;
   fi;
-  logMessage "configPath = "$configPath
+  logDebug "configPath = "$configPath
                                        # Генерируем меню
   ( getMenuPart "$menuPath" 1 0 \
     && processFiles $menuPath \
     && getMenuPart "$moduleConfigMenuPath" 3 $isConvertModuleEncoding \
   ) > ${menuTempPath};
   menuResult=$?
-  logMessage "menuResult = $menuResult"
+  logDebug "menuResult = $menuResult"
   if [[ -z $menuOutputFile ]] && [[ $menuResult -eq 0 ]]; then
-    logMessage "copying result menu ..."
+    logDebug "copying result menu ..."
     cp $menuTempPath $menuPath
     rm -f $menuTempPath;
   fi;
@@ -352,11 +345,11 @@ function initNaturalDocs()
   # Путь для автодокументации
   gendocDir="${gendocDir:-${rootDir}/Doc/DB/AutoGen}"
   # Каталог с настройками утилиты генерации
-  gendocConfigDir="${rootDir}/Db/OmsModule/NaturalDocs"
+  gendocConfigDir="${rootDir}/DB/OmsModule/NaturalDocs"
   # Каталог с временными файлами утилиты генерации
   gendocCacheDir="${gendocConfigDir}/Data"
   # Каталог с файлами - источниками для документации
-  sourceDir=${rootDir}/Db
+  sourceDir=${rootDir}/DB
 }
 
 # func: clean
@@ -370,7 +363,7 @@ function clean()
       echo "Directory \"${gendocCacheDir}\" not found";
       exit 3;
     fi;
-    logMessage "remove ${gendocCacheDir}/*"
+    logDebug "remove ${gendocCacheDir}/*"
     rm -rf ${gendocCacheDir}/*;
   fi;
 }
@@ -386,27 +379,31 @@ function runNaturalDocs()
 {
   initNaturalDocs;
   excludeRevert="";
-  if [[ -d "${rootDir}/Db/Install/Schema" ]]; then
+  if [[ -d "${rootDir}/DB/Install/Schema" ]]; then
     excludeRevert=$( \
-      find "${rootDir}"/Db/Install/Schema \
+      find "${rootDir}"/DB/Install/Schema \
         -name Revert      \
         -type d           \
         -printf " -xi %p" \
       );
   fi;
   outputFormat=$2;
+  local htmlCharset=$moduleEncoding
+  if [[ $htmlCharset == "cp1251" ]]; then
+    htmlCharset="Windows-1251"
+  fi
   naturalDocsCommand="\
     ${gendocRun} \
     -i ${sourceDir} \
     -o ${outputFormat} ${outputDir} \
     -p ${gendocConfigDir} \
-    --charset "${moduleEncoding}" \
-    --style small \
-    -xi "${rootDir}/Db/OmsModule" \
+    --charset "${htmlCharset}" \
+    --style Small \
+    -xi "${rootDir}/DB/OmsModule" \
     "${excludeRevert}" \
     -hl off \
     $1";
-  logMessage "$naturalDocsCommand";
+  logDebug "$naturalDocsCommand";
   $naturalDocsCommand;
 }
 
@@ -416,7 +413,7 @@ function runNaturalDocs()
 # Изменение режима запуска скрипта
 #
 changeRunMode() {
-  logMessage "changeRunMode $1"
+  logDebug "changeRunMode $1"
   if [[ -n $runMode ]] && ! [[ $runMode -eq $1 ]]; then
     echo "Option set is illegal" 1>&2;
     echo "Use $(basename $0) --help"
@@ -440,7 +437,7 @@ parseArgument()
         rootDir="$2"; shift;
         ;;
       --debug-level )
-        debugLevel=$2; shift;
+        setDebugLevel "$2"; debugLevel=$2; shift;
         ;;
       -h | --help)
         changeRunMode $RUN_MODE_HELP;
@@ -489,12 +486,19 @@ parseArgument()
 # Устанавливаем значения по умолчанию.
 #
 rootDir=${rootDir:-.}
-outputDir=${outputDir:-"${rootDir}/Doc/Db/Autogen"}
+outputDir=${outputDir:-"${rootDir}/Doc/DB/AutoGen"}
 
                                        # Инициализация
 parseArgument "$@";
-logMessage "runMode=$runMode";
+logDebug "runMode=$runMode";
+
                                        # Различные варианты выполнения
+if (( runMode != RUN_MODE_CLEAN \
+    && runMode != RUN_MODE_HELP \
+    && runMode != RUN_MODE_VERSION \
+    )); then
+  getModuleEncoding "$rootDir"
+fi
 case $runMode in
   $RUN_MODE_CLEAN )
     clean;

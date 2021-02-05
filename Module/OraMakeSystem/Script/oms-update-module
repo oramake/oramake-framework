@@ -47,15 +47,15 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.3.0
+OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26794352 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDateValue
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2020-12-11 15:32:46 +1100 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -414,12 +414,9 @@ patchFile()
   local patchFile=""
   local patchRevision=""
   if ! ((isUnixFormat)) && (( fromRevision < 273 )); then
-    $runCmd unix2dos "$dstFile" 2>/dev/null
+    $runCmd sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$dstFile"
   fi
-  local patchOption="--forward --batch --silent"
-  if (( isUseSubversion)) ; then
-    patchOption="$patchOption --no-backup-if-mismatch"
-  fi
+  local patchOption="--forward --batch --no-backup-if-mismatch --silent"
   for patchFile in `cd "$patchDir" && ls p[-]*[1-9][0-9]*.diff 2>/dev/null`
   do
     patchRevision="${patchFile%%.*}"
@@ -435,7 +432,7 @@ patchFile()
         updateMapVersion "$baseFile" "$dstFile" "1.3"
       else
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
-          $runCmd dos2unix "$dstFile" 2>/dev/null
+          $runCmd sed --in-place -e "s/\x0D//g" "$dstFile"
         fi
         local catCmd
         if (( isConvertModuleEncoding )); then
@@ -483,7 +480,7 @@ patchFile()
             || logError "error patch: $dstFile, $patchFile"
           fi
         if ! ((isUnixFormat)) && [[ -f "$dstFile" ]]; then
-          $runCmd unix2dos "$dstFile" 2>/dev/null
+          $runCmd sed --in-place -e "s/\x0D//g" -e "s/$/\x0D/" "$dstFile"
         fi
       fi
     fi
@@ -637,10 +634,14 @@ updateModule()
           if (( isDryRun )); then
             $runCmd $svnCmd propset svn:ignore -F "*" "$dstFile"
           else
+            local tmpFileNative=$tmpFile
+            if (( isWindows )); then
+              tmpFileNative=$(cygpath --windows "$tmpFileNative")
+            fi
             trap 'rm -f ${tmpFile} ; exit' 0 1 2 3 15
             echo "*" > "$tmpFile" \
               && $runCmd $svnCmd propset svn:ignore \
-                -F "`cygpath --windows $tmpFile`" "$dstFile" >/dev/null \
+                -F "$tmpFileNative" "$dstFile" >/dev/null \
               || exitError "Cannot set snv:ignore on file \"$dstFile\"."
             rm -f "$tmpFile"
           fi
