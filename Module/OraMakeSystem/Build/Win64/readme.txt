@@ -27,8 +27,8 @@ gmp 6.2.1-1
 coreutils 8.32-1
 findutils 4.7.0-1
 mpfr 4.1.0-1
-libreadline 8.1.0-1
 ncurses 6.2-1
+libreadline 8.1.0-1
 gawk 5.1.0-1
 sed 4.8-1
 libpcre 8.44-1
