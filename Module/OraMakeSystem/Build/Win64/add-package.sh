@@ -9,6 +9,11 @@ for filePath in "$@"; do
   packageNumber=${packageNumber%%-x86_64.*}
   packageNumber=${packageNumber#-}
   packagePath="MSYS2-packages/$fileName"
+  tarOpt=
+  case $fileName in
+    *.zst) tarOpt="--use-compress-program=zstd";;
+    *) tarOpt="--auto-compress"
+  esac
   isNewPackage=0
 
   if [[ "$filePath" != "$packagePath" ]] && [[ "$filePath" != "./$packagePath" ]]; then
@@ -21,14 +26,14 @@ for filePath in "$@"; do
       && git add "$packagePath"; \
     fi \
   && cd MSYS2 \
-  && tar xfa "../$packagePath" \
+  && tar $tarOpt -xf "../$packagePath" \
   && if ! [[ -d usr/share/oms-msys2 ]]; then \
       mkdir -p "usr/share/oms-msys2"; \
     fi \
   && mkdir "usr/share/oms-msys2/$packageName" \
   && mv .??* "usr/share/oms-msys2/$packageName" \
   && git add . \
-  && for f in $(tar -tf "../$packagePath"); do \
+  && for f in $(tar $tarOpt -tf "../$packagePath"); do \
       if [[ -f "$f" ]] && [[ -x "$f" ]]; then \
         find "$f" -perm /+x -exec git update-index --chmod=+x "$f" \; ; \
       fi; \
