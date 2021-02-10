@@ -118,7 +118,7 @@ install-msys2:
 				--target-directory="$(WIN_ROOT)" \
 				--parents \
 				$$(../make-file-list.sh) \
-			&& for d in etc tmp var usr/local; do \
+			&& for d in etc usr/local; do \
 					if [[ ! -d "$(WIN_ROOT)/$$d" ]]; then \
 						mkdir -p "$(WIN_ROOT)/$$d"; \
 					fi; \
