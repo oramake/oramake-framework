@@ -503,10 +503,10 @@ dist:
 			msys2Root="Module/OraMakeSystem/Build/Win64/MSYS2"; \
 			execCmd="./$$msys2Root/cmd/exec-command.cmd -"; \
 			setDistFile "$(DIST_DIR)/$(TAG_NAME)-cygwin.tar.gz"; \
-			tempDirMsys2=`$$execCmd mktemp -d --tmpdir=/tmp oramake-dist.XXX` \
+			tempDir=`mktemp -d --tmpdir="$(DIST_DIR)" oramake-dist.XXX` \
 				|| die "Error on creating temporary directory"; \
-			tempDir="$${msys2Root}$$tempDirMsys2"; \
-			$$execCmd 7za x -o"$$tempDirMsys2/src" "$$fullDist" >/dev/null \
+			tempDir=`cygpath --absolute --unix "$$tempDir"`; \
+			$$execCmd 7za x -o"$$tempDir/src" "$$fullDist" >/dev/null \
 				|| die "Error on unpacking $$fullDist to temp directory $$tempDir"; \
 			srcDir="$$tempDir/src/$(TAG_NAME)"; \
 			winType="Win64"; \
@@ -518,7 +518,7 @@ dist:
 					--prefix="$(TAG_NAME)/" \
 					--format=tar.gz \
 					"$(TAG_NAME)" \
-					`cd ../../$$srcDir && for f in * Build/*; do \
+					`cd $$srcDir && for f in * Build/*; do \
 						case $$f in \
 							*.cmd | Build | Build/$$winType) ;; \
 							*) echo $$f; \
@@ -531,13 +531,13 @@ dist:
 					}; \
 			echo "created: $$distFile"; \
 			setDistFile "$(DIST_DIR)/$(TAG_NAME)-$${winType,}.zip"; \
-			winRoot=`cygpath -am $$tempDir/OraMakeSystem`; \
+			winRoot=`cygpath --mixed $$tempDir/OraMakeSystem`; \
 			{ cd "$$srcDir" \
 				&& ./make.cmd install WIN_ROOT="$$winRoot" >/dev/null \
 				&& cd - >/dev/null; \
 			} \
 				|| die "Error on install OraMakeSystem to temp directory: $$winRoot"; \
-			$$execCmd 7za a -mx9 "$$distFile" "$$tempDirMsys2/OraMakeSystem" \
+			$$execCmd 7za a -mx9 "$$distFile" "$$tempDir/OraMakeSystem" \
 					>/dev/null \
 				|| { \
 					rm -f "$$distFile"; \
