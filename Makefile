@@ -500,21 +500,27 @@ dist:
 		if [[ "$$moduleName" == "OraMakeSystem" &&  \
 					"$(TAG_NAME)" != "OraMakeSystem-1.8.0" ]]; then \
 			fullDist=$$distFile; \
+			msys2Root="Module/OraMakeSystem/Build/Win64/MSYS2"; \
+			execCmd="./$$msys2Root/cmd/exec-command.cmd -"; \
 			setDistFile "$(DIST_DIR)/$(TAG_NAME)-cygwin.tar.gz"; \
-			tempDir=`mktemp -d --tmpdir oramake-dist.XXX` \
+			tempDirMsys2=`$$execCmd mktemp -d --tmpdir=/tmp oramake-dist.XXX` \
 				|| die "Error on creating temporary directory"; \
-			./Module/OraMakeSystem/Build/Win32/MSYS2/cmd/exec-command.cmd \
-					- 7za x -o"$$tempDir/src" "$$fullDist" >/dev/null \
+			tempDir="$${msys2Root}$$tempDirMsys2"; \
+			$$execCmd 7za x -o"$$tempDirMsys2/src" "$$fullDist" >/dev/null \
 				|| die "Error on unpacking $$fullDist to temp directory $$tempDir"; \
-			srcDir=$$tempDir/src/$(TAG_NAME); \
+			srcDir="$$tempDir/src/$(TAG_NAME)"; \
+			winType="Win64"; \
+			if [[ ! -d $$srcDir/Build/Win64 && -d $$srcDir/Build/Win32 ]]; then \
+				winType="Win32"; \
+			fi; \
 			{ cd "Module/$$moduleName" \
 				&& git archive \
 					--prefix="$(TAG_NAME)/" \
 					--format=tar.gz \
 					"$(TAG_NAME)" \
-					`cd $$srcDir && for f in * Build/*; do \
+					`cd ../../$$srcDir && for f in * Build/*; do \
 						case $$f in \
-							*.cmd | Build | Build/Win32) ;; \
+							*.cmd | Build | Build/$$winType) ;; \
 							*) echo $$f; \
 						esac; \
 						done;` \
@@ -524,12 +530,15 @@ dist:
 						die "Error during creating distributive: $$distFile"; \
 					}; \
 			echo "created: $$distFile"; \
-			setDistFile "$(DIST_DIR)/$(TAG_NAME)-win32.zip"; \
-		  $$srcDir/make.cmd -C "$$srcDir" \
-					install WIN_ROOT="$$tempDir/OraMakeSystem" >/dev/null \
-				|| die "Error on install OraMakeSystem to temp directory: $$tempDir"; \
-			./Module/OraMakeSystem/Build/Win32/MSYS2/cmd/exec-command.cmd \
-					- 7za a -mx9 "$$distFile" "$$tempDir/OraMakeSystem" >/dev/null \
+			setDistFile "$(DIST_DIR)/$(TAG_NAME)-$${winType,}.zip"; \
+			winRoot=`cygpath -am $$tempDir/OraMakeSystem`; \
+			{ cd "$$srcDir" \
+				&& ./make.cmd install WIN_ROOT="$$winRoot" >/dev/null \
+				&& cd - >/dev/null; \
+			} \
+				|| die "Error on install OraMakeSystem to temp directory: $$winRoot"; \
+			$$execCmd 7za a -mx9 "$$distFile" "$$tempDirMsys2/OraMakeSystem" \
+					>/dev/null \
 				|| { \
 					rm -f "$$distFile"; \
 					die "Error on creating $$distFile from temp install: $$tempDir"; \
