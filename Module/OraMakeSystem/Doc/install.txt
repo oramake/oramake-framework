@@ -474,8 +474,9 @@ make test TEST_USERID=???/???@???
 
 - если в параметрах <TEST_USERID> или <TEST_OPERATORID> указаны значения без
   пароля, то будет выполнена попытка получения пароля с помощью
-  вызова внешней программы ( см. <connect.sh::cspGetUserPassword>,
-  <connect.sh::cspGetOperatorPassword>), при этом если в параметре
+  вызова внешней программы (см. <connect.sh::cspGetUserPassword>,
+  <connect.sh::cspGetOperatorPassword>, а также
+  <Использование менеджера паролей>), при этом если в параметре
   <TEST_USERID> указано значение без имени пользователя ( в формате "@dbName"),
   то имя пользователя будет определено с помощью вызова функции
   <connect.sh::cspGetDefaultUserName>;

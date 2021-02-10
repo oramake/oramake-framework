@@ -109,7 +109,7 @@ install-msys2:
 	if [[ ! -d "$(WIN_ROOT)" ]]; then \
 		mkdir "$(WIN_ROOT)"; \
 	fi \
-	&& cd Build/Win32/MSYS2 \
+	&& cd Build/Win64/MSYS2 \
 	&& { \
 			cp \
 				--preserve=mode,ownership,timestamps \
@@ -118,20 +118,22 @@ install-msys2:
 				--target-directory="$(WIN_ROOT)" \
 				--parents \
 				$$(../make-file-list.sh) \
+			&& for d in etc tmp var usr/local; do \
+					if [[ ! -d "$(WIN_ROOT)/$$d" ]]; then \
+						mkdir -p "$(WIN_ROOT)/$$d"; \
+					fi; \
+				done \
 			&& gawk -F" = " \
 				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
 				`for f in usr/share/oms-msys2/*; do \
 						case $${f:20} in \
-							db | gdbm | libdb | libgdbm ) ;; \
+							p7zip ) ;; \
 							*) echo $$f/.PKGINFO; \
 						esac; \
 					done` \
 				> "$(WIN_ROOT)/etc/package-versions.txt" \
 			&& cd - >/dev/null \
-		;} \
-	&& if [[ ! -d "$(WIN_ROOT)/usr/local" ]]; then \
-		mkdir -p "$(WIN_ROOT)/usr/local"; \
-	fi
+		;}
 
 
 install: install-msys2
@@ -146,12 +148,12 @@ install-oms-msys2:
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
 		--target-directory="$(WIN_ROOT)/cmd" \
-		Build/Win32/MSYS2/cmd/* \
+		Build/Win64/MSYS2/cmd/* \
 	&& cp \
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
 		--target-directory="$(WIN_ROOT)" \
-		Build/Win32/MSYS2/*.cmd
+		Build/Win64/MSYS2/*.cmd
 
 
 install-oms: install-oms-msys2
@@ -374,11 +376,11 @@ set-oms-version:
 			$(scriptDir)/*[^~] \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
-			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+			$(buildDir)/Win64/MSYS2/cmd/exec-command.cmd \
 		&& sed --in-place -e "s/\x0D//g" -e "s/$$/\x0D/" \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
-			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+			$(buildDir)/Win64/MSYS2/cmd/exec-command.cmd \
 		&& sed --in-place \
 			-e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
 			$(buildDir)/NaturalDocs/Menu.txt \
