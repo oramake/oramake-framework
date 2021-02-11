@@ -6,6 +6,8 @@ group: 2.4.0 ( 2021-01-22)
 
 [+] Add ability to install for Linux.
 
+[*] Use 64-bit distribution for Windows (instead of 32-bit).
+
 [!] Fix bugs in case of use custom install <prefix>.
 
 [!] Restore charset information in automatically generated HTML documentation

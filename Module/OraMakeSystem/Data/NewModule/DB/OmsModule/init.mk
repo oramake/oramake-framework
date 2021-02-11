@@ -24,6 +24,10 @@ empty :=
 # Запятая.
 comma := ,
 
+# build var: sharp
+# Знак решетки (#).
+sharp := \#
+
 # build var: space
 # Пробел.
 space := $(empty) $(empty)
@@ -97,7 +101,7 @@ exportOmsInstallDir = export \
 #
 getRevisionFromKeyword = $(strip $(shell \
     keyString='$(1)'; \
-    echo "$${keyString:12:`expr length "$${keyString}"`-13}" \
+    echo "$${keyString:12:$${$(sharp)keyString}-13}" \
   ))
 
 

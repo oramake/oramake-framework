@@ -10,7 +10,7 @@ Doc/Html/ru/index.html
   Installation on Windows
   ========================
 
-1a. In case of installation from OraMakeSystem-X.X.X-win32.zip archive:
+1a. In case of installation from OraMakeSystem-X.X.X-win64.zip archive:
 
   - unpack the contents of the archive ( for example, into C:\).
 

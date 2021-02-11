@@ -269,7 +269,7 @@ loadFile()
 
   runCmd ${omsPrefix}oms-load \
         --userid "$loadUserId" \
-        ${loadOperatorId:+--operatorid \"$loadOperatorId\"} \
+        ${loadOperatorId:+--operatorid "$loadOperatorId"} \
         "$@"
 }
 

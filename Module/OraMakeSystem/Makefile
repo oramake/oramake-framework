@@ -91,6 +91,22 @@ configDir     = $(prefix)/etc/oms
 # (1 да, "" нет)
 MSYS2_FLAG =
 
+# Удаляет файлы установки для Windows с сохранением каталога с настройками
+removeMsysOms = \
+	cfgDir="$(configDir)"; \
+	for f in \
+				$(WIN_ROOT)/usr/local/etc/* \
+				$(WIN_ROOT)/usr/local/* \
+				$(WIN_ROOT)/usr/* \
+				$(WIN_ROOT)/* \
+			; do \
+		if [[ "$$f" != "$$cfgDir" ]] \
+				&& [[ "$${cfgDir%$$f/*}" == "$$cfgDir" ]] \
+				; then \
+			rm -rf "$$f"; \
+		fi; \
+	done;
+
 ifeq ($(OSTYPE),msys)
 
 MSYS2_FLAG = 1
@@ -108,8 +124,10 @@ install-msys2:
 	fi; \
 	if [[ ! -d "$(WIN_ROOT)" ]]; then \
 		mkdir "$(WIN_ROOT)"; \
+	elif [[ -f "$(WIN_ROOT)/oms.cmd" ]]; then \
+		$(removeMsysOms) \
 	fi \
-	&& cd Build/Win32/MSYS2 \
+	&& cd Build/Win64/MSYS2 \
 	&& { \
 			cp \
 				--preserve=mode,ownership,timestamps \
@@ -118,20 +136,22 @@ install-msys2:
 				--target-directory="$(WIN_ROOT)" \
 				--parents \
 				$$(../make-file-list.sh) \
+			&& for d in etc usr/local; do \
+					if [[ ! -d "$(WIN_ROOT)/$$d" ]]; then \
+						mkdir -p "$(WIN_ROOT)/$$d"; \
+					fi; \
+				done \
 			&& gawk -F" = " \
 				'/pkgname/ { pkgName=$$2 } /pkgver/ { print pkgName " " $$2 }' \
 				`for f in usr/share/oms-msys2/*; do \
 						case $${f:20} in \
-							db | gdbm | libdb | libgdbm ) ;; \
+							p7zip ) ;; \
 							*) echo $$f/.PKGINFO; \
 						esac; \
 					done` \
 				> "$(WIN_ROOT)/etc/package-versions.txt" \
 			&& cd - >/dev/null \
-		;} \
-	&& if [[ ! -d "$(WIN_ROOT)/usr/local" ]]; then \
-		mkdir -p "$(WIN_ROOT)/usr/local"; \
-	fi
+		;}
 
 
 install: install-msys2
@@ -146,12 +166,12 @@ install-oms-msys2:
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
 		--target-directory="$(WIN_ROOT)/cmd" \
-		Build/Win32/MSYS2/cmd/* \
+		Build/Win64/MSYS2/cmd/* \
 	&& cp \
 		--preserve=mode,ownership,timestamps \
 		--no-dereference --preserve=links \
 		--target-directory="$(WIN_ROOT)" \
-		Build/Win32/MSYS2/*.cmd
+		Build/Win64/MSYS2/*.cmd
 
 
 install-oms: install-oms-msys2
@@ -201,6 +221,10 @@ install-oms:
 		\) \
 		-delete \
 	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
+	&& find \
+		"$(configDir)/UpdateModule" \
+		-name ".gitignore" \
+		-delete \
 	&& mkdir -p "$(shareDir)/Config" \
 	&& cp --force Config/Legacy/* "$(shareDir)/Config" \
 	&& if [[ -z "$(MSYS2_FLAG)" ]]; then \
@@ -248,19 +272,7 @@ uninstall:
 			rm -rf "$(WIN_ROOT)" \
 			&& echo "Installation directory removed: \"$$winRoot\""; \
 		else \
-			cfgDir="$(configDir)"; \
-			for f in \
-						$(WIN_ROOT)/usr/local/etc/* \
-						$(WIN_ROOT)/usr/local/* \
-						$(WIN_ROOT)/usr/* \
-						$(WIN_ROOT)/* \
-					; do \
-				if [[ "$$f" != "$$cfgDir" ]] \
-						&& [[ "$${cfgDir%$$f/*}" == "$$cfgDir" ]] \
-						; then \
-					rm -rf "$$f"; \
-				fi; \
-			done; \
+			$(removeMsysOms) \
 			echo "OraMakeSystem files deleted"; \
 			echo "(use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\" along with config files)"; \
 		fi; \
@@ -374,11 +386,11 @@ set-oms-version:
 			$(scriptDir)/*[^~] \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
-			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+			$(buildDir)/Win64/MSYS2/cmd/exec-command.cmd \
 		&& sed --in-place -e "s/\x0D//g" -e "s/$$/\x0D/" \
 			$(dataDir)/NewModule/DB/OmsModule/init.mk \
 			$(dataDir)/NewModule/DB/OmsModule/common.mk \
-			$(buildDir)/Win32/MSYS2/cmd/exec-command.cmd \
+			$(buildDir)/Win64/MSYS2/cmd/exec-command.cmd \
 		&& sed --in-place \
 			-e 's/^SubTitle: Версия [0-9.]*$$/SubTitle: Версия $(OMS_VERSION)/' \
 			$(buildDir)/NaturalDocs/Menu.txt \
