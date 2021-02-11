@@ -25,6 +25,7 @@ find * -type f -print \
     -e '^usr/bin/\(fgrep\|findssl\.sh\|igawk\|notepad\)$' \
     -e '^usr/bin/\(ssh-copy-id\|updatedb\|vi\|wordpad\)$' \
     -e '^usr/bin/\(\[\|arch\|base32\|base64\|chcon\)\.exe$' \
+    -e '^usr/bin/\(b2sum\|basenc\|chattr\)\.exe$' \
     -e '^usr/bin/\(chgrp\|chmod\|chown\|chroot\|cksum\)\.exe$' \
     -e '^usr/bin/\(csplit\|cygwin-.*\)\.exe$' \
     -e '^usr/bin/\(dd\|df\|dir\|dircolors\|du\|expand\)\.exe$' \
@@ -58,14 +59,18 @@ find * -type f -print \
   -e '^usr/(share|lib)/perl5/core_perl/(?!(strict|integer|English|FindBin|warnings|XSLoader|Errno|Config|vars|Exporter|Carp|File/(Basename|Copy|Path)|File/Spec|constant|lib|Text|DynaLoader|Tie|Config_heavy|Config_git|overload|overloading|base|(.*/)?(re|Cwd|NamedCapture))(\.p[ml]$|/.*))' \
   | grep -v \
     -e '^usr/share/oms-msys2/' \
-      -e '/\.gitignore$' \
+    -e '/\.gitignore$' \
     -e '^usr/bin/sh\.exe$' \
     -e '^usr/bin/msys-\(gdbm-\|gdbm_compat-\).*\.dll$' \
     -e '^usr/bin/\(gdbmtool\|gdbm_dump\|gdbm_load\)\.exe$' \
     -e '^usr/bin/db_\(archive\|checkpoint\|deadlock\|dump\|hotbackup\|load\|log_verify\|printlog\|recover\|replicate\|stat\|tuner\|upgrade\|verify\)\.exe$' \
     -e '^etc/profile.d/perlbin\.*' \
-    -e '^usr/bin/perl5.22.1.exe$' \
+    -e '^usr/etc/profile.d/gawk\.*' \
+    -e '^usr/bin/perl5.32.0.exe$' \
     -e '^usr/bin/core_perl/' \
+    -e '^usr/lib/perl5/core_perl/File/Spec/AmigaOS.pm' \
+    -e '^usr/share/fish/vendor_conf.d/perlbin.fish' \
+    -e '^usr/share/makepkg-template/perl-binary-module-dependency.*' \
     -e '^usr/share/perl5/core_perl/encoding/warnings.pm' \
     -e '^usr/share/perl5/core_perl/Config/' \
     -e '^autorebase.*\.bat$' \
