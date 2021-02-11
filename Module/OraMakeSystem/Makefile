@@ -91,6 +91,22 @@ configDir     = $(prefix)/etc/oms
 # (1 да, "" нет)
 MSYS2_FLAG =
 
+# Удаляет файлы установки для Windows с сохранением каталога с настройками
+removeMsysOms = \
+	cfgDir="$(configDir)"; \
+	for f in \
+				$(WIN_ROOT)/usr/local/etc/* \
+				$(WIN_ROOT)/usr/local/* \
+				$(WIN_ROOT)/usr/* \
+				$(WIN_ROOT)/* \
+			; do \
+		if [[ "$$f" != "$$cfgDir" ]] \
+				&& [[ "$${cfgDir%$$f/*}" == "$$cfgDir" ]] \
+				; then \
+			rm -rf "$$f"; \
+		fi; \
+	done;
+
 ifeq ($(OSTYPE),msys)
 
 MSYS2_FLAG = 1
@@ -108,6 +124,8 @@ install-msys2:
 	fi; \
 	if [[ ! -d "$(WIN_ROOT)" ]]; then \
 		mkdir "$(WIN_ROOT)"; \
+	elif [[ -f "$(WIN_ROOT)/oms.cmd" ]]; then \
+		$(removeMsysOms) \
 	fi \
 	&& cd Build/Win64/MSYS2 \
 	&& { \
@@ -254,19 +272,7 @@ uninstall:
 			rm -rf "$(WIN_ROOT)" \
 			&& echo "Installation directory removed: \"$$winRoot\""; \
 		else \
-			cfgDir="$(configDir)"; \
-			for f in \
-						$(WIN_ROOT)/usr/local/etc/* \
-						$(WIN_ROOT)/usr/local/* \
-						$(WIN_ROOT)/usr/* \
-						$(WIN_ROOT)/* \
-					; do \
-				if [[ "$$f" != "$$cfgDir" ]] \
-						&& [[ "$${cfgDir%$$f/*}" == "$$cfgDir" ]] \
-						; then \
-					rm -rf "$$f"; \
-				fi; \
-			done; \
+			$(removeMsysOms) \
 			echo "OraMakeSystem files deleted"; \
 			echo "(use \"make uninstall FORCE=1\" to delete installation directory \"$$winRoot\" along with config files)"; \
 		fi; \
