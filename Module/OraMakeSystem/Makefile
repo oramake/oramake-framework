@@ -203,6 +203,10 @@ install-oms:
 		\) \
 		-delete \
 	&& cp -R $(if $(FORCE),--force,-n) Config/Default/* "$(configDir)" \
+	&& find \
+		"$(configDir)/UpdateModule" \
+		-name ".gitignore" \
+		-delete \
 	&& mkdir -p "$(shareDir)/Config" \
 	&& cp --force Config/Legacy/* "$(shareDir)/Config" \
 	&& if [[ -z "$(MSYS2_FLAG)" ]]; then \
