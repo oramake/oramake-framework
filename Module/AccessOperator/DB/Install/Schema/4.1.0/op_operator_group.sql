@@ -28,9 +28,26 @@ comment on column op_operator_group.grant_option_flag is
   'Признак выдачи прав на доступ в группе'
 /
 
-alter trigger 
-  op_operator_group_bu_history 
-disable
+declare
+  triggerName varchar2(100) := 'op_operator_group_bu_history';
+  triggerExists number(1,0);
+begin
+  select
+    count(1)
+  into
+    triggerExists
+  from
+    user_triggers
+  where
+    trigger_name = upper(triggerName)
+  ;
+  if triggerExists >= 1 then
+    execute immediate
+'alter trigger ' || triggerName || ' disable';
+  else
+    pkg_Common.outputMessage('Trigger ' || triggerName || ' does not exist');
+  end if;
+end;
 /
 
 merge into
@@ -38,15 +55,30 @@ merge into
 using
   (
   select
-    ogr.operator_id
-    , ggr.grant_group_id as group_id
-    , ogr.group_id as source_group_id
-    , ogr.date_ins
-    , ogr.operator_id_ins
+    *
   from
-    op_operator_group ogr
-    inner join op_grant_group ggr
-      on ggr.group_id = ogr.group_id
+    (
+    select
+      ogr.operator_id
+      , ggr.grant_group_id as group_id
+      , ogr.group_id as source_group_id
+      , ogr.date_ins
+      , ogr.operator_id_ins
+      , row_number() over(partition by
+          ogr.operator_id
+        , ggr.grant_group_id
+        order by
+          ogr.date_ins desc
+        , ogr.group_id desc
+        )
+        as deduplicate_number
+    from
+      op_operator_group ogr
+      inner join op_grant_group ggr
+        on ggr.group_id = ogr.group_id
+     ) t
+  where
+    deduplicate_number = 1
   ) src
 on
   (
@@ -77,8 +109,25 @@ when not matched then
 commit
 /
 
-alter trigger 
-  op_operator_group_bu_history 
-enable
+declare
+  triggerName varchar2(100) := 'op_operator_group_bu_history';
+  triggerExists number(1,0);
+begin
+  select
+    count(1)
+  into
+    triggerExists
+  from
+    user_triggers
+  where
+    trigger_name = upper(triggerName)
+  ;
+  if triggerExists >= 1 then
+    execute immediate
+'alter trigger ' || triggerName || ' enable';
+  else
+    pkg_Common.outputMessage('Trigger ' || triggerName || ' does not exist');
+  end if;
+end;
 /
 
