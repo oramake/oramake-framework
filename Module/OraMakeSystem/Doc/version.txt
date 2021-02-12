@@ -8,6 +8,8 @@ group: 2.4.0 ( 2021-01-22)
 
 [*] Use 64-bit distribution for Windows (instead of 32-bit).
 
+[+] Add option "--directory" ("-d") for "oms gen-spec" command.
+
 [!] Fix bugs in case of use custom install <prefix>.
 
 [!] Restore charset information in automatically generated HTML documentation
@@ -19,6 +21,11 @@ Remarks:
 - to exclude "/bin/bash: ${\#keyString}-13: bad substitution" error during
   installation, you need to update module files by "make update-oms-version"
   or "oms update-module" commands (error can be ignored);
+- to exclude
+  "PLS-00306: wrong number or types of arguments in call to 'CHECKINSTALLVERSION'"
+  error while executing <oms-check-install-version.sql> or
+  <oms-check-grant-version.sql> scripts, you need to install ModuleInfo 1.4.0
+  (required for previous version, OraMakeSystem 2.3.0);
 
 
 

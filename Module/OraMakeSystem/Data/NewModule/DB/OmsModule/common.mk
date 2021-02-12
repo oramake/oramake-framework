@@ -1135,7 +1135,7 @@ load-start-log.oms:
 			   echo "MODULE_VERSION      : $(MODULE_VERSION)"; \
 			   fi \
 			&& echo "INSTALL_VERSION     : $(INSTALL_VERSION)" \
-			&& echo "loadUserList        :$(loadUserList)" \
+			&& echo "loadUserList        : $(loadUserList)" \
 			&& echo "loadOperator        : $(loadOperatorName)" \
 			&& if [[ -n "$(COMMON_SCHEMA)" ]]; then \
 			   echo "COMMON_SCHEMA       : $(COMMON_SCHEMA)"; \

@@ -17,6 +17,8 @@
 #                                 содержимого временных файлов, по умолчанию
 #                                 из переменной окружения <OMS_DEBUG_LEVEL>,
 #                                 при отсутствии 0)
+# -d, --directory DIR           - путь к корневому каталогу модуля ( по
+#                                 умолчанию текущий каталог)
 # --spec-file-name,-s FILE_NAME - имя результирующего файла спецификации
 #                                 ( по-умолчанию определяется автоматически)
 # -h, --help                    - вывести справку по использованию
@@ -83,6 +85,10 @@ END_OBJECT_EXPR='^\/[[:space:]]*$'
 # Имя файла тела
 bodyFileName=""
 
+# var: rootDir
+# Корневой каталог модуля.
+rootDir=""
+
 # var: specFileName
 # Имя файла спецификации
 specFileName=""
@@ -135,6 +141,7 @@ Arguments:
 
 Options:
   --debug-level DBG_LEVEL     set level for print debug information ( 0 - 3)
+  -d, --directory DIR         path to module root directory (default: current)
   -s, --spec-file-name FILE_NAME
                               specification file name
                               ( by default, defined automatically using body file name)
@@ -153,6 +160,10 @@ parseOption()
     case $1 in
       --debug-level)
         setDebugLevel "$2"
+        shift;
+        ;;
+      -d | --directory)
+        rootDir="$2"
         shift;
         ;;
       -h | --help)
@@ -186,6 +197,9 @@ parseOption()
     shift
   done
   # Проверяем параметры выполнения
+  if [[ -z $rootDir ]]; then
+    rootDir="."
+  fi
   if [[ -z "$bodyFileName" ]]; then
     echo "Body file name is not set";
     exitArgError "."
@@ -288,7 +302,7 @@ BEGIN \
 generateSpec()
 {
   logDebug3 "Set tmpFileDir: '$tmpFileDir'"
-  getModuleEncoding "."
+  getModuleEncoding "$rootDir"
   if (( isConvertModuleEncoding )); then
     functionGroupExprLC=$(
       iconv -f "utf-8" -t "$moduleEncoding" <<<$FUNCTION_GROUP_EXPR
