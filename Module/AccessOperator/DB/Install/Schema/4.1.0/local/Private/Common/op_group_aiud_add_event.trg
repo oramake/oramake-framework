@@ -15,7 +15,7 @@ CREATE OR REPLACE TRIGGER op_group_aiud_add_event
 declare
   -- Сохраняет информацию о сделанном изменении.
   -- Определяем тип события
-  eventType rp_event.event_type%type :=
+  eventType varchar2(1) :=
     case when
       deleting
     then
@@ -31,8 +31,9 @@ declare
     end
   ;
 
-  id1 rp_event.pk1_id%type;
-  id2 rp_event.pk1_id%type;
+  id1 integer;
+  id2 integer;
+  rpEventExists integer;
 
 -- op_group_aiud_add_event
 begin
@@ -42,17 +43,36 @@ begin
     id1 := :new.group_id;
   end if;
 
-  insert into rp_event(
-    table_name
-    , event_type
-    , pk1_id
-    , pk2_id
-  )
-  values(
-    'OP_GROUP'
-    , eventType
+  select
+    count(1)
+  into
+    rpEventExists
+  from
+    user_tables
+  where
+    table_name = 'RP_EVENT'
+  ;
+  -- workaround for the case of replication
+  if rpEventExists = 1 then
+    execute immediate
+    '
+    insert into rp_event(
+      table_name
+      , event_type
+      , pk1_id
+      , pk2_id
+    )
+    values(
+      ''OP_GROUP''
+      , :eventType
+      , :id1
+      , :id2
+    )'
+    using
+      eventType
     , id1
     , id2
-  );
+    ;
+  end if;
 end op_group_aiud_add_event;
 /
