@@ -1,4 +1,4 @@
-Установка
+﻿Установка
 ====================
 
 Последовательность первоначальной установки модулей в БД (команды выполняются
@@ -24,7 +24,7 @@ SQL> @Module/UserCreate/create-user-main.sql om_main
 
 - установка OraMakeSystem
 
-Для устновки модулей в БД нужно установить OraMakeSystem из
+Для установки модулей в БД нужно установить OraMakeSystem из
 Module/OraMakeSystem согласно документации:
 
 Module/OraMakeSystem/Doc/Html/ru/index.html
