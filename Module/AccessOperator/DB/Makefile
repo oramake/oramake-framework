@@ -307,7 +307,7 @@ LOAD_OPERATORID := $(ORACLE_OPERATOR)
 # build var: COMMON_SCHEMA
 # Наименование схемы БД, в которой размещены общие модули.
 # (AccessOperator, ModuleInfo, etc)
-COMMON_SCHEMA := 
+COMMON_SCHEMA :=
 
 
 
@@ -342,7 +342,7 @@ LOCAL_SCHEMA_DIR2 := \
   $(call getProductionDbName,$(LOAD_DB2))
 
 # Обеспечиваем корректное значение переменной
-override LOCAL_SCHEMA_DIR2 := $(call getLocalDbDir,$(LOCAL_SCHEMA_DIR2))
+override LOCAL_SCHEMA_DIR2 := $(call getLocalDbDir,$(LOAD_USERID2))
 
 # build var: LOCAL_SCHEMA_DIR3
 # Подкаталог с локальными объектами для загрузки в схему LOAD_USERID3.
@@ -420,14 +420,8 @@ loadTarget =                             \
     $(wildcard Install/Schema/Last/*.trg)  \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard Local/Private/Common/*.pk[s,b])  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.vw)  \
-    $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.trg)  \
-    $(wildcard Install/Data/Last/Local/Private/Common/*.sql)      \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu3),                  \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)      \
   )   \
   $(addsuffix .$(lu4),                  \
   	$(wildcard Local/Private/Common/*.pk[s,b])  \
@@ -544,10 +538,8 @@ installSchemaTarget =                   \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu2),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/Private/Main/run.sql)  \
   )                                      \
   $(addsuffix .$(lu3),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)  \
   )                                      \
   $(addsuffix .$(lu4),                    \
      $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/Private/Common/run.sql) \
@@ -633,7 +625,7 @@ installDataTarget = \
   $(addsuffix .$(lu3), \
   ) \
   $(addsuffix .$(lu4), \
-    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/run.sql)      \
+    $(wildcard Install/Data/$(INSTALL_VERSION)/Local/Private/Main/run.sql)      \
   ) \
 
 
@@ -746,9 +738,9 @@ installAfterTarget =                          \
   )                                            \
   $(addsuffix .$(ru4),                        \
     $(installAfterOmsAction)                  \
+    $(wildcard Install/Config/after-action.sql)      \
     $(if $(INSTALL_VERSION), \
-      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/after-action.sql),) \
-      $(wildcard Install/Config/Local/$(LOCAL_SCHEMA_DIR4)/after-action.sql)      \
+      $(wildcard Install/Config/$(INSTALL_VERSION)/after-action.sql),) \
   )                                            \
 
 
@@ -880,6 +872,9 @@ uninstallBeforeTarget = \
     $(uninstallBeforeOmsAction) \
   ) \
   $(addsuffix .$(ru3), \
+    $(if $(INSTALL_VERSION), \
+      $(wildcard Install/Config/$(INSTALL_VERSION)/Revert/before-action.sql),) \
+    $(wildcard Install/Config/before-action.sql) \
     $(uninstallBeforeOmsAction) \
   ) \
 
