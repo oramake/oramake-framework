@@ -11,6 +11,7 @@
 @oms-run op_group.sql
 @oms-run op_operator_role.sql
 @oms-run op_operator_group.sql
+@oms-run op_group_role.sql
 
 
 -- Создание таблиц
