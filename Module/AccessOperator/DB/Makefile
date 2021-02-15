@@ -412,6 +412,7 @@ FILE_MASK :=
 LOAD_FILE_MASK :=
 
 # Файлы для загрузки
+# TODO: refactor, get rid of LOCAL_SCHEMA_DIR2
 loadTarget =                             \
   $(addsuffix .$(lu),                    \
     $(wildcard Install/Schema/Last/*.vw)  \
@@ -419,25 +420,21 @@ loadTarget =                             \
     $(wildcard Install/Schema/Last/*.trg)  \
   )                                      \
   $(addsuffix .$(lu2),                  \
-    $(wildcard Local/$(LOCAL_SCHEMA_DIR2)/*.pk[s,b])  \
+    $(wildcard Local/Private/Common/*.pk[s,b])  \
     $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.vw)  \
     $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR2)/*.trg)  \
-    $(wildcard Install/Data/Last/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
+    $(wildcard Install/Data/Last/Local/Private/Common/*.sql)      \
     $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu3),                  \
     $(wildcard Install/Data/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)      \
   )   \
   $(addsuffix .$(lu4),                  \
-	  $(if $(wildcard Local/$(LOCAL_SCHEMA_DIR4)/*), \
-    	$(wildcard Local/$(LOCAL_SCHEMA_DIR4)/*.pk[s,b]),  \
-    	$(wildcard Local/$(LOCAL_COMMON_SCHEMA_DIR4)/*.pk[s,b]))  \
-	  $(if $(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR4)/*), \
-    	$(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR4)/*.trg)  \
-    	$(wildcard Install/Schema/Last/Local/$(LOCAL_SCHEMA_DIR4)/*.vw),  \
-    	$(wildcard Install/Schema/Last/Local/$(LOCAL_COMMON_SCHEMA_DIR4)/*.trg)  \
-    	$(wildcard Install/Schema/Last/Local/$(LOCAL_COMMON_SCHEMA_DIR4)/*.vw))  \
+  	$(wildcard Local/Private/Common/*.pk[s,b])  \
+  	$(wildcard Install/Schema/Last/Local/Private/Common/*.trg)  \
+  	$(wildcard Install/Schema/Last/Local/Private/Common/*.vw)  \
   )                                    \
+
 
 # Список параметров для загружаемых файлов.
 #
@@ -509,6 +506,7 @@ installBeforeOmsAction =                      \
 
 
 # Действия, выполняемые перед установкой модуля.
+# Рассмаотреть удаление LOCAL_SCHEMA_DIR4
 installBeforeTarget =                          \
   $(addsuffix .$(ru),                          \
     $(if $(INSTALL_VERSION), \
@@ -546,15 +544,13 @@ installSchemaTarget =                   \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/run.sql)      \
   )                                      \
   $(addsuffix .$(lu2),                    \
-    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/run.sql)  \
+    $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/Private/Main/run.sql)  \
   )                                      \
   $(addsuffix .$(lu3),                    \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/run.sql)  \
   )                                      \
   $(addsuffix .$(lu4),                    \
-		$(if $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/*), \
-      $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/run.sql),  \
-		  $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_COMMON_SCHEMA_DIR4)/run.sql))  \
+     $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/Private/Common/run.sql) \
   )                                      \
 
 
@@ -1083,3 +1079,5 @@ grant: grant.oms
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk
+
+

@@ -3,21 +3,31 @@ title: Установка
 
 group: Общие замечания
 
+Термины:
+
+Private-DB                    - выбраная БД, являющаяся источником данных
+Public-DB                     - БД, в которые реплицируются данные из Private-DB
+Private-часть                 - часть модуля, устанавливаемая только в Private-DB
+Public-часть                  - часть модуля, устанавливаемая во все БД (Private-DB и Private-DB)
+
+
 Параметры установки:
 
-LOAD_USERID                   - Пользователь для загрузки ( формат: [userName[/password]][@dbName] )
+LOAD_USERID                   - Пользователь для установки общей (public) части
 
-LOAD_USERID2                  - Пользователь для установки на базы для репликации
+LOAD_USERID4                  - Пользователь для установки только
+                                private-части ( механизма репликации и пакета
+                                для работы с функциями редактирования) части
+                                во все БД, включая private
 
-LOAD_USERID4                  - Пользователь для установки механизма репликации и пакета для работы с функциями редактирования
+LOAD_USERID2                  - Пользователь для установки только на базы для
+                                репликации (не private-БД, TODO: заменить
+                                LOAD_USERID4->LOAD_USERID2)
 
-LOAD_USERID5                  - Пользователь для установки пакетных заданий в БД источник
+LOAD_USERID5                  - Пользователь для установки пакетных заданий в <Private-DB>
+                                (TODO: перенести в <LOAD_USERID>
 
 LOAD_OPERATORID               - Оператор для загрузки ( формат: operatorName[/password] )
-
-Public часть                  - Общая для всех БД часть
-
-Private Часть                 - Часть, которая устанавливается только в БД-источник
 
 
 
@@ -50,21 +60,60 @@ $ make grant INSTALL_VERSION=Last LOAD_USERID=userLogin/userPassword@DbName LOAD
 group: 4.1.0
 (<Версии::4.1.0 ( 2018-06-08)>)
 
+Предварительные требования:
+
+- версия требует OraMakeSystem и соответствующей конфигурации не старше 2.4.0;
+
 Порядок установки:
 
-- Установка private части;
+- установка общей части (во все БД);
+
 (code)
 
-make install INSTALL_VERSION=4.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=4.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=
 
 (end)
 
-- Установка в БД, в которые реплицируются операторы
+- дополнительная установка private части в основную БД;
 
 (code)
 
-$ make install INSTALL_VERSION=4.1.0 LOAD_USERID2=???/??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=4.1.0 LOAD_USERID4=???/???@??? LOAD_OPERATORID=???/???
 
+(end)
+
+
+
+
+group: 4.0.1
+(<Версии::4.0.1 ( 2019-12-11)>)
+
+Порядок установки:
+
+- отключение пакетных заданий
+(code)
+make install-before INSTALL_VERSION=4.0.1 LOAD_USERID4=information/???@<RFinfoTns> LOAD_OPERATORID=???/???
+(end)
+
+- Установка private части в БД *RFInfo*
+- схема information
+(code)
+make install INSTALL_VERSION=4.0.1 LOAD_USERID4=information/???@<RFinfoTns> LOAD_OPERATORID=???/??? LOAD_FILE_MASK=*.pk?
+(end)
+
+- схема ica
+(code)
+make install INSTALL_VERSION=4.0.1 LOAD_USERID4=ica/???@<RFinfoTns> LOAD_OPERATORID=???/??? LOAD_FILE_MASK=*.pk?
+(end)
+
+- обновление пакетных заданий
+(code)
+make install-batch INSTALL_VERSION=4.0.1 LOAD_USERID5=information/???@<RFinfoTns> LOAD_OPERATORID=???/???
+(end)
+
+- включение пакетных заданий
+(code)
+make install-after INSTALL_VERSION=4.0.1 LOAD_USERID4=information/???@<RFinfoTns> LOAD_OPERATORID=???/???
 (end)
 
 
