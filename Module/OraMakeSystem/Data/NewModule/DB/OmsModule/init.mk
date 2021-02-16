@@ -49,7 +49,7 @@ tab := $(empty)	$(empty)
 # build var: OMS_INSTALL_PREFIX
 # Общий префикс для инсталляционных каталогов.
 ifeq ($(OMS_INSTALL_PREFIX),)
-  binDir := $(dir $(shell bash -c "type -p oms"))
+  binDir := $(dir $(shell $$(type -p oms)))
   override OMS_INSTALL_PREFIX := $(if $(filter %/bin/,$(binDir)) \
     ,$(patsubst %/bin/,%,$(binDir)),/usr/local)
   undefine binDir
