@@ -134,17 +134,17 @@ Language: PLSQL
    Variable Prototype Enders: , ; ) := default Default DEFAULT
    Type Prototype Ender: ;
    Constant Prototype Ender: ;
-   Variable internal Prototype Enders: , ; ) := default Default DEFAULT
+   Type internal Prototype Ender: ;
+   Database Materialized View Prototype Enders: ; /
+   Constant internal Prototype Ender: ;
    Database View Prototype Enders: ; /
-   Database Type Prototype Enders: ; /
+   Database Index Prototype Enders: ; /
    Function public Prototype Enders: , ; ) as As AS is Is IS
    Database Table Prototype Enders: ; /
-   Constant internal Prototype Ender: ;
-   Database Materialized View Prototype Enders: ; /
    Database Sequence Prototype Enders: ; /
-   Type internal Prototype Ender: ;
+   Variable internal Prototype Enders: , ; ) := default Default DEFAULT
    Database Trigger Prototype Enders: begin Begin BEGIN declare Declare DECLARE
-   Database Index Prototype Enders: ; /
+   Database Type Prototype Enders: ; /
    Perl Package: NaturalDocs::Languages::PLSQL
 
 
@@ -153,5 +153,5 @@ Language: Shell
    Extension: sh
    Shebang String: /bin/bash
    Line Comment: #
-   Variable Prototype Ender: \n
    Line Extender: \
+   Variable Prototype Ender: \n
