@@ -545,6 +545,7 @@ exec_create-module()
         ;;
       Doc/map.xml \
         | DB/Makefile \
+        | DB/Install/Schema/Last/revert.sql \
         | DB/loaddeps.mk \
         )
         isExpand=1

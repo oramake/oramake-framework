@@ -4,11 +4,16 @@ title: Версии
 
 group: 2.4.0 ( 2021-01-22)
 
-[+] Add ability to install for Linux.
-
 [*] Use 64-bit distribution for Windows (instead of 32-bit).
 
+[+] Add ability to install for Linux.
+
 [+] Add option "--directory" ("-d") for "oms gen-spec" command.
+    For example, to generate specification for pkg_NewModule package, you can
+    execute in DB directory: "oms gen-spec -d .. pkg_NewModule.pkb".
+
+[+] Add install/uninstall commands, logger for package in template of new
+    module.
 
 [!] Fix bugs in case of use custom install <prefix>.
 

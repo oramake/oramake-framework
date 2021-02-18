@@ -159,12 +159,18 @@ Group: Шаблон модуля  {
 
    Group: О модуле  {
 
-      File: Описание  (Data/NewModule/DB/Doc/readme.txt)
-      File: Установка  (Data/NewModule/DB/Doc/install.txt)
-      File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
-      File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
       File: Сборка  (Data/NewModule/DB/Makefile)
-      File: Версии  (Data/NewModule/DB/Doc/version.txt)
+
+      Group: Doc  {
+
+         File: Описание  (Data/NewModule/DB/Doc/readme.txt)
+         File: Установка  (Data/NewModule/DB/Doc/install.txt)
+         File: Ошибки  (Data/NewModule/DB/Doc/bugs.txt)
+         File: Доработки  (Data/NewModule/DB/Doc/todo.txt)
+         File: Версии  (Data/NewModule/DB/Doc/version.txt)
+         }  # Group: Doc
+
+      File: Install/Schema/Last/revert.sql  (Data/NewModule/DB/Install/Schema/Last/revert.sql)
       }  # Group: О модуле
 
    File: Инициализация OMS  (Data/NewModule/DB/OmsModule/init.mk)

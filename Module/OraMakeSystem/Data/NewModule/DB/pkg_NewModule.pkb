@@ -3,6 +3,18 @@ create or replace package body $(packageName) is
 
 
 
+/* group: Переменные */
+
+/* ivar: logger
+  Логер пакета.
+*/
+logger lg_logger_t := lg_logger_t.getLogger(
+  moduleName    => Module_Name
+  , objectName  => '$(packageName)'
+);
+
+
+
 /* group: Функции */
 
 
