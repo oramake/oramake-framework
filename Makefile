@@ -295,6 +295,9 @@ install:
 		esac \
 		&& case "$${module}" in \
 			AccessOperator) \
+				$(runCmd) make install INSTALL_VERSION=Last \
+					LOAD_USERID4="$(MAIN_USERID)" \
+					LOAD_OPERATORID=; \
 				$(runCmd) make install-save-info INSTALL_VERSION=Last \
 					LOAD_USERID="$(MAIN_USERID)" \
 					LOAD_OPERATORID="$(INSTALL_OPERATORID)" \
@@ -388,6 +391,12 @@ uninstall:
 		$(runCmd) cd Module/$${module}/DB \
 		&& isUseOperator=1 \
 		&& case "$${module}" in \
+			AccessOperator) \
+				$(runCmd) make uninstall INSTALL_VERSION=Last \
+					LOAD_USERID4="$(MAIN_USERID)" \
+					LOAD_OPERATORID="$(INSTALL_OPERATORID)" \
+				; \
+				;; \
 			Common) \
 				isUseOperator=""; \
 				;; \
