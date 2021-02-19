@@ -15,12 +15,20 @@ alter table
   op_operator
 drop
   (
+  change_operator_id
+  )
+cascade constraint
+/
+
+alter table
+  op_operator
+drop
+  (
   action_type_code
   , computer_name
   , ip_address
   , change_number
   , change_date
-  , change_operator_id
   )
 cascade constraint
 /
