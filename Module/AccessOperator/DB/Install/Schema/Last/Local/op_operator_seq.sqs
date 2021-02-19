@@ -1,4 +1,7 @@
---scripts: OP_OPERATOR_SEQ.sql
--- Create sequence 
-create sequence OP_OPERATOR_SEQ
+-- sequence: op_operator_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <op_operator>.
+create sequence
+  op_operator_seq
+start with 6
 /

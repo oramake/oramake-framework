@@ -1,4 +1,7 @@
---scripts: OP_GROUP_SEQ.sql
--- Create sequence 
-create sequence OP_GROUP_SEQ
+-- sequence: op_group_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <op_group>.
+create sequence
+  op_group_seq
+start with 2
 /
