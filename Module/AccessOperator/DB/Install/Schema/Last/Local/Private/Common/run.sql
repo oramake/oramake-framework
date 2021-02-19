@@ -39,5 +39,5 @@
 @oms-run Install/Schema/Last/Local/op_group_seq.sqs
 @oms-run Install/Schema/Last/Local/op_operator_seq.sqs
 @oms-run Install/Schema/Last/Local/op_password_hist_seq.sqs
-@oms-run Install/Schema/Last/Local/op_role_seq.sql
+@oms-run Install/Schema/Last/Local/op_role_seq.sqs
 @oms-run op_login_attempt_group_seq.sqs

@@ -6,22 +6,15 @@
 @oms-set-indexTablespace.sql
 
 
--- Последовательности
-
-@oms-run op_group_seq.sqs
-@oms-run op_operator_seq.sqs
-@oms-run op_role_seq.sqs
-
-
 -- Таблицы
 
-@oms-run op_group_role.tab
 @oms-run op_group.tab
+@oms-run op_group_role.tab
 @oms-run op_lock_type.tab
 @oms-run op_login_attempt_group.tab
+@oms-run op_operator.tab
 @oms-run op_operator_group.tab
 @oms-run op_operator_role.tab
-@oms-run op_operator.tab
 @oms-run op_password_hist.tab
 @oms-run op_role.tab
 

@@ -7,7 +7,6 @@
 @oms-drop-foreign-key.sql rp_action
 @oms-drop-foreign-key.sql rp_customize_type
 @oms-drop-foreign-key.sql op_action_type
-@oms-drop-foreign-key.sql op_operator_waiting_emp_bind
 
 
 -- Удаление полей
@@ -88,23 +87,7 @@ cascade constraint
 -- Удаление таблиц
 
 drop table
-  rp_action
-cascade constraint
-/
-drop table
-  op_load_lock_form_sources_tmp
-cascade constraint
-/
-drop table
-  rp_customize_type
-cascade constraint
-/
-drop table
   op_action_type
-cascade constraint
-/
-drop table
-  op_operator_waiting_emp_bind
 cascade constraint
 /
 
@@ -115,5 +98,14 @@ drop sequence
   op_login_attempt_group_seq
 /
 drop sequence
-  op_oper_waiting_emp_bind_seq
+  op_group_seq
+/
+drop sequence
+  op_operator_seq
+/
+drop sequence
+  op_password_hist_seq
+/
+drop sequence
+  op_role_seq
 /

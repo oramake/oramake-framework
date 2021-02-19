@@ -65,11 +65,4 @@ drop table op_role
 /
 
 
--- Последовательности
 
-drop sequence op_group_seq
-/
-drop sequence op_operator_seq
-/
-drop sequence op_role_seq
-/

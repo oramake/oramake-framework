@@ -899,9 +899,7 @@ uninstallSchemaTarget = \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR3)/revert.sql)  \
   ) \
   $(addsuffix .$(ru4), \
-	  $(if $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/*), \
-    	$(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR4)/revert.sql),  \
-    	$(wildcard Install/Schema/$(INSTALL_VERSION)/Local/$(LOCAL_COMMON_SCHEMA_DIR4)/revert.sql))  \
+     $(wildcard Install/Schema/$(INSTALL_VERSION)/Local/Private/Common/revert.sql) \
   ) \
 
 

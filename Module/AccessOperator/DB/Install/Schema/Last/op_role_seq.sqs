@@ -1,7 +1,0 @@
--- sequence: op_role_seq
--- Последовательность для заполнения первичного ключа таблицы
--- <op_role>.
-create sequence
-  op_role_seq
-start with 8
-/

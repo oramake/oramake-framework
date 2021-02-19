@@ -74,6 +74,9 @@ make install INSTALL_VERSION=4.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=
 
 (end)
 
+- в случае отсутстви€ установленного Scheduler следует указать:
+  SKIP_FILE_MASK=*after-action.sql,*before-action.sql;
+
 - дополнительна€ установка private части в основную Ѕƒ;
 
 (code)
