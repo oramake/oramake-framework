@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 26867076 $
-# $Date:: 2021-01-30 11:36:30 -0500 #$
+# $Revision:: 26885628 $
+# $Date:: 2021-02-12 13:48:39 +0000 #$
 #
 
 
@@ -274,12 +274,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 26867076 $$
+omsRevisionKeyword    := \$$Revision:: 26885628 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2021-01-30 11:36:30 -0500 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-02-12 13:48:39 +0000 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -1135,7 +1135,7 @@ load-start-log.oms:
 			   echo "MODULE_VERSION      : $(MODULE_VERSION)"; \
 			   fi \
 			&& echo "INSTALL_VERSION     : $(INSTALL_VERSION)" \
-			&& echo "loadUserList        :$(loadUserList)" \
+			&& echo "loadUserList        : $(loadUserList)" \
 			&& echo "loadOperator        : $(loadOperatorName)" \
 			&& if [[ -n "$(COMMON_SCHEMA)" ]]; then \
 			   echo "COMMON_SCHEMA       : $(COMMON_SCHEMA)"; \
