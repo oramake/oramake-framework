@@ -297,8 +297,8 @@ install:
 			AccessOperator) \
 				$(runCmd) make install INSTALL_VERSION=Last \
 					LOAD_USERID4="$(MAIN_USERID)" \
-					LOAD_OPERATORID=; \
-				$(runCmd) make install-save-info INSTALL_VERSION=Last \
+					LOAD_OPERATORID= \
+				&& $(runCmd) make install-save-info INSTALL_VERSION=Last \
 					LOAD_USERID="$(MAIN_USERID)" \
 					LOAD_OPERATORID="$(INSTALL_OPERATORID)" \
 				;; \
