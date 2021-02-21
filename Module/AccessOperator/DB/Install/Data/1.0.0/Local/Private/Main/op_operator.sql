@@ -1,4 +1,4 @@
--- script: Install/Data/1.0.0/Local/private/Main/op_operator.sql
+-- script: Install/Data/1.0.0/Local/Private/Main/op_operator.sql
 -- Установка первоначальных операторов
 
 merge into

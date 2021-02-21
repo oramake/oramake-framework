@@ -273,21 +273,21 @@ Group: Скрипты  {
 
             Group: Local  {
 
-               Group: private  {
+               Group: Private  {
 
                   Group: Main  {
 
-                     File: run  (no auto-title, Install/Data/1.0.0/Local/private/Main/run.sql)
-                     File: op_action_type  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_action_type.sql)
-                     File: op_group  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_group.sql)
-                     File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_group_role.sql)
-                     File: op_operator  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_operator.sql)
-                     File: op_role  (no auto-title, Install/Data/1.0.0/Local/private/Main/op_role.sql)
+                     File: run  (no auto-title, Install/Data/1.0.0/Local/Private/Main/run.sql)
+                     File: op_action_type  (no auto-title, Install/Data/1.0.0/Local/Private/Main/op_action_type.sql)
+                     File: op_group  (no auto-title, Install/Data/1.0.0/Local/Private/Main/op_group.sql)
+                     File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/Private/Main/op_group_role.sql)
+                     File: op_operator  (no auto-title, Install/Data/1.0.0/Local/Private/Main/op_operator.sql)
+                     File: op_role  (no auto-title, Install/Data/1.0.0/Local/Private/Main/op_role.sql)
                      }  # Group: Main
 
-                  File: run  (no auto-title, Install/Data/1.0.0/Local/private/run.sql)
-                  File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/private/op_group_role.sql)
-                  }  # Group: private
+                  File: run  (no auto-title, Install/Data/1.0.0/Local/Private/run.sql)
+                  File: op_group_role  (no auto-title, Install/Data/1.0.0/Local/Private/op_group_role.sql)
+                  }  # Group: Private
 
                }  # Group: Local
 

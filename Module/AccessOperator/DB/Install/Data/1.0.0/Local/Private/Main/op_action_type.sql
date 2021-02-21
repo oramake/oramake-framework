@@ -1,4 +1,4 @@
--- script: Install/Data/1.0.0/Local/private/Main/op_action_type.sql
+-- script: Install/Data/1.0.0/Local/Private/Main/op_action_type.sql
 -- Установка начальных данных в таблицу <op_action_type>
 
 

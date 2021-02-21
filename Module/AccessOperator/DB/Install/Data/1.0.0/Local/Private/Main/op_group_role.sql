@@ -1,4 +1,4 @@
--- script: Install/Data/1.0.0/Local/private/Main/op_group_role.sql
+-- script: Install/Data/1.0.0/Local/Private/Main/op_group_role.sql
 -- Привязка ролей для входа в консультантский и админский интерфейс к круппам
 -- "Консультанты скоринга" и "Администраторы"
 

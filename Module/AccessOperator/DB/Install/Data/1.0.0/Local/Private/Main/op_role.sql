@@ -1,4 +1,4 @@
--- script: Install/Data/1.0.0/Local/private/Main/op_role.sql
+-- script: Install/Data/1.0.0/Local/Private/Main/op_role.sql
 -- Добавление первоначальных ролей
 
 merge into

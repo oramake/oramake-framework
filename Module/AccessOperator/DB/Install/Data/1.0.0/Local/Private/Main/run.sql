@@ -1,4 +1,4 @@
--- script: Install/Data/1.0.0/Local/private/Main/run.sql
+-- script: Install/Data/1.0.0/Local/Private/Main/run.sql
 
 @oms-run op_operator.sql
 @oms-run op_role.sql
