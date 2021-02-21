@@ -56,7 +56,7 @@ Install/Data/1.0.0/Local/Private/op_group_role.sql.$(lu2):     \
   Install/Data/1.0.0/Local/Private/op_role.sql.$(lu2)
 
 
-Local/Private/Main/pkg_AccessOperator.pkb.$(lu4):     \
-  Local/Private/Main/pkg_AccessOperator.pks.$(lu4)
+Local/Private/Common/pkg_AccessOperator.pkb.$(lu4):     \
+  Local/Private/Common/pkg_AccessOperator.pks.$(lu4)
 
 
