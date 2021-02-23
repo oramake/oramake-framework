@@ -931,10 +931,6 @@ end finishInstallNestedFile;
   Параметры:
   rec                         - данные записи
                                 (возврат)
-  currentVersion              - текущая версия
-                                (возврат)
-  currentInstallResultId      - Id результата установки текущей версии
-                                (возврат)
   moduleSvnRoot               - путь к корневому каталогу устанавливаемого
                                 модуля в Subversion ( начиная с имени
                                 репозитария, например
@@ -967,20 +963,16 @@ end finishInstallNestedFile;
                                 отсутствовать, если использовался тривиальный
                                 вариант, например run.sql)
   resultVersion               - версия, получившаяся результате выполнения
-                                установки
-                                (по умолчанию installVersion в случае
-                                установки, null в случае отмены полной
-                                установки, последняя установленная с меньшим
-                                номером в случае отмены установки обновления
-                                (ошибка если не удалось определить))
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
   isCreateModule              - создать записи о модуле и части модуля в
                                 случае отсутствия подходящих
                                 ( 1 да, 0 нет ( по умолчанию))
 */
 procedure fillInstallResult(
   rec out nocopy mod_install_result%rowtype
-  , currentVersion out nocopy varchar2
-  , currentInstallResultId out nocopy integer
   , moduleSvnRoot varchar2
   , moduleInitialSvnPath varchar2
   , modulePartNumber integer
@@ -996,93 +988,6 @@ procedure fillInstallResult(
   , isCreateModule integer := null
 )
 is
-
-
-
-  /*
-    Получает информацию о текущей версии.
-  */
-  procedure getCurrentVersionInfo
-  is
-  begin
-    select
-      max( ir.result_version) as current_version
-      , max( ir.install_result_id) as current_install_result_id
-    into currentVersion, currentInstallResultId
-    from
-      mod_install_result ir
-    where
-      ir.is_current_version = 1
-      and ir.module_part_id = rec.module_part_id
-      and ir.install_type_code = rec.install_type_code
-      and (
-        coalesce( ir.object_schema, rec.object_schema) is null
-        or ir.object_schema is not null
-          and rec.object_schema is not null
-          and ir.object_schema = rec.object_schema
-        )
-      and (
-        coalesce( ir.privs_user, rec.privs_user) is null
-        or ir.privs_user is not null
-          and rec.privs_user is not null
-          and ir.privs_user = rec.privs_user
-        )
-    ;
-  exception when others then
-    raise_application_error(
-      pkg_ModuleInfoInternal.ErrorStackInfo_Error
-      , 'Ошибка при получении информации о текущей версии.'
-      , true
-    );
-  end getCurrentVersionInfo;
-
-
-
-  /*
-    Определяет версию, получающуюся в результате отмены установки обновления
-    (последняя установленная с меньшим номером).
-  */
-  procedure getUninstallResultVersion
-  is
-  begin
-    select
-      max( ir.result_version)
-        keep( dense_rank first order by ir.install_result_id desc)
-    into rec.result_version
-    from
-      mod_install_result ir
-    where
-      ir.module_part_id = rec.module_part_id
-      and ir.install_type_code = rec.install_type_code
-      and (
-        coalesce( ir.object_schema, rec.object_schema) is null
-        or ir.object_schema is not null
-          and rec.object_schema is not null
-          and ir.object_schema = rec.object_schema
-        )
-      and (
-        coalesce( ir.privs_user, rec.privs_user) is null
-        or ir.privs_user is not null
-          and rec.privs_user is not null
-          and ir.privs_user = rec.privs_user
-        )
-      and ir.result_version != currentVersion
-      and pkg_ModuleInfoInternal.compareVersion(
-          ir.result_version
-          , currentVersion
-        ) = -1
-    ;
-  exception when others then
-    raise_application_error(
-      pkg_Error.ErrorStackInfo
-      , 'Ошибка при определении версии после отмены установки обновления.'
-      , true
-    );
-  end getUninstallResultVersion;
-
-
-
--- fillInstallResult
 begin
   checkUserExists(
     checkUserName => installUser
@@ -1120,45 +1025,13 @@ begin
       , partNumber  => modulePartNumber
       , isCreate    => coalesce( isCreateModule, 0)
     );
-    if rec.module_part_id is not null then
-      getCurrentVersionInfo();
-    end if;
-  end if;
-
-  -- Необходимо определить результирующую версию после отмены установки
-  -- обновления
-  if rec.result_version is null
-        and rec.is_revert_install = 1
-        and rec.is_full_install = 0
-      then
-    if currentVersion is not null then
-      getUninstallResultVersion();
-    end if;
-    if rec.result_version is null then
-      raise_application_error(
-        pkg_Error.IllegalArgument
-        , 'Must specify version of module that remains in database after'
-          || ' uninstall current version using UNINSTALL_RESULT_VERSION'
-          || ' parameter ('
-          || 'currentVersion="' || currentVersion || '"'
-          || ', install_result_id=' || currentInstallResultId
-          || ').'
-      );
-    end if;
   end if;
 exception when others then
-  if sqlcode = pkg_Error.IllegalArgument then
-    raise;
-  else
-    raise_application_error(
-      pkg_ModuleInfoInternal.ErrorStackInfo_Error
-      , 'Ошибка при заполнении записи с результатом установки ('
-        || 'currentVersion="' || currentVersion || '"'
-        || ', currentInstallResultId=' || currentInstallResultId
-        || ').'
-      , true
-    );
-  end if;
+  raise_application_error(
+    pkg_ModuleInfoInternal.ErrorStackInfo_Error
+    , 'Ошибка при заполнении записи с результатом установки.'
+    , true
+  );
 end fillInstallResult;
 
 /* func: checkInstallVersion
@@ -1197,13 +1070,11 @@ end fillInstallResult;
   installScript               - стартовый установочный скрипт ( может
                                 отсутствовать, если использовался тривиальный
                                 вариант, например run.sql)
-  resultVersion               - версия, получившаяся результате выполнения
-                                установки
-                                (по умолчанию installVersion в случае
-                                установки, null в случае отмены полной
-                                установки, последняя установленная с меньшим
-                                номером в случае отмены установки обновления
-                                (ошибка если не удалось определить))
+  resultVersion               - версия, получившаяся в результате выполнения
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
   overwriteCurrentVersionFlag - признак возможности перезаписи уже установленной текущей версии
                                 (1 - да (по-умолчанию), 0 - нет)
 */
@@ -1240,12 +1111,63 @@ is
 
 
 
+  /*
+    Получает информацию о текущей версии.
+  */
+  procedure getCurrentVersionInfo
+  is
+  begin
+    select
+      max(
+          case when
+            ir.install_type_code = rec.install_type_code
+          then
+            ir.result_version
+          end
+        )
+        as current_version
+      , max(
+          case when
+            ir.install_type_code = rec.install_type_code
+          then
+            ir.install_result_id
+          end
+        )
+        as current_install_result_id
+    into currentVersion, currentInstallResultId
+    from
+      mod_install_result ir
+    where
+      ir.is_current_version = 1
+      and ir.module_part_id = rec.module_part_id
+      and ir.install_type_code = rec.install_type_code
+      and (
+        coalesce( ir.object_schema, rec.object_schema) is null
+        or ir.object_schema is not null
+          and rec.object_schema is not null
+          and ir.object_schema = rec.object_schema
+        )
+      and (
+        coalesce( ir.privs_user, rec.privs_user) is null
+        or ir.privs_user is not null
+          and rec.privs_user is not null
+          and ir.privs_user = rec.privs_user
+        )
+    ;
+  exception when others then
+    raise_application_error(
+      pkg_ModuleInfoInternal.ErrorStackInfo_Error
+      , 'Ошибка при получении информации о текущей версии.'
+      , true
+    );
+  end getCurrentVersionInfo;
+
+
+
 -- checkInstallVersion
 begin
   fillInstallResult(
     rec                       => rec
-    , currentVersion          => currentVersion
-    , currentInstallResultId  => currentInstallResultId
     , moduleSvnRoot           => moduleSvnRoot
     , moduleInitialSvnPath    => moduleInitialSvnPath
     , modulePartNumber        => modulePartNumber
@@ -1260,6 +1182,9 @@ begin
     , resultVersion           => resultVersion
     , isCreateModule          => 0
   );
+  if rec.module_part_id is not null then
+    getCurrentVersionInfo();
+  end if;
 
   if currentVersion is null then
     if rec.is_full_install = 0 then
@@ -1327,6 +1252,7 @@ exception when others then
   end if;
 end checkInstallVersion;
 
+
 /* func: createInstallResult
   Добавляет результат установки для действия по установке модуля.
 
@@ -1381,12 +1307,10 @@ end checkInstallVersion;
                                 отсутствовать, если использовался тривиальный
                                 вариант, например run.sql)
   resultVersion               - версия, получившаяся результате выполнения
-                                установки
-                                (по умолчанию installVersion в случае
-                                установки, null в случае отмены полной
-                                установки, последняя установленная с меньшим
-                                номером в случае отмены установки обновления
-                                (ошибка если не удалось определить))
+                                установки, должна быть обязательно указана при
+                                отмене установки обновления ( по умолчанию
+                                installVersion в случае установки, null в
+                                случае отмены полной установки)
 
   Возврат:
   Id добавленной записи ( поле install_result_id таблицы <mod_install_result>).
@@ -1423,10 +1347,6 @@ is
   -- Данные добавляемой записи
   rec mod_install_result%rowtype;
 
-  -- Текущая версия
-  currentVersion mod_install_result.result_version%type;
-  currentInstallResultId integer;
-
 
 
   /*
@@ -1444,10 +1364,24 @@ is
         mod_install_result ir
       where
         ir.is_current_version = 1
-        and ir.install_result_id = currentInstallResultId
+        and ir.module_part_id = rec.module_part_id
+        and ir.install_type_code = rec.install_type_code
+        and (
+          coalesce( ir.object_schema, rec.object_schema) is null
+          or ir.object_schema is not null
+            and rec.object_schema is not null
+            and ir.object_schema = rec.object_schema
+          )
+        and (
+          coalesce( ir.privs_user, rec.privs_user) is null
+          or ir.privs_user is not null
+            and rec.privs_user is not null
+            and ir.privs_user = rec.privs_user
+          )
       for update of ir.is_current_version wait 5
     ;
 
+  --clearCurrentVersion
   begin
     for cv in curCurrentVersion loop
       update
@@ -1459,9 +1393,7 @@ is
   exception when others then
     raise_application_error(
       pkg_ModuleInfoInternal.ErrorStackInfo_Error
-      , 'Ошибка при сбросе флага текущей версии у существующей записи ('
-        || 'currentInstallResultId=' || currentInstallResultId
-        || ').'
+      , 'Ошибка при сбросе флага текущей версии у существующей записи.'
       , true
     );
   end clearCurrentVersion;
@@ -1493,8 +1425,6 @@ is
 begin
   fillInstallResult(
     rec                       => rec
-    , currentVersion          => currentVersion
-    , currentInstallResultId  => currentInstallResultId
     , moduleSvnRoot           => moduleSvnRoot
     , moduleInitialSvnPath    => moduleInitialSvnPath
     , modulePartNumber        => modulePartNumber
@@ -1529,9 +1459,7 @@ begin
     );
     rec.install_action_module_id := rec.module_id;
   end if;
-  if currentInstallResultId is not null then
-    clearCurrentVersion();
-  end if;
+  clearCurrentVersion();
   addInstallResult();
   return rec.install_result_id;
 end createInstallResult;

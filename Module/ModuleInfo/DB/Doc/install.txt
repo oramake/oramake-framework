@@ -61,6 +61,26 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 1.4.1
+(<Версии::1.4.1 (2021-02-20)>)
+
+Порядок установки:
+
+- установка в основную схему
+
+(code)
+
+make install INSTALL_VERSION=1.4.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+Замечания:
+- остановка выполнения заданий в БД во время установки не производится;
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;
+
+
+
 group: 1.4.0
 (<Версии::1.4.0 (2020-12-10)>)
 
@@ -70,7 +90,7 @@ group: 1.4.0
 
 (code)
 
-$ make install INSTALL_VERSION=1.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=1.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 

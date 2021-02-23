@@ -10,6 +10,6 @@
 --
 
 define runScript = ""
-@oms-default runScript "' || ( select 'stop-batches.sql' from all_tab_columns where table_name='V_SCH_BATCH' and column_name = 'BATCH_SHORT_NAME') || '"
+@oms-default runScript "' || ( select max('stop-batches.sql') from all_tab_columns where table_name='V_SCH_BATCH' and column_name = 'BATCH_SHORT_NAME') || '"
 
 @oms-run "&runScript" "v_mod_save_job_queue"
