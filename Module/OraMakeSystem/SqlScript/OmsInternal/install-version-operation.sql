@@ -208,15 +208,7 @@ begin
   privsUser             := '&8';
   isCheckOnly           := '&9';
 
-  if isRevertInstall = 1 and :oms_is_full_module_install = 0
-      and trim( resultVersion) is null
-      then
-    raise_application_error(
-      -20195
-      , 'UNINSTALL_RESULT_VERSION parameter must specify version of module'
-        || ' that remains in database after uninstall current version.'
-    );
-  elsif installTypeCode = 'PRI' and trim( privsUser) is null then
+  if installTypeCode = 'PRI' and trim( privsUser) is null then
     raise_application_error(
       -20195
       , 'TO_USERNAME parameter must specify username of database'

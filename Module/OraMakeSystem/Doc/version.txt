@@ -6,6 +6,9 @@ group: 2.4.0 ( 2021-01-22)
 
 [*] Use 64-bit distribution for Windows (instead of 32-bit).
 
+[+] Allow "make uninstall" command without <UNINSTALL_RESULT_VERSION> specified
+    (ModuleInfo 1.4.1 or later is required for this feature).
+
 [+] Add ability to install for Linux.
 
 [+] Add option "--directory" ("-d") for "oms gen-spec" command.

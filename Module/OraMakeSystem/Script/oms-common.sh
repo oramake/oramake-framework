@@ -50,11 +50,11 @@ omsInitialSvnPath='Oracle/Module/OraMakeSystem@633'
 
 # var: commonRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-commonRevisionValue='$Revision:: 26885628 $'
+commonRevisionValue='$Revision:: 26901522 $'
 
 # var: commonChangeDateValue
 # Строка с последней датой изменения файла
-commonChangeDateValue='$Date:: 2021-02-12 13:48:39 +0000 #$'
+commonChangeDateValue='$Date:: 2021-02-23 14:42:16 +0000 #$'
 
 
 # var: commonRevision
