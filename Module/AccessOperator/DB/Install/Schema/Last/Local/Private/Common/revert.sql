@@ -117,3 +117,20 @@ drop sequence
 drop sequence
   op_role_seq
 /
+
+-- Триггеры
+drop trigger
+  op_operator_bu_history
+ /
+drop trigger
+  op_group_bu_history
+/
+drop trigger
+  op_operator_group_bu_history
+/
+drop trigger
+  op_operator_role_bu_history
+/
+drop trigger
+  op_role_bu_history
+/
