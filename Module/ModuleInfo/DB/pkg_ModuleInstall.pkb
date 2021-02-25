@@ -1074,7 +1074,7 @@ is
     ;
   exception when others then
     raise_application_error(
-      pkg_Error.ErrorStackInfo
+      pkg_ModuleInfoInternal.ErrorStackInfo_Error
       , 'Ошибка при определении версии после отмены установки обновления.'
       , true
     );
@@ -1136,7 +1136,7 @@ begin
     end if;
     if rec.result_version is null then
       raise_application_error(
-        pkg_Error.IllegalArgument
+        pkg_ModuleInfoInternal.IllegalArgument_Error
         , 'Must specify version of module that remains in database after'
           || ' uninstall current version using UNINSTALL_RESULT_VERSION'
           || ' parameter ('
@@ -1147,7 +1147,7 @@ begin
     end if;
   end if;
 exception when others then
-  if sqlcode = pkg_Error.IllegalArgument then
+  if sqlcode = pkg_ModuleInfoInternal.IllegalArgument_Error then
     raise;
   else
     raise_application_error(
