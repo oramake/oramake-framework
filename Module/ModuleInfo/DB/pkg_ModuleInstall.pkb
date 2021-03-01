@@ -1131,7 +1131,7 @@ begin
         and rec.is_revert_install = 1
         and rec.is_full_install = 0
       then
-    if currentVersion is not null then
+    if currentVersion is not null and currentVersion = installVersion then
       getUninstallResultVersion();
     end if;
     if rec.result_version is null then
