@@ -137,10 +137,20 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
+            File: acl  (no auto-title, Install/Grant/Last/acl.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
          }  # Group: Grant
+
+      Group: Schema  {
+
+         Group: Last  {
+
+            File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            }  # Group: Last
+
+         }  # Group: Schema
 
       }  # Group: Install
 

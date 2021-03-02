@@ -24,6 +24,10 @@ empty :=
 # Запятая.
 comma := ,
 
+# build var: sharp
+# Знак решетки (#).
+sharp := \#
+
 # build var: space
 # Пробел.
 space := $(empty) $(empty)
@@ -45,7 +49,7 @@ tab := $(empty)	$(empty)
 # build var: OMS_INSTALL_PREFIX
 # Общий префикс для инсталляционных каталогов.
 ifeq ($(OMS_INSTALL_PREFIX),)
-  binDir := $(dir $(shell bash -c "type -p oms"))
+  binDir := $(dir $(shell echo $$(type -p oms)))
   override OMS_INSTALL_PREFIX := $(if $(filter %/bin/,$(binDir)) \
     ,$(patsubst %/bin/,%,$(binDir)),/usr/local)
   undefine binDir
@@ -97,7 +101,7 @@ exportOmsInstallDir = export \
 #
 getRevisionFromKeyword = $(strip $(shell \
     keyString='$(1)'; \
-    echo "$${keyString:12:`expr length "$${keyString}"`-13}" \
+    echo "$${keyString:12:$${$(sharp)keyString}-13}" \
   ))
 
 
