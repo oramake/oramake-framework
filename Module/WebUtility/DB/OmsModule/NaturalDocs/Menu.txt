@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: WebUtility
-SubTitle: Версия 1.1.3
+SubTitle: Версия 1.1.4
 
 # You can add a footer to your documentation like this:
 # Footer: [text]

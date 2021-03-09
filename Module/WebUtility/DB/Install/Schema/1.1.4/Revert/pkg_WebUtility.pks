@@ -152,88 +152,7 @@ AWS4_HMAC_SHA256_Scheme constant varchar2(30) := 'AWS4-HMAC-SHA256';
 
 /* group: Execute of HTTP requests */
 
-/* pproc: execHttpRequest (All parameters)
-  Execute of HTTP request.
-
-  Parameters:
-  statusCode                  - Request result code (HTTP Status-Code)
-                                (out)
-  reasonPhrase                - Description of the query result
-                                (HTTP Reason-Phrase)
-                                (out, maximum 256 chars)
-  contentType                 - Type of response (HTTP Content-Type)
-                                (out, maximum 1024 chars)
-  textEntityBody              - Test response to request (HTTP entity-body)
-                                (out)
-  binEntityBody               - Binary Response to request (HTTP entity-body)
-                                (out)
-  execSecond                  - Request execution time
-                                (in seconds, -1 if it was not possible to
-                                  measure)
-                                (out)
-  responseHeaderList          - Response headers (out)
-  requestUrl                  - Request URL
-  requestText                 - Request text
-                                (default is absent)
-  parameterList               - Request parameters
-                                (default is absent)
-  httpMethod                  - HTTP method for request
-                                (default POST if requestText or parameterList
-                                  is not empty oterwise GET)
-  disableChunkedEncFlag       - Disable use chunked transfer encoding when
-                                sending request
-                                (1 yes, 0 no (is default))
-  headerList                  - Request headers
-                                (defaut is absent, but some headers can be
-                                  added by default, see the remarks below)
-  partList                    - Request parts
-                                (defaut is absent, only for multipart request,
-                                 RFC 2045)
-  bodyCharset                 - Character set of request body
-                                (default is UTF-8)
-  returnBinaryResponseFlag    - Return binary response
-                                (1 binary, 0 text (is default)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
-
-  Remarks:
-  - headers in headerList with null value are not sent;
-  - by default, request uses chunked transfer-encoding and sends
-    "Transfer-Encoding: chunked" header ( this will be disabled if
-    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
-    <TransferEncoding_HttpHeader> in headerList);
-  - by default, request sends <ContentType_HttpHeader> header with value
-    <WwwForm_ContentType> if it is POST request with parameters,
-    with value <Xml_ContentType> if request text starts with "<?xml ",
-    with value <Json_ContentType> if request text starts with "[" or "{"
-    ( this will be disabled if you use <ContentType_HttpHeader> in
-    headerList);
-  - data is automatically converted from the database character set to the
-    request body character set;
-
-  ( <body::execHttpRequest (All parameters)>)
-*/
-procedure execHttpRequest(
-  statusCode out nocopy integer
-  , reasonPhrase out nocopy varchar2
-  , contentType out nocopy varchar2
-  , binEntityBody out nocopy blob
-  , textEntityBody out nocopy clob
-  , execSecond out nocopy number
-  , responseHeaderList out nocopy wbu_header_list_t
-  , requestUrl varchar2
-  , requestText clob := null
-  , parameterList wbu_parameter_list_t := null
-  , httpMethod varchar2 := null
-  , disableChunkedEncFlag integer := null
-  , headerList wbu_header_list_t := null
-  , partList wbu_part_list_t := null
-  , bodyCharset varchar2 := null
-  , returnBinaryResponseFlag integer := null
-  , maxWaitSecond integer := null
-);
-
-/* pproc: execHttpRequest (Text response)
+/* pproc: execHttpRequest
   Execute of HTTP request.
 
   Parameters:
@@ -288,7 +207,7 @@ procedure execHttpRequest(
   - data is automatically converted from the database character set to the
     request body character set;
 
-  ( <body::execHttpRequest (Text response)>)
+  ( <body::execHttpRequest>)
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
@@ -308,82 +227,7 @@ procedure execHttpRequest(
   , maxWaitSecond integer := null
 );
 
-/* pproc: execHttpRequest (Binary response)
-  Execute of HTTP request.
-
-  Parameters:
-  statusCode                  - Request result code (HTTP Status-Code)
-                                (out)
-  reasonPhrase                - Description of the query result
-                                (HTTP Reason-Phrase)
-                                (out, maximum 256 chars)
-  contentType                 - Type of response (HTTP Content-Type)
-                                (out, maximum 1024 chars)
-  entityBody                  - Response to request (HTTP entity-body)
-                                (out)
-  execSecond                  - Request execution time
-                                (in seconds, -1 if it was not possible to
-                                  measure)
-                                (out)
-  responseHeaderList          - Response headers (out)
-  requestUrl                  - Request URL
-  requestText                 - Request text
-                                (default is absent)
-  parameterList               - Request parameters
-                                (default is absent)
-  httpMethod                  - HTTP method for request
-                                (default POST if requestText or parameterList
-                                  is not empty oterwise GET)
-  disableChunkedEncFlag       - Disable use chunked transfer encoding when
-                                sending request
-                                (1 yes, 0 no (is default))
-  headerList                  - Request headers
-                                (defaut is absent, but some headers can be
-                                  added by default, see the remarks below)
-  partList                    - Request parts
-                                (defaut is absent, only for multipart request,
-                                 RFC 2045)
-  bodyCharset                 - Character set of request body
-                                (default is UTF-8)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
-
-  Remarks:
-  - headers in headerList with null value are not sent;
-  - by default, request uses chunked transfer-encoding and sends
-    "Transfer-Encoding: chunked" header ( this will be disabled if
-    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
-    <TransferEncoding_HttpHeader> in headerList);
-  - by default, request sends <ContentType_HttpHeader> header with value
-    <WwwForm_ContentType> if it is POST request with parameters,
-    with value <Xml_ContentType> if request text starts with "<?xml ",
-    with value <Json_ContentType> if request text starts with "[" or "{"
-    ( this will be disabled if you use <ContentType_HttpHeader> in
-    headerList);
-  - data is automatically converted from the database character set to the
-    request body character set;
-
-  ( <body::execHttpRequest (Binary response)>)
-*/
-procedure execHttpRequest(
-  statusCode out nocopy integer
-  , reasonPhrase out nocopy varchar2
-  , contentType out nocopy varchar2
-  , entityBody out nocopy blob
-  , execSecond out nocopy number
-  , responseHeaderList out nocopy wbu_header_list_t
-  , requestUrl varchar2
-  , requestText clob := null
-  , parameterList wbu_parameter_list_t := null
-  , httpMethod varchar2 := null
-  , disableChunkedEncFlag integer := null
-  , headerList wbu_header_list_t := null
-  , partList wbu_part_list_t := null
-  , bodyCharset varchar2 := null
-  , maxWaitSecond integer := null
-);
-
-/* pproc: execHttpRequest (Text response, without responseHeaderList)
+/* pproc: execHttpRequest(without responseHeaderList)
   Execute of HTTP request.
 
   Parameters:
@@ -437,86 +281,13 @@ procedure execHttpRequest(
   - data is automatically converted from the database character set to the
     request body character set;
 
-  ( <body::execHttpRequest (Text response, without responseHeaderList)>)
+  ( <body::execHttpRequest(without responseHeaderList)>)
 */
 procedure execHttpRequest(
   statusCode out nocopy integer
   , reasonPhrase out nocopy varchar2
   , contentType out nocopy varchar2
   , entityBody out nocopy clob
-  , execSecond out nocopy number
-  , requestUrl varchar2
-  , requestText clob := null
-  , parameterList wbu_parameter_list_t := null
-  , httpMethod varchar2 := null
-  , disableChunkedEncFlag integer := null
-  , headerList wbu_header_list_t := null
-  , partList wbu_part_list_t := null
-  , bodyCharset varchar2 := null
-  , maxWaitSecond integer := null
-);
-
-/* pproc: execHttpRequest (Binary response, without responseHeaderList)
-  Execute of HTTP request.
-
-  Parameters:
-  statusCode                  - Request result code (HTTP Status-Code)
-                                (out)
-  reasonPhrase                - Description of the query result
-                                (HTTP Reason-Phrase)
-                                (out, maximum 256 chars)
-  contentType                 - Type of response (HTTP Content-Type)
-                                (out, maximum 1024 chars)
-  entityBody                  - Response to request (HTTP entity-body)
-                                (out)
-  execSecond                  - Request execution time
-                                (in seconds, -1 if it was not possible to
-                                  measure)
-                                (out)
-  requestUrl                  - Request URL
-  requestText                 - Request text
-                                (default is absent)
-  parameterList               - Request parameters
-                                (default is absent)
-  httpMethod                  - HTTP method for request
-                                (default POST if requestText or parameterList
-                                  is not empty oterwise GET)
-  disableChunkedEncFlag       - Disable use chunked transfer encoding when
-                                sending request
-                                (1 yes, 0 no (is default))
-  headerList                  - Request headers
-                                (defaut is absent, but some headers can be
-                                  added by default, see the remarks below)
-  partList                    - Request parts
-                                (defaut is absent, only for multipart request,
-                                 RFC 2045)
-  bodyCharset                 - Character set of request body
-                                (default is UTF-8)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
-
-  Remarks:
-  - headers in headerList with null value are not sent;
-  - by default, request uses chunked transfer-encoding and sends
-    "Transfer-Encoding: chunked" header ( this will be disabled if
-    disableChunkedEncFlag=1 or you use <ContentLength_HttpHeader> or
-    <TransferEncoding_HttpHeader> in headerList);
-  - by default, request sends <ContentType_HttpHeader> header with value
-    <WwwForm_ContentType> if it is POST request with parameters,
-    with value <Xml_ContentType> if request text starts with "<?xml ",
-    with value <Json_ContentType> if request text starts with "[" or "{"
-    ( this will be disabled if you use <ContentType_HttpHeader> in
-    headerList);
-  - data is automatically converted from the database character set to the
-    request body character set;
-
-  ( <body::execHttpRequest (Binary response, without responseHeaderList)>)
-*/
-procedure execHttpRequest(
-  statusCode out nocopy integer
-  , reasonPhrase out nocopy varchar2
-  , contentType out nocopy varchar2
-  , entityBody out nocopy blob
   , execSecond out nocopy number
   , requestUrl varchar2
   , requestText clob := null
@@ -605,7 +376,7 @@ function getResponseXml(
 return xmltype;
 
 /* pfunc: getHttpResponse
-  Returns text data received by using an HTTP request at a given URL.
+  Returns data received by using an HTTP request at a given URL.
 
   Parameters:
   requestUrl                  - URL for request
@@ -644,45 +415,7 @@ function getHttpResponse(
 )
 return clob;
 
-/* func: getHttpBinaryResponse
-  Returns binary data received by using an HTTP request at a given URL.
 
-  Parameters:
-  requestUrl                  - URL for request
-  requestText                 - Request text
-                                ( default is absent)
-  parameterList               - Request parameters
-                                ( default is absent)
-  httpMethod                  - HTTP method for request
-                                ( default POST if requestText not empty
-                                  oterwise GET)
-  disableChunkedEncFlag       - Disable use chunked transfer encoding when
-                                sending request
-                                (1 yes, 0 no (is default))
-  headerList                  - Request headers
-                                (defaut is absent, but some headers can be
-                                  added by default, see the remarks below)
-  bodyCharset                 - Character set of request body
-                                (default is UTF-8)
-  maxWaitSecond               - Maximum response time on request
-                                (in seconds, default 60 seconds)
-
-  Return:
-  binary data, returned from the HTTP request.
-
-  ( <body::getHttpBinaryResponse>)
-*/
-function getHttpBinaryResponse(
-  requestUrl varchar2
-  , requestText clob := null
-  , parameterList wbu_parameter_list_t := null
-  , httpMethod varchar2 := null
-  , disableChunkedEncFlag integer := null
-  , headerList wbu_header_list_t := null
-  , bodyCharset varchar2 := null
-  , maxWaitSecond integer := null
-)
-return blob;
 
 /* group: Execute of SOAP HTTP requests  */
 
