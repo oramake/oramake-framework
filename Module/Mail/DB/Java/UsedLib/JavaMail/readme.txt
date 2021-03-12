@@ -1,17 +1,14 @@
 title: JavaMail
 
 Для работы с почтой по протоколам SMTP, POP3, IMAP используется библиотека
-JavaMail ( источник <https://maven.java.net/content/repositories/releases/com/sun/mail/>).
+Jakarta Mail (была переименована из JavaMail)
+(домашняя страница <https://eclipse-ee4j.github.io/mail/>).
 
 Версия:
-- javamail 1.5.6
+- Jakarta Mail 1.6.4 (August 28, 2019)
+  (источник <https://repo1.maven.org/maven2/com/sun/mail/jakarta.mail/1.6.4/>)
 
-Документация:
-- readme ( <http:javamail-1.5.6/README.txt>);
-- API documentation ( <http:javamail-1.5.6/docs/javadocs/index.html>);
-
-Установка:
-- необходимо наличие библиотеки <JAF>;
-- для подключения к почтовому серверу необходимы дополнительные права на
-  уровне Java, которые выдаются пользователю при установке скриптом
-  <Install/Grant/javamail.sql>;
+Документация и примеры:
+- API documentation (см. jakarta.mail-1.6.4/Javadoc/index.html);
+- Примеры (см. jakarta.mail-1.6.4/jakartamail-samples/README.txt)
+  (источник <https://github.com/eclipse-ee4j/mail/releases/download/1.6.4/jakartamail-samples.zip>);

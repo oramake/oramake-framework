@@ -47,7 +47,7 @@ pkg_MailInternal.pkb.$(lu):           \
 
 Mail.jav.$(lu):                     \
   OraUtil.jav.$(lu)                  \
-  $(JAVAMAIL_DIR)/mail.jar.$(lu)
+  $(JAVAMAIL_LIB).$(lu)
 
 Data/ml_message_state.sql.$(lu):          \
   pkg_Mail.pks.$(lu)

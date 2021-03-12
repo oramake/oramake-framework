@@ -1,0 +1,10 @@
+java msgsendsample 'shannon">
+RCPT TO:testuser
+DATA
+To: bar
+Subject: test
+
+xxx
+.
+QUIT
+"' shannon localhost true

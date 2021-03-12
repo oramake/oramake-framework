@@ -1,0 +1,6 @@
+#!/bin/sh
+# test using Gmail
+#javac -cp $CLASSPATH:$WS/gimap/target/gimap.jar gmsgshow.java
+#java -cp $CLASSPATH:$WS/gimap/target/gimap.jar gmsgshow -D -L "gimaps://javamailtck:mail'r'us@datsun.us.oracle.com:20993/INBOX"  1
+
+java -Dmail.gimaps.ssl.trust=* -Dmail.gimaps.compress.enable=true -cp $CLASSPATH:$WS/gimap/target/gimap.jar:$HOME/ext/activation.jar msgshow -D -L "gimaps://javamailtck:mail'r'us@datsun.us.oracle.com:20993/INBOX"  2
