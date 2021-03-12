@@ -221,11 +221,11 @@ OMS_VERSION=2.4.0
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
-fileRevisionValue='$Revision:: 26901522 $'
+fileRevisionValue='$Revision:: 26867076 $'
 
 # var: fileChangeDate
 # Строка с последней датой изменения файла
-fileChangeDateValue='$Date:: 2021-02-23 14:42:16 +0000 #$'
+fileChangeDateValue='$Date:: 2021-01-30 11:36:30 -0500 #$'
 
 
 
@@ -1359,11 +1359,15 @@ loadJava()
 #
 dropJava()
 {
+  local dropjavaCmd="dropjava"
+  if (( isWindows )); then
+    dropjavaCmd="${dropjavaCmd}.bat"
+  fi
   # Получаем общий код завершения канала
   set -o pipefail
   # sed используется для обхода бага с зависанием команды read при наличии
   # двух подряд символов возврата каретки
-  ( dropjava.bat -user "$userId" "${loadFile}" 2>&1 ) \
+  ( $dropjavaCmd -user "$userId" "${loadFile}" 2>&1 ) \
     | sed --unbuffered -e 's/\r//g' | checkLoadJavaOutput
   local loadResult=$?
   set +o pipefail
