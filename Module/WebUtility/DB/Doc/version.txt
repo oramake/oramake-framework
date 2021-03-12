@@ -6,6 +6,13 @@ group: 1.1.4 ( 2021-03-04)
 
 [+] Support download binary file from web server.
 
+[+] Support new HTTP status codes of a HTTP response (
+    HTTP_ACCEPTED, 
+    HTTP_NON_AUTHORITATIVE_INFO, 
+    HTTP_NO_CONTENT, 
+    HTTP_RESET_CONTENT, 
+    HTTP_PARTIAL_CONTENT  
+    ).
 
 
 group: 1.1.3 ( 2021-02-04)

@@ -1334,8 +1334,13 @@ is
 -- checkResponseError
 begin
   if statusCode not in (
-    utl_http.HTTP_OK
+      utl_http.HTTP_OK
     , utl_http.HTTP_CREATED
+    , utl_http.HTTP_ACCEPTED
+    , utl_http.HTTP_NON_AUTHORITATIVE_INFO
+    , utl_http.HTTP_NO_CONTENT
+    , utl_http.HTTP_RESET_CONTENT
+    , utl_http.HTTP_PARTIAL_CONTENT 
   ) then
     raise_application_error(
       pkg_Error.ProcessError
