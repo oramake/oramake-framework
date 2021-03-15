@@ -39,8 +39,13 @@ testFailMessage varchar2(32767) := null;
 testBeginTime timestamp with time zone := null;
 
 
+
+
 /* group: Функции */
 
+
+
+/* group: Управление тестами */
 
 /* func: isTestFailed
   Возвращает истину, если по последнему выполнявшемуся тесту ( текущему либо
@@ -57,7 +62,6 @@ begin
     testFailMessage is not null
   ;
 end isTestFailed;
-
 
 /* proc: beginTest
    Начало теста.
@@ -77,7 +81,6 @@ begin
   testFailMessage := null;
   testBeginTime := systimestamp;
 end beginTest;
-
 
 /* proc: endTest
   Завершение теста.
@@ -114,7 +117,6 @@ begin
   end if;
 end endTest;
 
-
 /* proc: failTest
   Неуспешное завершение теста.
 
@@ -131,7 +133,6 @@ begin
   end if;
   endTest();
 end failTest;
-
 
 /* proc: addTestInfo
   Добавить информацию в соообщение по тесту.
@@ -153,7 +154,6 @@ begin
   ;
 end addTestInfo;
 
-
 /* func: getTestTimeSecond
   Получение интервала времени выполнения теста ( в секундах).
 */
@@ -173,6 +173,10 @@ begin
   ;
 end getTestTimeSecond;
 
+
+
+
+/* group: Функции проверки результата */
 
 /* func: compareChar ( func )
    Сравнение строковых данных.
@@ -298,7 +302,6 @@ begin
   end if;
 end compareChar;
 
-
 /* proc: compareChar ( proc )
    Сравнение строковых данных.
 
@@ -328,7 +331,6 @@ begin
     );
 
 end compareChar;
-
 
 /* func: compareRowCount ( func, table )
    Сравнение текущего кол-ва строк в таблице с ожидаемым кол-вом.
@@ -449,7 +451,6 @@ exception
 
 end compareRowCount;
 
-
 /* proc: compareRowCount ( proc, table )
    Сравнение текущего кол-ва строк в таблице с ожидаемым кол-вом.
 
@@ -481,7 +482,6 @@ begin
     );
 
 end compareRowCount;
-
 
 /* func: compareRowCount ( func, cursor )
    Сравнение текущего кол-ва строк в sys_refcursor с ожидаемым кол-вом.
@@ -779,7 +779,6 @@ exception
 
 end compareRowCount;
 
-
 /* proc: compareRowCount ( proc, cursor )
    Сравнение текущего кол-ва строк в sys_refcursor с ожидаемым кол-вом.
 
@@ -808,7 +807,6 @@ begin
     );
 
 end compareRowCount;
-
 
 /* func: compareQueryResult ( func, cursor )
   Сравнение данных в sys_refcursor с ожидаемыми.
