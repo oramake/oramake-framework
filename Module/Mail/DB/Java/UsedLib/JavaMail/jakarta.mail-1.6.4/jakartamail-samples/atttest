@@ -1,0 +1,1 @@
+java -Dmail.mbox.locktype=none -cp $CLASSPATH:$WS/mbox/target/mbox.jar msgatt -L "mbox:" -f "mail/software/microservices"

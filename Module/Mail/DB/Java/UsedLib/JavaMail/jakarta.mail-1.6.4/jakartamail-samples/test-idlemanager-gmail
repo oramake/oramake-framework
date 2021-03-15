@@ -1,0 +1,3 @@
+java -cp $CLASSPATH:$WS/gimap/target/gimap.jar \
+    -Dmail.gimap.trust=* \
+    idlemonitor -D -L "gimap://javamailtck:mail'r'us@datsunx:20993"

@@ -64,6 +64,22 @@ TestFetchSendAddress_OptSName constant varchar2(50) := 'TestFetchSendAddress';
 
 /* group: Функции */
 
+/* pproc: smtpsend
+  Отправляет письмо ( немедленно).
+
+  ( <body::smtpsend>)
+*/
+procedure smtpsend(
+  recipient varchar2 := null
+  , copyRecipient varchar2 := null
+  , subject varchar2 := null
+  , messageText varchar2 := null
+  , sender varchar2 := null
+  , smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
+);
+
 /* pproc: testEmailValidation
    Выполняет тестовые сценарии для проверки работы валидатора email адресов
 

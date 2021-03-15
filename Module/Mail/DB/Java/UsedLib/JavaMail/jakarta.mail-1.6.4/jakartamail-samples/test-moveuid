@@ -1,0 +1,4 @@
+#!/bin/sh
+# UW IMAP doesn't support UIDPLUS
+# test using Gmail
+java moveuid -D -L "imaps://javamailtck:mail'r'us@datsun.us.oracle.com:20993"  -f moveuid

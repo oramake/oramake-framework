@@ -28,6 +28,78 @@ opt opt_plsql_object_option_t :=
 
 /* group: Функции */
 
+/* iproc: smtpsendJava
+  Отправляет письмо ( немедленно).
+*/
+procedure smtpsendJava(
+  recipient varchar2
+  , copyRecipient varchar2
+  , subject varchar2
+  , messageText varchar2
+  , sender varchar2
+  , smtpServer varchar2
+  , username varchar2
+  , password varchar2
+)
+is
+language java name '
+MailTest.smtpsend(
+  java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.lang.String
+  , java.lang.String
+)
+';
+
+/* proc: smtpsend
+  Отправляет письмо ( немедленно).
+*/
+procedure smtpsend(
+  recipient varchar2 := null
+  , copyRecipient varchar2 := null
+  , subject varchar2 := null
+  , messageText varchar2 := null
+  , sender varchar2 := null
+  , smtpServer varchar2 := null
+  , username varchar2 := null
+  , password varchar2 := null
+)
+is
+begin
+  smtpsendJava(
+    recipient               =>
+        coalesce(
+          recipient
+          , opt.getString( TestRecipient_OptSName)
+          , pkg_Common.getMailAddressDestination()
+        )
+    , copyRecipient         => copyRecipient
+    , subject               =>
+        coalesce(
+          subject
+          , 'Mail test: smtpsend: uid=' || dbms_utility.get_time()
+        )
+    , messageText           => coalesce( messageText, 'Test message text')
+    , sender                =>
+        coalesce(
+          sender
+          , opt.getString( TestSmtpUsername_OptSName)
+          , opt.getString( TestSender_OptSName)
+          , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+        )
+    , smtpServer            =>
+        coalesce( smtpServer, opt.getString( TestSmtpServer_OptSName))
+    , username              =>
+        coalesce( userName, opt.getString( TestSmtpUsername_OptSName))
+    , password              =>
+        coalesce( password, opt.getString( TestSmtpPassword_OptSName))
+  );
+end smtpsend;
+
 /* proc: testEmailValidation
    Выполняет тестовые сценарии для проверки работы валидатора email адресов
 */

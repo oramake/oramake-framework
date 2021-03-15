@@ -2,11 +2,11 @@
 
 # build var: JAVAMAIL_DIR
 # Корневой каталог дистрибутива используемой версии библиотеки JavaMail.
-JAVAMAIL_DIR      = Java/UsedLib/JavaMail/javamail-1.5.6
+JAVAMAIL_DIR = Java/UsedLib/JavaMail/jakarta.mail-1.6.4
 
-# build var: JAF_DIR
-# Корневой каталог дистрибутива используемой версии библиотеки JAF.
-JAF_DIR            = Java/UsedLib/JAF/jaf-1.0.2
+# build var: JAVAMAIL_LIB
+# Полный путь к jar-файлу библиотеки JavaMail.
+JAVAMAIL_LIB = $(JAVAMAIL_DIR)/jakarta.mail-1.6.4.jar
 
 # Каталог сборки OMS-модуля
 omsModuleDir = OmsModule
@@ -144,7 +144,7 @@ GENDOC_DB_DIR      = ../Doc/DB/AutoGen
 
 # build var: GENDOC_DB_FLAGS
 # Дополнительные параметры генерации документации.
-GENDOC_DB_FLAGS    =  -xi "$(JAVAMAIL_DIR)" -xi "$(JAF_DIR)"
+GENDOC_DB_FLAGS    =  -xi "$(JAVAMAIL_DIR)"
 
 
 # target: gendoc
@@ -315,14 +315,13 @@ LOAD_OPERATORID := $(ORACLE_OPERATOR)
 # Используемые Java-библиотеки.
 # Указывается пути к *.jar файлам загружаемых внешних Java-библиотек.
 loadJavaUsedLibJar  =                    \
-  $(wildcard $(JAF_DIR)/activation.jar)  \
-  $(wildcard $(JAVAMAIL_DIR)/mail.jar)
+  $(wildcard $(JAVAMAIL_LIB))
 
 
 # build var: COMMON_SCHEMA
 # Наименование схемы БД, в которой размещены общие модули.
 # (AccessOperator, ModuleInfo, etc)
-COMMON_SCHEMA := 
+COMMON_SCHEMA :=
 
 
 
@@ -724,7 +723,7 @@ installTestTarget = \
   $(addsuffix .$(lu), \
     $(wildcard \
       $(addprefix Test/, \
-        *.typ *.pks *.tyb *.pkb \
+        *.typ *.pks *.jav *.tyb *.pkb \
         Data/*.sql \
       ) \
     ) \
@@ -829,9 +828,6 @@ uninstall-before: uninstall-before.oms
 # Скрипты для отмены установки схемы
 uninstallSchemaTarget = \
   $(addsuffix .$(ru), \
-    $(addsuffix .revert, \
-      $(loadJavaUsedLibJar) \
-		) \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
@@ -857,6 +853,9 @@ uninstallLoadTarget = \
     $(if $(INSTALL_VERSION), \
       $(foreach m, *.typ *.vw *.pks *.trg *.tyb *.pkb, \
         $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/$(m)) \
+      ) \
+      $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST),, \
+        $(addsuffix .revert,$(loadJavaUsedLibJar)) \
       ) \
     ,) \
   ) \
@@ -1004,6 +1003,3 @@ grant: grant.oms
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk
-
-# Включаем дополнительные настройки для Java
-include java_support.mk

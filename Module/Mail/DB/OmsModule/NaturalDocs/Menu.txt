@@ -100,6 +100,11 @@ Group: Пакеты  {
 
 Group: Java-исходники  {
 
+   Group: Test  {
+
+      File: MailTest  (no auto-title, Test/MailTest.jav)
+      }  # Group: Test
+
    File: Mail  (no auto-title, Mail.jav)
    File: OraUtil  (no auto-title, OraUtil.jav)
    }  # Group: Java-исходники
