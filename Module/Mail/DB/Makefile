@@ -828,9 +828,6 @@ uninstall-before: uninstall-before.oms
 # Скрипты для отмены установки схемы
 uninstallSchemaTarget = \
   $(addsuffix .$(ru), \
-    $(addsuffix .revert, \
-      $(loadJavaUsedLibJar) \
-		) \
     $(wildcard Install/Schema/$(INSTALL_VERSION)/revert.sql) \
   ) \
   $(addsuffix .$(ru2), \
@@ -856,6 +853,9 @@ uninstallLoadTarget = \
     $(if $(INSTALL_VERSION), \
       $(foreach m, *.typ *.vw *.pks *.trg *.tyb *.pkb, \
         $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/$(m)) \
+      ) \
+      $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST),, \
+        $(addsuffix .revert,$(loadJavaUsedLibJar)) \
       ) \
     ,) \
   ) \
@@ -1003,6 +1003,3 @@ grant: grant.oms
 
 # Включаем стандартные настройки сборки проекта
 include $(omsModuleDir)/common.mk
-
-# Включаем дополнительные настройки для Java
-include java_support.mk
