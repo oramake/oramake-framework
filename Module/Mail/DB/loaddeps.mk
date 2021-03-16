@@ -52,3 +52,16 @@ Mail.jav.$(lu):                     \
 Data/ml_message_state.sql.$(lu):          \
   pkg_Mail.pks.$(lu)
 
+
+
+ifeq ($(INSTALL_VERSION),2.7.0)
+
+# удаляем старую версию библиотеки чтобы удалить ненужные JAVA RESOURCE
+Java/UsedLib/JavaMail/jakarta.mail-1.6.4/jakarta.mail-1.6.4.jar.$(lu): \
+  Install/Schema/2.7.0/Revert/mail.jar.revert.$(ru)
+
+Install/Schema/2.7.0/Revert/mail.jar.$(ru): \
+  Java/UsedLib/JavaMail/jakarta.mail-1.6.4/jakarta.mail-1.6.4.jar.revert.$(ru)
+
+endif
+
