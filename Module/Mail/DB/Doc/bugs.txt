@@ -1,5 +1,14 @@
 Title: Ошибки
 
+[!] В Oracle 19.9 возможна ошибка при отправке письма через SMTP-сервер с
+    SSL-авторизацией вида
+    "javax.net.ssl.SSLException: java.lang.IllegalStateException: point has
+    incorrect order".
+    Для решения проблемы нужно установить патч для Oracle bug 32167592 либо
+    применить обходное решение, рекомендуемое Oracle Support в документе "19c
+    JIT: Javax.net.ssl.SSLException: Java.lang.IllegalStateException: Point
+    Has Incorrect Order (Doc ID 2738433.1)"
+
 [!] В случае наличия в почтовом ящике большого количества писем получение
     почты может завершиться с ошибкой java.lang.OutOfMemoryError.
     В качестве обходного решения можно добавить параметр с максимальным числом
