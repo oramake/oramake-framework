@@ -38,16 +38,20 @@ testFailMessage varchar2(32767) := null;
 */
 testBeginTime timestamp with time zone := null;
 
-/* ivar: parallelStarted
+/* ivar: parallelExecution
   Было ли инициализировано выполнение параллельных тестов.
-  -- TODO: возможно заменить на jobHeaderId
 */
-parallelStarted boolean := false;
+parallelExecution boolean := false;
 
-/* ivar: oracleJobName
+/* ivar: jobHeaderId
+  Заголовок тестовых job. Первичный ключ <tsu_job_header>.
+*/
+jobHeaderId integer := null;
+
+/* ivar: jobName
   Наименование job dbms_scheduler в случае выполнения в job.
 */
-oracleJobName varchar2(100) := null;
+jobName varchar2(100) := null;
 
 
 
@@ -87,7 +91,7 @@ return boolean
 is
 -- checkParallelTests
 begin
-  -- Цикл по всем тестам сессии v_tsu_session_job
+  -- Цикл по всем джобам tsu_job заголовка jobHeaderId
   -- Если тест FINISHED то вывод на экран результатов
   -- И присвоение статуса (tsu_job) PRINTED
   -- Если тестов не осталось возвращаем true
@@ -101,7 +105,8 @@ procedure saveJobTestResult
 is
 -- saveJobTestResult
 begin
-  -- Сохранение результатов теста в tsu_test_run
+  -- Сохранение результатов теста в tsu_test_run (со ссылкой на
+  -- oracle_job_name)
   -- infoMessage, testFailMessage, testInfoMessage, testBeginTime
   null;
 end saveJobTestResult;
@@ -115,19 +120,24 @@ procedure beginTestParallel(
 is
 -- beginTestParallel
 begin
-  -- Инициализация paralllelStarted
+  -- Инициализация parallelExecution
   -- Создание tsu_job_header
   null;
 end beginTestParallel;
 
 /* proc: endTestParallel
   Конец параллельной обработки тестов.
+
+  maxWaitSeconds              - максимальное время ожидания (в секундах,
+                                по-умолчанию 300)
 */
-procedure endTestParallel
+procedure endTestParallel(
+  maxWaitSeconds integer := null
+)
 is
 -- endTestParallel
 begin
-  for i in 1..300
+  for i in 1..coalesce(maxWaitSeconds, 300)
   loop
     if checkParallelTests() then
       exit;
@@ -164,13 +174,13 @@ procedure createTestJob(
 is
   jobSqlText varchar2(32767);
   jobNameVariable varchar2(30);
-  oracleJobName varchar2(100);
+  jobName varchar2(100);
 -- createTestJob
 begin
-  createTestJob.oracleJobName := createTestJob(
+  createTestJob.jobName := createTestJob(
     sqlText => sqlText
   );
-  if pkg_TestUtility.parallelStarted then
+  if pkg_TestUtility.parallelExecution then
     jobNameVariable := 'job_name';
   else
     jobNameVariable := ':jobName';
@@ -180,7 +190,7 @@ begin
 declare
   errorMessage varchar2(32767);
 begin
-  pkg_TestUtility.internalBeginTestJob(oracleJobName => ' || jobNameVariable || ');
+  pkg_TestUtility.internalBeginTestJob(jobName => ' || jobNameVariable || ');
   begin
   '
    || rtrim(trim(replace(replace(sqlText, chr(10), ''), chr(13), '')), ';')
@@ -193,14 +203,14 @@ begin
       then
       '
       pkg_TestUtility.internalEndTestJob(
-        oracleJobName => ' ||  jobNameVariable || '
+        jobName => ' ||  jobNameVariable || '
       , errorMessage  => errorMessage
       );
       raise_application_error(
         pkg_Error.ErrorStackInfo
         , lg_logger_t.getRootLogger().errorStack(
             ''Ошибка во время выполенения тестового job (''
-          || ''oracleJobName="'' || ' || jobNameVariable || ' || ''"''
+          || ''jobName="'' || ' || jobNameVariable || ' || ''"''
           || '')''
           )
         , true
@@ -209,26 +219,26 @@ begin
       end || '
   end;
   pkg_TestUtility.internalEndTestJob(
-    oracleJobName => ' ||  jobNameVariable || '
+    jobName => ' ||  jobNameVariable || '
   , errorMessage  => errorMessage
   );
 end;'
   ;
-  if pkg_TestUtility.parallelStarted then
+  if pkg_TestUtility.parallelExecution then
     dbms_scheduler.create_job(
-      job_name => createTestJob.oracleJobName
+      job_name => createTestJob.jobName
     , job_type => 'PLSQL_BLOCK'
     , job_action => jobSqlText
     , enabled => true
     , comments => 'TestUtility'
     );
-    logger.debug('Job created: oracleJobName="' + createTestJob.oracleJobName || '"');
+    logger.debug('Job created: jobName="' + createTestJob.jobName || '"');
   else
     logger.debug('Parralel tests packages not started: executing in the same session');
     execute immediate
       jobSqlText
     using
-      createTestJob.oracleJobName
+      createTestJob.jobName
     ;
   end if;
 exception when others then
@@ -244,37 +254,39 @@ exception when others then
 end createTestJob;
 
 /* proc: internalBeginTestJob
-  Начало выполнения тестового job.
+  Начало выполнения тестового job. Не должна вызываться нигде, кроме
+  PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
 
   Параметры:
-  oracleJobName               - наименование job для dbms_scheduler
+  jobName                     - наименование job
 */
 procedure internalBeginTestJob(
-  oracleJobName varchar2
+  jobName varchar2
 )
 is
 -- internalBeginTestJob
 begin
   -- Нахождение записи и обновление статуса STARTED
-  pkg_TestUtility.oracleJobName := internalBeginTestJob.oracleJobName;
+  pkg_TestUtility.jobName := internalBeginTestJob.jobName;
 end internalBeginTestJob;
 
 /* proc: internalEndTestJob
-  Начало выполнения тестового job.
+  Начало выполнения тестового job. Не должна вызываться нигде, кроме
+  PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
 
   Параметры:
-  oracleJobName               - наименование job для dbms_scheduler
+  jobName                     - наименование job
   errorMessage                - сообщение об ошибке
 */
 procedure internalEndTestJob(
-  oracleJobName varchar2
+  jobName varchar2
 , errorMessage varchar2
 )
 is
 -- internalBeginTestJob
 begin
   -- Нахождение записи и обновление статуса на FINISHED
-  -- Если oracleJobName не совпадает то добавлять ошибку
+  -- Если jobName не совпадает то добавлять ошибку
   null;
 end internalEndTestJob;
 
@@ -358,7 +370,7 @@ begin
     -- testFailMessage нужно сохранить до начала нового теста, чтобы
     -- обеспечить корректность функции isTestFailed
   end if;
-  if pkg_TestUtility.oracleJobName is not null then
+  if pkg_TestUtility.jobName is not null then
     -- Сохранение данных теста для job
     saveJobTestResult();
   end if;

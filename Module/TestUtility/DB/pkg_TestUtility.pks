@@ -22,6 +22,73 @@ Module_Name constant varchar2(30) := 'TestUtility';
 
 
 
+/* group: Параллельное выполнение тестов */
+
+/* pproc: beginTestParallel
+  Начало параллельной обработки тестов.
+
+  ( <body::beginTestParallel>)
+*/
+procedure beginTestParallel(
+  testSetName varchar2 := null
+);
+
+/* pproc: endTestParallel
+  Конец параллельной обработки тестов.
+
+  maxWaitSeconds              - максимальное время ожидания (в секундах,
+                                по-умолчанию 300)
+
+  ( <body::endTestParallel>)
+*/
+procedure endTestParallel(
+  maxWaitSeconds integer := null
+);
+
+/* pproc: createTestJob
+  Создание job для запуска теста.
+
+  Параметры:
+  sqlText                     - текст SQL
+  suppressException           - гасить исключение (по-умолчанию false)
+
+  ( <body::createTestJob>)
+*/
+procedure createTestJob(
+  sqlText varchar2
+, suppressException boolean := null
+);
+
+/* pproc: internalBeginTestJob
+  Начало выполнения тестового job. Не должна вызываться нигде, кроме
+  PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
+
+  Параметры:
+  jobName               - наименование job для dbms_scheduler
+
+  ( <body::internalBeginTestJob>)
+*/
+procedure internalBeginTestJob(
+  jobName varchar2
+);
+
+/* pproc: internalEndTestJob
+  Начало выполнения тестового job. Не должна вызываться нигде, кроме
+  PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
+
+  Параметры:
+  jobName               - наименование job для dbms_scheduler
+  errorMessage                - сообщение об ошибке
+
+  ( <body::internalEndTestJob>)
+*/
+procedure internalEndTestJob(
+  jobName varchar2
+, errorMessage varchar2
+);
+
+
+
 /* group: Управление тестами */
 
 /* pfunc: isTestFailed
@@ -84,66 +151,6 @@ procedure addTestInfo(
 */
 function getTestTimeSecond
 return number;
-
-
-
-/* group: Параллельное выполнение тестов */
-
-/* pproc: beginTestParallel
-  Начало параллельной обработки тестов.
-
-  ( <body::beginTestParallel>)
-*/
-procedure beginTestParallel(
-  testSetName varchar2 := null
-);
-
-/* pproc: endTestParallel
-  Конец параллельной обработки тестов.
-
-  ( <body::endTestParallel>)
-*/
-procedure endTestParallel;
-
-/* pproc: createTestJob
-  Создание job для запуска теста.
-
-  Параметры:
-  sqlText                     - текст SQL
-  suppressException           - гасить исключение (по-умолчанию false)
-
-  ( <body::createTestJob>)
-*/
-procedure createTestJob(
-  sqlText varchar2
-, suppressException boolean := null
-);
-
-/* pproc: internalBeginTestJob
-  Начало выполнения тестового job.
-
-  Параметры:
-  oracleJobName               - наименование job для dbms_scheduler
-
-  ( <body::internalBeginTestJob>)
-*/
-procedure internalBeginTestJob(
-  oracleJobName varchar2
-);
-
-/* pproc: internalEndTestJob
-  Начало выполнения тестового job.
-
-  Параметры:
-  oracleJobName               - наименование job для dbms_scheduler
-  errorMessage                - сообщение об ошибке
-
-  ( <body::internalEndTestJob>)
-*/
-procedure internalEndTestJob(
-  oracleJobName varchar2
-, errorMessage varchar2
-);
 
 
 
