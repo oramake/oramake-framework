@@ -85,6 +85,70 @@ procedure addTestInfo(
 function getTestTimeSecond
 return number;
 
+
+
+/* group: Параллельное выполнение тестов */
+
+/* pproc: beginTestParallel
+  Начало параллельной обработки тестов.
+
+  ( <body::beginTestParallel>)
+*/
+procedure beginTestParallel(
+  testSetName varchar2 := null
+);
+
+/* pproc: endTestParallel
+  Конец параллельной обработки тестов.
+
+  ( <body::endTestParallel>)
+*/
+procedure endTestParallel;
+
+/* pproc: createTestJob
+  Создание job для запуска теста.
+
+  Параметры:
+  sqlText                     - текст SQL
+  suppressException           - гасить исключение (по-умолчанию false)
+
+  ( <body::createTestJob>)
+*/
+procedure createTestJob(
+  sqlText varchar2
+, suppressException boolean := null
+);
+
+/* pproc: internalBeginTestJob
+  Начало выполнения тестового job.
+
+  Параметры:
+  oracleJobName               - наименование job для dbms_scheduler
+
+  ( <body::internalBeginTestJob>)
+*/
+procedure internalBeginTestJob(
+  oracleJobName varchar2
+);
+
+/* pproc: internalEndTestJob
+  Начало выполнения тестового job.
+
+  Параметры:
+  oracleJobName               - наименование job для dbms_scheduler
+  errorMessage                - сообщение об ошибке
+
+  ( <body::internalEndTestJob>)
+*/
+procedure internalEndTestJob(
+  oracleJobName varchar2
+, errorMessage varchar2
+);
+
+
+
+/* group: Функции проверки результата */
+
 /* pfunc: compareChar ( func )
    Сравнение строковых данных.
 

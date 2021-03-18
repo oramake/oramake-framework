@@ -38,10 +38,245 @@ testFailMessage varchar2(32767) := null;
 */
 testBeginTime timestamp with time zone := null;
 
+/* ivar: parallelStarted
+  Было ли инициализировано выполнение параллельных тестов.
+  -- TODO: возможно заменить на jobHeaderId
+*/
+parallelStarted boolean := false;
+
+/* ivar: oracleJobName
+  Наименование job dbms_scheduler в случае выполнения в job.
+*/
+oracleJobName varchar2(100) := null;
 
 
 
 /* group: Функции */
+
+
+
+/* group: Параллельное выполнение тестов */
+
+/* ifunc: createTestJob
+  Создание записи тестового job.
+
+  Параметры:
+  sqlText                     - SQL-текст job
+*/
+function createTestJob(
+  sqlText clob
+)
+return varchar2
+is
+-- createTestJob
+begin
+  -- Создание записи tsu_job и получение id м ммеем (oracle_job_name =
+  -- 'TESTUTILITY_' || to_char(job_id)
+  return 'TESTUTILITY_' || to_char(sysdate, 'yyyymmdd_hh24miss');
+end createTestJob;
+
+/* ifunc: checkParallelTests
+  Проверка завершения параллельных тестов сессии.
+
+  Возврат:
+  - true, если все тесты завершены
+  - false, если тесты остались
+*/
+function checkParallelTests
+return boolean
+is
+-- checkParallelTests
+begin
+  -- Цикл по всем тестам сессии v_tsu_session_job
+  -- Если тест FINISHED то вывод на экран результатов
+  -- И присвоение статуса (tsu_job) PRINTED
+  -- Если тестов не осталось возвращаем true
+  return true;
+end checkParallelTests;
+
+/* iproc: saveJobTestResult
+  Сохранение результатов теста.
+*/
+procedure saveJobTestResult
+is
+-- saveJobTestResult
+begin
+  -- Сохранение результатов теста в tsu_test_run
+  -- infoMessage, testFailMessage, testInfoMessage, testBeginTime
+  null;
+end saveJobTestResult;
+
+/* proc: beginTestParallel
+  Начало параллельной обработки тестов.
+*/
+procedure beginTestParallel(
+  testSetName varchar2 := null
+)
+is
+-- beginTestParallel
+begin
+  -- Инициализация paralllelStarted
+  -- Создание tsu_job_header
+  null;
+end beginTestParallel;
+
+/* proc: endTestParallel
+  Конец параллельной обработки тестов.
+*/
+procedure endTestParallel
+is
+-- endTestParallel
+begin
+  for i in 1..300
+  loop
+    if checkParallelTests() then
+      exit;
+    end if;
+    dbms_lock.sleep(1);
+    if i = 300 then
+      raise_application_error(
+        pkg_Error.IllegalArgument
+        , 'Превышено время ожидания тестов'
+      );
+    end if;
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка параллельной обработки тестов'
+      )
+    , true
+  );
+end endTestParallel;
+
+/* proc: createTestJob
+  Создание job для запуска теста.
+
+  Параметры:
+  sqlText                     - текст SQL
+  suppressException           - гасить исключение (по-умолчанию false)
+*/
+procedure createTestJob(
+  sqlText varchar2
+, suppressException boolean := null
+)
+is
+  jobSqlText varchar2(32767);
+  jobNameVariable varchar2(30);
+  oracleJobName varchar2(100);
+-- createTestJob
+begin
+  createTestJob.oracleJobName := createTestJob(
+    sqlText => sqlText
+  );
+  if pkg_TestUtility.parallelStarted then
+    jobNameVariable := 'job_name';
+  else
+    jobNameVariable := ':jobName';
+  end if;
+  jobSqlText :=
+'
+declare
+  errorMessage varchar2(32767);
+begin
+  pkg_TestUtility.internalBeginTestJob(oracleJobName => ' || jobNameVariable || ');
+  begin
+  '
+   || rtrim(trim(replace(replace(sqlText, chr(10), ''), chr(13), '')), ';')
+   || ';
+    exception when others then
+      errorMessage := lg_logger_t.getRootLogger().getErrorStack();'
+      ||
+      case when
+         coalesce(suppressException, false) = false
+      then
+      '
+      pkg_TestUtility.internalEndTestJob(
+        oracleJobName => ' ||  jobNameVariable || '
+      , errorMessage  => errorMessage
+      );
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , lg_logger_t.getRootLogger().errorStack(
+            ''Ошибка во время выполенения тестового job (''
+          || ''oracleJobName="'' || ' || jobNameVariable || ' || ''"''
+          || '')''
+          )
+        , true
+      );
+      '
+      end || '
+  end;
+  pkg_TestUtility.internalEndTestJob(
+    oracleJobName => ' ||  jobNameVariable || '
+  , errorMessage  => errorMessage
+  );
+end;'
+  ;
+  if pkg_TestUtility.parallelStarted then
+    dbms_scheduler.create_job(
+      job_name => createTestJob.oracleJobName
+    , job_type => 'PLSQL_BLOCK'
+    , job_action => jobSqlText
+    , enabled => true
+    , comments => 'TestUtility'
+    );
+    logger.debug('Job created: oracleJobName="' + createTestJob.oracleJobName || '"');
+  else
+    logger.debug('Parralel tests packages not started: executing in the same session');
+    execute immediate
+      jobSqlText
+    using
+      createTestJob.oracleJobName
+    ;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка создания job ('
+      || 'sqlText="' || sqlText || '"'
+      || ')'
+      )
+    , true
+  );
+end createTestJob;
+
+/* proc: internalBeginTestJob
+  Начало выполнения тестового job.
+
+  Параметры:
+  oracleJobName               - наименование job для dbms_scheduler
+*/
+procedure internalBeginTestJob(
+  oracleJobName varchar2
+)
+is
+-- internalBeginTestJob
+begin
+  -- Нахождение записи и обновление статуса STARTED
+  pkg_TestUtility.oracleJobName := internalBeginTestJob.oracleJobName;
+end internalBeginTestJob;
+
+/* proc: internalEndTestJob
+  Начало выполнения тестового job.
+
+  Параметры:
+  oracleJobName               - наименование job для dbms_scheduler
+  errorMessage                - сообщение об ошибке
+*/
+procedure internalEndTestJob(
+  oracleJobName varchar2
+, errorMessage varchar2
+)
+is
+-- internalBeginTestJob
+begin
+  -- Нахождение записи и обновление статуса на FINISHED
+  -- Если oracleJobName не совпадает то добавлять ошибку
+  null;
+end internalEndTestJob;
 
 
 
@@ -74,12 +309,20 @@ procedure beginTest(
 )
 is
 begin
-  if not logger.isEnabledFor( pkg_Logging.Info_LevelCode) then
-    logger.setLevel( pkg_Logging.Info_LevelCode);
+  if not logger.isEnabledFor(pkg_Logging.Info_LevelCode) then
+    logger.setLevel(pkg_Logging.Info_LevelCode);
   end if;
   testInfoMessage := messageText;
   testFailMessage := null;
   testBeginTime := systimestamp;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка начала теста'
+      )
+    , true
+  );
 end beginTest;
 
 /* proc: endTest
@@ -110,11 +353,23 @@ begin
           || chr(10) || testFailMessage
       end
     ;
-    logger.info( infoMessage);
+    logger.info(infoMessage);
     testInfoMessage := null;
     -- testFailMessage нужно сохранить до начала нового теста, чтобы
     -- обеспечить корректность функции isTestFailed
   end if;
+  if pkg_TestUtility.oracleJobName is not null then
+    -- Сохранение данных теста для job
+    saveJobTestResult();
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка завершения теста'
+      )
+    , true
+  );
 end endTest;
 
 /* proc: failTest
@@ -172,7 +427,6 @@ begin
     + extract( second from timeDiff)
   ;
 end getTestTimeSecond;
-
 
 
 
