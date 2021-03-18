@@ -88,8 +88,20 @@ Group: Скрипты  {
 
          Group: Last  {
 
+            File: run  (no auto-title, Install/Schema/Last/run.sql)
             File: revert  (no auto-title, Install/Schema/Last/revert.sql)
+            File: tsu_job  (no auto-title, Install/Schema/Last/tsu_job.tab)
+            File: tsu_job_seq  (no auto-title, Install/Schema/Last/tsu_job_seq.sqs)
+            File: tsu_process  (no auto-title, Install/Schema/Last/tsu_process.tab)
+            File: tsu_process_seq  (no auto-title, Install/Schema/Last/tsu_process_seq.sqs)
+            File: tsu_test_run  (no auto-title, Install/Schema/Last/tsu_test_run.tab)
+            File: tsu_test_run_seq  (no auto-title, Install/Schema/Last/tsu_test_run_seq.sqs)
             }  # Group: Last
+
+         Group: 1.2.0  {
+
+            File: run  (no auto-title, Install/Schema/1.2.0/run.sql)
+            }  # Group: 1.2.0
 
          }  # Group: Schema
 
@@ -98,6 +110,13 @@ Group: Скрипты  {
    }  # Group: Скрипты
 
 Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Table Index: Таблицы
+      Database Index Index: Индексы
+      Database Sequence Index: Последовательности
+      }  # Group: Объекты БД
 
    Group: Открытые объявления  {
 
