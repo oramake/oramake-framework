@@ -851,7 +851,7 @@ uninstall-schema: uninstall-schema.oms
 uninstallLoadTarget = \
   $(addsuffix .$(ru), \
     $(if $(INSTALL_VERSION), \
-      $(foreach m, *.typ *.vw *.pks *.trg *.tyb *.pkb, \
+      $(foreach m, *.jar *.typ *.vw *.pks *.trg *.tyb *.pkb *.jav, \
         $(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/$(m)) \
       ) \
       $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST),, \

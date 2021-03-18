@@ -201,6 +201,7 @@ Group: Скрипты  {
          Group: 2.7.0  {
 
             File: run  (no auto-title, Install/Schema/2.7.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.7.0/revert.sql)
             }  # Group: 2.7.0
 
          Group: 2.5.0  {
@@ -227,12 +228,6 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
-
-   Group: Java  {
-
-      File: drop-java-lib  (no auto-title, Java/drop-java-lib.sh)
-      File: load-java-lib  (no auto-title, Java/load-java-lib.sh)
-      }  # Group: Java
 
    Group: Test  {
 
