@@ -1,0 +1,23 @@
+-- table: tsu_process
+-- Процессы.
+create table
+  tsu_process
+(
+  process_id                      integer                             not null
+  , process_description           varchar2(4000)
+  , date_ins                      date                default sysdate not null
+  , constraint tsu_process_pk primary key
+    ( process_id)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table tsu_process is
+  'Процессы [ SVN root: Oracle/Module/TestUtility]'
+/
+comment on column tsu_process.date_ins is
+  'Дата добавления записи'
+/
+

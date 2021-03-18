@@ -1,0 +1,6 @@
+-- sequence: tsu_process_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <tsu_process>.
+create sequence
+  tsu_process_seq
+/

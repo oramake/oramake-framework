@@ -24,13 +24,28 @@ Module_Name constant varchar2(30) := 'TestUtility';
 
 /* group: Параллельное выполнение тестов */
 
+/* pfunc: createProcess
+  Создание процесса.
+
+  processDescription          - описание процесса
+
+  Возврат:
+  - id процесса;
+
+  ( <body::createProcess>)
+*/
+function createProcess(
+  processDescription varchar2 := null
+)
+return integer;
+
 /* pproc: beginTestParallel
   Начало параллельной обработки тестов.
 
   ( <body::beginTestParallel>)
 */
 procedure beginTestParallel(
-  testSetName varchar2 := null
+  processDescription varchar2 := null
 );
 
 /* pproc: endTestParallel
@@ -64,7 +79,7 @@ procedure createTestJob(
   PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
 
   Параметры:
-  jobName               - наименование job для dbms_scheduler
+  jobName                     - наименование job
 
   ( <body::internalBeginTestJob>)
 */
@@ -77,7 +92,7 @@ procedure internalBeginTestJob(
   PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
 
   Параметры:
-  jobName               - наименование job для dbms_scheduler
+  jobName                     - наименование job
   errorMessage                - сообщение об ошибке
 
   ( <body::internalEndTestJob>)

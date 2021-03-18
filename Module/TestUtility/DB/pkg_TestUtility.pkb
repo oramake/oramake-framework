@@ -43,10 +43,10 @@ testBeginTime timestamp with time zone := null;
 */
 parallelExecution boolean := false;
 
-/* ivar: jobHeaderId
-  Заголовок тестовых job. Первичный ключ <tsu_job_header>.
+/* ivar: processId
+  Процесс. Первичный ключ <tsu_process>.
 */
-jobHeaderId integer := null;
+processId integer := null;
 
 /* ivar: jobName
   Наименование job dbms_scheduler в случае выполнения в job.
@@ -66,18 +66,92 @@ jobName varchar2(100) := null;
 
   Параметры:
   sqlText                     - SQL-текст job
+  processId                   - id процесса
 */
 function createTestJob(
   sqlText clob
+, processId integer
 )
 return varchar2
 is
+  jobName tsu_job.job_name%type;
 -- createTestJob
 begin
-  -- Создание записи tsu_job и получение id м ммеем (oracle_job_name =
-  -- 'TESTUTILITY_' || to_char(job_id)
-  return 'TESTUTILITY_' || to_char(sysdate, 'yyyymmdd_hh24miss');
+  insert into
+    tsu_job
+  (
+    job_id
+  , sql_text
+  , process_id
+  )
+  values(
+    tsu_job_seq.nextval
+  , sqlText
+  , processId
+  )
+  returning
+    job_name
+  into
+    createTestJob.jobName
+  ;
+  return
+    createTestJob.jobName
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка создание записи тестового job ('
+      || 'sqlText="' || sqlText || '"'
+      || ')'
+      )
+    , true
+  );
 end createTestJob;
+
+/* func: createProcess
+  Создание процесса.
+
+  processDescription          - описание процесса
+
+  Возврат:
+  - id процесса;
+*/
+function createProcess(
+  processDescription varchar2 := null
+)
+return integer
+is
+  processId integer;
+-- createProcess
+begin
+  insert into
+    tsu_process
+  (
+    process_id
+  , process_description
+  )
+  values(
+    tsu_process_seq.nextval
+  , processDescription
+  )
+  returning
+    process_id
+  into
+    processId
+  ;
+  return processId;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка создания процесса ('
+      || 'processDescription="' || processDescription || '"'
+      || ')'
+      )
+    , true
+  );
+end createProcess;
 
 /* ifunc: checkParallelTests
   Проверка завершения параллельных тестов сессии.
@@ -86,43 +160,83 @@ end createTestJob;
   - true, если все тесты завершены
   - false, если тесты остались
 */
-function checkParallelTests
+function checkParallelTests(
+  processId integer
+)
 return boolean
 is
+  runningJobCount integer := 0;
 -- checkParallelTests
 begin
-  -- Цикл по всем джобам tsu_job заголовка jobHeaderId
-  -- Если тест FINISHED то вывод на экран результатов
-  -- И присвоение статуса (tsu_job) PRINTED
-  -- Если тестов не осталось возвращаем true
-  return true;
+  for job in (
+  select
+    *
+  from
+    tsu_job
+  where
+    process_id = processId
+    and status_code <> 'PRINTED'
+  ) loop
+    if job.status_code = 'FINISHED' then
+      -- TODO: implement
+      logger.warn('Output results for job_id=' || to_char(job.job_id));
+    else
+      runningJobCount := runningJobCount + 1;
+    end if;
+  end loop;
+  return runningJobCount = 0;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка проверки завершения тестов сесси ('
+      || 'processId=' || to_char(processId)
+      || ')'
+      )
+    , true
+  );
 end checkParallelTests;
 
-/* iproc: saveJobTestResult
+/* iproc: saveTestRunResult
   Сохранение результатов теста.
+
+  jobName                     - наименование job
 */
-procedure saveJobTestResult
+procedure saveTestRunResult(
+  jobName varchar2
+)
 is
--- saveJobTestResult
+-- saveTestRunResult
 begin
   -- Сохранение результатов теста в tsu_test_run (со ссылкой на
   -- oracle_job_name)
   -- infoMessage, testFailMessage, testInfoMessage, testBeginTime
   null;
-end saveJobTestResult;
+end saveTestRunResult;
 
 /* proc: beginTestParallel
   Начало параллельной обработки тестов.
 */
 procedure beginTestParallel(
-  testSetName varchar2 := null
+  processDescription varchar2 := null
 )
 is
 -- beginTestParallel
 begin
-  -- Инициализация parallelExecution
-  -- Создание tsu_job_header
-  null;
+  pkg_TestUtility.processId := createProcess(
+    processDescription => processDescription
+  );
+  parallelExecution := false; --TODO: change
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка начала параллельной обработки тестов ('
+      || 'processDescription="' || processDescription || '"'
+      || ')'
+      )
+    , true
+  );
 end beginTestParallel;
 
 /* proc: endTestParallel
@@ -137,9 +251,17 @@ procedure endTestParallel(
 is
 -- endTestParallel
 begin
+  if pkg_TestUtility.processId is null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Процесс не был инициализирован'
+    );
+  end if;
   for i in 1..coalesce(maxWaitSeconds, 300)
   loop
-    if checkParallelTests() then
+    if
+       checkParallelTests(processId => pkg_TestUtility.processId)
+    then
       exit;
     end if;
     dbms_lock.sleep(1);
@@ -177,8 +299,14 @@ is
   jobName varchar2(100);
 -- createTestJob
 begin
+  if pkg_TestUtility.processId is null then
+    pkg_TestUtility.processId := createProcess(
+      processDescription => 'Процесс для выполнения в одной сессии'
+    );
+  end if;
   createTestJob.jobName := createTestJob(
-    sqlText => sqlText
+    sqlText   => sqlText
+  , processId => pkg_TestUtility.processId
   );
   if pkg_TestUtility.parallelExecution then
     jobNameVariable := 'job_name';
@@ -266,12 +394,30 @@ procedure internalBeginTestJob(
 is
 -- internalBeginTestJob
 begin
-  -- Нахождение записи и обновление статуса STARTED
+  -- Нахождение записи и обновление статуса на STARTED
   pkg_TestUtility.jobName := internalBeginTestJob.jobName;
+  update
+    tsu_job
+  set
+    status_code        = 'STARTED'
+  , oracle_sid         = pkg_Common.getSessionSid()
+  , oracle_serial#     = pkg_Common.getSessionSerial()
+  , last_status_update = systimestamp
+  where
+    job_name = jobName
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка выполнения job'
+      )
+    , true
+  );
 end internalBeginTestJob;
 
 /* proc: internalEndTestJob
-  Начало выполнения тестового job. Не должна вызываться нигде, кроме
+  Конец выполнения тестового job. Не должна вызываться нигде, кроме
   PL/SQL-блоков, формируемых в <pkg_TestUtility::createTestJob>.
 
   Параметры:
@@ -287,7 +433,32 @@ is
 begin
   -- Нахождение записи и обновление статуса на FINISHED
   -- Если jobName не совпадает то добавлять ошибку
-  null;
+  update
+    tsu_job
+  set
+    status_code        = 'FINISHED'
+  , last_status_update = systimestamp
+  , error_message      = errorMessage
+  where
+    job_name = jobName
+  ;
+  if sql%rowcount <> 1 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Неверное количество обновлённых записей'
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка завершения выполнения job ('
+      || 'jobName="' || jobName || '"'
+      || ', errorMessage="' || errorMessage || '"'
+      || ')'
+      )
+    , true
+  );
 end internalEndTestJob;
 
 
@@ -372,7 +543,7 @@ begin
   end if;
   if pkg_TestUtility.jobName is not null then
     -- Сохранение данных теста для job
-    saveJobTestResult();
+    saveTestRunResult(jobName => pkg_TestUtility.jobName);
   end if;
 exception when others then
   raise_application_error(

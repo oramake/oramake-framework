@@ -1,0 +1,38 @@
+-- table: tsu_test_run
+-- Выполнение тестов.
+create table
+  tsu_test_run
+(
+  test_run_id                     integer                             not null
+  , job_id                        integer                             not null
+  , info_message                  varchar2(4000)                      not null
+  , fail_message                  varchar2(4000)
+  , begin_time                    timestamp with time zone
+  , date_ins                      timestamp with time zone default systimestamp not null
+  , constraint tsu_test_run_pk primary key
+    ( test_run_id)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table tsu_test_run is
+  'Выполнение тестов [ SVN root: Oracle/Module/TestUtility]'
+/
+comment on column tsu_test_run.date_ins is
+  'Дата добавления записи'
+/
+
+
+-- index: tsu_test_run_ix_job_id
+-- Индекс для внешнего ключа.
+create index
+  tsu_test_run_ix_job_id
+on
+  tsu_test_run (
+    job_id
+  )
+tablespace &indexTablespace
+/
+

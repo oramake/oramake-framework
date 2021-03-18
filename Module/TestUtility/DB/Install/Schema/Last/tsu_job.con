@@ -1,0 +1,9 @@
+alter table
+  tsu_job
+add constraint
+  tsu_job_fk_tsu_process
+foreign key
+  (process_id)
+references
+  tsu_process(process_id)
+/

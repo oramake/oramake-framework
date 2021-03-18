@@ -1,0 +1,58 @@
+-- table: tsu_job
+-- Задания.
+create table
+  tsu_job
+(
+  job_id                          integer                             not null
+  , job_name                      varchar2(100) as ('TESTUTILITY_' || to_char(job_id))
+  , process_id                    integer
+  , sql_text                      varchar2(4000)                      not null
+  , status_code                   varchar2(10)        default 'NEW'   not null
+  , last_status_update            timestamp with time zone default systimestamp not null
+  , oracle_sid                    integer
+  , oracle_serial#                integer
+  , error_message                 varchar2(4000)
+  , date_ins                      timestamp with time zone default systimestamp not null
+  , constraint tsu_job_pk primary key
+    (job_id)
+    using index tablespace &indexTablespace
+  , constraint tsu_job_uk unique
+    (job_name)
+    using index tablespace &indexTablespace
+  , constraint tsu_job_ck_status_code check
+    (
+      status_code = 'NEW'
+      or
+      status_code in
+      (
+        'STARTED'
+      , 'FINISHED'
+      , 'PRINTED'
+      )
+      and oracle_sid is not null
+      and oracle_serial# is not null
+    )
+)
+/
+
+-- TODO: комментарии
+
+comment on table tsu_job is
+  'Задания [SVN root: Oracle/Module/TestUtility]'
+/
+comment on column tsu_job.date_ins is
+  'Дата/время добавления записи'
+/
+
+
+-- index: tsu_job_ix_process
+-- Индекс для внешнего ключа.
+create index
+  tsu_job_ix_process
+on
+  tsu_job (
+    process_id
+  )
+tablespace &indexTablespace
+/
+

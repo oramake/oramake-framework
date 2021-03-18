@@ -1,0 +1,6 @@
+-- sequence: tsu_job_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <tsu_job>.
+create sequence
+  tsu_job_seq
+/
