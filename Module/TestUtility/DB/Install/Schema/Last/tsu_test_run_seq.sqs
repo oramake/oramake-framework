@@ -1,0 +1,6 @@
+-- sequence: tsu_test_run_seq
+-- Последовательность для заполнения первичного ключа таблицы
+-- <tsu_test_run>.
+create sequence
+  tsu_test_run_seq
+/

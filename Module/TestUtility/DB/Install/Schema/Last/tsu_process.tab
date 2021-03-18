@@ -13,9 +13,14 @@ create table
 /
 
 
-
 comment on table tsu_process is
   'Процессы [ SVN root: Oracle/Module/TestUtility]'
+/
+comment on column tsu_process.process_id is
+  'Id процесса'
+/
+comment on column tsu_process.process_description is
+  'Описание процесса'
 /
 comment on column tsu_process.date_ins is
   'Дата добавления записи'

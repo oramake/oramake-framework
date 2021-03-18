@@ -1,0 +1,9 @@
+alter table
+  tsu_test_run
+add constraint
+  tsu_test_run_fk_job
+foreign key
+  (job_id)
+references
+  tsu_job(job_id)
+/

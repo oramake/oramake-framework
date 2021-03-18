@@ -109,19 +109,23 @@ exception when others then
   );
 end createTestJob;
 
-/* func: createProcess
+/* ifunc: createProcess
   Создание процесса.
 
   processDescription          - описание процесса
 
   Возврат:
   - id процесса;
+
+  Замечание:
+  - процедура выполняется в автономной транзакции;
 */
 function createProcess(
   processDescription varchar2 := null
 )
 return integer
 is
+  pragma autonomous_transaction;
   processId integer;
 -- createProcess
 begin
@@ -140,8 +144,10 @@ begin
   into
     processId
   ;
+  commit;
   return processId;
 exception when others then
+  rollback;
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -159,37 +165,75 @@ end createProcess;
   Возврат:
   - true, если все тесты завершены
   - false, если тесты остались
+
+  Замечание:
+  - процедура выполняется в автономной транзакции;
 */
 function checkParallelTests(
   processId integer
 )
 return boolean
 is
+  pragma autonomous_transaction;
   runningJobCount integer := 0;
+
+  /*
+    Вывод результатов
+  */
+  procedure outputJobResult(jobId integer)
+  is
+  begin
+    for testRun in (
+      select
+        *
+      from
+        tsu_test_run
+      where
+        job_id = jobId
+      order by
+        test_run_id
+    ) loop
+      logger.info(testRun.info_message);
+    end loop;
+    update
+      tsu_job
+    set
+      status_code = 'PRINTED'
+    where
+      job_id = jobId
+    ;
+  end outputJobResult;
+
 -- checkParallelTests
 begin
   for job in (
-  select
-    *
-  from
-    tsu_job
-  where
-    process_id = processId
-    and status_code <> 'PRINTED'
+    select
+      *
+    from
+      tsu_job
+    where
+      process_id = processId
+      and status_code <> 'PRINTED'
+    order by
+      job_id
   ) loop
     if job.status_code = 'FINISHED' then
-      -- TODO: implement
-      logger.warn('Output results for job_id=' || to_char(job.job_id));
+      outputJobResult(jobId => job.job_id);
+      if job.error_message is not null then
+        logger.error(job.error_message);
+      end if;
     else
       runningJobCount := runningJobCount + 1;
     end if;
   end loop;
+  commit;
   return runningJobCount = 0;
 exception when others then
+  rollback;
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка проверки завершения тестов сесси ('
+        'Ошибка проверки завершения тестов ('
       || 'processId=' || to_char(processId)
       || ')'
       )
@@ -201,17 +245,46 @@ end checkParallelTests;
   Сохранение результатов теста.
 
   jobName                     - наименование job
+  infoMessage                 - информационное сообщение
 */
 procedure saveTestRunResult(
   jobName varchar2
+, infoMessage varchar2
 )
 is
+  pragma autonomous_transaction;
 -- saveTestRunResult
 begin
-  -- Сохранение результатов теста в tsu_test_run (со ссылкой на
-  -- oracle_job_name)
-  -- infoMessage, testFailMessage, testInfoMessage, testBeginTime
-  null;
+  insert into tsu_test_run(
+    test_run_id
+  , job_id
+  , info_message
+  , fail_message
+  , begin_time
+  )
+  select
+    tsu_test_run_seq.nextval as test_run_id
+  , job_id
+  , substr(infoMessage, 1, 4000) as info_message
+  , substr(pkg_TestUtility.testFailMessage, 1, 4000) as fail_message
+  , pkg_TestUtility.testBeginTime as begin_time
+  from
+    tsu_job
+  where
+    job_name = jobName
+  ;
+  commit;
+exception when others then
+  rollback;
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка сохранения результатов теста ('
+      || 'jobName="' || jobName  || '"'
+      || ')'
+      )
+    , true
+  );
 end saveTestRunResult;
 
 /* proc: beginTestParallel
@@ -223,10 +296,13 @@ procedure beginTestParallel(
 is
 -- beginTestParallel
 begin
+  if not logger.isEnabledFor(pkg_Logging.Info_LevelCode) then
+    logger.setLevel(pkg_Logging.Info_LevelCode);
+  end if;
   pkg_TestUtility.processId := createProcess(
     processDescription => processDescription
   );
-  parallelExecution := false; --TODO: change
+  parallelExecution := true;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -265,13 +341,17 @@ begin
       exit;
     end if;
     dbms_lock.sleep(1);
-    if i = 300 then
+    if i = coalesce(maxWaitSeconds, 300) then
+      pkg_TestUtility.parallelExecution := false;
+      pkg_TestUtility.processId := null;
       raise_application_error(
         pkg_Error.IllegalArgument
         , 'Превышено время ожидания тестов'
       );
     end if;
   end loop;
+  pkg_TestUtility.parallelExecution := false;
+  pkg_TestUtility.processId := null;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -297,17 +377,67 @@ is
   jobSqlText varchar2(32767);
   jobNameVariable varchar2(30);
   jobName varchar2(100);
--- createTestJob
+  operatorId integer;
+
+  /*
+    Создание записи job.
+  */
+  procedure createTestJobInternal
+  is
+    pragma autonomous_transaction;
+  begin
+    createTestJob.jobName := createTestJob(
+      sqlText   => sqlText
+    , processId => pkg_TestUtility.processId
+    );
+    commit;
+  end createTestJobInternal;
+
+  /*
+    Создание job DBMS_SCHEDULER.
+  */
+  procedure createOracleJob
+  is
+    pragma autonomous_transaction;
+  begin
+    dbms_scheduler.create_job(
+      job_name => createTestJob.jobName
+    , job_type => 'PLSQL_BLOCK'
+    , job_action => jobSqlText
+    , enabled => true
+    , comments => 'TestUtility'
+    );
+    logger.debug('Job created: jobName="' || createTestJob.jobName || '"');
+    commit;
+  end createOracleJob;
+
+  /*
+    Получение operator_id.
+  */
+  procedure getOperatorId
+  is
+  begin
+    execute immediate
+    '
+    begin
+      :operatorId := pkg_Operator.getCurrentUserId();
+    end;
+    '
+    using out
+      operatorId
+    ;
+  exception when others then
+    operatorId := null;
+  end getOperatorId;
+
 begin
+  getOperatorId();
   if pkg_TestUtility.processId is null then
     pkg_TestUtility.processId := createProcess(
       processDescription => 'Процесс для выполнения в одной сессии'
     );
   end if;
-  createTestJob.jobName := createTestJob(
-    sqlText   => sqlText
-  , processId => pkg_TestUtility.processId
-  );
+  createTestJobInternal();
   if pkg_TestUtility.parallelExecution then
     jobNameVariable := 'job_name';
   else
@@ -320,7 +450,11 @@ declare
 begin
   pkg_TestUtility.internalBeginTestJob(jobName => ' || jobNameVariable || ');
   begin
-  '
+   '
+   ||
+   case when operatorId is not null then
+     'pkg_Operator.setCurrentUserId(' || to_char(pkg_Operator.getCurrentUserId()) || ');'
+   end
    || rtrim(trim(replace(replace(sqlText, chr(10), ''), chr(13), '')), ';')
    || ';
     exception when others then
@@ -353,14 +487,7 @@ begin
 end;'
   ;
   if pkg_TestUtility.parallelExecution then
-    dbms_scheduler.create_job(
-      job_name => createTestJob.jobName
-    , job_type => 'PLSQL_BLOCK'
-    , job_action => jobSqlText
-    , enabled => true
-    , comments => 'TestUtility'
-    );
-    logger.debug('Job created: jobName="' + createTestJob.jobName || '"');
+    createOracleJob();
   else
     logger.debug('Parralel tests packages not started: executing in the same session');
     execute immediate
@@ -387,11 +514,15 @@ end createTestJob;
 
   Параметры:
   jobName                     - наименование job
+
+  Замечание:
+  - процедура выполняется в автономной транзакции;
 */
 procedure internalBeginTestJob(
   jobName varchar2
 )
 is
+  pragma autonomous_transaction;
 -- internalBeginTestJob
 begin
   -- Нахождение записи и обновление статуса на STARTED
@@ -406,7 +537,9 @@ begin
   where
     job_name = jobName
   ;
+  commit;
 exception when others then
+  rollback;
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -423,12 +556,16 @@ end internalBeginTestJob;
   Параметры:
   jobName                     - наименование job
   errorMessage                - сообщение об ошибке
+
+  Замечание:
+  - процедура выполняется в автономной транзакции;
 */
 procedure internalEndTestJob(
   jobName varchar2
 , errorMessage varchar2
 )
 is
+   pragma autonomous_transaction;
 -- internalBeginTestJob
 begin
   -- Нахождение записи и обновление статуса на FINISHED
@@ -448,7 +585,9 @@ begin
       , 'Неверное количество обновлённых записей'
     );
   end if;
+  commit;
 exception when others then
+  rollback;
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
@@ -543,7 +682,10 @@ begin
   end if;
   if pkg_TestUtility.jobName is not null then
     -- Сохранение данных теста для job
-    saveTestRunResult(jobName => pkg_TestUtility.jobName);
+    saveTestRunResult(
+      jobName     => pkg_TestUtility.jobName
+    , infoMessage => infoMessage
+    );
   end if;
 exception when others then
   raise_application_error(

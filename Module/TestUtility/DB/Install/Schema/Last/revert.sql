@@ -14,6 +14,7 @@ drop package pkg_Tests
 
 @oms-drop-foreign-key tsu_job
 @oms-drop-foreign-key tsu_process
+@oms-drop-foreign-key tsu_test_run
 
 
 -- Таблицы
@@ -21,6 +22,8 @@ drop package pkg_Tests
 drop table tsu_job
 /
 drop table tsu_process
+/
+drop table tsu_test_run
 /
 
 

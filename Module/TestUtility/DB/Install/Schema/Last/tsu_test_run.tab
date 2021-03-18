@@ -23,6 +23,15 @@ comment on table tsu_test_run is
 comment on column tsu_test_run.date_ins is
   'Дата добавления записи'
 /
+comment on column tsu_test_run.info_message is
+  'Информацинное сообщение'
+/
+comment on column tsu_test_run.fail_message is
+  'Сообщение неудачного теста'
+/
+comment on column tsu_test_run.begin_time is
+  'Дата/время начала теста'
+/
 
 
 -- index: tsu_test_run_ix_job_id
