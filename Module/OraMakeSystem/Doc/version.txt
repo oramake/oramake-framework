@@ -4,6 +4,9 @@ title: Версии
 
 group: ?.?.?
 
+[*] Run "oms gen-schema-revert" during "make update-oms-version" if
+    Install/Schema/Last/revert.sql does not exists.
+
 [!] Fix in use ".revert" extension for drop Java libraries.
 
 

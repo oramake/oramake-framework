@@ -558,6 +558,12 @@ updateModule()
 
   getModuleEncoding "$rootDir"
 
+  # Нужно ли выполнить oms gen-schema-revert после обновления
+  isGenSchemaRevert=0
+  if ! [[ -f "$rootDir/DB/Install/Schema/Last/revert.sql" ]]; then
+    isGenSchemaRevert=1
+  fi
+
                                         # Ветки .svn игнорируются для удобства
                                         # тестирования ( запуск на текущей
                                         # версии шаблона без выполнения
@@ -652,6 +658,10 @@ updateModule()
       doAfterAction "$file" "$dstPath" "$fromRevision"
     fi
   done
+  if (( isGenSchemaRevert )); then
+    $runCmd $installPrefix/bin/oms gen-schema-revert -d "$rootDir" \
+      || exitError "Error on run: $installPrefix/bin/oms gen-schema-revert -d \"$rootDir\""
+  fi
                                         # Выводит результат обновления
   if (( ! isDryRun)); then
     printUpdateResult
