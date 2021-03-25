@@ -677,15 +677,17 @@ begin
     ;
     logger.info(infoMessage);
     testInfoMessage := null;
+    if pkg_TestUtility.jobName is not null then
+      -- Сохранение данных теста для job
+      saveTestRunResult(
+        jobName     => pkg_TestUtility.jobName
+      , infoMessage => infoMessage
+      );
+    end if;
     -- testFailMessage нужно сохранить до начала нового теста, чтобы
     -- обеспечить корректность функции isTestFailed
-  end if;
-  if pkg_TestUtility.jobName is not null then
-    -- Сохранение данных теста для job
-    saveTestRunResult(
-      jobName     => pkg_TestUtility.jobName
-    , infoMessage => infoMessage
-    );
+  else
+    logger.trace('endTest: Test not started');
   end if;
 exception when others then
   raise_application_error(
