@@ -5,11 +5,6 @@ create or replace package body pkg_MailInternal is
 
 /* group: Константы */
 
-/* iconst: Module_Name
-  Название модуля, к которому относится пакет.
-*/
-Module_Name constant varchar2(30) := pkg_Mail.Module_Name;
-
 /* iconst: CheckCommand_Timeout
   Таймаут между проверками наличия команд для обработки
   ( в секундах )
@@ -35,7 +30,7 @@ Max_Wait_TimeOut constant integer := 3600*2.5;
   Интерфейсный объект к модулю Logging
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => Module_Name
+  moduleName => pkg_MailBase.Module_Name
   , objectName => 'pkg_MailInternal'
 );
 
@@ -44,7 +39,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
   для использования в Java
 */
 loggerJava lg_logger_t := lg_logger_t.getLogger(
-  moduleName => Module_Name
+  moduleName => pkg_MailBase.Module_Name
   , objectName => 'Mail.pkg_Mail.java'
 );
 
@@ -169,7 +164,7 @@ procedure initHandler(
 is
 begin
   pkg_TaskHandler.initHandler(
-    moduleName => Module_Name
+    moduleName => pkg_MailBase.Module_Name
     , processName => processName
   );
   lastRequestCheck := null;

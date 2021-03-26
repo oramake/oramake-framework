@@ -68,6 +68,12 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_Mail.pkb)
       }  # Group: pkg_Mail
 
+   Group: pkg_MailBase  {
+
+      File: Спецификация  (no auto-title, pkg_MailBase.pks)
+      File: Реализация  (no auto-title, pkg_MailBase.pkb)
+      }  # Group: pkg_MailBase
+
    Group: pkg_MailHandler  {
 
       File: Спецификация  (no auto-title, pkg_MailHandler.pks)
@@ -254,6 +260,7 @@ Group: Индекс  {
 
    Group: Открытые объявления  {
 
+      Type Index: Типы
       Constant Index: Константы
       Function public Index: Функции
       }  # Group: Открытые объявления

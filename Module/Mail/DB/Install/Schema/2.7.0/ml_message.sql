@@ -15,3 +15,7 @@ on
   )
 tablespace &indexTablespace
 /
+
+comment on column ml_message.smtp_server is
+  'SMTP-сервер для отправки сообщения (NULL для использования SMTP-сервера по умолчанию)'
+/

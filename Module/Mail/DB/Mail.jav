@@ -1737,7 +1737,7 @@ try
 + "   -- и параметр равен\n"
 + "   -- значению имени SMTP-сервера\n"
 + "   -- по умолчанию\n"
-+ "     or ? = pkg_Common.getSmtpServer()\n"
++ "     or ? = pkg_MailBase.getDefaultSmtpServer()\n"
 + "     and ms.smtp_server is null\n"
 + "   )\n"
 + "   and ms.send_date <= systimestamp\n"

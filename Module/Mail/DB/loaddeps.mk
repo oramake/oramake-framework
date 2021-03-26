@@ -28,29 +28,33 @@
 #   с учетом регистра, например "Install/Schema/Last/test_view.vw.$(lu): ...";
 #
 
-pkg_Mail.pkb.$(lu):                 \
-  pkg_Mail.pks.$(lu)                \
+pkg_Mail.pkb.$(lu): \
+  pkg_Mail.pks.$(lu) \
+  pkg_MailBase.pks.$(lu) \
   pkg_MailUtility.pks.$(lu) \
   pkg_MailInternal.pks.$(lu)
 
-pkg_MailHandler.pkb.$(lu):           \
-  pkg_MailHandler.pks.$(lu)          \
-  pkg_Mail.pks.$(lu)	\
+pkg_MailBase.pkb.$(lu): \
+  pkg_MailBase.pks.$(lu)
+
+pkg_MailHandler.pkb.$(lu): \
+  pkg_MailHandler.pks.$(lu) \
+  pkg_Mail.pks.$(lu) \
+  pkg_MailBase.pks.$(lu) \
   pkg_MailInternal.pks.$(lu) \
   Install/Schema/Last/v_ml_fetch_request_wait.vw.$(lu)
 
-pkg_MailUtility.pkb.$(lu):           \
-  pkg_MailUtility.pks.$(lu)
+pkg_MailUtility.pkb.$(lu): \
+  pkg_MailUtility.pks.$(lu) \
+  pkg_MailBase.pks.$(lu)
 
-pkg_MailInternal.pkb.$(lu):           \
-  pkg_MailInternal.pks.$(lu)
+pkg_MailInternal.pkb.$(lu): \
+  pkg_MailInternal.pks.$(lu) \
+  pkg_MailBase.pks.$(lu)
 
-Mail.jav.$(lu):                     \
-  OraUtil.jav.$(lu)                  \
+Mail.jav.$(lu): \
+  OraUtil.jav.$(lu) \
   $(JAVAMAIL_LIB).$(lu)
-
-Data/ml_message_state.sql.$(lu):          \
-  pkg_Mail.pks.$(lu)
 
 
 

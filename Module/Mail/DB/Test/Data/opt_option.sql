@@ -24,7 +24,7 @@ declare
 
   opt opt_plsql_object_option_t :=
     opt_plsql_object_option_t(
-      moduleName      => pkg_Mail.Module_Name
+      moduleName      => pkg_MailBase.Module_Name
       , objectName    => 'pkg_MailTest'
     )
   ;

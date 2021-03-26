@@ -580,6 +580,7 @@ getInstallDataFile = \
 installDataTarget = \
   $(addsuffix .$(lu), \
     $(call getInstallDataFile) \
+    $(wildcard $(OMS_INSTALL_CONFIG_DIR)/ModuleConfig/Mail/opt_option.sql) \
   ) \
   $(addsuffix .$(lu2), \
   ) \

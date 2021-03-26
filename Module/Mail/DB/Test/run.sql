@@ -16,7 +16,7 @@ declare
   loggingLevelCode varchar2(10) := '&loggingLevelCode';
 begin
   lg_logger_t.getRootLogger().setLevel( pkg_Logging.Warning_LevelCode);
-  lg_logger_t.getLogger( pkg_Mail.Module_Name).setLevel(
+  lg_logger_t.getLogger( pkg_MailBase.Module_Name).setLevel(
     coalesce( loggingLevelCode, pkg_Logging.Warning_LevelCode)
   );
 end;

@@ -124,7 +124,7 @@ comment on column ml_message.message_state_code is
   ' од состо€ни€ сообщени€ ( ссылка на ml_message_state)'
 /
 comment on column ml_message.smtp_server is
-  'SMTP-сервер дл€ отправки сообщени€. «начение null приравниваетс€ к pkg_Common.getSmtpServer'
+  'SMTP-сервер дл€ отправки сообщени€ (NULL дл€ использовани€ SMTP-сервера по умолчанию)'
 /
 comment on column ml_message.sender is
   'јдреса отправителей ( кодированныее оригинальные дл€ вход€щих сообщений, преобразованные дл€ исход€щих)'

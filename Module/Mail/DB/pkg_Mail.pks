@@ -7,11 +7,6 @@ create or replace package pkg_Mail is
 
 /* group: Константы */
 
-/* const: Module_Name
-  Название модуля, к которому относится пакет
-*/
-Module_Name constant varchar2(30) := 'Mail';
-
 
 
 /* group: Коды состояния сообщения */
@@ -96,8 +91,10 @@ ImageJPEGData_MimeType constant varchar2(40) := 'image/jpeg';
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя (или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию, в т.ч. имя пользователя и пароль
+                                для авторизации, если они заданы в настройках)
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -135,8 +132,9 @@ procedure sendMail(
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -171,8 +169,9 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -205,8 +204,9 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

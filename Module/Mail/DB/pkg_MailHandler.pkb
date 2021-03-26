@@ -10,19 +10,9 @@ create or replace package body pkg_MailHandler is
 */
 subtype TUrlString is ml_fetch_request.url%type;
 
-/* itype: TColSmtpServer
-  Тип коллекции для адресов SMTP-серверов
-*/
-type TColSmtpServer is table of ml_message.smtp_server%type;
-
 
 
 /* group: Константы */
-
-/* iconst: Module_Name
-  Название модуля, к которому относится пакет.
-*/
-Module_Name constant varchar2(30) := pkg_Mail.Module_Name;
 
 /* iconst: CheckCommand_Timeout
   Таймаут между проверками наличия команд
@@ -46,90 +36,13 @@ SendMessage_TimeLimit constant interval day to second := INTERVAL '3' MINUTE;
   Интерфейсный объект к модулю Logging
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => pkg_Mail.Module_Name
+  moduleName => pkg_MailBase.Module_Name
   , objectName => 'pkg_MailHanlder'
 );
 
 
 
 /* group: Функции */
-
-/* ifunc: parseSmtpServerList
-  Разбирает строку со списком адресов
-  SMTP-серверов.
-
-  smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
-                                через ",". Пустая строка приравнивается
-                                к pkg_Common.getSmtpServer.
-
-  Возврат:
-    - коллекция адресов
-*/
-function parseSmtpServerList(
-  smtpServerList varchar2
-)
-return TColSmtpServer
-is
-
-  -- Результирующая коллекция
-  colSmtpServer TColSmtpServer := TColSmtpServer();
-
-  -- Указатели на символы в строке
-  i integer := 1;
-  j integer;
-
-  -- Признак окончания разбора
-  finished boolean := false;
-
-  -- Длина строки списка имён SMTP-серверов
-  lengthSmtpList integer := coalesce( length( smtpServerList),0);
-
-begin
-  i := 1;
-  for safeLoop in 1..lengthSmtpList+2
-  loop
-    j := coalesce( instr( smtpServerList, ',', i, 1),0);
-    if j = 0 then
-      j := lengthSmtpList + 1;
-      finished := true;
-      logger.trace( 'finished');
-    end if;
-    logger.trace( 'i=' || to_char( i));
-    logger.trace( 'j=' || to_char( j));
-
-    -- Получаем следующий элемент
-    colSmtpServer.extend;
-    colSmtpServer( colSmtpServer.last)
-      := coalesce(
-           replace(
-             substr( smtpServerList
-                     , i
-                     , j-i
-                   )
-             , ' '
-           )
-           , pkg_Common.getSmtpServer
-         );
-    logger.debug( 'add SMTP: '
-      || '"' || colSmtpServer( colSmtpServer.last) || '"'
-    );
-    exit when
-      finished;
-    i := j + 1;
-  end loop;
-  return
-    colSmtpServer;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка разбора строки списка адресов SMTP('
-        || 'smtpServerList="' || smtpServerList || '"'
-        || ')'
-      )
-    , true
-  );
-end parseSmtpServerList;
 
 
 
@@ -161,9 +74,10 @@ return java.math.BigDecimal
   сообщений.
 
   Параметры:
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                Значение null приравнивается к
-                                pkg_Common.getSmtpServer.
+  smtpServer                  - имя (или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию, в т.ч. имя пользователя и пароль
+                                для авторизации, если они заданы в настройках)
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -191,15 +105,39 @@ is
   -- Автономная транзакция, т.к.  обращаемся к внешним сервисам
   pragma autonomous_transaction;
 
+  -- Использовать SMTP-сервер по умолчанию
+  isDefaultSmtpServer boolean := smtpServer is null;
+
+  -- Настройки SMTP-сервера по умолчанию
+  defCfg pkg_MailBase.SmtpConfigT;
+
   -- Число отправленных сообщений
-  nSend integer := 0;
+  nSend integer;
 
 begin
+  if isDefaultSmtpServer then
+    defCfg := pkg_MailBase.getDefaultSmtpConfig();
+  end if;
   nSend := sendMessageJava(
-    coalesce( smtpServer, pkg_Common.getSmtpServer())
-    , username
-    , password
-    , maxMessageCount - nSend
+    smtpServer            =>
+        case when isDefaultSmtpServer then
+          defCfg.smtp_server
+        else
+          smtpServer
+        end
+    , username            =>
+        case when isDefaultSmtpServer then
+          defCfg.username
+        else
+          username
+        end
+    , password            =>
+        case when isDefaultSmtpServer then
+          defCfg.password
+        else
+          password
+        end
+    , maxMessageCount     => maxMessageCount
   );
   commit;
   return nSend;
@@ -221,8 +159,8 @@ end sendMessage;
 
   Параметры:
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
-                                через ",".
-                                Значение null приравнивается к pkg_Common.getSmtpServer.
+                                через ",". Вместо пустой строки подставляется
+                                SMTP-сервер по умолчанию.
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -272,8 +210,8 @@ is
   -- Количество отправленных сообщений
   sentMessageCount integer := 0;
 
-  -- Коллекция имён SMTP-серверов
-  colSmtpServer TColSmtpServer;
+  -- Настройки SMTP-серверов
+  smtpCfgList pkg_MailBase.SmtpConfigListT;
 
 
 
@@ -285,7 +223,7 @@ is
 
     -- Инициализируем обработчик
     pkg_TaskHandler.initHandler(
-      moduleName                  => Module_Name
+      moduleName                  => pkg_MailBase.Module_Name
       , processName               => 'sendHandler'
          || '('
          || coalesce(
@@ -310,7 +248,7 @@ is
     handlerSid          := pkg_Common.getSessionSid();
     handlerSerial       := pkg_Common.getSessionSerial();
                                         -- Разбираем список адресов
-    colSmtpServer := parseSmtpServerList(
+    smtpCfgList := pkg_MailBase.parseSmtpServerList(
       smtpServerList => smtpServerList
     );
   exception when others then
@@ -350,7 +288,7 @@ is
     logger.trace( 'check new request');
 
     -- Проверяем сообщения по указанным SMTP-серверам
-    for i in 1..colSmtpServer.count loop
+    for i in 1..smtpCfgList.count loop
       select
         count(*)
       into
@@ -362,9 +300,9 @@ is
         -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
         -- SMTP-сервера по-умолчанию, иметь значение null
         and
-        ( ms.smtp_server = colSmtpServer(i)
-          or colSmtpServer(i) = pkg_Common.getSmtpServer
-          and ms.smtp_server is null
+        ( ms.smtp_server = smtpCfgList(i).smtp_server
+          or smtpCfgList(i).default_flag = 1
+            and ms.smtp_server is null
         )
         and ms.send_date <= systimestamp
         and rownum <= 1
@@ -454,11 +392,11 @@ is
 
     -- Выполняем отправку сообщений c ограничением по количеству записей для
     -- каждого SMTP-сервера
-    for i in 1..colSmtpServer.count loop
+    for i in 1..smtpCfgList.count loop
       nSend := sendMessage(
-        smtpServer => colSmtpServer(i)
-        , username => username
-        , password => password
+        smtpServer => smtpCfgList(i).smtp_server
+        , username => smtpCfgList(i).username
+        , password => smtpCfgList(i).password
         , maxMessageCount => maxMessageCount - sentMessageCount
       );
       logger.trace( 'sent count: ' || nSend);
@@ -1075,8 +1013,8 @@ end fetchHandler;
                                 передаче null будет использовано значение по
                                 умолчанию)
   smtpServerList              - список имён ( или ip-адресов) SMTP-серверов
-                                через ",". Пустая строка приравнивается
-                                к pkg_Common.getSmtpServer.
+                                через ",". Вместо пустой строки подставляется
+                                SMTP-сервер по умолчанию.
 
   Возврат:
     - количество ошибок
@@ -1097,8 +1035,8 @@ is
   -- Текст сообщения
   msg varchar2( 30000);
 
-  -- Коллекция SMTP-серверов
-  colSmtpServer TColSmtpServer;
+  -- Настройки SMTP-серверов
+  smtpCfgList pkg_MailBase.SmtpConfigListT;
 
 
 
@@ -1107,13 +1045,9 @@ is
   */
   procedure processSmtpServer(
     smtpServer varchar2
+    , defaultFlag integer
   )
   is
-
-    -- Используемый SMTP-сервер
-    usedSmtpServer varchar2( 512 ) :=
-      coalesce( smtpServer, pkg_Common.getSmtpServer())
-    ;
 
     -- Создан ли заголовок для SMTP-сервера
     headerCreated boolean := false;
@@ -1143,9 +1077,8 @@ is
         -- Поле smtp_server должно совпадать с smtpServer, либо, в случае
         -- SMTP-сервера по-умолчанию, иметь значение null
         and
-        ( ms.smtp_server = usedSmtpServer
-          or usedSmtpServer = pkg_Common.getSmtpServer
-          and ms.smtp_server is null
+        ( ms.smtp_server = smtpServer
+          or defaultFlag = 1 and ms.smtp_server is null
         )
         and (
           ms.error_code is not null
@@ -1176,7 +1109,7 @@ is
         msg := substr( msg
           || chr(10)
           || chr(10)
-          || '* SMTP Server: ' || to_char( usedSmtpServer )
+          || '* SMTP Server: ' || to_char( smtpServer )
           || chr(10)
           , 1
           , 30000
@@ -1253,23 +1186,24 @@ is
 
 -- notifyError
 begin
-  colSmtpServer := parseSmtpServerList(
+  smtpCfgList := pkg_MailBase.parseSmtpServerList(
     smtpServerList => smtpServerList
   );
 
   -- Формируем сообщение
-  for i in 1..colSmtpServer.count loop
+  for i in 1..smtpCfgList.count loop
     processSmtpServer(
-      smtpServer => colSmtpServer(i)
+      smtpServer    => smtpCfgList(i).smtp_server
+      , defaultFlag => smtpCfgList(i).default_flag
     );
   end loop;
 
   -- Отправляем письмо по ошибкам
   if msg is not null then
     pkg_Common.sendMail(
-      mailSender => pkg_Common.getMailAddressSource( Module_Name)
+      mailSender => pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
       , mailRecipient => pkg_Common.getMailAddressDestination
-      , subject => Module_Name || ': error notification'
+      , subject => pkg_MailBase.Module_Name || ': error notification'
       , message =>
           rpad( 'Дата проверки: ', 35) || to_char( checkTime, 'dd.mm.yy hh24:mi:ss')
           || chr( 10)

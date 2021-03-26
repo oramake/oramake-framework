@@ -3,7 +3,7 @@ declare
   -- Параметры тестирования
   opt opt_plsql_object_option_t :=
     opt_plsql_object_option_t(
-      moduleName        => pkg_Mail.Module_Name
+      moduleName        => pkg_MailBase.Module_Name
       , objectName      => 'pkg_MailTest'
     )
   ;
@@ -15,7 +15,7 @@ begin
     sender                  =>
         coalesce(
           opt.getString( pkg_MailTest.TestSender_OptSName)
-          , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+          , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
         )
     , recipient             =>
         coalesce(

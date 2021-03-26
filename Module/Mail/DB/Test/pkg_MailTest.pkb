@@ -10,7 +10,7 @@ as
   Логер пакета.
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName    => pkg_Mail.Module_Name
+  moduleName    => pkg_MailBase.Module_Name
   , objectName  => 'pkg_MailTest'
 );
 
@@ -19,7 +19,7 @@ logger lg_logger_t := lg_logger_t.getLogger(
 */
 opt opt_plsql_object_option_t :=
   opt_plsql_object_option_t(
-    moduleName        => pkg_Mail.Module_Name
+    moduleName        => pkg_MailBase.Module_Name
     , objectName      => 'pkg_MailTest'
   )
 ;
@@ -89,7 +89,7 @@ begin
           sender
           , opt.getString( TestSmtpUsername_OptSName)
           , opt.getString( TestSender_OptSName)
-          , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+          , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
         )
     , smtpServer            =>
         coalesce( smtpServer, opt.getString( TestSmtpServer_OptSName))
@@ -255,7 +255,7 @@ is
         sender                  =>
             coalesce(
               opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
             )
         , recipient             =>
             coalesce(
@@ -413,7 +413,7 @@ is
         sender                  =>
             coalesce(
               opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
             )
         , recipient             =>
             coalesce(
@@ -659,7 +659,7 @@ is
         sender                  =>
             coalesce(
               opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
             )
         , recipient             =>
             coalesce(
@@ -943,7 +943,7 @@ is
         sender                  =>
             coalesce(
               opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_Mail.Module_Name)
+              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
             )
         , recipient             =>
             coalesce(

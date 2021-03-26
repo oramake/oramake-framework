@@ -26,10 +26,10 @@ AttachmentImage_DefaultType constant varchar2(50) := ImageJPEGData_MimeType;
 /* group: Переменные */
 
 /* ivar: logger
-  Интерфейсный объект к модулю Logging
+  Логер пакета.
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => Module_Name
+  moduleName => pkg_MailBase.Module_Name
   , objectName => 'pkg_Mail'
 );
 
@@ -88,8 +88,10 @@ Mail.send(
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя (или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию, в т.ч. имя пользователя и пароль
+                                для авторизации, если они заданы в настройках)
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -112,7 +114,17 @@ procedure sendMail(
   , isHtml boolean := null
 )
 is
+
+  -- Использовать SMTP-сервер по умолчанию
+  isDefaultSmtpServer boolean := smtpServer is null;
+
+  -- Настройки SMTP-сервера по умолчанию
+  defCfg pkg_MailBase.SmtpConfigT;
+
 begin
+  if isDefaultSmtpServer then
+    defCfg := pkg_MailBase.getDefaultSmtpConfig();
+  end if;
   sendMailJava(
     sender                => pkg_MailUtility.getEncodedAddressList( sender)
     , recipient           => pkg_MailUtility.getEncodedAddressList( recipient)
@@ -130,13 +142,24 @@ begin
           coalesce( attachmentType, Attachment_DefaultType)
         end
     , attachmentData      => attachmentData
-    , smtpServer          => case when smtpServer is not null then
-                               smtpServer
-                             else
-                               pkg_Common.getSmtpServer()
-                             end
-    , username            => username
-    , password            => password
+    , smtpServer          =>
+        case when isDefaultSmtpServer then
+          defCfg.smtp_server
+        else
+          smtpServer
+        end
+    , username            =>
+        case when isDefaultSmtpServer then
+          defCfg.username
+        else
+          username
+        end
+    , password            =>
+        case when isDefaultSmtpServer then
+          defCfg.password
+        else
+          password
+        end
     , isHtml =>
         case when isHtml
            then 1
@@ -236,8 +259,9 @@ end createAttachment;
   attachmentType              - тип вложения
   attachmentData              - данные вложения
   sourceMessageId             - Id сообщения, на которое посылается ответ
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
   isHtml                      - создавать сообщение как HTML
                                 ( 1 да, 0 нет ( по-умолчанию))
@@ -363,8 +387,9 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -415,8 +440,9 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -466,8 +492,9 @@ end sendHtmlMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
-                                используется сервер из pkg_Common.getSmtpServer)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
+                                (если не указан, то используется SMTP-сервер по
+                                умолчанию)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

@@ -18,7 +18,7 @@ subtype TUrlString is varchar2(1000);
   Интерфейсный объект к модулю Logging
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => pkg_Mail.Module_Name
+  moduleName => pkg_MailBase.Module_Name
   , objectName => 'pkg_MailUtility'
 );
 

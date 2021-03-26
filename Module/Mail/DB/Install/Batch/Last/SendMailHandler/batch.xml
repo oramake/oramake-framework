@@ -10,7 +10,10 @@
     <option short_name="MaxMessageCount" type="number" name=" оличество отправл€емых сообщений">
       <value>500</value>
     </option>
-    <option short_name="SmtpServerList" type="string" name="—писок имен ( ip-адресов) SMTP-серверов ( разделить &quot;,&quot;, по умолчанию используетс€ SMTP-сервер, возвращаемый pkg_Common.getSmtpServer)">
+    <option short_name="SmtpServerList" type="string"
+      name="—писок имен ( ip-адресов) SMTP-серверов ( разделить &quot;,&quot;)"
+      description="≈сли значение не задано, то используетс€ SMTP-сервер из настроек модул€, а при его отсутствии SMTP-сервер, возвращаемый функцией pkg_Common.getSmtpServer модул€ Common"
+      >
       <value></value>
     </option>
     <option short_name="Username" type="string" name="»м€ пользовател€ дл€ авторизации на SMTP-сервере">
