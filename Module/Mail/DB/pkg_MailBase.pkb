@@ -48,15 +48,17 @@ begin
     optionShortName => DefaultSmtpServer_OptSName
     , useCacheFlag  => 1
   );
-  if cfg.smtp_server is not null and coalesce( getAuthParamsFlag, 1) != 0 then
-    cfg.username := moduleOption.getString(
-      optionShortName => DefaultSmtpUsername_OptSName
-      , useCacheFlag  => 1
-    );
-    cfg.password := moduleOption.getString(
-      optionShortName => DefaultSmtpPassword_OptSName
-      , useCacheFlag  => 1
-    );
+  if cfg.smtp_server is not null then
+    if coalesce( getAuthParamsFlag, 1) != 0 then
+      cfg.username := moduleOption.getString(
+        optionShortName => DefaultSmtpUsername_OptSName
+        , useCacheFlag  => 1
+      );
+      cfg.password := moduleOption.getString(
+        optionShortName => DefaultSmtpPassword_OptSName
+        , useCacheFlag  => 1
+      );
+    end if;
   else
     cfg.smtp_server := pkg_Common.getSmtpServer();
   end if;
