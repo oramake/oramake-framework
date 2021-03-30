@@ -76,6 +76,8 @@ end;
 
 -- Пакеты
 
+drop package pkg_MailBase
+/
 drop package pkg_Mail
 /
 drop package pkg_MailHandler
