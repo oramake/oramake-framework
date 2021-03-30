@@ -23,3 +23,37 @@ on
   )
 tablespace &indexTablespace
 /
+
+declare
+
+  opt opt_option_list_t := opt_option_list_t(
+    findModuleString => 'Oracle/Module/Mail'
+  );
+
+  cursor dataCur is
+    select
+      t.option_short_name
+    from
+      table( opt.getOptionValue()) t
+    where
+      t.option_short_name in (
+        'DefaultSmtpServer'
+        , 'DefaultSmtpUsername'
+        , 'DefaultSmtpPassword'
+        , 'DefaultMailSender'
+      )
+  ;
+
+begin
+  for rec in dataCur loop
+    opt.deleteOption( optionShortName => rec.option_short_name);
+    dbms_output.put_line(
+      'delete option: ' || rec.option_short_name
+    );
+  end loop;
+  commit;
+end;
+/
+
+drop package pkg_MailBase
+/

@@ -26,18 +26,11 @@ AttachmentImage_DefaultType constant varchar2(50) := ImageJPEGData_MimeType;
 /* group: Переменные */
 
 /* ivar: logger
-  Логер пакета.
+  Интерфейсный объект к модулю Logging
 */
 logger lg_logger_t := lg_logger_t.getLogger(
-  moduleName => pkg_MailBase.Module_Name
+  moduleName => Module_Name
   , objectName => 'pkg_Mail'
-);
-
-/* ivar: moduleOption
-  Настроечные параметры модуля
-*/
-moduleOption opt_option_list_t := opt_option_list_t(
-  findModuleString => pkg_MailBase.Module_SvnRoot
 );
 
 
@@ -83,68 +76,11 @@ Mail.send(
 )
 ';
 
-/* func: getMailSender
-  Возвращает адрес отправителя для отправки сообщений.
-  Возвращаемое значение настраивается с помощью параметра
-  <pkg_MailBase.DefaultMailSender_OptSName>, если значение параметра не задано,
-  возвращается значение функции pkg_Common.getMailAddressSource.
-
-  Параметры:
-  systemName                  - Название системы или модуля, формирующего
-                                сообщение
-                                (по умолчанию отсутствует)
-*/
-function getMailSender(
-  systemName varchar2 := null
-)
-return varchar2
-is
-
-  senderText ml_message.sender_text%type;
-
-begin
-  senderText := moduleOption.getString(
-    optionShortName => pkg_MailBase.DefaultMailSender_OptSName
-    , useCacheFlag  => 1
-  );
-  senderText :=
-    case when senderText is not null then
-      ltrim(
-        replace(
-          replace(
-              senderText
-              , '$(instanceName)', pkg_Common.getInstanceName()
-            )
-          , '$(systemName)', systemName
-        )
-        -- убираем возможные разделители элементов шаблона
-        , '. '
-      )
-    else
-      pkg_Common.getMailAddressSource(
-        systemName => systemName
-      )
-    end
-  ;
-  return senderText;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка при получении адреса отправителя ('
-        || 'systemName="' || systemName || '"'
-        || ').'
-      )
-    , true
-  );
-end getMailSender;
-
 /* proc: sendMail
   Отправляет письмо ( немедленно).
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -152,10 +88,8 @@ end getMailSender;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя (или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию, в т.ч. имя пользователя и пароль
-                                для авторизации, если они заданы в настройках)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -164,7 +98,7 @@ end getMailSender;
                                 по-умолчанию письмо отправляется как обычный текст
 */
 procedure sendMail(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -178,22 +112,9 @@ procedure sendMail(
   , isHtml boolean := null
 )
 is
-
-  -- Использовать SMTP-сервер по умолчанию
-  isDefaultSmtpServer boolean := smtpServer is null;
-
-  -- Настройки SMTP-сервера по умолчанию
-  defCfg pkg_MailBase.SmtpConfigT;
-
 begin
-  if isDefaultSmtpServer then
-    defCfg := pkg_MailBase.getDefaultSmtpConfig();
-  end if;
   sendMailJava(
-    sender                =>
-        pkg_MailUtility.getEncodedAddressList(
-          coalesce( sender, getMailSender())
-        )
+    sender                => pkg_MailUtility.getEncodedAddressList( sender)
     , recipient           => pkg_MailUtility.getEncodedAddressList( recipient)
     , copyRecipient       => pkg_MailUtility.getEncodedAddressList(
                               copyRecipient
@@ -209,24 +130,13 @@ begin
           coalesce( attachmentType, Attachment_DefaultType)
         end
     , attachmentData      => attachmentData
-    , smtpServer          =>
-        case when isDefaultSmtpServer then
-          defCfg.smtp_server
-        else
-          smtpServer
-        end
-    , username            =>
-        case when isDefaultSmtpServer then
-          defCfg.username
-        else
-          username
-        end
-    , password            =>
-        case when isDefaultSmtpServer then
-          defCfg.password
-        else
-          password
-        end
+    , smtpServer          => case when smtpServer is not null then
+                               smtpServer
+                             else
+                               pkg_Common.getSmtpServer()
+                             end
+    , username            => username
+    , password            => password
     , isHtml =>
         case when isHtml
            then 1
@@ -318,7 +228,6 @@ end createAttachment;
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -327,9 +236,8 @@ end createAttachment;
   attachmentType              - тип вложения
   attachmentData              - данные вложения
   sourceMessageId             - Id сообщения, на которое посылается ответ
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
   isHtml                      - создавать сообщение как HTML
                                 ( 1 да, 0 нет ( по-умолчанию))
@@ -369,10 +277,8 @@ is
 
   begin
     msg.incoming_flag       := 0;
-    msg.sender_text         := coalesce( sender, getMailSender());
-    msg.sender              :=
-      pkg_MailUtility.getEncodedAddressList( msg.sender_text)
-    ;
+    msg.sender_text         := sender;
+    msg.sender              := pkg_MailUtility.getEncodedAddressList( sender);
     msg.sender_address      := pkg_MailUtility.getAddress( msg.sender);
     msg.recipient_text      := recipient;
     msg.recipient           := pkg_MailUtility.getEncodedAddressList(
@@ -450,7 +356,6 @@ end sendMessage;
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -458,16 +363,15 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
   Id сообщения.
 */
 function sendMessage(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -504,7 +408,6 @@ end sendMessage;
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -512,16 +415,15 @@ end sendMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
   Id сообщения.
 */
 function sendHtmlMessage(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -564,9 +466,8 @@ end sendHtmlMessage;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

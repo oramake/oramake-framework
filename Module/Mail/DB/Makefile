@@ -858,6 +858,7 @@ uninstallLoadTarget = \
       $(if $(call nullif,$(call upper,$(INSTALL_VERSION)),LAST),, \
         $(addsuffix .revert,$(loadJavaUsedLibJar)) \
       ) \
+			$(wildcard Install/Schema/$(INSTALL_VERSION)/Revert/PublicJob/*.job.sql) \
     ,) \
   ) \
   $(addsuffix .$(ru2), \

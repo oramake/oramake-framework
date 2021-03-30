@@ -7,6 +7,11 @@ create or replace package pkg_Mail is
 
 /* group: Константы */
 
+/* const: Module_Name
+  Название модуля, к которому относится пакет
+*/
+Module_Name constant varchar2(30) := 'Mail';
+
 
 
 /* group: Коды состояния сообщения */
@@ -79,30 +84,11 @@ ImageJPEGData_MimeType constant varchar2(40) := 'image/jpeg';
 
 /* group: Отправка писем */
 
-/* pfunc: getMailSender
-  Возвращает адрес отправителя для отправки сообщений.
-  Возвращаемое значение настраивается с помощью параметра
-  <pkg_MailBase.DefaultMailSender_OptSName>, если значение параметра не задано,
-  возвращается значение функции pkg_Common.getMailAddressSource.
-
-  Параметры:
-  systemName                  - Название системы или модуля, формирующего
-                                сообщение
-                                (по умолчанию отсутствует)
-
-  ( <body::getMailSender>)
-*/
-function getMailSender(
-  systemName varchar2 := null
-)
-return varchar2;
-
 /* pproc: sendMail
   Отправляет письмо ( немедленно).
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -110,10 +96,8 @@ return varchar2;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя (или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию, в т.ч. имя пользователя и пароль
-                                для авторизации, если они заданы в настройках)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   username                    - имя пользователя для авторизации на SMTP-сервере
                                 (null без авторизации (по умолчанию))
   password                    - пароль для авторизации на SMTP-сервере
@@ -124,7 +108,7 @@ return varchar2;
   ( <body::sendMail>)
 */
 procedure sendMail(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -144,7 +128,6 @@ procedure sendMail(
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -152,9 +135,8 @@ procedure sendMail(
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -163,7 +145,7 @@ procedure sendMail(
   ( <body::sendMessage>)
 */
 function sendMessage(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -182,7 +164,6 @@ return integer;
 
   Параметры:
   sender                      - адрес отправителя
-                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -190,9 +171,8 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:
@@ -201,7 +181,7 @@ return integer;
   ( <body::sendHtmlMessage>)
 */
 function sendHtmlMessage(
-  sender varchar2 := null
+  sender varchar2
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -225,9 +205,8 @@ return integer;
   attachmentFileName          - имя файла вложения
   attachmentType              - тип вложения
   attachmentData              - данные вложения
-  smtpServer                  - имя ( или ip-адрес) SMTP-сервера
-                                (если не указан, то используется SMTP-сервер по
-                                умолчанию)
+  smtpServer                  - имя ( или ip-адрес) SMTP-сервера ( по умолчанию
+                                используется сервер из pkg_Common.getSmtpServer)
   expireDate                  - дата истечения срока жизни сообщения
 
   Возврат:

@@ -42,6 +42,23 @@ Module_SvnRoot constant varchar2(100) := 'Oracle/Module/Mail';
 
 /* group: Настроечные параметры */
 
+/* const: DefaultMailSender_OptSName
+  Краткое наименование параметра
+  "Адрес отправителя по умолчанию для отправки сообщений"
+
+  В значении можно использовать макросы:
+  $(instanceName) - имя инстанса БД
+  $(systemName)   - имя системы, отправляющей сообщение (параметр systemName
+                    функции <pkg_Mail.getMailSender>)
+
+  Пример:
+  > $(systemName).$(instanceName).oracle <user@example.com>
+
+  Если значение не задано, то используется значение, возвращаемое функцией
+  pkg_Common.getMailAddressSource модуля Common.
+*/
+DefaultMailSender_OptSName constant varchar2(50) := 'DefaultMailSender';
+
 /* const: DefaultSmtpServer_OptSName
   Краткое наименование параметра
   "SMTP-сервер по умолчанию для отправки писем".

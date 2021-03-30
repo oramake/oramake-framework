@@ -9,6 +9,7 @@ declare
     select
       -- значения для промышленной БД
       1 as prod_value_flag
+      , '' as mail_sender
       , '' as smtp_server
       , '' as username
       , '' as password
@@ -18,6 +19,7 @@ declare
     select
       -- значения для тестовой БД
       0 as prod_value_flag
+      , '' as mail_sender
       , '' as smtp_server
       , '' as username
       , '' as password
@@ -36,6 +38,30 @@ declare
 
 begin
   for rec in dataCur loop
+
+    -- Устанавливаем адрес отправителя если он задан в курсоре и не задан в БД
+    if rec.mail_sender is not null
+      and opt.getString(
+            optionShortName => pkg_MailBase.DefaultMailSender_OptSName
+            , prodValueFlag => rec.prod_value_flag
+          )
+          is null
+        then
+      opt.setValue(
+        optionShortName       => pkg_MailBase.DefaultMailSender_OptSName
+        , prodValueFlag       => rec.prod_value_flag
+        , stringValue         => rec.mail_sender
+        , skipIfNoChangeFlag  => 1
+      );
+      logger.info(
+        'set mail sender: ' || rec.mail_sender
+        || case rec.prod_value_flag
+            when 1 then ' (промышленное)'
+            else ' (тестовое)'
+          end
+      );
+    end if;
+
     -- Устанавливаем SMTP-сервер если он задан в курсоре и не задан в БД
     if rec.smtp_server is not null
       and opt.getString(
