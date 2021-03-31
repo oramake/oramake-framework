@@ -406,6 +406,8 @@ end isTraceEnabled;
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
   contextTypeShortName        - Краткое наименование типа
                                 открываемого/закрываемого контекста выполнения
                                 (по умолчанию отсутствует)
@@ -429,6 +431,7 @@ member procedure log(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -441,6 +444,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -462,6 +466,7 @@ member procedure fatal(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -474,6 +479,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -494,6 +500,7 @@ member procedure error(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -506,6 +513,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -526,6 +534,7 @@ member procedure warn(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -538,6 +547,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -558,6 +568,7 @@ member procedure info(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -570,6 +581,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -590,6 +602,7 @@ member procedure debug(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -602,6 +615,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -622,6 +636,7 @@ member procedure trace(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -634,6 +649,7 @@ begin
     , messageText           => messageText
     , messageValue          => messageValue
     , messageLabel          => messageLabel
+    , textData              => textData
     , contextTypeShortName  => contextTypeShortName
     , contextValueId        => contextValueId
     , openContextFlag       => openContextFlag
@@ -658,7 +674,7 @@ end trace;
                                 умолчанию логировать если указано значение
                                 любого из параметров
                                 closeContextTypeShortName, levelCode,
-                                messageValue, messageLabel)
+                                messageValue, messageLabel, textData)
   closeContextTypeShortName   - Краткое наименование типа закрываемого
                                 контекста выполнения
                                 (по умолчанию отсутствует)
@@ -674,6 +690,8 @@ end trace;
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
 
   Возврат:
   - соообщение для генерации исключения
@@ -703,6 +721,7 @@ member function errorStack(
   , levelCode varchar2 := null
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
 )
 return varchar2
 is
@@ -714,6 +733,7 @@ begin
           levelCode is not null
           or messageValue is not null
           or messageLabel is not null
+          or textData is not null
         )
       then
     log(
@@ -730,6 +750,7 @@ begin
           || chr(10) || getErrorStack( isStackPreserved => 1)
       , messageValue          => messageValue
       , messageLabel          => messageLabel
+      , textData              => textData
       , contextTypeShortName  => closeContextTypeShortName
       , contextValueId        => contextValueId
       , openContextFlag       =>

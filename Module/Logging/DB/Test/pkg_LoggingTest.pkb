@@ -72,6 +72,7 @@ is
 
   es1ct lg_context_type%rowtype;
   es1lg lg_log%rowtype;
+  es1textData lg_log_data.text_data%type;
 
   /*
     Возвращает значение строкового поля с игнорированием пробелов.
@@ -136,6 +137,7 @@ begin
             , messageText           => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -146,6 +148,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -156,6 +159,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -170,6 +174,7 @@ begin
           es1lg.level_code              := getStr( 'levelCode', 0);
           es1lg.message_value           := getNum( 'messageValue', 0);
           es1lg.message_label           := getStr( 'messageLabel', 0);
+          es1textData                   := getStr( 'textData', 0);
         when 'errorStack2' then
           begin
             begin
@@ -190,6 +195,7 @@ begin
                       , levelCode                 => es1lg.level_code
                       , messageValue              => es1lg.message_value
                       , messageLabel              => es1lg.message_label
+                      , textData                  => es1textData
                     )
                   , true
                 );
@@ -221,6 +227,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -231,6 +238,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -241,6 +249,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -251,6 +260,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -390,6 +400,7 @@ is
     caseDescription varchar2
     , levelCode varchar2 := null
     , messageText varchar2 := null
+    , textData clob := null
     , moduleName varchar2 := None_String
     , objectName varchar2 := None_String
     , moduleId integer := None_Integer
@@ -419,7 +430,7 @@ is
     -- Число добавленных сообщений
     logCount integer;
 
-    lgr lg_log%rowtype;
+    lgr v_lg_log%rowtype;
 
   -- checkCase
   begin
@@ -460,6 +471,7 @@ is
               messageText
               , 'Сообщение для автотеста: ' || caseDescription
             )
+        , textData    => textData
       );
 
       -- Восстанавливаем значения по умолчанию
@@ -526,7 +538,7 @@ is
           t.*
         into lgr
         from
-          lg_log t
+          v_lg_log t
         where
           t.log_id = logId
         ;
@@ -540,14 +552,55 @@ is
               cinfo || 'Некорректное значение level_code'
         );
       end if;
-      if length( messageText) <= 4000 then
+      if messageText is not null then
         pkg_TestUtility.compareChar(
           actualString        => lgr.message_text
-          , expectedString    => messageText
+          , expectedString    => substr( messageText, 1, 4000)
           , failMessageText   =>
               cinfo || 'Некорректное значение message_text'
         );
+        pkg_TestUtility.compareChar(
+          actualString        => lgr.long_message_text
+          , expectedString    =>
+              case when length( messageText) > 4000 then messageText end
+          , failMessageText   =>
+              cinfo || 'Некорректное значение long_message_text'
+        );
+        pkg_TestUtility.compareChar(
+          actualString        => lgr.full_message_text
+          , expectedString    => messageText
+          , failMessageText   =>
+              cinfo || 'Некорректное значение full_message_text'
+        );
       end if;
+      pkg_TestUtility.compareChar(
+        actualString        => lgr.long_message_text_flag
+        , expectedString    => case when length( messageText) > 4000 then 1 end
+        , failMessageText   =>
+            cinfo || 'Некорректное значение long_message_text_flag'
+      );
+      pkg_TestUtility.compareChar(
+        actualString        => length( lgr.text_data)
+        , expectedString    => length( textData)
+        , failMessageText   =>
+            cinfo || 'Некорректная длина text_data'
+      );
+      if length( lgr.text_data) = length( textData) then
+        for i in 0 .. ceil( length( textData) / 30000) - 1 loop
+          pkg_TestUtility.compareChar(
+            actualString        => substr( lgr.text_data, i*30000 + 1, 30000)
+            , expectedString    => substr( textData     , i*30000 + 1, 30000)
+            , failMessageText   =>
+                cinfo || 'Некорректное значение text_data (часть #' || i || ')'
+          );
+        end loop;
+      end if;
+      pkg_TestUtility.compareChar(
+        actualString        => lgr.text_data_flag
+        , expectedString    => case when textData is not null then 1 end
+        , failMessageText   =>
+            cinfo || 'Некорректное значение text_data_flag'
+      );
       if nullif( None_String, moduleName) is not null then
         pkg_TestUtility.compareChar(
           actualString        => lgr.module_name
@@ -800,6 +853,15 @@ and not (
       'Сообщение длиной 32767 символов'
       , messageText   =>
           rpad( 'Сообщение длиной 32767 символов', 32767, '.')
+    );
+
+    checkCase(
+      'Текстовые данные длиной 60000 символов'
+      , messageText   =>
+          'Текстовые данные длиной 60000 символов'
+      , textData      =>
+          rpad( '0', 30000-1, '.') || '1'
+          || rpad( '2', 30000-1, '.') || '3'
     );
 
     checkCase(
@@ -1121,7 +1183,7 @@ LEVEL_CODE  ; MESSAGE_TEXT                                                      
 INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                   ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
 DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
 INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
-ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 177  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 187 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
 '
     );
 

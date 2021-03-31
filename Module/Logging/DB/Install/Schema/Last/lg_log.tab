@@ -9,6 +9,8 @@ create table
   , message_value                 integer
   , message_label                 varchar2(128)
   , message_text                  varchar2(4000)                      not null
+  , long_message_text_flag        number(1)
+  , text_data_flag                number(1)
   , context_level                 integer
   , context_type_id               integer
   , context_value_id              integer
@@ -28,6 +30,10 @@ create table
     using index tablespace &indexTablespace
   , constraint lg_log_ck_level_code check
     (level_code not in ('ALL','OFF'))
+  , constraint lg_log_ck_long_message_text_fl check
+    (long_message_text_flag in (1))
+  , constraint lg_log_ck_text_data_flag check
+    (text_data_flag in (1))
   , constraint lg_log_ck_context_level check
     (context_level >= 0)
   , constraint lg_log_ck_open_context_flag check

@@ -48,6 +48,23 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 2.2.0
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=2.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+Замечания:
+- в случае необходимости отмены установки нужно выполнить аналогичную команду,
+  заменив "install" на "uninstall" (при этом необходимо использовать
+  OraMakeSystem версии не ниже 2.4.0);
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;
+
+
+
 group: 2.1.0
 
 Предварительные требования:
@@ -188,12 +205,13 @@ group: Выполнение тестов
 
 Предварительные требования:
 - установка модуля TestUtility;
+- установка тестовых объектов модуля ModuleInfo;
 
 Команда установки объектов для выполнения тестов:
 
 (code)
 
-make install-test LOAD_USERID=???/???@???
+make install-test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -201,13 +219,13 @@ make install-test LOAD_USERID=???/???@???
 
 (code)
 
-make test LOAD_USERID=???/???@???
+make test LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
 Замечания:
-- в случае наличия в БД модуля AccessOperator в команды нужно добавить параметр
-  LOAD_OPERATORID ( "  LOAD_OPERATORID=???/???");
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;
 
 
 
@@ -220,7 +238,7 @@ group: Удаление модуля из БД
 
 (code)
 
-make uninstall INSTALL_VERSION=Last LOAD_USERID2=???/???@???
+make uninstall INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
@@ -228,10 +246,10 @@ make uninstall INSTALL_VERSION=Last LOAD_USERID2=???/???@???
 
 (code)
 
-make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@???
+make uninstall INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end)
 
 Замечания:
-- в случае наличия в БД модуля AccessOperator в команду нужно добавить параметр
-  LOAD_OPERATORID ( "  LOAD_OPERATORID=???/???");
+- в случае отсутствия в БД модуля AccessOperator параметр LOAD_OPERATORID
+  указывать не надо;

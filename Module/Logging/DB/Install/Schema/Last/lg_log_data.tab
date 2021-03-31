@@ -1,0 +1,32 @@
+-- table: lg_log_data
+-- Данные лога работы программных модулей.
+create table
+  lg_log_data
+(
+  log_id                          integer                             not null
+  , long_message_text             clob
+  , text_data                     clob
+  , date_ins                      date                default sysdate not null
+  , constraint lg_log_data_pk primary key
+    ( log_id)
+    using index tablespace &indexTablespace
+)
+/
+
+
+
+comment on table lg_log_data is
+  'Данные лога работы программных модулей [SVN root: Oracle/Module/Logging]'
+/
+comment on column lg_log_data.log_id is
+  'Id записи лога'
+/
+comment on column lg_log_data.long_message_text is
+  'Текст длинного сообщения (длиной от 4001 до 32767 символов)'
+/
+comment on column lg_log_data.text_data is
+  'Текстовые данные, связанные с сообщением'
+/
+comment on column lg_log_data.date_ins is
+  'Дата добавления записи в таблицу'
+/

@@ -6,21 +6,23 @@
 @oms-set-indexTablespace.sql
 
 
+-- Последовательности
+
+@oms-run lg_context_type_seq.sqs
+@oms-run lg_log_seq.sqs
+
+
 -- Таблицы
 
 @oms-run lg_context_type.tab
 @oms-run lg_destination.tab
 @oms-run lg_level.tab
 @oms-run lg_log.tab
+@oms-run lg_log_data.tab
 
 
 -- Outline-ограничения целостности
 
 @oms-run lg_context_type.con
 @oms-run lg_log.con
-
-
--- Последовательности
-
-@oms-run lg_context_type_seq.sqs
-@oms-run lg_log_seq.sqs
+@oms-run lg_log_data.con

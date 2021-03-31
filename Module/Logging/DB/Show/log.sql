@@ -36,7 +36,7 @@ set feedback on
 select
   lg.log_id
   , lg.level_code
-  , lg.message_text
+  , lg.full_message_text
   , lg.message_value
   , lg.message_label
   , lg.context_level
@@ -53,12 +53,15 @@ select
   , lg.log_time
   , lg.date_ins
   , lg.operator_id
+  , lg.long_message_text_flag
+  , lg.text_data_flag
+  , lg.text_data
 from
   (
   select
     lg.*
   from
-    lg_log lg
+    v_lg_log lg
   where
     lg.log_id = :logId
   union all
@@ -69,7 +72,7 @@ from
     select
       lg.*
     from
-      lg_log lg
+      v_lg_log lg
     where
       :logId is null
     order by

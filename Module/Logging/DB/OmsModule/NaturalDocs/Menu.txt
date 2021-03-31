@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: Logging
-SubTitle: Версия 2.1.0
+SubTitle: Версия 2.2.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -159,12 +159,20 @@ Group: Скрипты  {
             File: lg_destination  (no auto-title, Install/Schema/Last/lg_destination.tab)
             File: lg_level  (no auto-title, Install/Schema/Last/lg_level.tab)
             File: lg_log  (no auto-title, Install/Schema/Last/lg_log.tab)
+            File: lg_log_data  (no auto-title, Install/Schema/Last/lg_log_data.tab)
             File: lg_log_seq  (no auto-title, Install/Schema/Last/lg_log_seq.sqs)
             File: set-log-comment  (no auto-title, Install/Schema/Last/set-log-comment.sql)
             File: v_lg_context_change  (no auto-title, Install/Schema/Last/v_lg_context_change.vw)
             File: v_lg_context_change_log  (no auto-title, Install/Schema/Last/v_lg_context_change_log.vw)
             File: v_lg_current_log  (no auto-title, Install/Schema/Last/v_lg_current_log.vw)
+            File: v_lg_log  (no auto-title, Install/Schema/Last/v_lg_log.vw)
             }  # Group: Last
+
+         Group: 2.2.0  {
+
+            File: run  (no auto-title, Install/Schema/2.2.0/run.sql)
+            File: revert  (no auto-title, Install/Schema/2.2.0/revert.sql)
+            }  # Group: 2.2.0
 
          Group: 2.1.0  {
 
@@ -178,7 +186,7 @@ Group: Скрипты  {
             File: revert  (no auto-title, Install/Schema/2.0.0/revert.sql)
             }  # Group: 2.0.0
 
-         File: add-install-job  (no auto-title, Install/Schema/add-install-job.sql)
+         File: validate-constraint  (no auto-title, Install/Schema/validate-constraint.sql)
          }  # Group: Schema
 
       }  # Group: Install

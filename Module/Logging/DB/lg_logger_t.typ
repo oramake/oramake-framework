@@ -332,6 +332,8 @@ return boolean,
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
   contextTypeShortName        - Краткое наименование типа
                                 открываемого/закрываемого контекста выполнения
                                 (по умолчанию отсутствует)
@@ -357,6 +359,7 @@ member procedure log(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -378,6 +381,7 @@ member procedure fatal(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -399,6 +403,7 @@ member procedure error(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -420,6 +425,7 @@ member procedure warn(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -441,6 +447,7 @@ member procedure info(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -462,6 +469,7 @@ member procedure debug(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -483,6 +491,7 @@ member procedure trace(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -506,7 +515,7 @@ member procedure trace(
                                 умолчанию логировать если указано значение
                                 любого из параметров
                                 closeContextTypeShortName, levelCode,
-                                messageValue, messageLabel)
+                                messageValue, messageLabel, textData)
   closeContextTypeShortName   - Краткое наименование типа закрываемого
                                 контекста выполнения
                                 (по умолчанию отсутствует)
@@ -522,6 +531,8 @@ member procedure trace(
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
 
   Возврат:
   - соообщение для генерации исключения
@@ -553,6 +564,7 @@ member function errorStack(
   , levelCode varchar2 := null
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
 )
 return varchar2,
 
