@@ -11,7 +11,7 @@ if (browserType) {document.write("<div class=" + browserType + ">");if (browserV
 
 
 
-<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Schema/2.2.0/revert.sql"></a>Install/<wbr>Schema/<wbr>2.2.<wbr>0/revert.sql</h1><div class=CBody><p>Отменяет изменения в объектах схемы, внесенные при установке версии 2.2.0.</p></div></div></div>
+<div id=Content><div class="CFile"><div class=CTopic id=MainTopic><h1 class=CTitle><a name="Install/Schema/2.2.0/revert.sql"></a>Install/<wbr>Schema/<wbr>2.2.<wbr>0/revert.sql</h1><div class=CBody><p>Отменяет изменения в объектах схемы, внесенные при установке версии 2.2.0.</p><h4 class=CHeading>Замечания</h4><ul><li>добавленые при установке в таблицу <a href="../Last/lg_level-tab.html#lg_level" class=LDatabaseTable id=link1 onMouseOver="ShowTip(event, 'tt1', 'link1')" onMouseOut="HideTip('tt1')">lg_level</a> записи с кодами TRACE2 и TRACE3 не удаляются при отмене установки;</li></ul></div></div></div>
 
 </div><!--Content-->
 
@@ -27,7 +27,7 @@ HideAllBut([19, 22, 23, 28], 33);// --></script></div><!--Menu-->
 
 
 <!--START_ND_TOOLTIPS-->
-<!--END_ND_TOOLTIPS-->
+<div class=CToolTip id="tt1"><div class=CDatabaseTable><blockquote><table border=0 cellspacing=0 cellpadding=0 class="Prototype"><tr><td><table border=0 cellspacing=0 cellpadding=0><tr><td class=PBeforeParameters colspan=3>create table lg_level (</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>level_code</td><td class=PType nowrap width=100%>&nbsp;varchar2(10) not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>message_level_code</td><td class=PType nowrap width=100%>&nbsp;as ( case when level_code not in ('ALL', 'OFF') then level_code end ) ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>level_order</td><td class=PType nowrap width=100%>&nbsp;number(3) not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>level_name</td><td class=PType nowrap width=100%>&nbsp;varchar2(100) not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>level_description</td><td class=PType nowrap width=100%>&nbsp;varchar2(255) ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>date_ins</td><td class=PType nowrap width=100%>&nbsp;date default sysdate not null ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>constraint</td><td class=PType nowrap width=100%>&nbsp;lg_level_pk primary key (level_code) using index tablespace &amp;indexTablespace ,</td></tr><tr><td>&nbsp;&nbsp;&nbsp;</td><td class=PParameter nowrap>constraint</td><td class=PType nowrap width=100%>&nbsp;lg_level_uk_message_level_code unique (message_level_code) using index tablespace &amp;indexTablespace</td></tr><tr><td class=PAfterParameters colspan=3>)</td></tr></table></td></tr></table></blockquote>Уровни логирования.</div></div><!--END_ND_TOOLTIPS-->
 
 
 

@@ -57,6 +57,20 @@ begin
       from dual
       union all
       select
+        pkg_Logging.Trace2_LevelCode
+        , 200
+        , 'Трассировка уровня 2'
+        , ''
+      from dual
+      union all
+      select
+        pkg_Logging.Trace3_LevelCode
+        , 100
+        , 'Трассировка уровня 3'
+        , ''
+      from dual
+      union all
+      select
         pkg_Logging.All_LevelCode
         , 0
         , 'Максимальный уровень логирования'

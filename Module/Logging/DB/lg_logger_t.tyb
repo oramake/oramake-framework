@@ -131,6 +131,26 @@ begin
   return pkg_Logging.Trace_LevelCode;
 end getTraceLevelCode;
 
+/* func: getTrace2LevelCode
+  Возвращает код уровня логирования "Трассировка уровня 2".
+*/
+static function getTrace2LevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Trace2_LevelCode;
+end getTrace2LevelCode;
+
+/* func: getTrace3LevelCode
+  Возвращает код уровня логирования "Трассировка уровня 3".
+*/
+static function getTrace3LevelCode
+return varchar2
+is
+begin
+  return pkg_Logging.Trace3_LevelCode;
+end getTrace3LevelCode;
+
 /* func: getAllLevelCode
   Возвращает код уровня логирования "Максимальный уровень логирования".
 */
@@ -391,6 +411,32 @@ is
 begin
   return isEnabledFor( pkg_Logging.Trace_LevelCode);
 end isTraceEnabled;
+
+/* func: isTrace2Enabled
+  Возвращает истину, если трассировочное сообщение уровня 2 будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+*/
+member function isTrace2Enabled
+return boolean
+is
+begin
+  return isEnabledFor( pkg_Logging.Trace2_LevelCode);
+end isTrace2Enabled;
+
+/* func: isTrace3Enabled
+  Возвращает истину, если трассировочное сообщение уровня 3 будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+*/
+member function isTrace3Enabled
+return boolean
+is
+begin
+  return isEnabledFor( pkg_Logging.Trace3_LevelCode);
+end isTrace3Enabled;
 
 
 
@@ -656,6 +702,74 @@ begin
     , contextTypeModuleId   => contextTypeModuleId
   );
 end trace;
+
+/* proc: trace2
+  Логирует трассировочное сообщение уровня 2 (уровня <getTrace2LevelCode>).
+
+  Параметры:
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
+*/
+member procedure trace2(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+)
+is
+begin
+  log(
+    levelCode               => pkg_Logging.Trace2_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , textData              => textData
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
+  );
+end trace2;
+
+/* proc: trace3
+  Логирует трассировочное сообщение уровня 3 (уровня <getTrace3LevelCode>).
+
+  Параметры:
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
+*/
+member procedure trace3(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+)
+is
+begin
+  log(
+    levelCode               => pkg_Logging.Trace3_LevelCode
+    , messageText           => messageText
+    , messageValue          => messageValue
+    , messageLabel          => messageLabel
+    , textData              => textData
+    , contextTypeShortName  => contextTypeShortName
+    , contextValueId        => contextValueId
+    , openContextFlag       => openContextFlag
+    , contextTypeModuleId   => contextTypeModuleId
+  );
+end trace3;
 
 
 

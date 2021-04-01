@@ -838,32 +838,29 @@ is
 begin
   logDbOut(
     outPrefix =>
-        substr( to_char( curTime), 10, 12) || ': '
+        substr( to_char( curTime, 'hh24:mi:ss.ff'), 1, 12) || ': '
         || lpad(
              coalesce(
-               case when
-                 extract ( HOUR from timeInterval) = 0
-               then
-                 to_char(
-                    extract( SECOND from timeInterval) * 1000
-                    + extract( MINUTE from timeInterval) * 60000
-                 )
-               -- Если прошло больше часа показываем время в часах
-               when
-                 timeInterval is not null
-               then
-                 to_char(
-                   extract ( HOUR from timeInterval)
-                   + extract ( DAY from timeInterval) * 24
-                   , 'FM9999990D00'
-                   , 'NLS_NUMERIC_CHARACTERS = ''. '''
-                 ) || 'h.'
+               case
+                 when extract ( HOUR from timeInterval) = 0 then
+                   to_char(
+                      round( extract( SECOND from timeInterval) * 1000)
+                      + extract( MINUTE from timeInterval) * 60000
+                   )
+                 -- если прошло больше часа показываем время в часах
+                 when timeInterval is not null then
+                   to_char(
+                     extract ( HOUR from timeInterval)
+                     + extract ( DAY from timeInterval) * 24
+                     , 'FM9999990D00'
+                     , 'NLS_NUMERIC_CHARACTERS = ''. '''
+                   ) || 'h.'
                end
                , ' '
              )
              , 5
            )
-        || ': ' || rpad( levelCode, 5)
+        || ': ' || rpad( levelCode, greatest( length( levelCode), 5))
         || ': '
     , messageText => messageText
     , textData    => textData

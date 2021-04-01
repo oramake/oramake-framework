@@ -122,6 +122,22 @@ return varchar2,
 static function getTraceLevelCode
 return varchar2,
 
+/* pfunc: getTrace2LevelCode
+  Возвращает код уровня логирования "Трассировка уровня 2".
+
+  ( <body::getTrace2LevelCode>)
+*/
+static function getTrace2LevelCode
+return varchar2,
+
+/* pfunc: getTrace3LevelCode
+  Возвращает код уровня логирования "Трассировка уровня 3".
+
+  ( <body::getTrace3LevelCode>)
+*/
+static function getTrace3LevelCode
+return varchar2,
+
 /* pfunc: getAllLevelCode
   Возвращает код уровня логирования "Максимальный уровень логирования".
 
@@ -318,6 +334,28 @@ return boolean,
 member function isTraceEnabled
 return boolean,
 
+/* pfunc: isTrace2Enabled
+  Возвращает истину, если трассировочное сообщение уровня 2 будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+
+  ( <body::isTrace2Enabled>)
+*/
+member function isTrace2Enabled
+return boolean,
+
+/* pfunc: isTrace3Enabled
+  Возвращает истину, если трассировочное сообщение уровня 3 будет логироваться.
+
+  Замечания:
+  - вызывает функцию <isEnabledFor>;
+
+  ( <body::isTrace3Enabled>)
+*/
+member function isTrace3Enabled
+return boolean,
+
 
 
 /* group: Логирование сообщений */
@@ -487,6 +525,50 @@ member procedure debug(
   ( <body::trace>)
 */
 member procedure trace(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+),
+
+/* pproc: trace2
+  Логирует трассировочное сообщение уровня 2 (уровня <getTrace2LevelCode>).
+
+  Параметры:
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
+
+  ( <body::trace2>)
+*/
+member procedure trace2(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+),
+
+/* pproc: trace3
+  Логирует трассировочное сообщение уровня 3 (уровня <getTrace3LevelCode>).
+
+  Параметры:
+  messageText                 - Текст сообщения
+  ...                         - Необязательные параметры, идентичные
+                                необязательным параметрам процедуры <log>
+
+  ( <body::trace3>)
+*/
+member procedure trace3(
   self in lg_logger_t
   , messageText varchar2
   , messageValue integer := null

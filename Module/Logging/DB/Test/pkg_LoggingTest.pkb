@@ -266,6 +266,28 @@ begin
             , openContextFlag       => getNum( 'openContextFlag', 0)
             , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
           );
+        when 'trace2' then
+          usedLogger.trace2(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'trace3' then
+          usedLogger.trace3(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
         -- Типы контекста выполнения
         when 'mergeContextType' then
           usedLogger.mergeContextType(
@@ -844,7 +866,7 @@ and not (
         , levelCode     => rec.level_code
         , setLevelCode  => rec.level_code
         , messageText   =>
-            'Сообщение уровня "' || rec.level_description || '"'
+            'Сообщение уровня "' || rec.level_name || '"'
             || ' ( код "' || rec.level_code || '")'
       );
     end loop;
