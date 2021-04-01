@@ -52,6 +52,9 @@ group: Завершение доработок
 
 [-] Удалить поля из App-части: is_job_broken, duration_second.
 
+[*] Использовать поле level_name вместо level_description (требует установки
+    модуля Logging версии 2.1.0).
+
 [*] В App-части вместо устаревших колонок message_type_code, message_type_name
     использовать колонки level_code, level_name (в курсорах, возвращаемых
     функциями <pkg_Scheduler.findRootLog>, <pkg_Scheduler.getDetailedLog>).
