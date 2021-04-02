@@ -1,0 +1,44 @@
+title: Использования типа Clob в логах
+
+(скрипт: DB/Example/clob-log.sql)
+
+Пример использования:
+
+(code)
+
+declare
+
+  testText clob := 'test';
+  
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => 'TestModule'
+    , objectName  => 'Test'
+  );
+begin
+
+  logger.info( messageText => 'working...'
+    , textData => testText);
+
+end;
+/
+
+(end)
+
+Результат выполнения:
+
+(code)
+
+15:14:50.736: 15332: INFO : working...
+test
+
+(end)
+
+Записи в логе:
+
+(code)
+
+LEVEL_CODE MESSAGE_TEXT      TEXT_DATA
+---------- ----------------- -----------------
+INFO       f1(1): working... test
+
+(end)
