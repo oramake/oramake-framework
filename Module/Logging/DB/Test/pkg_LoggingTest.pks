@@ -32,5 +32,18 @@ procedure testLogger(
   testCaseNumber integer := null
 );
 
+/* pproc: testUtility
+  Тестирование логирования с помощью типа <lg_logger_t>.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+
+  ( <body::testUtility>)
+*/
+procedure testUtility(
+  testCaseNumber integer := null
+);
+
 end pkg_LoggingTest;
 /

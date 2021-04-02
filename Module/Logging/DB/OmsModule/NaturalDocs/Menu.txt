@@ -96,6 +96,12 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_LoggingInternal.pkb)
       }  # Group: pkg_LoggingInternal
 
+   Group: pkg_LoggingUtility  {
+
+      File: Спецификация  (no auto-title, pkg_LoggingUtility.pks)
+      File: Реализация  (no auto-title, pkg_LoggingUtility.pkb)
+      }  # Group: pkg_LoggingUtility
+
    Group: Test  {
 
       Group: pkg_LoggingTest  {

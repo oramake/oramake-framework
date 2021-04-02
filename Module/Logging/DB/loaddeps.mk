@@ -41,6 +41,11 @@ pkg_LoggingErrorStack.pkb.$(lu): \
   pkg_LoggingErrorStack.pks.$(lu) \
   lg_logger_t.typ.$(lu)
 
+pkg_LoggingUtility.pkb.$(lu): \
+  pkg_LoggingUtility.pks.$(lu) \
+  pkg_Logging.pks.$(lu) \
+  lg_logger_t.typ.$(lu)
+
 lg_logger_t.tyb.$(lu): \
   lg_logger_t.typ.$(lu) \
   pkg_Logging.pks.$(lu) \

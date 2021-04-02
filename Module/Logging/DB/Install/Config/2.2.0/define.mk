@@ -4,6 +4,7 @@ LOAD_FILE_MASK = \
   */v_lg_log.vw \
   pkg_Logging.pk? \
   pkg_LoggingInternal.pk? \
+  pkg_LoggingUtility.pk? \
   lg_logger_t.ty? \
 
 

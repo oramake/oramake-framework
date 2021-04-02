@@ -6,6 +6,8 @@
 --  TRACE3 не удал€ютс€ при отмене установки;
 --
 
+drop package pkg_LoggingUtility
+/
 
 drop view v_lg_log
 /

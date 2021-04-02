@@ -14,6 +14,8 @@ group: 2.2.0 ( 2021-03-24)
     (можно использовать с помощью функций <lg_logger_t.trace2> и
     <lg_logger_t.trace3>).
 
+[+] Добавлена функция очистки лога <pkg_LoggingUtility.clearLog>.
+
 
 
 group: 2.1.0 ( 2019-04-16)
