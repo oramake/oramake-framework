@@ -60,6 +60,12 @@ Group: О модуле  {
    File: Версии  (Doc/version.txt)
    }  # Group: О модуле
 
+Group: Примеры  {
+
+   File: Использование вложенного контекста  (Example/nested-context.txt)
+   File: Установка уровня и назначения логирования  (Example/set-level-destination.txt)
+   }  # Group: Примеры
+
 Group: Объектные типы  {
 
    Group: lg_logger_t  {
@@ -208,12 +214,6 @@ Group: Скрипты  {
          File: stack-example  (no auto-title, Test/Error-Stack/stack-example.sql)
          File: stack-resolve-debug  (no auto-title, Test/Error-Stack/stack-resolve-debug.sql)
          }  # Group: Error-Stack
-
-      Group: Example  {
-
-         File: nested-context  (no auto-title, Test/Example/nested-context.sql)
-         File: set-level-destination  (no auto-title, Test/Example/set-level-destination.sql)
-         }  # Group: Example
 
       File: run  (no auto-title, Test/run.sql)
       File: java-trace-on  (no auto-title, Test/java-trace-on.sql)
