@@ -23,7 +23,7 @@ public class ValueServiceImpl extends OptionAsRiaServiceImpl<Value> implements V
 	public List<JepOption> getOperator(String dataSource, String operatorName, Integer maxRowCount) throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			result = getProxyDao().getOperator(dataSource, operatorName, maxRowCount);
+			result = getProxyDao(dataSource).getOperator(dataSource, operatorName, maxRowCount);
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}

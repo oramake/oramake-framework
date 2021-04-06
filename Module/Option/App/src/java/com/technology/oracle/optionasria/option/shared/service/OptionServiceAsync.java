@@ -8,7 +8,7 @@ import com.technology.oracle.optionasria.main.shared.service.OptionAsRiaServiceA
  
 public interface OptionServiceAsync extends OptionAsRiaServiceAsync {
 	//void getDataSource(AsyncCallback<List<JepOption>> callback);
-	void getModule(AsyncCallback<List<JepOption>> callback);
-	void getObjectType(AsyncCallback<List<JepOption>> callback);
-	void getValueType(AsyncCallback<List<JepOption>> callback);
+	void getModule(String currentDataSource, AsyncCallback<List<JepOption>> callback);
+	void getObjectType(String currentDataSource, AsyncCallback<List<JepOption>> callback);
+	void getValueType(String currentDataSource, AsyncCallback<List<JepOption>> callback);
 }

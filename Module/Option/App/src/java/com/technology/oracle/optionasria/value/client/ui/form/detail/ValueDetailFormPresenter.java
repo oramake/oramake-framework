@@ -4,6 +4,7 @@ import static com.technology.jep.jepria.client.ui.WorkstateEnum.CREATE;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.EDIT;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.SEARCH;
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
+import static com.technology.oracle.optionasria.main.shared.OptionAsRiaConstant.CURRENT_DATA_SOURCE;
 import static com.technology.oracle.optionasria.option.shared.OptionConstant.dateValueTypeCode;
 import static com.technology.oracle.optionasria.option.shared.OptionConstant.numberValueTypeCode;
 import static com.technology.oracle.optionasria.option.shared.OptionConstant.stringValueTypeCode;
@@ -26,11 +27,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.place.shared.Place;
+import com.google.gwt.storage.client.Storage;
+import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.async.TypingTimeoutAsyncCallback;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
+import com.technology.jep.jepria.client.ui.form.detail.DetailFormView;
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
 import com.technology.jep.jepria.client.widget.event.JepEvent;
 import com.technology.jep.jepria.client.widget.event.JepEventType;
@@ -41,8 +46,9 @@ import com.technology.oracle.optionasria.main.client.history.scope.OptionAsRiaSc
 import com.technology.oracle.optionasria.value.shared.service.ValueServiceAsync;
 
 public class ValueDetailFormPresenter<E extends PlainEventBus, S extends ValueServiceAsync>
-		extends DetailFormPresenter<ValueDetailFormView, E, S, StandardClientFactory<E, S>> {
+		extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> {
 
+	private Storage storage = Storage.getSessionStorageIfSupported();
 	private S service = clientFactory.getService();
 
 	public ValueDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
@@ -72,6 +78,8 @@ public class ValueDetailFormPresenter<E extends PlainEventBus, S extends ValueSe
 		// Проинициализируем поисковый шаблон (независимо откуда был осуществлен переход: с формы поиска или с главной формы на подчиненную).
 		searchTemplate = event.getPagingConfig().getTemplateRecord();
 		searchTemplate.set(DATA_SOURCE, OptionAsRiaScope.instance.getDataSource());
+		searchTemplate.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+		super.onSearch(event);
 	}
 
 	protected boolean beforeSave(JepRecord currentRecord) {
@@ -81,13 +89,13 @@ public class ValueDetailFormPresenter<E extends PlainEventBus, S extends ValueSe
 		return super.beforeSave(currentRecord);
 	}
 
-	protected void saveOnCreate(JepRecord currentRecord) {
+	/*protected void saveOnCreate(JepRecord currentRecord) {
 		currentRecord.set(DATA_SOURCE, OptionAsRiaScope.instance.getDataSource());
 		JepRecord valueOptionRecord = OptionAsRiaScope.instance.getCurruntValueOption();
 		currentRecord.set(OPTION_ID, valueOptionRecord.get(OPTION_ID));
 		currentRecord.set(VALUE_TYPE_CODE, valueOptionRecord.get(VALUE_TYPE_CODE));
 		super.saveOnCreate(currentRecord);
-	}
+	}*/
 
 
 	public void bind() {
@@ -148,6 +156,41 @@ public class ValueDetailFormPresenter<E extends PlainEventBus, S extends ValueSe
 			}
 		});
 		 */
+	}
+
+	@Override
+	protected void saveOnEdit(JepRecord currentRecord) {
+		service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+			@Override
+			public void onSuccess(Void result) {
+			}
+		});
+		currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+		super.saveOnEdit(currentRecord);
+	}
+
+	@Override
+	protected void saveOnCreate(JepRecord currentRecord) {
+		service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+			@Override
+			public void onSuccess(Void result) {
+				currentRecord.set(DATA_SOURCE, OptionAsRiaScope.instance.getDataSource());
+				JepRecord valueOptionRecord = OptionAsRiaScope.instance.getCurruntValueOption();
+				currentRecord.set(OPTION_ID, valueOptionRecord.get(OPTION_ID));
+				currentRecord.set(VALUE_TYPE_CODE, valueOptionRecord.get(VALUE_TYPE_CODE));
+			}
+		});
+		currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+		super.saveOnCreate(currentRecord);
+	}
+
+	public void onDoDelete(DoDeleteEvent event){
+		service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+			@Override
+			public void onSuccess(Void result) {
+			}
+		});
+		super.onDoDelete(event);
 	}
 
 	protected void adjustToWorkstate(WorkstateEnum workstate) {

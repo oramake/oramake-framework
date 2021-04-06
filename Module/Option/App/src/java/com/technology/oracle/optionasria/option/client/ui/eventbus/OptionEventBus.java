@@ -5,7 +5,7 @@ import com.technology.jep.jepria.client.ui.plain.PlainClientFactory;
 
 public class OptionEventBus extends PlainEventBus {
 
-	public OptionEventBus(PlainClientFactory<?, ?> clientFactory) {
-		super(clientFactory);
+	public OptionEventBus() {
+		super();
 	}
 }

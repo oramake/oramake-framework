@@ -1,17 +1,13 @@
 package com.technology.oracle.optionasria.main.server;
 
-import static com.technology.jep.jepria.server.JepRiaServerConstant.FOUND_RECORDS_SESSION_ATTRIBUTE;
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpSession;
 
 import com.technology.jep.jepria.server.dao.JepDataStandard;
-import com.technology.jep.jepria.server.service.JepDataServiceServlet;
-import com.technology.jep.jepria.server.util.JepServerUtil;
 import com.technology.jep.jepria.shared.exceptions.ApplicationException;
 import com.technology.jep.jepria.shared.exceptions.SystemException;
 import com.technology.jep.jepria.shared.load.FindConfig;
@@ -20,8 +16,8 @@ import com.technology.jep.jepria.shared.load.PagingResult;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.record.JepRecordDefinition;
 import com.technology.oracle.optionasria.main.shared.service.OptionAsRiaService;
-import com.technology.oracle.optionasria.option.server.dao.Option;
 
+import static com.technology.oracle.optionasria.main.shared.OptionAsRiaConstant.CURRENT_DATA_SOURCE;
 import static com.technology.oracle.optionasria.option.shared.field.OptionFieldNames.*;
 
 
@@ -46,7 +42,7 @@ public class OptionAsRiaServiceImpl<D extends JepDataStandard> extends DataSourc
 		prepareFileFields(record);
 		
 		try {
-			Object recordId = getProxyDao().create(record, getOperatorId());
+			Object recordId = getProxyDao(createConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)).create(record, getOperatorId());
 			String[] primaryKey = recordDefinition.getPrimaryKey();
 			if(recordId != null) {
 				if(primaryKey.length == 1) {
@@ -71,14 +67,14 @@ public class OptionAsRiaServiceImpl<D extends JepDataStandard> extends DataSourc
 	@Override
 	public JepRecord update(FindConfig updateConfig) throws ApplicationException {
 		JepRecord record = updateConfig.getTemplateRecord();
-		
+
 		logger.trace("BEGIN update(" + record + ")");
 		JepRecord resultRecord = null;
 		
 		prepareFileFields(record);
 		
 		try {
-		  getProxyDao().update(record, getOperatorId());
+		  getProxyDao(updateConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)).update(record, getOperatorId());
 			updateLobFields(record);
 			resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(record), record);
 			clearFoundRecords(updateConfig);

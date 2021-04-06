@@ -1,6 +1,5 @@
 package com.technology.oracle.optionasria.main.client.ui.module;
- 
-import static com.technology.jep.jepria.client.security.ClientSecurity.CHECK_ROLES_BY_OR;
+
 import static com.technology.oracle.optionasria.main.client.OptionAsRiaClientConstant.OPTION_MODULE_ID;
 import static com.technology.oracle.optionasria.main.client.OptionAsRiaClientConstant.VALUE_MODULE_ID;
 
@@ -15,8 +14,8 @@ public class OptionAsRiaMainModulePresenter<E extends MainEventBus, S extends Je
  
 	public OptionAsRiaMainModulePresenter(MainClientFactory<E, S> clientFactory) {
 		super(clientFactory);
-		addModuleProtection(OPTION_MODULE_ID, "OptShowOption", CHECK_ROLES_BY_OR);
-		addModuleProtection(VALUE_MODULE_ID, "OptShowOption", CHECK_ROLES_BY_OR);
+		addModuleProtection(OPTION_MODULE_ID, "OptShowOption");
+		addModuleProtection(VALUE_MODULE_ID, "OptShowOption");
 	}
  
 }

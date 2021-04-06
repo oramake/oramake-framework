@@ -16,6 +16,7 @@ import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.optionasria.option.client.ui.eventbus.OptionEventBus;
 import com.technology.oracle.optionasria.option.client.ui.form.detail.OptionDetailFormPresenter;
 import com.technology.oracle.optionasria.option.client.ui.form.detail.OptionDetailFormViewImpl;
+import com.technology.oracle.optionasria.option.client.ui.form.list.OptionListFormPresenter;
 import com.technology.oracle.optionasria.option.client.ui.form.list.OptionListFormViewImpl;
 import com.technology.oracle.optionasria.option.client.ui.toolbar.OptionToolBarPresenter;
 import com.technology.oracle.optionasria.option.client.ui.toolbar.OptionToolBarViewImpl;
@@ -24,8 +25,8 @@ import com.technology.oracle.optionasria.option.shared.service.OptionService;
 import com.technology.oracle.optionasria.option.shared.service.OptionServiceAsync;
 import com.technology.oracle.optionasria.option.client.ui.OptionFormContainerPresenter;
 
-public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionServiceAsync>
-		extends StandardClientFactoryImpl<E, S> {
+public class OptionClientFactoryImpl< S extends OptionServiceAsync>
+		extends StandardClientFactoryImpl<OptionEventBus, S> {
 
 	private static final IsWidget optionDetailFormView = new OptionDetailFormViewImpl();
 	private static final IsWidget optionToolBarView = new OptionToolBarViewImpl();
@@ -34,8 +35,7 @@ public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionSe
 	private static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
 
   public OptionClientFactoryImpl() {
-    super(OptionRecordDefinition.instance);
-    initActivityMappers(this);
+    super(OPTION_MODULE_ID, OptionRecordDefinition.instance);
   }
 
   static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
@@ -54,7 +54,7 @@ public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionSe
   }
 
   public JepPresenter createListFormPresenter(Place place) {
-    return new ListFormPresenter(place, this);
+    return new OptionListFormPresenter(place, this);
   }
 
   public JepPresenter createToolBarPresenter(Place place) {
@@ -72,6 +72,11 @@ public class OptionClientFactoryImpl<E extends PlainEventBus, S extends OptionSe
   public IsWidget getListFormView() {
     return optionListFormView;
   }
+
+  protected OptionEventBus createEventBus() {
+    return new OptionEventBus();
+  }
+
 
   public S getService() {
     if(dataService == null) {

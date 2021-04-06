@@ -20,30 +20,30 @@ public class OptionServiceImpl extends OptionAsRiaServiceImpl<Option> implements
 		super(OptionRecordDefinition.instance, new OptionDao());
 	}
  
-	public List<JepOption> getModule() throws ApplicationException {
+	public List<JepOption> getModule(String currentDataSource) throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			result = getProxyDao().getModule();
+			result = getProxyDao(currentDataSource).getModule();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
 		return result;
 	}
  
-	public List<JepOption> getObjectType() throws ApplicationException {
+	public List<JepOption> getObjectType(String currentDataSource) throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			result = getProxyDao().getObjectType();
+			result = getProxyDao(currentDataSource).getObjectType();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
 		return result;
 	}
  
-	public List<JepOption> getValueType() throws ApplicationException {
+	public List<JepOption> getValueType(String currentDataSource) throws ApplicationException {
 		List<JepOption> result = null;
 		try {
-			result = getProxyDao().getValueType();
+			result = getProxyDao(currentDataSource).getValueType();
 		} catch (Throwable th) {
 			throw new ApplicationException(th.getLocalizedMessage(), th);
 		}
