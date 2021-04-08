@@ -630,7 +630,7 @@ is
   citem GetContextTypeCacheItemT;
 
 begin
-  ckey := substr( moduleId || ':'  || contextTypeShortName, 1, 100);
+  ckey := substrb( moduleId || ':'  || contextTypeShortName, 1, 100);
   if not getContextTypeCache.exists( ckey) then
     select
       min( t.context_type_id)
@@ -795,20 +795,21 @@ is
   -- (совпадает с максимальной длиной varchar2)
   Line_MaxLen constant pls_integer:= 32767;
 
+  i integer := 1;
+
 begin
-  if length( outPrefix) + length( messageText) > Line_MaxLen then
+  if lengthb( outPrefix) + lengthb( messageText) > Line_MaxLen then
     dbms_output.put_line( outPrefix);
     dbms_output.put_line( messageText);
   else
     dbms_output.put_line( outPrefix || messageText);
   end if;
-  if length( textData) > 0 then
-    for i in 0 .. ceil( length( textData) / Line_MaxLen) - 1 loop
-      dbms_output.put_line(
-        substr( textData, 1 + i * Line_MaxLen, Line_MaxLen)
-      );
-    end loop;
-  end if;
+  while i < lengthb( textData) loop
+    dbms_output.put_line( substrb( textData, i, Line_MaxLen));
+    -- фактическая длина может быть меньше Line_MaxLen в случае многобайтовой
+    -- кодировки при попадании границы отсечки между байтами одного символа
+    i := i + lengthb( substrb( textData, i, Line_MaxLen));
+  end loop;
 end logDbOut;
 
 /* ifunc: logDebugDbOut
@@ -901,14 +902,14 @@ is
 begin
   logRec.level_code := levelCode;
   if length( messageText) > 4000 then
-    logRec.message_text := substr( messageText, 1, 4000);
+    logRec.message_text := substrb( messageText, 1, 4000);
     logRec.long_message_text_flag := 1;
     logRec.long_message_text := messageText;
   else
     logRec.message_text := messageText;
   end if;
   logRec.message_value := messageValue;
-  logRec.message_label := substr( messageLabel, 1, 128);
+  logRec.message_label := substrb( messageLabel, 1, 128);
   if textData is not null then
     logRec.text_data_flag := 1;
     logRec.text_data := textData;

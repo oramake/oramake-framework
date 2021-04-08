@@ -40,6 +40,43 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* ifunc: rpadb
+  Аналог rpad с указанием ограничения длины в байтах.
+*/
+function rpadb(
+  exp1 varchar2
+  , n integer
+  , exp2 varchar2 := null
+)
+return varchar2
+is
+
+  s2 varchar2(32767);
+
+begin
+  s2 := coalesce( exp2, ' ');
+  return
+    substrb( exp1, 1, n)
+    || rpad(
+        s2
+        , greatest( floor( ( n - lengthb( exp1)) / nullif( lengthb( s2), 0)), 0)
+        , s2
+      )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка ошибка при формировании строки ('
+        || 'exp1="' || exp1 || '"'
+        || ', n=' || n
+        || ', exp2="' || exp2 || '"'
+      )
+    , true
+  );
+end rpadb;
+
+
 /* func: updateJavaUtilLoggingLevel
   Обновляет уровень логирования в java.util.logging
 */
@@ -1010,7 +1047,7 @@ and not (
     checkCase(
       'Сообщение длиной 32767 символов'
       , messageText   =>
-          rpad( 'Сообщение длиной 32767 символов', 32767, '.')
+          rpadb( 'Сообщение длиной 32767 символов', 32767, '.')
     );
 
     checkCase(
@@ -1018,8 +1055,8 @@ and not (
       , messageText   =>
           'Текстовые данные длиной 60000 символов'
       , textData      =>
-          rpad( '0', 30000-1, '.') || '1'
-          || rpad( '2', 30000-1, '.') || '3'
+          rpadb( '0', 30000 - lengthb( '1'), '.') || '1'
+          || rpadb( '2', 30000 - lengthb( '3'), '.') || '3'
     );
 
     checkCase(
@@ -1341,7 +1378,7 @@ LEVEL_CODE  ; MESSAGE_TEXT                                                      
 INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                   ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
 DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
 INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
-ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 187 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 224 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 219  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
 '
     );
 

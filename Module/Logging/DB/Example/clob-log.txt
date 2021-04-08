@@ -9,7 +9,7 @@ title: Использования типа Clob в логах
 declare
 
   testText clob := 'test';
-  
+
   logger lg_logger_t := lg_logger_t.getLogger(
     moduleName    => 'TestModule'
     , objectName  => 'Test'
@@ -39,6 +39,6 @@ test
 
 LEVEL_CODE MESSAGE_TEXT      TEXT_DATA
 ---------- ----------------- -----------------
-INFO       f1(1): working... test
+INFO       working...        test
 
 (end)

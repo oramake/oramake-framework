@@ -62,13 +62,13 @@ Group: О модуле  {
 
 Group: Примеры  {
 
-   File: Использования типа Clob в логах  (Example/clob-log.txt)
-   File: Узнать логируются ли сообщения данного уровня  (Example/enabled-level-log.txt)
-   File: Использование вложенного контекста  (Example/nested-context.txt)
-   File: Установка уровня и назначения логирования  (Example/set-level-destination.txt)
-   File: Логирование стека ошибок  (Example/stack-error-log.txt)
    File: Начало работы с модулем Logging  (Example/start-use-log.txt)
+   File: Узнать логируются ли сообщения данного уровня  (Example/enabled-level-log.txt)
    File: Использование Warning и Error уровней логирования  (Example/warn-error-log.txt)
+   File: Установка уровня и назначения логирования  (Example/set-level-destination.txt)
+   File: Использования типа Clob в логах  (Example/clob-log.txt)
+   File: Логирование стека ошибок  (Example/stack-error-log.txt)
+   File: Использование вложенного контекста  (Example/nested-context.txt)
    }  # Group: Примеры
 
 Group: Объектные типы  {
