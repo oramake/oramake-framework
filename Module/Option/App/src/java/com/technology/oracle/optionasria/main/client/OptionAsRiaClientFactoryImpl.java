@@ -2,27 +2,30 @@ package com.technology.oracle.optionasria.main.client;
 
 import static com.technology.oracle.optionasria.main.client.OptionAsRiaClientConstant.OPTION_MODULE_ID;
 import static com.technology.oracle.optionasria.main.client.OptionAsRiaClientConstant.VALUE_MODULE_ID;
-import static com.technology.oracle.optionasria.main.client.OptionAsRiaClientConstant.optionText;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.activity.shared.Activity;
 import com.google.gwt.core.client.GWT;
-import com.technology.jep.jepria.client.ModuleItem;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.technology.jep.jepria.client.async.LoadAsyncCallback;
 import com.technology.jep.jepria.client.async.LoadPlainClientFactory;
 import com.technology.jep.jepria.client.ui.eventbus.main.MainEventBus;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.main.MainClientFactory;
 import com.technology.jep.jepria.client.ui.main.MainClientFactoryImpl;
+import com.technology.jep.jepria.client.ui.main.MainModulePresenter;
+import com.technology.jep.jepria.client.ui.main.MainView;
 import com.technology.jep.jepria.client.ui.plain.PlainClientFactory;
 import com.technology.jep.jepria.shared.service.JepMainServiceAsync;
 import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.optionasria.main.client.ui.module.OptionAsRiaMainModulePresenter;
+import com.technology.oracle.optionasria.main.client.ui.module.OptionAsRiaMainViewImpl;
 import com.technology.oracle.optionasria.option.client.OptionClientFactoryImpl;
 import com.technology.oracle.optionasria.value.client.ValueClientFactoryImpl;
 
-public class OptionAsRiaClientFactoryImpl<E extends MainEventBus, S extends JepMainServiceAsync>
-	extends MainClientFactoryImpl<E, S> implements MainClientFactory<E, S> {
+
+public class OptionAsRiaClientFactoryImpl extends MainClientFactoryImpl<MainEventBus, JepMainServiceAsync> {
+
+  private static final IsWidget mainView = new OptionAsRiaMainViewImpl() ;
 
 	public static MainClientFactory<MainEventBus, JepMainServiceAsync> getInstance() {
     if(instance == null) {
@@ -33,15 +36,13 @@ public class OptionAsRiaClientFactoryImpl<E extends MainEventBus, S extends JepM
 
 	private OptionAsRiaClientFactoryImpl() {
     super(
-        new ModuleItem(OPTION_MODULE_ID, optionText.submodule_option_title())
-        , new ModuleItem(VALUE_MODULE_ID, optionText.submodule_value_title())
+        OPTION_MODULE_ID,
+        VALUE_MODULE_ID
     );
-
-    initActivityMappers(this);
   }
 
 	@Override
-	public Activity createMainModulePresenter() {
+	public MainModulePresenter<? extends MainView, MainEventBus,JepMainServiceAsync, ? extends MainClientFactory<MainEventBus, JepMainServiceAsync>> createMainModulePresenter() {
 		return new OptionAsRiaMainModulePresenter(this);
 	}
 
@@ -62,5 +63,10 @@ public class OptionAsRiaClientFactoryImpl<E extends MainEventBus, S extends JepM
         }
       });
     }
+  }
+
+  @Override
+  public IsWidget getMainView() {
+    return mainView;
   }
 }

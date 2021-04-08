@@ -1,0 +1,10 @@
+alter table
+  lg_log_data
+add constraint
+  lg_log_data_fk_log_id
+foreign key
+  ( log_id)
+references
+  lg_log ( log_id)
+on delete cascade
+/

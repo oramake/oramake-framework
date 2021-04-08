@@ -9,7 +9,7 @@ import com.technology.oracle.optionasria.main.shared.service.OptionAsRiaService;
 
 @RemoteServiceRelativePath("OptionService")
 public interface OptionService extends OptionAsRiaService {
-	List<JepOption> getModule() throws ApplicationException;
-	List<JepOption> getObjectType() throws ApplicationException;
-	List<JepOption> getValueType() throws ApplicationException;
+	List<JepOption> getModule(String currentDataSource) throws ApplicationException;
+	List<JepOption> getObjectType(String currentDataSource) throws ApplicationException;
+	List<JepOption> getValueType(String currentDataSource) throws ApplicationException;
 }

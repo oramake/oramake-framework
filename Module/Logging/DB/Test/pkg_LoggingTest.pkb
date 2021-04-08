@@ -40,6 +40,43 @@ logger lg_logger_t := lg_logger_t.getLogger(
 
 /* group: Функции */
 
+/* ifunc: rpadb
+  Аналог rpad с указанием ограничения длины в байтах.
+*/
+function rpadb(
+  exp1 varchar2
+  , n integer
+  , exp2 varchar2 := null
+)
+return varchar2
+is
+
+  s2 varchar2(32767);
+
+begin
+  s2 := coalesce( exp2, ' ');
+  return
+    substrb( exp1, 1, n)
+    || rpad(
+        s2
+        , greatest( floor( ( n - lengthb( exp1)) / nullif( lengthb( s2), 0)), 0)
+        , s2
+      )
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка ошибка при формировании строки ('
+        || 'exp1="' || exp1 || '"'
+        || ', n=' || n
+        || ', exp2="' || exp2 || '"'
+      )
+    , true
+  );
+end rpadb;
+
+
 /* func: updateJavaUtilLoggingLevel
   Обновляет уровень логирования в java.util.logging
 */
@@ -72,6 +109,7 @@ is
 
   es1ct lg_context_type%rowtype;
   es1lg lg_log%rowtype;
+  es1textData lg_log_data.text_data%type;
 
   /*
     Возвращает значение строкового поля с игнорированием пробелов.
@@ -136,6 +174,7 @@ begin
             , messageText           => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -146,6 +185,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -156,6 +196,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -170,6 +211,7 @@ begin
           es1lg.level_code              := getStr( 'levelCode', 0);
           es1lg.message_value           := getNum( 'messageValue', 0);
           es1lg.message_label           := getStr( 'messageLabel', 0);
+          es1textData                   := getStr( 'textData', 0);
         when 'errorStack2' then
           begin
             begin
@@ -190,6 +232,7 @@ begin
                       , levelCode                 => es1lg.level_code
                       , messageValue              => es1lg.message_value
                       , messageLabel              => es1lg.message_label
+                      , textData                  => es1textData
                     )
                   , true
                 );
@@ -221,6 +264,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -231,6 +275,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -241,6 +286,7 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -251,6 +297,29 @@ begin
             messageText             => getStr( 'messageText')
             , messageValue          => getNum( 'messageValue', 0)
             , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'trace2' then
+          usedLogger.trace2(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
+            , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
+            , contextValueId        => getNum( 'contextValueId', 0)
+            , openContextFlag       => getNum( 'openContextFlag', 0)
+            , contextTypeModuleId   => getNum( 'contextTypeModuleId', 0)
+          );
+        when 'trace3' then
+          usedLogger.trace3(
+            messageText             => getStr( 'messageText')
+            , messageValue          => getNum( 'messageValue', 0)
+            , messageLabel          => getStr( 'messageLabel', 0)
+            , textData              => getStr( 'textData', 0)
             , contextTypeShortName  => getStr( 'contextTypeShortName', 0)
             , contextValueId        => getNum( 'contextValueId', 0)
             , openContextFlag       => getNum( 'openContextFlag', 0)
@@ -286,6 +355,228 @@ begin
   end loop;
 end execLoggerMethod;
 
+/* iproc: getTestModule
+  Получает параметры тестового модуля.
+*/
+procedure getTestModule(
+  testModuleId out integer
+  , testModuleName out varchar2
+  , testModuleInitialPath out varchar2
+)
+is
+
+  pragma autonomous_transaction;
+
+begin
+  testModuleId := pkg_ModuleInfoTest.getTestModuleId(
+    baseName => 'LoggingAutoTest'
+  );
+  select
+    t.module_name
+    , t.initial_svn_root || '@' || t.initial_svn_revision
+  into testModuleName, testModuleInitialPath
+  from
+    v_mod_module t
+  where
+    t.module_id = testModuleId
+  ;
+
+  -- Фиксируем, т.к. если модуль был создан, то он будет невиден в
+  -- при логировании (выполняемом в автономной транзакции)
+  commit;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении параметров тестового модуля.'
+      )
+    , true
+  );
+end getTestModule;
+
+/* ifunc: addTestLog
+  Добавляет тестовые записи лога.
+*/
+function addTestLog(
+  levelCode varchar2 := null
+  , messageText varchar2 := null
+  , textData clob := null
+  , usedLogger lg_logger_t := null
+  , setLevelCode varchar2 := lg_logger_t.getAllLevelCode()
+  , setLogTime timestamp with time zone := null
+  , setSessionid number := null
+)
+return integer
+is
+
+  prevLogId integer;
+  oldLevelCode lg_level.level_code%type;
+
+  logId integer;
+  logCount integer;
+
+  -- Логер для добавления записей
+  lgr lg_logger_t := usedLogger;
+
+  testModuleId integer;
+  testModuleName lg_log.module_name%type;
+  testModuleInitialPath lg_log.module_name%type;
+  testObjectName lg_log.object_name%type;
+
+
+
+  /*
+    Меняет значения полей записи лога.
+  */
+  procedure updateLogRow
+  is
+
+    pragma autonomous_transaction;
+
+  begin
+    if logId is null then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , 'Запись не была добавлена в лог.'
+      );
+    end if;
+    update
+      lg_log t
+    set
+      t.log_time = coalesce( setLogTime, t.log_time)
+      , t.sessionid = coalesce( setSessionid, t.sessionid)
+    where
+      t.log_id = logId
+    ;
+    commit;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при изменении значений полей записи лога ('
+          || 'logId=' || logId
+          || ').'
+        )
+      , true
+    );
+  end updateLogRow;
+
+
+
+-- addTestLog
+begin
+  if usedLogger is not null then
+    oldLevelCode := usedLogger.getLevel();
+  end if;
+  select
+    coalesce( max( t.log_id), 0)
+  into prevLogId
+  from
+    lg_log t
+  ;
+  if lgr is null then
+    getTestModule(
+      testModuleId              => testModuleId
+      , testModuleName          => testModuleName
+      , testModuleInitialPath   => testModuleInitialPath
+    );
+    lgr := lg_logger_t.getLogger(
+      moduleName    => testModuleName
+      , objectName  => 'addTestLog'
+    );
+    lgr.setLevel( lg_logger_t.getAllLevelCode());
+  end if;
+  if setLevelCode is not null then
+    lgr.setLevel( setLevelCode);
+  end if;
+
+  -- Исключаем одновременный вывод через dbms_output
+  pkg_Logging.setDestination(
+    destinationCode => pkg_Logging.Table_DestinationCode
+  );
+
+  lgr.log(
+    levelCode     => coalesce( levelCode, lg_logger_t.getTraceLevelCode())
+    , messageText =>
+        coalesce(
+          messageText
+          , 'Запись для автотеста'
+        )
+    , textData    => textData
+  );
+
+  -- Восстанавливаем значения по умолчанию
+  pkg_Logging.setDestination( destinationCode => null);
+  select
+    max( t.log_id)
+    , count(*)
+  into logId, logCount
+  from
+    v_lg_current_log t
+  where
+    t.log_id > prevLogId
+    -- исключаем отладочные сообщения пакета pkg_LoggingInternal
+    and not (
+      nullif( 'Logging', t.module_name) is null
+      and nullif( 'pkg_LoggingInternal', t.object_name) is null
+    )
+  ;
+  if logCount > 1
+      then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , 'Некорректное число добавленных записей: ' || logCount
+    );
+  end if;
+  if setLogTime is not null or setSessionid is not null then
+    updateLogRow();
+  end if;
+  if usedLogger is not null and setLevelCode is not null then
+    usedLogger.setLevel( oldLevelCode);
+  end if;
+  return logId;
+exception when others then
+  if usedLogger is not null and setLevelCode is not null then
+    usedLogger.setLevel( oldLevelCode);
+  end if;
+  pkg_Logging.setDestination( destinationCode => null);
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при формировании тестовых записей лога.'
+      )
+    , true
+  );
+end addTestLog;
+
+/* iproc: addTestLog( PROC)
+  Добавляет тестовые записи лога.
+*/
+procedure addTestLog(
+  levelCode varchar2 := null
+  , messageText varchar2 := null
+  , textData clob := null
+  , usedLogger lg_logger_t := null
+  , setLevelCode varchar2 := null
+  , setLogTime timestamp with time zone := null
+  , setSessionid number := null
+)
+is
+
+  logId integer;
+
+begin
+  logId := addTestLog(
+    levelCode           => levelCode
+    , messageText       => messageText
+    , textData          => textData
+    , usedLogger        => usedLogger
+    , setLevelCode      => setLevelCode
+    , setLogTime        => setLogTime
+    , setSessionid      => setSessionid
+  );
+end addTestLog;
+
 /* proc: testLogger
   Тестирование логирования с помощью типа <lg_logger_t>.
 
@@ -311,8 +602,8 @@ is
   testLogger lg_logger_t;
   testModuleId integer;
   testModuleName lg_log.module_name%type;
-  testObjectName lg_log.object_name%type;
   testModuleInitialPath lg_log.module_name%type;
+  testObjectName lg_log.object_name%type;
 
 
 
@@ -321,49 +612,12 @@ is
   */
   procedure prepareTestData
   is
-
-
-
-    /*
-      Получает параметры тестового модуля.
-    */
-    procedure getTestModule
-    is
-
-      pragma autonomous_transaction;
-
-    begin
-      testModuleId := pkg_ModuleInfoTest.getTestModuleId(
-        baseName => 'LoggingAutoTest'
-      );
-      select
-        t.module_name
-        , t.initial_svn_root || '@' || t.initial_svn_revision
-      into testModuleName, testModuleInitialPath
-      from
-        v_mod_module t
-      where
-        t.module_id = testModuleId
-      ;
-
-      -- Фиксируем, т.к. если модуль был создан, то он будет невиден в
-      -- при логировании (выполняемом в автономной транзакции)
-      commit;
-    exception when others then
-      raise_application_error(
-        pkg_Error.ErrorStackInfo
-        , logger.errorStack(
-            'Ошибка при получении параметров тестового модуля.'
-          )
-        , true
-      );
-    end getTestModule;
-
-
-
-  -- prepareTestData
   begin
-    getTestModule();
+    getTestModule(
+      testModuleId              => testModuleId
+      , testModuleName          => testModuleName
+      , testModuleInitialPath   => testModuleInitialPath
+    );
     rootLogger := lg_logger_t.getRootLogger();
     isDebugEnabled := rootLogger.isDebugEnabled();
     testObjectName := 'pkg_TestPackage';
@@ -390,6 +644,7 @@ is
     caseDescription varchar2
     , levelCode varchar2 := null
     , messageText varchar2 := null
+    , textData clob := null
     , moduleName varchar2 := None_String
     , objectName varchar2 := None_String
     , moduleId integer := None_Integer
@@ -408,18 +663,10 @@ is
 
     errorMessage varchar2(32000);
 
-    prevLogId integer;
-
-    oldLevelCode lg_level.level_code%type;
-    oldRootLevelCode lg_level.level_code%type;
-
     -- Id созданного сообщения
     logId integer;
 
-    -- Число добавленных сообщений
-    logCount integer;
-
-    lgr lg_log%rowtype;
+    lgr v_lg_log%rowtype;
 
   -- checkCase
   begin
@@ -434,53 +681,18 @@ is
     end if;
     logger.info( '*** ' || cinfo);
 
-    select
-      coalesce( max( t.log_id), 0)
-    into prevLogId
-    from
-      lg_log t
-    ;
-    if setLevelCode is not null then
-      oldLevelCode := usedLogger.getLevel();
-    end if;
     begin
-      if setLevelCode is not null then
-        usedLogger.setLevel( setLevelCode);
-      end if;
-
-      -- Исключаем одновременный вывод через dbms_output
-      pkg_Logging.setDestination(
-        destinationCode => pkg_Logging.Table_DestinationCode
-      );
-
-      usedLogger.log(
-        levelCode     => coalesce( levelCode, lg_logger_t.getTraceLevelCode())
-        , messageText =>
+      logId := addTestLog(
+        levelCode       => coalesce( levelCode, lg_logger_t.getTraceLevelCode())
+        , messageText   =>
             coalesce(
               messageText
               , 'Сообщение для автотеста: ' || caseDescription
             )
+        , textData      => textData
+        , setLevelCode  => setLevelCode
+        , usedLogger    => usedLogger
       );
-
-      -- Восстанавливаем значения по умолчанию
-      pkg_Logging.setDestination( destinationCode => null);
-      select
-        max( t.log_id)
-        , count(*)
-      into logId, logCount
-      from
-        v_lg_current_log t
-      where
-        t.log_id > prevLogId
-        -- исключаем отладочные сообщения пакета pkg_LoggingInternal
-        and not (
-          nullif( 'Logging', t.module_name) is null
-          and nullif( 'pkg_LoggingInternal', t.object_name) is null
-        )
-      ;
-      if setLevelCode is not null then
-        usedLogger.setLevel( oldLevelCode);
-      end if;
       if errorMessageMask is not null then
         pkg_TestUtility.failTest(
           failMessageText   =>
@@ -488,10 +700,6 @@ is
         );
       end if;
     exception when others then
-      if setLevelCode is not null then
-        usedLogger.setLevel( oldLevelCode);
-      end if;
-      pkg_Logging.setDestination( destinationCode => null);
       if errorMessageMask is not null then
         errorMessage := logger.getErrorStack();
         if errorMessage not like errorMessageMask then
@@ -513,20 +721,19 @@ is
 
     -- Проверка успешного результата
     if errorMessageMask is null then
-      pkg_TestUtility.compareChar(
-        actualString        => logCount
-        , expectedString    => 1
-        , failMessageText   =>
-            cinfo || 'Некорректное число добавленных сообщений'
-            || ' ( prevLogId=' || prevLogId || ')'
-      );
+      if logId is null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Сообщение не было добавлено'
+        );
+      end if;
 
       if logId is not null then
         select
           t.*
         into lgr
         from
-          lg_log t
+          v_lg_log t
         where
           t.log_id = logId
         ;
@@ -540,14 +747,55 @@ is
               cinfo || 'Некорректное значение level_code'
         );
       end if;
-      if length( messageText) <= 4000 then
+      if messageText is not null then
         pkg_TestUtility.compareChar(
           actualString        => lgr.message_text
-          , expectedString    => messageText
+          , expectedString    => substrb( messageText, 1, 4000)
           , failMessageText   =>
               cinfo || 'Некорректное значение message_text'
         );
+        pkg_TestUtility.compareChar(
+          actualString        => lgr.long_message_text
+          , expectedString    =>
+              case when length( messageText) > 4000 then messageText end
+          , failMessageText   =>
+              cinfo || 'Некорректное значение long_message_text'
+        );
+        pkg_TestUtility.compareChar(
+          actualString        => lgr.full_message_text
+          , expectedString    => messageText
+          , failMessageText   =>
+              cinfo || 'Некорректное значение full_message_text'
+        );
       end if;
+      pkg_TestUtility.compareChar(
+        actualString        => lgr.long_message_text_flag
+        , expectedString    => case when length( messageText) > 4000 then 1 end
+        , failMessageText   =>
+            cinfo || 'Некорректное значение long_message_text_flag'
+      );
+      pkg_TestUtility.compareChar(
+        actualString        => length( lgr.text_data)
+        , expectedString    => length( textData)
+        , failMessageText   =>
+            cinfo || 'Некорректная длина text_data'
+      );
+      if length( lgr.text_data) = length( textData) then
+        for i in 0 .. ceil( length( textData) / 30000) - 1 loop
+          pkg_TestUtility.compareChar(
+            actualString        => substr( lgr.text_data, i*30000 + 1, 30000)
+            , expectedString    => substr( textData     , i*30000 + 1, 30000)
+            , failMessageText   =>
+                cinfo || 'Некорректное значение text_data (часть #' || i || ')'
+          );
+        end loop;
+      end if;
+      pkg_TestUtility.compareChar(
+        actualString        => lgr.text_data_flag
+        , expectedString    => case when textData is not null then 1 end
+        , failMessageText   =>
+            cinfo || 'Некорректное значение text_data_flag'
+      );
       if nullif( None_String, moduleName) is not null then
         pkg_TestUtility.compareChar(
           actualString        => lgr.module_name
@@ -791,7 +1039,7 @@ and not (
         , levelCode     => rec.level_code
         , setLevelCode  => rec.level_code
         , messageText   =>
-            'Сообщение уровня "' || rec.level_description || '"'
+            'Сообщение уровня "' || rec.level_name || '"'
             || ' ( код "' || rec.level_code || '")'
       );
     end loop;
@@ -799,7 +1047,16 @@ and not (
     checkCase(
       'Сообщение длиной 32767 символов'
       , messageText   =>
-          rpad( 'Сообщение длиной 32767 символов', 32767, '.')
+          rpadb( 'Сообщение длиной 32767 символов', 32767, '.')
+    );
+
+    checkCase(
+      'Текстовые данные длиной 60000 символов'
+      , messageText   =>
+          'Текстовые данные длиной 60000 символов'
+      , textData      =>
+          rpadb( '0', 30000 - lengthb( '1'), '.') || '1'
+          || rpadb( '2', 30000 - lengthb( '3'), '.') || '3'
     );
 
     checkCase(
@@ -1121,7 +1378,7 @@ LEVEL_CODE  ; MESSAGE_TEXT                                                      
 INFO        ; Начало обработки файла tmp1.txt                                                                                                                                                                                                   ;               ; tmp1.txt      ; file                    ;               11 ;                 1 ;            $(rowId) ;             1 ;                  1
 DEBUG       ; Начало обработки записи #2                                                                                                                                                                                                        ;               ;               ; record                  ;                2 ;                 1 ;            $(rowId) ;             2 ;                  1
 INFO        ; Закрытие контекста выполнения в связи с ошибкой: Ошибка при обработке записи #2. ORA-20015: Запись загружена ранее                                                                                                                ;        -20015 ; DUB_ERROR     ; record                  ;                2 ;                 0 ;         $(rowId(2)) ;             2 ;                  1
-ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 182 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 177  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
+ERROR       ; Ошибка при обработке файла. ORA-20150: Ошибка при обработке записи #2. ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 224 ORA-20015: Запись загружена ранее ORA-06512: at "$(CURRENT_SCHEMA).PKG_LOGGINGTEST", line 219  ;             1 ;               ; file                    ;               11 ;                 0 ;         $(rowId(1)) ;             1 ;                  1
 '
     );
 
@@ -1252,13 +1509,251 @@ exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
     , logger.errorStack(
-        'Ошибка при тестировании тестировании логирования через lg_logger_t ('
+        'Ошибка при тестировании логирования через lg_logger_t ('
         || ' testCaseNumber=' || testCaseNumber
         || ').'
       )
     , true
   );
 end testLogger;
+
+/* proc: testUtility
+  Тестирование вспомогательных функций.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+*/
+procedure testUtility(
+  testCaseNumber integer := null
+)
+is
+
+  -- Время, ранее которого не должно быть логов
+  Min_LogTime timestamp with time zone := to_timestamp_tz(
+    '01.05.1991 04:16:01.443000000 04:00'
+    , 'dd.mm.yyyy hh24:mi:ss.ff tzh:tzm'
+  );
+
+
+  -- Порядковый номер очередного тестового случая
+  checkCaseNumber integer := 0;
+
+
+
+  /*
+    Подготавливает данные для теста.
+  */
+  procedure prepareTestData
+  is
+
+    pragma autonomous_transaction;
+
+  begin
+    delete
+      lg_log t
+    where
+      t.log_time < Min_LogTime
+      and t.module_name = 'TestMod_LoggingAutoTest'
+    ;
+    commit;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при подготовке данных для теста.'
+        )
+      , true
+    );
+  end prepareTestData;
+
+
+
+  /*
+    Проверяет тестовый случай.
+  */
+  procedure checkCase(
+    caseDescription varchar2
+    , testFunction varchar2
+    , toTime timestamp with time zone := null
+    , returnNumber integer := null
+    , existsLogId integer := null
+    , notExistsLogId integer := null
+    , errorMessageMask varchar2 := null
+    , nextCaseUsedCount pls_integer := null
+  )
+  is
+
+    -- Описание тестового случая
+    cinfo varchar2(200) :=
+      'CASE ' || to_char( checkCaseNumber + 1)
+       || ': '|| testFunction || ': "' || caseDescription || '": '
+    ;
+
+    errorMessage varchar2(32000);
+
+    retNum number;
+
+  -- checkCase
+  begin
+    checkCaseNumber := checkCaseNumber + 1;
+    if pkg_TestUtility.isTestFailed()
+          or testCaseNumber is not null
+            and testCaseNumber
+              not between checkCaseNumber
+                and checkCaseNumber + coalesce( nextCaseUsedCount, 0)
+        then
+      return;
+    end if;
+    logger.info( '*** ' || cinfo);
+
+    begin
+      case testFunction
+        when 'clearLog' then
+          retNum := pkg_LoggingUtility.clearLog(
+            toTime => toTime
+          );
+      end case;
+      if errorMessageMask is not null then
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Успешное выполнение вместо ошибки'
+        );
+      end if;
+    exception when others then
+      if errorMessageMask is not null then
+        errorMessage := logger.getErrorStack();
+        if errorMessage not like errorMessageMask then
+          pkg_TestUtility.compareChar(
+            actualString        => errorMessage
+            , expectedString    => errorMessageMask
+            , failMessageText   =>
+                cinfo || 'Сообщение об ошибке не соответствует маске'
+          );
+        end if;
+      else
+        pkg_TestUtility.failTest(
+          failMessageText   =>
+            cinfo || 'Выполнение завершилось с ошибкой:'
+            || chr(10) || logger.getErrorStack()
+        );
+      end if;
+    end;
+
+    -- Проверка успешного результата
+    if errorMessageMask is null and not pkg_TestUtility.isTestFailed then
+      if returnNumber is not null then
+        pkg_TestUtility.compareChar(
+          actualString        => retNum
+          , expectedString    => returnNumber
+          , failMessageText   =>
+              cinfo || 'Неожиданное числовое значение функции'
+        );
+      end if;
+      if existsLogId is not null then
+        pkg_TestUtility.compareRowCount(
+          tableName           => 'lg_log'
+          , filterCondition   => 'log_id = ' || existsLogId
+          , expectedRowCount  => 1
+          , failMessageText   =>
+              cinfo || 'Отсутствует запись лога'
+        );
+      end if;
+      if notExistsLogId is not null then
+        pkg_TestUtility.compareRowCount(
+          tableName           => 'lg_log'
+          , filterCondition   => 'log_id = ' || notExistsLogId
+          , expectedRowCount  => 0
+          , failMessageText   =>
+              cinfo || 'Лишняя запись лога'
+        );
+      end if;
+    end if;
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке тестового случая ('
+          || ' caseNumber=' || checkCaseNumber
+          || ', caseDescription="' || caseDescription || '"'
+          || ', testFunction="' || testFunction || '"'
+          || ').'
+        )
+      , true
+    );
+  end checkCase;
+
+
+
+  /*
+    Проверка очистки лога
+  */
+  procedure checkClearLog
+  is
+
+    saveLogId integer;
+    delLogId integer;
+
+  begin
+    addTestLog();
+    checkCase(
+      'Нет данных для удаления'
+      , 'clearLog'
+      , toTime          => Min_LogTime
+      , returnNumber    => 0
+    );
+    saveLogId := addTestLog(
+      setLogTime => Min_LogTime - INTERVAL '1' SECOND
+    );
+    checkCase(
+      'Сессия с логами до и после граничного времени'
+      , 'clearLog'
+      , toTime          => Min_LogTime
+      , returnNumber    => 0
+      , existsLogId     => coalesce( saveLogId, -1)
+    );
+    delLogId := addTestLog(
+      setLogTime        => Min_LogTime - INTERVAL '1' SECOND
+        -- отрицательное значение гарантирует уникальность
+      , setSessionid    => - sys_context('USERENV','SESSIONID')
+    );
+    checkCase(
+      'Есть данные для удаления'
+      , 'clearLog'
+      , toTime            => Min_LogTime
+      , returnNumber      => 1
+      , existsLogId       => saveLogId
+      , notExistsLogId    => delLogId
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при проверке очистки лога.'
+        )
+      , true
+    );
+  end checkClearLog;
+
+
+
+-- testUtility
+begin
+  prepareTestData();
+  pkg_TestUtility.beginTest( 'utility');
+  checkClearLog();
+  pkg_TestUtility.endTest();
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при тестировании вспомогательных функций ('
+        || ' testCaseNumber=' || testCaseNumber
+        || ').'
+      )
+    , true
+  );
+end testUtility;
 
 end pkg_LoggingTest;
 /

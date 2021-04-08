@@ -79,11 +79,30 @@ ImageJPEGData_MimeType constant varchar2(40) := 'image/jpeg';
 
 /* group: Отправка писем */
 
+/* pfunc: getMailSender
+  Возвращает адрес отправителя для отправки сообщений.
+  Возвращаемое значение настраивается с помощью параметра
+  <pkg_MailBase.DefaultMailSender_OptSName>, если значение параметра не задано,
+  возвращается значение функции pkg_Common.getMailAddressSource.
+
+  Параметры:
+  systemName                  - Название системы или модуля, формирующего
+                                сообщение
+                                (по умолчанию отсутствует)
+
+  ( <body::getMailSender>)
+*/
+function getMailSender(
+  systemName varchar2 := null
+)
+return varchar2;
+
 /* pproc: sendMail
   Отправляет письмо ( немедленно).
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -105,7 +124,7 @@ ImageJPEGData_MimeType constant varchar2(40) := 'image/jpeg';
   ( <body::sendMail>)
 */
 procedure sendMail(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -125,6 +144,7 @@ procedure sendMail(
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -143,7 +163,7 @@ procedure sendMail(
   ( <body::sendMessage>)
 */
 function sendMessage(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -162,6 +182,7 @@ return integer;
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -180,7 +201,7 @@ return integer;
   ( <body::sendHtmlMessage>)
 */
 function sendHtmlMessage(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2

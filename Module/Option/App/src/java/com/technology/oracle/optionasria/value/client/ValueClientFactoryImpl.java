@@ -15,6 +15,7 @@ import com.technology.jep.jepria.client.ui.plain.StandardModulePresenter;
 import com.technology.jep.jepria.shared.service.data.JepDataServiceAsync;
 import com.technology.oracle.optionasria.value.client.ui.form.detail.ValueDetailFormPresenter;
 import com.technology.oracle.optionasria.value.client.ui.form.detail.ValueDetailFormViewImpl;
+import com.technology.oracle.optionasria.value.client.ui.form.list.ValueListFormPresenter;
 import com.technology.oracle.optionasria.value.client.ui.form.list.ValueListFormViewImpl;
 import com.technology.oracle.optionasria.value.client.ui.toolbar.ValueToolBarPresenter;
 import com.technology.oracle.optionasria.value.client.ui.toolbar.ValueToolBarViewImpl;
@@ -22,8 +23,8 @@ import com.technology.oracle.optionasria.value.shared.record.ValueRecordDefiniti
 import com.technology.oracle.optionasria.value.shared.service.ValueService;
 import com.technology.oracle.optionasria.value.shared.service.ValueServiceAsync;
  
-public class ValueClientFactoryImpl<E extends PlainEventBus, S extends ValueServiceAsync>
-		extends StandardClientFactoryImpl<E, S> {
+public class ValueClientFactoryImpl
+		extends StandardClientFactoryImpl<PlainEventBus, ValueServiceAsync> {
  
 	private static final IsWidget valueDetailFormView = new ValueDetailFormViewImpl();
 	private static final IsWidget valueToolBarView = new ValueToolBarViewImpl();
@@ -32,8 +33,7 @@ public class ValueClientFactoryImpl<E extends PlainEventBus, S extends ValueServ
 	private static PlainClientFactoryImpl<PlainEventBus, JepDataServiceAsync> instance = null;
 	 
   public ValueClientFactoryImpl() {
-    super(ValueRecordDefinition.instance);
-    initActivityMappers(this);
+    super(VALUE_MODULE_ID, ValueRecordDefinition.instance);
   }
  
   static public PlainClientFactory<PlainEventBus, JepDataServiceAsync> getInstance() {
@@ -52,7 +52,7 @@ public class ValueClientFactoryImpl<E extends PlainEventBus, S extends ValueServ
   }
  
   public JepPresenter createListFormPresenter(Place place) {
-    return new ListFormPresenter(place, this);
+    return new ValueListFormPresenter(place, this);
   }
   
   public JepPresenter createToolBarPresenter(Place place) {
@@ -70,11 +70,9 @@ public class ValueClientFactoryImpl<E extends PlainEventBus, S extends ValueServ
   public IsWidget getListFormView() {
     return valueListFormView;
   }
- 
-  public S getService() {
-    if(dataService == null) {
-      dataService = (S) GWT.create(ValueService.class);
-    }
-    return dataService;
+
+  @Override
+  public ValueServiceAsync createService() {
+    return GWT.create(ValueService.class);
   }
 }

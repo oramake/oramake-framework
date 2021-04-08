@@ -18,9 +18,33 @@ subtype IdStrT is varchar2(39);
 subtype FindModuleStringT is varchar2(128);
 
 /* itype: LogRecT
-  Запись таблицы лога (тип).
+  Запись лога (тип).
 */
-subtype LogRecT is lg_log%rowtype;
+type LogRecT is record (
+  log_id                          lg_log.log_id%type
+  , sessionid                     lg_log.sessionid%type
+  , level_code                    lg_log.level_code%type
+  , message_value                 lg_log.message_value%type
+  , message_label                 lg_log.message_label%type
+  , message_text                  lg_log.message_text%type
+  , long_message_text_flag        lg_log.long_message_text_flag%type
+  , text_data_flag                lg_log.text_data_flag%type
+  , context_level                 lg_log.context_level%type
+  , context_type_id               lg_log.context_type_id%type
+  , context_value_id              lg_log.context_value_id%type
+  , open_context_log_id           lg_log.open_context_log_id%type
+  , open_context_log_time         lg_log.open_context_log_time%type
+  , open_context_flag             lg_log.open_context_flag%type
+  , context_type_level            lg_log.context_type_level%type
+  , module_name                   lg_log.module_name%type
+  , object_name                   lg_log.object_name%type
+  , module_id                     lg_log.module_id%type
+  , log_time                      lg_log.log_time%type
+  , date_ins                      lg_log.date_ins%type
+  , operator_id                   lg_log.operator_id%type
+  , long_message_text             lg_log_data.long_message_text%type
+  , text_data                     lg_log_data.text_data%type
+);
 
 /* itype: TLoggerUid
   Уникальный идентификатор логера.
@@ -606,7 +630,7 @@ is
   citem GetContextTypeCacheItemT;
 
 begin
-  ckey := substr( moduleId || ':'  || contextTypeShortName, 1, 100);
+  ckey := substrb( moduleId || ':'  || contextTypeShortName, 1, 100);
   if not getContextTypeCache.exists( ckey) then
     select
       min( t.context_type_id)
@@ -752,66 +776,39 @@ end setDestination;
 
 /* ifunc: logDbOut
   Выводит сообщение через dbms_output.
-  Строки сообщения, длина которых больше 255 символов, при выводе автоматически
-  разбиваются на строки допустимого размера ( в связи ограничением dbms_output).
+  Выводимые текстовые данные (textData) разбиваются на строки максимально
+  допустимого размера (в связи с ограничением dbms_output.put_line).
 
   Параметры:
-  messageText                 - текст сообщения
-
-  Замечания:
-  - разбивка при выводе слишком длинных строк сообщения по возможности
-    производится по символу новой строки ( 0x0A) либо перед пробелом;
+  outPrefix                   - Префикс, выводимый перед текстом сообщения
+  messageText                 - Текст сообщения
+  textData                    - Текстовые данные, связанные с сообщением
 */
 procedure logDbOut(
-  messageText varchar2
+  outPrefix varchar2
+  , messageText varchar2
+  , textData clob
 )
 is
 
-  -- Максимальная длина вывода
-  Max_OutputLength constant pls_integer:= 255;
+  -- Максимальная длина выводимой строки в dbms_output.put_line
+  -- (совпадает с максимальной длиной varchar2)
+  Line_MaxLen constant pls_integer:= 32767;
 
-  -- Длина строки
-  len pls_integer := coalesce( length( messageText), 0);
-
-  -- Стартовая позиция для текущего вывода
-  i pls_integer := 1;
-
-  -- Стартовая позиция для следующего вывода
-  i2 pls_integer;
-
-  -- Конечная позиция для текущего вывода ( не включая)
-  k pls_integer := null;
+  i integer := 1;
 
 begin
-  loop
-    i2 := len + 1;
-    if i2 - i > Max_OutputLength then
-      i2 := i + Max_OutputLength;
-
-      -- Пытаемся разбить строку по символу новой строки
-      k := instr( messageText, chr(10), i2 - len - 1);
-      if k >= i then
-        i2 := k + 1;
-      else
-        k := instr( messageText, ' ', i2 - len - 1);
-        if k > i then
-          i2 := k;
-        else
-          k := i2;
-        end if;
-      end if;
-    elsif i > 1 then
-      k := i2;
-    end if;
-    dbms_output.put_line(
-      case when k is not null then
-        substr( messageText, i, k - i)
-      else
-        messageText
-      end
-    );
-    exit when i2 > len;
-    i := i2;
+  if lengthb( outPrefix) + lengthb( messageText) > Line_MaxLen then
+    dbms_output.put_line( outPrefix);
+    dbms_output.put_line( messageText);
+  else
+    dbms_output.put_line( outPrefix || messageText);
+  end if;
+  while i < lengthb( textData) loop
+    dbms_output.put_line( substrb( textData, i, Line_MaxLen));
+    -- фактическая длина может быть меньше Line_MaxLen в случае многобайтовой
+    -- кодировки при попадании границы отсечки между байтами одного символа
+    i := i + lengthb( substrb( textData, i, Line_MaxLen));
   end loop;
 end logDbOut;
 
@@ -821,10 +818,14 @@ end logDbOut;
   вывода предыдущего сообщения.
 
   Параметры:
-  messageText                 - текст сообщения
+  levelCode                   - Код уровня сообщения
+  messageText                 - Текст сообщения
+  textData                    - Текстовые данные, связанные с сообщением
 */
 procedure logDebugDbOut(
-  messageText varchar2
+  levelCode varchar2
+  , messageText varchar2
+  , textData clob
 )
 is
 
@@ -837,32 +838,33 @@ is
 
 begin
   logDbOut(
-    substr( to_char( curTime), 10, 12) || ': '
-    || lpad(
-         coalesce(
-           case when
-             extract ( HOUR from timeInterval) = 0
-           then
-             to_char(
-                extract( SECOND from timeInterval) * 1000
-                + extract( MINUTE from timeInterval) * 60000
+    outPrefix =>
+        substr( to_char( curTime, 'hh24:mi:ss.ff'), 1, 12) || ': '
+        || lpad(
+             coalesce(
+               case
+                 when extract ( HOUR from timeInterval) = 0 then
+                   to_char(
+                      round( extract( SECOND from timeInterval) * 1000)
+                      + extract( MINUTE from timeInterval) * 60000
+                   )
+                 -- если прошло больше часа показываем время в часах
+                 when timeInterval is not null then
+                   to_char(
+                     extract ( HOUR from timeInterval)
+                     + extract ( DAY from timeInterval) * 24
+                     , 'FM9999990D00'
+                     , 'NLS_NUMERIC_CHARACTERS = ''. '''
+                   ) || 'h.'
+               end
+               , ' '
              )
-           -- Если прошло больше часа показываем время в часах
-           when
-             timeInterval is not null
-           then
-             to_char(
-               extract ( HOUR from timeInterval)
-               + extract ( DAY from timeInterval) * 24
-               , 'FM9999990D00'
-               , 'NLS_NUMERIC_CHARACTERS = ''. '''
-             ) || 'h.'
-           end
-           , ' '
-         )
-         , 5
-       )
-    || ': ' || messageText
+             , 5
+           )
+        || ': ' || rpad( levelCode, greatest( length( levelCode), 5))
+        || ': '
+    , messageText => messageText
+    , textData    => textData
   );
 
   -- Запоминаем время вывода сообщения
@@ -879,6 +881,8 @@ end logDebugDbOut;
   messageText                 - Текст сообщения
   messageValue                - Целочисленное значение, связанное с сообщением
   messageLabel                - Строковое значение, связанное с сообщением
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
   loggerUid                   - Идентификатор логера
   disableDboutFlag            - Запрет вывода сообщений через dbms_output
                                 (в т.ч. порождаемых сообщений об ошибках)
@@ -890,15 +894,26 @@ procedure fillCommonField(
   , messageText varchar2
   , messageValue integer
   , messageLabel varchar2
+  , textData clob
   , loggerUid varchar2
   , disableDboutFlag integer
 )
 is
 begin
   logRec.level_code := levelCode;
-  logRec.message_text := substr( messageText, 1, 4000);
+  if length( messageText) > 4000 then
+    logRec.message_text := substrb( messageText, 1, 4000);
+    logRec.long_message_text_flag := 1;
+    logRec.long_message_text := messageText;
+  else
+    logRec.message_text := messageText;
+  end if;
   logRec.message_value := messageValue;
-  logRec.message_label := substr( messageLabel, 1, 128);
+  logRec.message_label := substrb( messageLabel, 1, 128);
+  if textData is not null then
+    logRec.text_data_flag := 1;
+    logRec.text_data := textData;
+  end if;
 
   if loggerUid is not null then
     logRec.module_name := colLogger( loggerUid).moduleName;
@@ -926,14 +941,14 @@ exception when others then
 end fillCommonField;
 
 /* iproc: prepareLogRow
-  Заполняет служебные поля записи таблицы <lg_log> перед вставкой.
+  Заполняет служебные поля записи лога перед вставкой.
 
   Параметры:
-  logRec                      - Данные записи таблицы <lg_log>
+  logRec                      - Данные записи лога
                                 (модификация)
 */
 procedure prepareLogRow(
-  logRec in out nocopy lg_log%rowtype
+  logRec in out nocopy LogRecT
 )
 is
 begin
@@ -982,19 +997,100 @@ is
 
   pragma autonomous_transaction;
 
+  rec lg_log%rowtype;
+
 begin
   if logRec.date_ins is null then
     logRec.date_ins := sysdate;
   end if;
+  rec.log_id                      := logRec.log_id;
+  rec.sessionid                   := logRec.sessionid;
+  rec.level_code                  := logRec.level_code;
+  rec.message_value               := logRec.message_value;
+  rec.message_label               := logRec.message_label;
+  rec.message_text                := logRec.message_text;
+  rec.long_message_text_flag      := logRec.long_message_text_flag;
+  rec.text_data_flag              := logRec.text_data_flag;
+  rec.context_level               := logRec.context_level;
+  rec.context_type_id             := logRec.context_type_id;
+  rec.context_value_id            := logRec.context_value_id;
+  rec.open_context_log_id         := logRec.open_context_log_id;
+  rec.open_context_log_time       := logRec.open_context_log_time;
+  rec.open_context_flag           := logRec.open_context_flag;
+  rec.context_type_level          := logRec.context_type_level;
+  rec.module_name                 := logRec.module_name;
+  rec.object_name                 := logRec.object_name;
+  rec.module_id                   := logRec.module_id;
+  rec.log_time                    := logRec.log_time;
+  rec.date_ins                    := logRec.date_ins;
+  rec.operator_id                 := logRec.operator_id;
   insert into
     lg_log
+  (
+    log_id
+    , sessionid
+    , level_code
+    , message_value
+    , message_label
+    , message_text
+    , long_message_text_flag
+    , text_data_flag
+    , context_level
+    , context_type_id
+    , context_value_id
+    , open_context_log_id
+    , open_context_log_time
+    , open_context_flag
+    , context_type_level
+    , module_name
+    , object_name
+    , module_id
+    , log_time
+    , date_ins
+    , operator_id
+  )
   values
-    logRec
-  ;
+  (
+    logRec.log_id
+    , logRec.sessionid
+    , logRec.level_code
+    , logRec.message_value
+    , logRec.message_label
+    , logRec.message_text
+    , logRec.long_message_text_flag
+    , logRec.text_data_flag
+    , logRec.context_level
+    , logRec.context_type_id
+    , logRec.context_value_id
+    , logRec.open_context_log_id
+    , logRec.open_context_log_time
+    , logRec.open_context_flag
+    , logRec.context_type_level
+    , logRec.module_name
+    , logRec.object_name
+    , logRec.module_id
+    , logRec.log_time
+    , logRec.date_ins
+    , logRec.operator_id
+  );
+  if logRec.long_message_text_flag = 1 or logRec.text_data_flag = 1 then
+    insert into
+      lg_log_data
+    (
+      log_id
+      , long_message_text
+      , text_data
+      , date_ins
+    )
+    values
+    (
+      logRec.log_id
+      , logRec.long_message_text
+      , logRec.text_data
+      , logRec.date_ins
+    );
+  end if;
   commit;
-  --dbms_output.put_line(
-  --  'logTable: log_id=' || logRec.log_id || ', text: ' || logRec.message_text
-  --);
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -1007,6 +1103,8 @@ exception when others then
       || ', open_context_flag=' || logRec.open_context_flag
       || ', context_type_level=' || logRec.context_type_level
       || ', module_id=' || logRec.module_id
+      || ', long_message_text_flag=' || logRec.long_message_text_flag
+      || ', text_data_flag=' || logRec.text_data_flag
       || ').'
     , true
   );
@@ -1032,7 +1130,14 @@ begin
   if isDboutEnabled then
     begin
       logDebugDbOut(
-        rpad( logRec.level_code, 5) || ': ' || logRec.message_text
+        levelCode => logRec.level_code
+        , messageText =>
+            case when logRec.long_message_text_flag = 1 then
+              logRec.long_message_text
+            else
+              logRec.message_text
+            end
+        , textData => logRec.text_data
       );
     exception when others then
       logMessage(
@@ -1042,7 +1147,9 @@ begin
             || chr(10) || logger.getErrorStack()
             || chr(10) || '(логируемое сообщение:'
             || ' levelCode="' || logRec.level_code || '"'
-            || ', messageText="' || logRec.message_text || '").'
+            || ', long_message_text_flag=' || logRec.long_message_text_flag
+            || ', messageText="' || logRec.message_text || '"'
+            || ').'
         , loggerUid           => internalLoggerUid
         , disableDboutFlag    => 1
       );
@@ -1060,6 +1167,8 @@ end outputMessage;
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
   contextTypeShortName        - Краткое наименование типа
                                 открываемого/закрываемого контекста выполнения
                                 (по умолчанию отсутствует)
@@ -1092,6 +1201,7 @@ procedure logMessage(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -1440,6 +1550,7 @@ is
           , messageText       => 'Автоматическое закрытие контекста'
           , messageValue      => null
           , messageLabel      => null
+          , textData          => null
           , loggerUid         => null
           , disableDboutFlag  => disableDboutFlag
         );
@@ -1601,7 +1712,6 @@ is
 
 -- logMessage
 begin
-  --dbms_output.put_line( 'logMessage: text: '|| messageText);
   messageLoggerUid := coalesce( loggerUid, Root_LoggerUid);
   if contextTypeShortName is null
         and (
@@ -1660,6 +1770,7 @@ begin
       , messageText       => messageText
       , messageValue      => messageValue
       , messageLabel      => messageLabel
+      , textData          => textData
       , loggerUid         => messageLoggerUid
       , disableDboutFlag  => disableDboutFlag
     );
@@ -1684,7 +1795,8 @@ exception when others then
     , 'Ошибка при логировании сообщения ('
       || ' levelCode="' || levelCode || '"'
       || case when length( messageText) > 200 then
-          ', messageText(first 200 chars)="'
+          ', length(messageText)=' || length( messageText)
+          || ', messageText(first 200 chars)="'
             || substr( messageText, 1, 200) || '"'
         else
           ', messageText="' || messageText || '"'

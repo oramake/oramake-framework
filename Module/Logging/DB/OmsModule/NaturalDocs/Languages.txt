@@ -134,17 +134,17 @@ Language: PLSQL
    Variable Prototype Enders: , ; ) := default Default DEFAULT
    Type Prototype Ender: ;
    Constant Prototype Ender: ;
-   Database Type Prototype Enders: ; /
+   Database Sequence Prototype Enders: ; /
+   Database Table Prototype Enders: ; /
+   Type internal Prototype Ender: ;
+   Database Materialized View Prototype Enders: ; /
    Constant internal Prototype Ender: ;
-   Database Trigger Prototype Enders: begin Begin BEGIN declare Declare DECLARE
    Database Index Prototype Enders: ; /
    Function public Prototype Enders: , ; ) as As AS is Is IS
    Variable internal Prototype Enders: , ; ) := default Default DEFAULT
-   Database Sequence Prototype Enders: ; /
-   Database Table Prototype Enders: ; /
+   Database Trigger Prototype Enders: begin Begin BEGIN declare Declare DECLARE
    Database View Prototype Enders: ; /
-   Database Materialized View Prototype Enders: ; /
-   Type internal Prototype Ender: ;
+   Database Type Prototype Enders: ; /
    Perl Package: NaturalDocs::Languages::PLSQL
 
 

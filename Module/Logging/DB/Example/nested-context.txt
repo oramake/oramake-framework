@@ -1,0 +1,161 @@
+title: Использование вложенного контекста
+
+(скрипт: DB/Example/nested-context.sql)
+
+Предварительные требования:
+- установка пакета pkg_ModuleInfoTest (тестовый пакет модуля ModuleInfo) в
+ связи с использованием функции getTestModuleId для добавления тестового
+ модуля в таблицу mod_module модуля ModuleInfo;
+
+Пример использования:
+
+(code)
+
+declare
+
+  -- Признак генерации ошибки при обработке
+  isError integer := '&isError';
+
+  -- Логирование указанного уровня
+  logLevel varchar2(100) := trim( '&logLevel');
+
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => :testModuleName
+    , objectName  => 'Do/calc-stats.sql'
+  );
+
+  processedCount integer := 0;
+
+  cursor requestCur is
+    select
+      t.column_value as request_id
+    from
+      table( pkg_Common.split('15,21,33,45,54')) t
+  ;
+
+
+
+  procedure processRequest(
+    requestId integer
+  )
+  is
+  begin
+    logger.trace(
+      'Обработка запроса: requestId='  || requestId
+      , contextTypeShortName => :RequestId_CtxTpSName
+      , contextValueId => requestId
+      , openContextFlag => 1
+    );
+
+    -- Обработка запроса...
+
+    -- При обработке одного из запросов возникает ошибка
+    if isError = 1 and requestId = 33 then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , 'Некорректный запрос'
+      );
+    end if;
+
+    processedCount := processedCount + 1;
+
+    logger.trace(
+      'Обработка запроса завершена'
+      , contextTypeShortName => :RequestId_CtxTpSName
+      , contextValueId => requestId
+      , openContextFlag => 0
+    );
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack(
+          'Ошибка при обработке запроса ('
+            || 'requestId=' || requestId
+            || ').'
+          , closeContextTypeShortName => :RequestId_CtxTpSName
+          , contextValueId            => requestId
+            -- использованием INFO, т.к. полный стек ошибки будет логироваться
+            -- уровнем выше
+          , levelCode                 => lg_logger_t.getInfoLevelCode()
+        )
+      , true
+    );
+  end processRequest;
+
+
+
+-- main
+begin
+  logger.setLevel( logLevel);
+  logger.info(
+    'Расчет статистики по запросам'
+    , contextTypeShortName => :CalcStats_CtxTpSName
+    , openContextFlag => 1
+  );
+  for rec in requestCur loop
+    processRequest( requestId => rec.request_id);
+  end loop;
+  logger.info(
+    'Расчет завершен, обработано запросов: ' || processedCount
+    , contextTypeShortName => :CalcStats_CtxTpSName
+    , openContextFlag => 0
+    , messageValue => processedCount
+  );
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при расчете (обработано запросов: ' || processedCount || ').'
+				, logMessageFlag            => 1
+        , closeContextTypeShortName => :CalcStats_CtxTpSName
+        , messageValue              => processedCount
+      )
+    , true
+  );
+end;
+/
+
+(end)
+
+Пример выполнения скрипта:
+(code)
+Calculate statistics #1 ...
+
+Calculate statistics #2 (with error) ...
+declare
+*
+ERROR at line 1:
+ORA-20150: Ошибка при расчете (обработано запросов: 2).
+ORA-06512: at line 92
+ORA-20150: Ошибка при обработке запроса (requestId=33).
+ORA-06512: at line 56
+ORA-20185: Некорректный запрос
+ORA-06512: at line 41
+ORA-06512: at line 83
+ORA-06512: at line 83
+
+
+Rows in v_lg_context_change:
+
+OPEN_LOG_ID CLOSE_LOG_ID CLOSE_LEVE CLOSE_MESSAGE_VALUE
+----------- ------------ ---------- -------------------
+       7450         7456 INFO                         5
+       7457         7462 ERROR                        2
+
+Rows in lg_log (last calculation):
+
+    LOG_ID LEVEL_CODE MESSAGE_TEXT                                             ...  MESSAGE_VALUE CONTEXT_LEVEL CONTEXT_VALUE_ID
+---------- ---------- --------------------------------------------------------      ------------- ------------- ----------------
+      7457 INFO       Расчет статистики по запросам                                                           1
+      7460 TRACE      Обработка запроса: requestId=33                                                         2               33
+      7461 INFO       Закрытие контекста выполнения в связи с ошибкой:                                        2               33
+                      Ошибка при обработке запроса (requestId=33).
+                      ORA-20185: Некорректный запрос
+
+      7462 ERROR      Ошибка при расчете (обработано запросов: 2).                              2             1
+                      ORA-20150: Ошибка при обработке запроса (requestId=33).
+                      ORA-06512: at line 56
+                      ORA-20185: Некорректный запрос
+                      ORA-06512: at line 41
+                      ORA-06512: at line 83
+(end)

@@ -17,9 +17,13 @@ declare
 
   objectList ObjectListT := ObjectListT(
     'lg_context_type'
+    , 'lg_level'
     , 'lg_log'
+    , 'lg_log_data'
     , 'v_lg_context_change'
     , 'v_lg_context_change_log'
+    , 'v_lg_current_log'
+    , 'v_lg_log'
   );
 
   -- Признак выдачи прав для всех пользователей

@@ -1,27 +1,4 @@
--- script: Test/Example/set-level-destination.sql
--- Установка уровня и назначения логирования (пример).
---
--- Пример выполнения скрипта:
--- (code)
--- 08:44:44,841:      : INFO : f1(1): working...
--- 08:44:44,841:     0: DEBUG: f1(2): start...
--- 08:44:44,841:     0: INFO : f1(2): working...
--- 08:44:44,841:     0: DEBUG: f1(3): start...
--- 08:44:44,841:     0: INFO : f1(3): working...
--- 08:44:44,841:     0: TRACE: f1(3): finished
---
--- PL/SQL procedure successfully completed.
---
--- Rows in lg_log:
---
--- LEVEL_CODE MESSAGE_TEXT
--- ---------- -----------------------------------
--- INFO       f1(1): working...
--- DEBUG      f1(2): start...
--- INFO       f1(2): working...
---
--- 3 rows selected.
--- (end)
+-- Установка уровня и назначения логирования (пример)
 
 declare
 

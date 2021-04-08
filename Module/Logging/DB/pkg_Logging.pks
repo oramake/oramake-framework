@@ -59,6 +59,16 @@ Debug_LevelCode varchar2(10) := 'DEBUG';
 */
 Trace_LevelCode varchar2(10) := 'TRACE';
 
+/* const: Trace2_LevelCode
+  Код уровня логирования "Трассировка уровня 2".
+*/
+Trace2_LevelCode varchar2(10) := 'TRACE2';
+
+/* const: Trace3_LevelCode
+  Код уровня логирования "Трассировка уровня 3".
+*/
+Trace3_LevelCode varchar2(10) := 'TRACE3';
+
 /* const: All_LevelCode
   Код уровня логирования "Максимальный уровень логирования".
 */

@@ -26,7 +26,13 @@ comment on column &tableName..message_label is
   '—троковое значение, св€занное с сообщением'
 /
 comment on column &tableName..message_text is
-  '“екст сообщени€'
+  '“екст сообщени€ (первые 4000 символов в случае длинного сообщени€)'
+/
+comment on column &tableName..long_message_text_flag is
+  '‘лаг длинного (более 4000 символов) сообщени€ (1 да, иначе null). ƒл€ длинного сообщени€ в поле message_text сохран€ютс€ только первые 4000 символов текста собщени€, полный текст сообщени€ сохран€етс€ в поле long_message_text таблицы lg_log_data.'
+/
+comment on column &tableName..text_data_flag is
+  '‘лаг наличи€ текстовых данных, св€занных с сообщением (1 да, иначе null). “екстовые данные сохран€ютс€ в поле text_data таблицы lg_log_data.'
 /
 comment on column &tableName..context_level is
   ' онтекст выполнени€: ”ровень вложенного контекста выполнени€ (null при отсутствии контекста, 0 при отсутствии вложенного и наличии ассоциативного контекста)'

@@ -1,0 +1,46 @@
+title: Начало работы с модулем Logging
+
+(скрипт: DB/Example/start-use-log.sql)
+
+Лог сообщение в одну строку:
+
+(code)
+
+begin
+  lg_logger_t.getRootLogger().info('Hellow World');
+end;
+/
+
+(end)
+
+Результат выполнения:
+
+(code)
+
+14:49:17.450: 78276: INFO : Hellow World
+
+(end)
+
+Просмотр лога в той же сессии:
+
+(code)
+
+select
+  vl.*
+from 
+  v_lg_current_log vl
+order by
+  vl.date_ins
+/
+
+(end)
+
+Записи в логе:
+
+(code)
+
+LEVEL_CODE MESSAGE_TEXT
+---------- -----------------------------------
+INFO       Hellow World
+
+(end)

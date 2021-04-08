@@ -140,6 +140,9 @@ begin
     , maxMessageCount     => maxMessageCount
   );
   commit;
+  logger.trace(
+    'sendMessage(smtpServer=' || smtpServer || '): sent count: ' || nSend
+  );
   return nSend;
 exception when others then
   raise_application_error(
@@ -399,7 +402,6 @@ is
         , password => smtpCfgList(i).password
         , maxMessageCount => maxMessageCount - sentMessageCount
       );
-      logger.trace( 'sent count: ' || nSend);
       sentMessageCount := sentMessageCount + nSend;
 
       -- Если отправили максимально допустимое количество сообщений, то

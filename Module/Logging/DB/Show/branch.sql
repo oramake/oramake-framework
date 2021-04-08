@@ -34,7 +34,7 @@ end;
 
 set feedback on
 
-column message_text_ format A200 head MESSAGE_TEXT
+column full_message_text_ format A200 head MESSAGE_TEXT
 
 select
   lg.log_id
@@ -44,8 +44,8 @@ select
       , lpad( '  ', (lg.message_level - 1) * 2, ' ')
     )
     -- исключаем ошибку из-за строки длиной больше 4000 символов
-    || substr( lg.message_text, 1, 4000 - (lg.message_level - 1) * 2)
-    as message_text_
+    || lg.full_message_text
+    as full_message_text_
   , lg.message_value
   , lg.message_label
   , lg.context_level
@@ -62,6 +62,9 @@ select
   , lg.log_time
   , lg.date_ins
   , lg.operator_id
+  , lg.long_message_text_flag
+  , lg.text_data_flag
+  , lg.text_data
 from
   (
   select /*+ index( lg LG_LOG_IX_SESSIONID_LOGID) */
@@ -71,7 +74,7 @@ from
       as message_level
   from
     v_lg_context_change_log ccl
-    inner join lg_log lg
+    inner join v_lg_log lg
       on lg.sessionid = ccl.sessionid
         and lg.log_id >= ccl.open_log_id
         and lg.log_id <= coalesce( ccl.close_log_id, lg.log_id)
@@ -84,4 +87,4 @@ where
   rownum <= :maxRowCount
 /
 
-column message_text_ clear
+column full_message_text_ clear

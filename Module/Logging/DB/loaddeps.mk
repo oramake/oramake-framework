@@ -41,6 +41,11 @@ pkg_LoggingErrorStack.pkb.$(lu): \
   pkg_LoggingErrorStack.pks.$(lu) \
   lg_logger_t.typ.$(lu)
 
+pkg_LoggingUtility.pkb.$(lu): \
+  pkg_LoggingUtility.pks.$(lu) \
+  pkg_Logging.pks.$(lu) \
+  lg_logger_t.typ.$(lu)
+
 lg_logger_t.tyb.$(lu): \
   lg_logger_t.typ.$(lu) \
   pkg_Logging.pks.$(lu) \
@@ -58,6 +63,7 @@ Install/Schema/Last/run.sql.$(lu):\
 Install/Schema/Last/v_lg_context_change_log.vw.$(lu):\
   Install/Schema/Last/v_lg_context_change.vw.$(lu)
 
-Install/Schema/Last/lg_log_bi_define.trg.$(lu):\
-  pkg_LoggingInternal.pks.$(lu)
+Install/Schema/Last/v_lg_current_log.vw.$(lu):\
+  Install/Schema/Last/v_lg_log.vw.$(lu)
+
 

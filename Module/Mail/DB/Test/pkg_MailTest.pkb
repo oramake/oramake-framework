@@ -89,7 +89,6 @@ begin
           sender
           , opt.getString( TestSmtpUsername_OptSName)
           , opt.getString( TestSender_OptSName)
-          , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
         )
     , smtpServer            =>
         coalesce( smtpServer, opt.getString( TestSmtpServer_OptSName))
@@ -252,11 +251,7 @@ is
 
     begin
       pkg_Mail.sendMail(
-        sender                  =>
-            coalesce(
-              opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
-            )
+        sender                  => opt.getString( TestSender_OptSName)
         , recipient             =>
             coalesce(
               opt.getString( TestRecipient_OptSName)
@@ -410,11 +405,7 @@ is
     begin
       savepoint pkg_MailTestSendMessage;
       messageId := pkg_Mail.sendMessage(
-        sender                  =>
-            coalesce(
-              opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
-            )
+        sender                  => opt.getString( TestSender_OptSName)
         , recipient             =>
             coalesce(
               opt.getString( TestRecipient_OptSName)
@@ -656,11 +647,7 @@ is
     begin
       savepoint pkg_MailTestSendHtmlMessage;
       messageId := pkg_Mail.sendHtmlMessage(
-        sender                  =>
-            coalesce(
-              opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
-            )
+        sender                  => opt.getString( TestSender_OptSName)
         , recipient             =>
             coalesce(
               opt.getString( TestRecipient_OptSName)
@@ -940,11 +927,7 @@ is
 
       -- Отправка письма для тестового ящика
       pkg_Mail.sendMail(
-        sender                  =>
-            coalesce(
-              opt.getString( TestSender_OptSName)
-              , pkg_Common.getMailAddressSource( pkg_MailBase.Module_Name)
-            )
+        sender                  => opt.getString( TestSender_OptSName)
         , recipient             =>
             coalesce(
               opt.getString( TestFetchSendAddress_OptSName)

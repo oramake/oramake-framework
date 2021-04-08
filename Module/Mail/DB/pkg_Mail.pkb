@@ -33,6 +33,13 @@ logger lg_logger_t := lg_logger_t.getLogger(
   , objectName => 'pkg_Mail'
 );
 
+/* ivar: moduleOption
+  Настроечные параметры модуля
+*/
+moduleOption opt_option_list_t := opt_option_list_t(
+  findModuleString => pkg_MailBase.Module_SvnRoot
+);
+
 
 
 /* group: Функции */
@@ -76,11 +83,68 @@ Mail.send(
 )
 ';
 
+/* func: getMailSender
+  Возвращает адрес отправителя для отправки сообщений.
+  Возвращаемое значение настраивается с помощью параметра
+  <pkg_MailBase.DefaultMailSender_OptSName>, если значение параметра не задано,
+  возвращается значение функции pkg_Common.getMailAddressSource.
+
+  Параметры:
+  systemName                  - Название системы или модуля, формирующего
+                                сообщение
+                                (по умолчанию отсутствует)
+*/
+function getMailSender(
+  systemName varchar2 := null
+)
+return varchar2
+is
+
+  senderText ml_message.sender_text%type;
+
+begin
+  senderText := moduleOption.getString(
+    optionShortName => pkg_MailBase.DefaultMailSender_OptSName
+    , useCacheFlag  => 1
+  );
+  senderText :=
+    case when senderText is not null then
+      ltrim(
+        replace(
+          replace(
+              senderText
+              , '$(instanceName)', pkg_Common.getInstanceName()
+            )
+          , '$(systemName)', systemName
+        )
+        -- убираем возможные разделители элементов шаблона
+        , '. '
+      )
+    else
+      pkg_Common.getMailAddressSource(
+        systemName => systemName
+      )
+    end
+  ;
+  return senderText;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при получении адреса отправителя ('
+        || 'systemName="' || systemName || '"'
+        || ').'
+      )
+    , true
+  );
+end getMailSender;
+
 /* proc: sendMail
   Отправляет письмо ( немедленно).
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -100,7 +164,7 @@ Mail.send(
                                 по-умолчанию письмо отправляется как обычный текст
 */
 procedure sendMail(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -126,7 +190,10 @@ begin
     defCfg := pkg_MailBase.getDefaultSmtpConfig();
   end if;
   sendMailJava(
-    sender                => pkg_MailUtility.getEncodedAddressList( sender)
+    sender                =>
+        pkg_MailUtility.getEncodedAddressList(
+          coalesce( sender, getMailSender())
+        )
     , recipient           => pkg_MailUtility.getEncodedAddressList( recipient)
     , copyRecipient       => pkg_MailUtility.getEncodedAddressList(
                               copyRecipient
@@ -251,6 +318,7 @@ end createAttachment;
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -301,8 +369,10 @@ is
 
   begin
     msg.incoming_flag       := 0;
-    msg.sender_text         := sender;
-    msg.sender              := pkg_MailUtility.getEncodedAddressList( sender);
+    msg.sender_text         := coalesce( sender, getMailSender());
+    msg.sender              :=
+      pkg_MailUtility.getEncodedAddressList( msg.sender_text)
+    ;
     msg.sender_address      := pkg_MailUtility.getAddress( msg.sender);
     msg.recipient_text      := recipient;
     msg.recipient           := pkg_MailUtility.getEncodedAddressList(
@@ -380,6 +450,7 @@ end sendMessage;
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -396,7 +467,7 @@ end sendMessage;
   Id сообщения.
 */
 function sendMessage(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2
@@ -433,6 +504,7 @@ end sendMessage;
 
   Параметры:
   sender                      - адрес отправителя
+                                (по умолчанию <getMailSender>)
   recipient                   - адреса получателей
   copyRecipient               - адреса получателей копии
   subject                     - тема письма
@@ -449,7 +521,7 @@ end sendMessage;
   Id сообщения.
 */
 function sendHtmlMessage(
-  sender varchar2
+  sender varchar2 := null
   , recipient varchar2
   , copyRecipient varchar2 := null
   , subject varchar2

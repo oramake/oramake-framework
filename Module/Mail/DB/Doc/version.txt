@@ -9,6 +9,12 @@ group: 2.7.0 ( 2021-01-31)
     используется SMTP-сервер, возвращаемый функцией pkg_Common.getSmtpServer
     модуля Common).
 
+[*] Для формирования адреса отправителя по умолчанию добавлена функция
+    <pkg_Mail.getMailSender> (для использования вместо функции
+    pkg_Common.getMailAddressSource), при этом параметр sender функций
+    отправки писем (sendMail, sendMessage, sendHtmlMessage) стал
+    необязательным.
+
 [*] Обновлена используемая версия библиотеки JavaMail (стала использоваться
     библиотека Jakarta Mail 1.6.4).
 

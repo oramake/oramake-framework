@@ -78,6 +78,8 @@ select
   , lg.message_value
   , lg.message_label
   , lg.message_text
+  , lg.long_message_text_flag
+  , lg.text_data_flag
   , lg.context_level
   , lg.open_context_log_id
   , lg.open_context_log_time
@@ -210,15 +212,11 @@ where
 comment on table v_lg_context_change_log is
   'Лог изменения контекста выполнения [SVN root: Oracle/Module/Logging]'
 /
-comment on column v_lg_context_change_log.log_id is
-  'Id записи лога'
-/
-comment on column v_lg_context_change_log.sessionid is
-  'Идентификатор сессии (значение v$session.audsid)'
-/
-comment on column v_lg_context_change_log.log_time is
-  'Время формирования записи лога'
-/
+
+-- Устанавливает комментарии к основным полям
+@oms-run Install/Schema/Last/set-log-comment.sql v_lg_context_change_log
+
+-- Устанавливает собственные комментарии к полям
 comment on column v_lg_context_change_log.context_type_id is
   'Id типа контекста выполнения'
 /
@@ -264,18 +262,6 @@ comment on column v_lg_context_change_log.close_message_value is
 comment on column v_lg_context_change_log.close_message_label is
   'Строковое значение, связанное с сообщением по закрытию контекста'
 /
-comment on column v_lg_context_change_log.level_code is
-  'Код уровня логирования'
-/
-comment on column v_lg_context_change_log.message_value is
-  'Целочисленное значение, связанное с сообщением'
-/
-comment on column v_lg_context_change_log.message_label is
-  'Строковое значение, связанное с сообщением'
-/
-comment on column v_lg_context_change_log.message_text is
-  'Текст сообщения'
-/
 comment on column v_lg_context_change_log.context_level is
   'Контекст выполнения: Уровень вложенного контекста выполнения (0 при отсутствии вложенного и наличии ассоциативного контекста)'
 /
@@ -287,19 +273,4 @@ comment on column v_lg_context_change_log.open_context_log_time is
 /
 comment on column v_lg_context_change_log.context_type_level is
   'Уровень самовложенности типа контекста выполнения (начиная с 1, null для ассоциативного контекста)'
-/
-comment on column v_lg_context_change_log.module_name is
-  'Имя модуля, добавившего запись'
-/
-comment on column v_lg_context_change_log.object_name is
-  'Имя объекта модуля (пакета, типа, скрипта), добавившего запись'
-/
-comment on column v_lg_context_change_log.module_id is
-  'Id модуля, добавившего запись (если удалось определить)'
-/
-comment on column v_lg_context_change_log.date_ins is
-  'Дата добавления записи в таблицу'
-/
-comment on column v_lg_context_change_log.operator_id is
-  'Id оператора ( из модуля AccessOperator)'
 /

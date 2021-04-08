@@ -63,6 +63,8 @@ procedure setDestination(
                                 (по умолчанию отсутствует)
   messageLabel                - Строковое значение, связанное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - Текстовые данные, связанные с сообщением
+                                (по умолчанию отсутствуют)
   contextTypeShortName        - Краткое наименование типа
                                 открываемого/закрываемого контекста выполнения
                                 (по умолчанию отсутствует)
@@ -97,6 +99,7 @@ procedure logMessage(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null

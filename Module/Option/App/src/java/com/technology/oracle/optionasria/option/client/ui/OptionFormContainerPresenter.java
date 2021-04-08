@@ -10,9 +10,10 @@ import com.technology.jep.jepria.client.ui.plain.StandardModulePresenter;
 import com.technology.jep.jepria.client.ui.plain.StandardModuleView;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.oracle.optionasria.main.client.history.scope.OptionAsRiaScope;
+import com.technology.oracle.optionasria.option.client.ui.eventbus.OptionEventBus;
 import com.technology.oracle.optionasria.option.shared.service.OptionServiceAsync;
 
-public class OptionFormContainerPresenter <E extends PlainEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E,S>>
+public class OptionFormContainerPresenter <E extends OptionEventBus, S extends OptionServiceAsync, F extends StandardClientFactory<E,S>>
   extends StandardModulePresenter<StandardModuleView, E, S, F> {
 
   public OptionFormContainerPresenter(Place place, F clientFactory) {

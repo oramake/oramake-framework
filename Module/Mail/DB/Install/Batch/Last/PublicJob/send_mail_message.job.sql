@@ -1,14 +1,14 @@
 -- Отправка почтового сообщения
 -- Отправляет сообщение по электронной почте ( сообщение сохраняется в таблице
 -- ml_message, реальная отправка осуществляется другим процессом).
--- 
+--
 -- Параметры:
--- 
+--
 -- MailRecipient                 - список получателей
 -- MailSubject                   - тема письма
 -- MailBody                      - текст письма
 -- MailSenderPrefix              - префикс адреса отправителя
--- 
+--
 -- Замечания:
 -- - для сохранения сообщения используется автономная транзакция;
 -- - сообщения хранятся 70 дней;
@@ -39,11 +39,10 @@ declare
                                         --Для исключения влияния на основную
                                         --транзакцию
     pragma autonomous_transaction;
-    
-  --SendMail
+
   begin
-    messageId := pkg_Mail.SendMessage(
-      sender        => pkg_Common.GetMailAddressSource( senderPrefix)
+    messageId := pkg_Mail.sendMessage(
+      sender        => pkg_Mail.getMailSender( systemName => senderPrefix)
       , recipient   => coalesce(
                         recipient
                         , pkg_Common.GetMailAddressDestination
@@ -62,7 +61,7 @@ begin
     SendMail;
     jobResultMessage :=
       'Сообщение сформировано для отправки ('
-      || ' message_id=' || to_char( messageId) 
+      || ' message_id=' || to_char( messageId)
       || ').'
     ;
   else

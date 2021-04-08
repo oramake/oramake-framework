@@ -1,0 +1,55 @@
+title: Узнать логируются ли сообщения данного уровня
+
+(скрипт: DB/Example/enabled-level-log.sql)
+
+Пример использования:
+
+(code)
+
+declare
+
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => 'TestModule'
+    , objectName  => 'Test'
+  );
+
+begin
+  logger.debug( 'start...');
+
+  logger.info( 'working...');
+
+  if logger.isDebugEnabled() then
+
+    dbms_output.put_line('Debug Enabled');
+  
+  else
+  
+    dbms_output.put_line('Debug not Enabled');
+  
+  end if;
+  
+  if logger.isTraceEnabled() then
+
+    dbms_output.put_line('Trace Enabled');
+  
+  else
+  
+    dbms_output.put_line('Trace not Enabled');
+  
+  end if;
+  
+end;
+/
+
+(end)
+
+Результат выполнения:
+
+(code)
+
+15:20:14.443: 32370: DEBUG: start...
+15:20:14.443:     0: INFO : working...
+Debug Enabled
+Trace not Enabled
+
+(end)

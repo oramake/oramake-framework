@@ -122,6 +122,22 @@ return varchar2,
 static function getTraceLevelCode
 return varchar2,
 
+/* pfunc: getTrace2LevelCode
+  ¬озвращает код уровн€ логировани€ "“рассировка уровн€ 2".
+
+  ( <body::getTrace2LevelCode>)
+*/
+static function getTrace2LevelCode
+return varchar2,
+
+/* pfunc: getTrace3LevelCode
+  ¬озвращает код уровн€ логировани€ "“рассировка уровн€ 3".
+
+  ( <body::getTrace3LevelCode>)
+*/
+static function getTrace3LevelCode
+return varchar2,
+
 /* pfunc: getAllLevelCode
   ¬озвращает код уровн€ логировани€ "ћаксимальный уровень логировани€".
 
@@ -318,6 +334,28 @@ return boolean,
 member function isTraceEnabled
 return boolean,
 
+/* pfunc: isTrace2Enabled
+  ¬озвращает истину, если трассировочное сообщение уровн€ 2 будет логироватьс€.
+
+  «амечани€:
+  - вызывает функцию <isEnabledFor>;
+
+  ( <body::isTrace2Enabled>)
+*/
+member function isTrace2Enabled
+return boolean,
+
+/* pfunc: isTrace3Enabled
+  ¬озвращает истину, если трассировочное сообщение уровн€ 3 будет логироватьс€.
+
+  «амечани€:
+  - вызывает функцию <isEnabledFor>;
+
+  ( <body::isTrace3Enabled>)
+*/
+member function isTrace3Enabled
+return boolean,
+
 
 
 /* group: Ћогирование сообщений */
@@ -332,6 +370,8 @@ return boolean,
                                 (по умолчанию отсутствует)
   messageLabel                - —троковое значение, св€занное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - “екстовые данные, св€занные с сообщением
+                                (по умолчанию отсутствуют)
   contextTypeShortName        -  раткое наименование типа
                                 открываемого/закрываемого контекста выполнени€
                                 (по умолчанию отсутствует)
@@ -357,6 +397,7 @@ member procedure log(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -378,6 +419,7 @@ member procedure fatal(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -399,6 +441,7 @@ member procedure error(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -420,6 +463,7 @@ member procedure warn(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -441,6 +485,7 @@ member procedure info(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -462,6 +507,7 @@ member procedure debug(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -483,6 +529,51 @@ member procedure trace(
   , messageText varchar2
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+),
+
+/* pproc: trace2
+  Ћогирует трассировочное сообщение уровн€ 2 (уровн€ <getTrace2LevelCode>).
+
+  ѕараметры:
+  messageText                 - “екст сообщени€
+  ...                         - Ќеоб€зательные параметры, идентичные
+                                необ€зательным параметрам процедуры <log>
+
+  ( <body::trace2>)
+*/
+member procedure trace2(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
+  , contextTypeShortName varchar2 := null
+  , contextValueId integer := null
+  , openContextFlag integer := null
+  , contextTypeModuleId integer := null
+),
+
+/* pproc: trace3
+  Ћогирует трассировочное сообщение уровн€ 3 (уровн€ <getTrace3LevelCode>).
+
+  ѕараметры:
+  messageText                 - “екст сообщени€
+  ...                         - Ќеоб€зательные параметры, идентичные
+                                необ€зательным параметрам процедуры <log>
+
+  ( <body::trace3>)
+*/
+member procedure trace3(
+  self in lg_logger_t
+  , messageText varchar2
+  , messageValue integer := null
+  , messageLabel varchar2 := null
+  , textData clob := null
   , contextTypeShortName varchar2 := null
   , contextValueId integer := null
   , openContextFlag integer := null
@@ -506,7 +597,7 @@ member procedure trace(
                                 умолчанию логировать если указано значение
                                 любого из параметров
                                 closeContextTypeShortName, levelCode,
-                                messageValue, messageLabel)
+                                messageValue, messageLabel, textData)
   closeContextTypeShortName   -  раткое наименование типа закрываемого
                                 контекста выполнени€
                                 (по умолчанию отсутствует)
@@ -522,6 +613,8 @@ member procedure trace(
                                 (по умолчанию отсутствует)
   messageLabel                - —троковое значение, св€занное с сообщением
                                 (по умолчанию отсутствует)
+  textData                    - “екстовые данные, св€занные с сообщением
+                                (по умолчанию отсутствуют)
 
   ¬озврат:
   - соообщение дл€ генерации исключени€
@@ -553,6 +646,7 @@ member function errorStack(
   , levelCode varchar2 := null
   , messageValue integer := null
   , messageLabel varchar2 := null
+  , textData clob := null
 )
 return varchar2,
 

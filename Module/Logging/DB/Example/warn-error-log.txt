@@ -1,0 +1,61 @@
+title: Использование Warning и Error уровней логирования
+
+(скрипт: DB/Example/warn-error-log.sql)
+
+Пример использования:
+
+(code)
+
+declare
+  testFlag boolean := false;
+  
+  logger lg_logger_t := lg_logger_t.getLogger(
+    moduleName    => 'TestModule'
+    , objectName  => 'Test'
+  );
+
+begin
+
+  logger.info( 'working...');
+
+  if testFlag = false then
+      
+    logger.warn( 'warning...');
+      
+  end if;
+  
+  raise_application_error(
+    pkg_Error.ProcessError
+    , 'exception'
+  );
+  
+exception when others then
+  
+  logger.error('error...');
+
+end;
+/
+
+(end)
+
+Результат выполнения:
+
+(code)
+
+16:33:04.912: 1.00h: INFO : working...
+16:33:04.912:     0: WARN : warning...
+16:33:04.912:     0: ERROR: error...
+
+(end)
+
+Записи в логе:
+
+(code)
+
+LEVEL_CODE MESSAGE_TEXT
+---------- -----------------------------------
+INFO       working...
+WARN       warning...
+ERROR      error...
+
+(end)

@@ -2,7 +2,6 @@
 -- Отменяет установку модуля, удаляя созданные объекты схемы.
 
 
-
 -- Удаление тестовых объектов ( при наличии)
 begin
   for rec in (
@@ -27,7 +26,6 @@ begin
   end loop;
 end;
 /
-
 
 
 -- Удаление общих объектов схемы
@@ -57,6 +55,8 @@ drop view v_lg_context_change_log
 /
 drop view v_lg_current_log
 /
+drop view v_lg_log
+/
 
 
 -- Внешние ключи
@@ -65,6 +65,7 @@ drop view v_lg_current_log
 @oms-drop-foreign-key lg_destination
 @oms-drop-foreign-key lg_level
 @oms-drop-foreign-key lg_log
+@oms-drop-foreign-key lg_log_data
 
 
 -- Таблицы
@@ -76,6 +77,8 @@ drop table lg_destination
 drop table lg_level
 /
 drop table lg_log
+/
+drop table lg_log_data
 /
 
 

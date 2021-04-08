@@ -32,5 +32,18 @@ procedure testLogger(
   testCaseNumber integer := null
 );
 
+/* pproc: testUtility
+  Тестирование вспомогательных функций.
+
+  Параметры:
+  testCaseNumber              - Номер проверяемого тестового случая
+                                ( по умолчанию без ограничений)
+
+  ( <body::testUtility>)
+*/
+procedure testUtility(
+  testCaseNumber integer := null
+);
+
 end pkg_LoggingTest;
 /
