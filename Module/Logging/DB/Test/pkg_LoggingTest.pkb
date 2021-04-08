@@ -750,7 +750,7 @@ is
       if messageText is not null then
         pkg_TestUtility.compareChar(
           actualString        => lgr.message_text
-          , expectedString    => substr( messageText, 1, 4000)
+          , expectedString    => substrb( messageText, 1, 4000)
           , failMessageText   =>
               cinfo || 'Некорректное значение message_text'
         );
