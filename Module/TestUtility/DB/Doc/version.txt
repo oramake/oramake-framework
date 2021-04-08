@@ -2,8 +2,8 @@ title: Версии
 
 
 
-group: 1.2.0 ( 2021-03-18)
-(<Установка::1.2.0>)
+group: 2.0.0 ( 2021-03-18)
+(<Установка::2.0.0>)
 
 [+] Parrallel test execution (<pkg_TestUtility.beginTestParallel>,
     <pkg_TestUtility.endTestParallel>, <pkg_TestUtility.createTestJob>).

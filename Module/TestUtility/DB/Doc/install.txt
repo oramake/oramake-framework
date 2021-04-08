@@ -19,8 +19,8 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
-group: 1.2.0
-(<Версии::1.2.0 ( 2021-03-18)>)
+group: 2.0.0
+(<Версии::2.0.0 ( 2021-03-18)>)
 
 Порядок установки:
 
@@ -28,7 +28,7 @@ group: 1.2.0
 
 (code)
 
-make install INSTALL_VERSION=1.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+make install INSTALL_VERSION=2.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 (end code)
 

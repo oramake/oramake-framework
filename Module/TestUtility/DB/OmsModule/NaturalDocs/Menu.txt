@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TestUtility
-SubTitle: Версия 1.2.0
+SubTitle: Версия 2.0.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -98,10 +98,10 @@ Group: Скрипты  {
             File: tsu_test_run_seq  (no auto-title, Install/Schema/Last/tsu_test_run_seq.sqs)
             }  # Group: Last
 
-         Group: 1.2.0  {
+         Group: 2.0.0  {
 
-            File: run  (no auto-title, Install/Schema/1.2.0/run.sql)
-            }  # Group: 1.2.0
+            File: run  (no auto-title, Install/Schema/2.0.0/run.sql)
+            }  # Group: 2.0.0
 
          }  # Group: Schema
 
