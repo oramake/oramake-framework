@@ -603,11 +603,11 @@ begin
       , 'Нет данных по именам полей.'
     );
   end if;
-  fieldNameKey := upper( trim( replace( fieldName, chr(10), ' ')));
+  fieldNameKey := rpad( upper( trim( replace( fieldName, chr(10), ' '))), 30);
   if fieldNameKey is not null then
     i := instr(
       fieldNameList
-      , rpad( fieldNameKey, 30) || chr(10)
+      , fieldNameKey || chr(10)
     );
     if i > 0 then
       fieldIndex := ( i - 1) / 31 + 1;

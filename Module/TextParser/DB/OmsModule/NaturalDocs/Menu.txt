@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TextParser
-SubTitle: Версия 1.3.4
+SubTitle: Версия 1.3.5
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -84,6 +84,16 @@ Group: Пакеты  {
       File: Реализация  (no auto-title, pkg_TextParserBase.pkb)
       }  # Group: pkg_TextParserBase
 
+   Group: Test  {
+
+      Group: pkg_TextParserTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_TextParserTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_TextParserTest.pkb)
+         }  # Group: pkg_TextParserTest
+
+      }  # Group: Test
+
    }  # Group: Пакеты
 
 Group: Скрипты  {
@@ -110,6 +120,17 @@ Group: Скрипты  {
          }  # Group: Schema
 
       }  # Group: Install
+
+   Group: Test  {
+
+      Group: Example  {
+
+         File: parse-csv  (no auto-title, Test/Example/parse-csv.sql)
+         }  # Group: Example
+
+      File: run  (no auto-title, Test/run.sql)
+      File: example  (no auto-title, Test/example.sql)
+      }  # Group: Test
 
    }  # Group: Скрипты
 

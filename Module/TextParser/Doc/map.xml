@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>TextParser</name>
   <description>Модуль для разбора текста</description>
-  <version>1.3.4</version>
+  <version>1.3.5</version>
   <prefix>tpr</prefix>
   <team>
     <programmerDB></programmerDB>

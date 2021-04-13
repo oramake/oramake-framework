@@ -15,6 +15,84 @@ LOAD_USERID                   - основной пользователь для установки в БД
 
 
 
+group: 1.3.5
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.3.5 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+group: 1.3.4
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.3.4 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
+group: 1.3.3
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.3.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
+group: 1.3.2
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.3.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.3.1
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.3.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.3.0
+
+Последовательность установки:
+
+- выдача прав на использование модуля пользователю public:
+
+(code)
+
+make grant LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? GRANT_SCRIPT=all-to-public TO_USERNAME=public
+
+(end)
+
+
+
 group: Первоначальная установка
 
 Команда для первоначальной установки текущей версии модуля:

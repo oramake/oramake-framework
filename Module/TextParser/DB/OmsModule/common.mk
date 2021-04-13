@@ -4,8 +4,8 @@
 #
 # OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision:: 26885628 $
-# $Date:: 2021-02-12 13:48:39 +0000 #$
+# $Revision:: 26901522 $
+# $Date:: 2021-02-23 14:42:16 +0000 #$
 #
 
 
@@ -274,12 +274,12 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionKeyword    := \$$Revision:: 26885628 $$
+omsRevisionKeyword    := \$$Revision:: 26901522 $$
 
 omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateKeyword  := \$$Date:: 2021-02-12 13:48:39 +0000 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-02-23 14:42:16 +0000 #$$
 
 omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
@@ -504,21 +504,24 @@ filterOutFileMask = \
    done; \
   )),$1)
 
+# Получает флаг выгрузки / деинсталляции файла из $@ (1, либо пусто)
+getRevertFlag = $(if $(filter $(<F).revert.%,$(@F)),1,)
+
 # Выделяет пользователя ( без пароля) при загрузке из $@ и $<.
 # Может вызываться только из правил.
 # Предполагает, что зависимость $< представляет собой загружаемый в БД скрипт
 # ( пример: Do/run.sql), а цель $@ представляет собой тот же скрипт с
 # добавлением через точку имени пользователя и БД ( userName@dbName) и
 # произвольного расширения ( пример: Do/run.sql.userName@dbName.load).
-getLoadUser  = $(patsubst $(<F).%,%,$(basename $(@F)))
+# Также возможно использование после скрипта расширения .revert, указывающего
+# на деинсталляцию файла вместо установки
+# ( пример: Java/test.jar.revert.userName@dbName.run)
+getLoadUser  = $(patsubst $(<F)$(if $(call getRevertFlag),.revert).%,%,$(basename $(@F)))
 
 # Выделяет пользователя с паролем при загрузке из loadUserIdList с
 # использованием функции getLoadUser.
 getLoadUserId  =  \
   $(firstword $(filter $(subst @,/%@,$(getLoadUser)),$(loadUserIdList)))
-
-# Получает флаг выгрузки / деинсталляции файла из $@ (1, либо пусто)
-getRevertFlag = $(if $(filter $(<F).revert.%,$(@F)),1,)
 
 # Возвращает номер части модуля, загружаемой в данную схему БД.
 # В случае, если несколько частей модуля одновременно загружаются в одну и
