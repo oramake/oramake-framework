@@ -186,7 +186,7 @@ end nextTime;
 
 /* group: Информирование о состоянии */
 
-/* proc: setAction( INTERNAL)
+/* iproc: setAction( INTERNAL)
   Устанавливает информацию о выполняемом действии.
 
   Параметры:
@@ -426,7 +426,7 @@ exception when others then
   );
 end removePipe;
 
-/* func: sendMessage( INTERNAL)
+/* ifunc: sendMessage( INTERNAL)
   Посылает сообщение в канал.
 
   Параметры:
@@ -680,7 +680,7 @@ end receiveMessage;
 
 /* group: Отправка/получение команд */
 
-/* func: getCommandPipeName
+/* ifunc: getCommandPipeName
   Возвращает имя командного канала для сессии.
 
   Параметры:
@@ -883,6 +883,52 @@ begin
   end if;
   return isReceive;
 end getCommand;
+
+/* func: isStopCommandReceived
+  Проверяет получение команды остановки.
+
+  Параметры:
+  timeout                     - Время ожидания в секундах
+                                (по умолчанию без ожидания)
+
+  Возврат:
+  истина, если команда остановки была получена.
+*/
+function isStopCommandReceived(
+  timeout number := null
+)
+return boolean
+is
+
+  -- Признак получения команды
+  isReceived boolean;
+
+  -- Имя полученной команды
+  command varchar2(50);
+
+begin
+  isReceived := getCommand(
+    command   => command
+    , timeout => timeout
+  );
+  if command != Stop_Command then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Получена неизвестная управляющая команда "' || command || '".'
+    );
+  end if;
+  return coalesce( command = Stop_Command, false);
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при проверке получения команды остановки ('
+        || 'timeout=' || timeout
+        || ').'
+      )
+    , true
+  );
+end isStopCommandReceived;
 
 /* proc: initHandler
   Инициализирует обработчик.
