@@ -32,6 +32,11 @@ make install INSTALL_VERSION=2.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/?
 
 (end code)
 
+Замечание:
+- в случае если в схеме не был установлен модуль Scheduler, следует выдать
+  системные привилегии под привилегированным пользователем (DBA, см
+  <Первоначальная установка>);
+
 
 
 group: Первоначальная установка
@@ -40,11 +45,23 @@ group: Первоначальная установка
 
 Порядок установки:
 
+- выдача системных привилегий и прав на системные объекты пользователю, под
+  которым будет установлен модуль
+
 (code)
 
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+make grant LOAD_USERID=sys/???@??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs
 
 (end)
+
+- установка модуля в БД
+
+(code)
+
+make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
+
 
 
 
