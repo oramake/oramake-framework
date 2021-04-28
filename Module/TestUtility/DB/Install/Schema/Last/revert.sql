@@ -33,3 +33,5 @@ drop sequence tsu_job_seq
 /
 drop sequence tsu_process_seq
 /
+drop sequence tsu_test_run_seq
+/
