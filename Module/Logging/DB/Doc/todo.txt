@@ -17,6 +17,24 @@ group: Общие
     большого количества логов каким-либо модулем (например, если включили
     трассировку и забыли выключить).
 
+[*] Устанавливать уровень логирования для корневого логера в значение по
+    умолчанию вместо генерации ошибки:
+
+(code)
+
+BEGIN lg_logger_t.getRootLogger().setLevel(null); END;
+
+*
+ERROR at line 1:
+ORA-20150: Ошибка при установке уровня логирования ( loggerUid=".", levelCode="").
+ORA-06512: at "OPERATION.PKG_LOGGINGINTERNAL", line 2067
+ORA-20195: Уровень логирования для корневого логера не может быть NULL.
+ORA-06512: at "OPERATION.PKG_LOGGINGINTERNAL", line 2060
+ORA-06512: at "OPERATION.LG_LOGGER_T", line 329
+ORA-06512: at line 1
+
+(end)
+
 [*] Удаление лишних сообщений при установке. Использование скрипта oms-default.
 
 

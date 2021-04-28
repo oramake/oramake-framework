@@ -4,6 +4,9 @@ title: Версии
 
 group: 1.2.5 ( 2021-01-31)
 
+[+] Добавлена функция проверки получения команды остановки
+    (<pkg_TaskHandler.isStopCommandReceived>).
+
 [*] Уточнены комментарии в общем задании батчей restart_task_handler.
 
 
