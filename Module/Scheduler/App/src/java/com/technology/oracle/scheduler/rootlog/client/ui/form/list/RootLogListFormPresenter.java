@@ -5,6 +5,7 @@ import static com.technology.oracle.scheduler.main.client.SchedulerClientConstan
 import static com.technology.oracle.scheduler.main.client.SchedulerClientConstant.ROOTLOG_MODULE_ID;
 
 import com.google.gwt.place.shared.Place;
+import com.google.gwt.user.client.Window;
 import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.history.place.JepViewListPlace;
 import com.technology.jep.jepria.client.history.scope.JepScope;
@@ -25,6 +26,8 @@ import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.oracle.scheduler.main.client.history.scope.SchedulerScope;
 import com.technology.oracle.scheduler.rootlog.shared.record.RootLogRecordDefinition;
 import com.technology.oracle.scheduler.rootlog.shared.service.RootLogServiceAsync;
+
+import java.awt.*;
 
 public class RootLogListFormPresenter<V extends ListFormView, E extends PlainEventBus, S extends RootLogServiceAsync, F extends StandardClientFactory<E, S>>
   extends ListFormPresenter<V, E, S, F> {

@@ -1,8 +1,11 @@
 package com.technology.oracle.scheduler.detailedlog.client.ui.form.list;
 
 import static com.technology.jep.jepria.client.JepRiaClientConstant.JepTexts;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 
 import com.google.gwt.place.shared.Place;
+import com.google.gwt.storage.client.Storage;
+import com.google.gwt.user.client.Window;
 import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.history.place.JepViewListPlace;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
@@ -34,6 +37,8 @@ public class DetailedLogListFormPresenter<V extends ListFormView, E extends Plai
     //TODO: для чего этот код?
     searchTemplate = event.getPagingConfig(); // Запомним поисковый шаблон.
     pagingConfig = null;
+    Storage storage = Storage.getSessionStorageIfSupported();
+    event.getPagingConfig().getTemplateRecord().set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
     super.onSearch(event);
   };
 
@@ -91,4 +96,6 @@ public class DetailedLogListFormPresenter<V extends ListFormView, E extends Plai
       }
     }
   }
+
+
 }

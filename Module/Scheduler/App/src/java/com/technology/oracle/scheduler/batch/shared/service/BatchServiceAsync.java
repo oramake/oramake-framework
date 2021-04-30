@@ -6,8 +6,8 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerServiceAsync
  
 public interface BatchServiceAsync extends SchedulerServiceAsync {
 
-  void activateBatch(Integer batchId, AsyncCallback<JepRecord> callback);
-  void deactivateBatch(Integer batchId, AsyncCallback<JepRecord> callback);
-  void executeBatch(Integer batchId, AsyncCallback<JepRecord> callback);
-  void abortBatch(Integer batchId, AsyncCallback<JepRecord> callback);
+  void activateBatch(Integer batchId, String dataSource, AsyncCallback<JepRecord> callback);
+  void deactivateBatch(Integer batchId, String dataSource, AsyncCallback<JepRecord> callback);
+  void executeBatch(Integer batchId, String dataSource, AsyncCallback<JepRecord> callback);
+  void abortBatch(Integer batchId, String dataSource, AsyncCallback<JepRecord> callback);
 }

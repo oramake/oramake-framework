@@ -3,22 +3,22 @@ package com.technology.oracle.scheduler.moduleroleprivilege.client.ui.form.detai
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.CREATE;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.SEARCH;
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
-import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.DATA_SOURCE;
-import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.MODULE_ID;
-import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.MODULE_ROLE_PRIVILEGE_ID;
-import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.PRIVILEGE_CODE;
-import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.ROLE_ID;
 import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.*;
+import static com.technology.oracle.scheduler.moduleroleprivilege.shared.field.ModuleRolePrivilegeFieldNames.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.place.shared.Place;
+import com.google.gwt.storage.client.Storage;
 import com.technology.jep.jepria.client.async.FirstTimeUseAsyncCallback;
 import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.async.TypingTimeoutAsyncCallback;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormView;
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
@@ -40,7 +40,8 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
  
   public void bind() {
     super.bind();
-    // Здесь размещается код связывания presenter-а и view 
+    // Здесь размещается код связывания presenter-а и view
+    Storage storage = Storage.getLocalStorageIfSupported();
     fields.addFieldListener(DATA_SOURCE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
       @Override
       public void handleEvent(final JepEvent event) {
@@ -55,20 +56,22 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     fields.addFieldListener(DATA_SOURCE, JepEventType.CHANGE_SELECTION_EVENT, new JepListener() {
       @Override
       public void handleEvent(JepEvent event) {
-        service.setCurrentDataSource(JepOption.<String>getValue(event.getParameter()), new JepAsyncCallback<Void>() {
-          @Override
-          public void onSuccess(Void result) {
-            setDataSourceDependFields();
-            changeModules();
-          }
-        });
+        final JepOption dataSource = (JepOption) event.getParameter();
+        storage.setItem(CURRENT_DATA_SOURCE, (String) dataSource.getValue());
+//        service.setCurrentDataSource(JepOption.<String>getValue(event.getParameter()), new JepAsyncCallback<Void>() {
+//          @Override
+//          public void onSuccess(Void result) {
+//            setDataSourceDependFields();
+//            changeModules();
+//          }
+//        });
       }
     });
     
     fields.addFieldListener(PRIVILEGE_CODE, JepEventType.FIRST_TIME_USE_EVENT, new JepListener() {
       @Override
       public void handleEvent(final JepEvent event) {
-        service.getPrivilege(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+        service.getPrivilege(storage.getItem(CURRENT_DATA_SOURCE), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
           public void onSuccessLoad(List<JepOption> result){
             fields.setFieldOptions(PRIVILEGE_CODE, result);
           }
@@ -90,13 +93,13 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     
     String dataSource = JepOption.<String>getValue(fields.getFieldValue(DATA_SOURCE));
     final JepComboBoxField moduleComboBoxField = (JepComboBoxField)fields.get(MODULE_ID);
-
+    Storage storage = Storage.getLocalStorageIfSupported();
     if(!JepRiaUtil.isEmpty(dataSource)) {
       
       moduleComboBoxField.setLoadingImage(true);
       fields.setFieldEnabled(MODULE_ID, false);
       
-      service.getModule(new JepAsyncCallback<List<JepOption>>() {
+      service.getModule(storage.getItem(CURRENT_DATA_SOURCE),new JepAsyncCallback<List<JepOption>>() {
         
         @Override
         public void onSuccess(List<JepOption> result){
@@ -121,7 +124,8 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     JepComboBoxField roleField = (JepComboBoxField) fields.get(ROLE_ID);
     roleField.setLoadingImage(true);
     String rawValue = roleField.getRawValue();
-    service.getRole(rawValue + "%", new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)) {
+    Storage storage = Storage.getLocalStorageIfSupported();
+    service.getRole(rawValue + "%", storage.getItem(CURRENT_DATA_SOURCE),  new TypingTimeoutAsyncCallback<List<JepOption>>(new JepEvent(roleField)) {
         
         @Override
         public void onSuccessLoad(List<JepOption> result) {
@@ -150,6 +154,55 @@ public class ModuleRolePrivilegeDetailFormPresenter<E extends PlainEventBus, S e
     fields.setFieldEnabled(MODULE_ID, enabled);
     fields.setFieldEnabled(PRIVILEGE_CODE, enabled);
     fields.setFieldEnabled(ROLE_ID, enabled);
+  }
+
+  @Override
+  protected void saveOnEdit(JepRecord currentRecord) {
+    service.setCurrentDataSource(Storage.getLocalStorageIfSupported().getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    Storage storage = Storage.getLocalStorageIfSupported();
+    currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    super.saveOnEdit(currentRecord);
+  }
+
+  @Override
+  protected void saveOnCreate(JepRecord currentRecord) {
+    service.setCurrentDataSource(Storage.getLocalStorageIfSupported().getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    Storage storage = Storage.getLocalStorageIfSupported();
+    currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    super.saveOnCreate(currentRecord);
+  }
+
+  public void onDoDelete(DoDeleteEvent event){
+    service.setCurrentDataSource(Storage.getLocalStorageIfSupported().getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    super.onDoDelete(event);
+  }
+
+  @Override
+  public void onSearch(SearchEvent event) {
+    Storage storage = Storage.getLocalStorageIfSupported();
+    event.getPagingConfig().getTemplateRecord().set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    searchTemplate = event.getPagingConfig().getTemplateRecord();
+    /*saveSearchTemplate(event.getPagingConfig().getTemplateRecord());*/
+    super.onSearch(event);
+  }
+
+  @Override
+  public void onDoGetRecord(DoGetRecordEvent event) {
+    Storage storage = Storage.getLocalStorageIfSupported();
+    event.getPagingConfig().getTemplateRecord().set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    super.onDoGetRecord(event);
   }
   
  

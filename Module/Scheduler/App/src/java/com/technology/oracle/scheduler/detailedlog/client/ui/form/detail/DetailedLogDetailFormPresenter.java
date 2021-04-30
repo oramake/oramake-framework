@@ -4,7 +4,7 @@ import static com.technology.oracle.scheduler.detailedlog.shared.field.DetailedL
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.*;
  
 import com.google.gwt.place.shared.Place;
- 
+
 import com.technology.jep.jepria.client.ui.plain.StandardClientFactory;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
@@ -22,9 +22,10 @@ public class DetailedLogDetailFormPresenter<E extends PlainEventBus, S extends D
     super.bind();
     // Здесь размещается код связывания presenter-а и view 
   }
-  */ 
+  */
  
   protected void adjustToWorkstate(WorkstateEnum workstate) {
   }
- 
+
+
 }

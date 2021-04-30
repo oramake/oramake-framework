@@ -8,8 +8,8 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
 @RemoteServiceRelativePath("BatchService")
 public interface BatchService extends SchedulerService {
   
-  JepRecord activateBatch(Integer batchId) throws ApplicationException;
-  JepRecord deactivateBatch(Integer batchId) throws ApplicationException;
-  JepRecord executeBatch(Integer batchId) throws ApplicationException;
-  JepRecord abortBatch(Integer batchId) throws ApplicationException;
+  JepRecord activateBatch(Integer batchId, String dataSource) throws ApplicationException;
+  JepRecord deactivateBatch(Integer batchId, String dataSource) throws ApplicationException;
+  JepRecord executeBatch(Integer batchId, String dataSource) throws ApplicationException;
+  JepRecord abortBatch(Integer batchId, String dataSource) throws ApplicationException;
 }

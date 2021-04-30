@@ -9,5 +9,5 @@ import com.technology.oracle.scheduler.main.shared.service.SchedulerService;
  
 @RemoteServiceRelativePath("OptionService")
 public interface OptionService extends SchedulerService {
-  List<JepOption> getValueType() throws ApplicationException;
+  List<JepOption> getValueType(String currentDataSource) throws ApplicationException;
 }

@@ -1,7 +1,9 @@
 package com.technology.oracle.scheduler.main.server;
 
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.DATA_SOURCE_LIST;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,15 +37,15 @@ public class DataSourceServiceImpl<D extends JepDataStandard> extends JepDataSer
   
   private Map<String, D> proxiesDao = new ConcurrentHashMap<>();
   
-  protected D getProxyDao() throws ApplicationException {
+  protected D getProxyDao(String currentDataSource) throws ApplicationException {
 
-    String dataSource = getCurrentDataSource();
+    //String dataSource = getCurrentDataSource();
     
-    D proxyDao = proxiesDao.get(dataSource);
+    D proxyDao = proxiesDao.get(currentDataSource);
     
     if(proxyDao == null) {
-      proxyDao = TransactionFactory.createProxy(dao, dataSource, moduleName);
-      proxiesDao.put(dataSource, proxyDao);
+      proxyDao = TransactionFactory.createProxy(dao, currentDataSource, moduleName);
+      proxiesDao.put(currentDataSource, proxyDao);
     }
     
     return proxyDao;
@@ -152,26 +154,55 @@ public class DataSourceServiceImpl<D extends JepDataStandard> extends JepDataSer
    */
   @Override
   public synchronized JepRecord update(FindConfig updateConfig) throws ApplicationException {
-    super.dao = getProxyDao();
+//    super.dao = getProxyDao();
+    if(JepOption.<String>getValue(updateConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)) == null){
+      throw new ApplicationException("Не установлен DataSource!", new ApplicationException());
+    }else {
+      super.dao = getProxyDao(JepOption.<String>getValue(updateConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)));
     return super.update(updateConfig);
+      }
   }
   
   @Override
   public synchronized PagingResult<JepRecord> find(PagingConfig pagingConfig) throws ApplicationException {
-    super.dao = getProxyDao();
-    return super.find(pagingConfig);
+    HttpSession session = getThreadLocalRequest().getSession();
+    if(JepOption.<String>getValue(pagingConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)) != null){
+      super.dao = getProxyDao(JepOption.<String>getValue(pagingConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)));
+      return super.find(pagingConfig);
+    } else if ((String)session.getAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE) != null){
+      super.dao = getProxyDao((String)session.getAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE));
+      session.removeAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE);
+      return super.find(pagingConfig);
+    } else {
+      throw new ApplicationException("Не установлен DataSource!", new ApplicationException());
+    }
   }
   
   @Override
   public synchronized JepRecord create(FindConfig createConfig) throws ApplicationException {
-    super.dao = getProxyDao();
-    return super.create(createConfig);
+    if(JepOption.<String>getValue(createConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)) == null){
+      throw new ApplicationException("Не установлен DataSource!", new ApplicationException());
+    }else {
+      super.dao = getProxyDao(JepOption.<String>getValue(createConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)));
+//    super.dao = getProxyDao();
+      return super.create(createConfig);
+    }
   }
   
   @Override
   public synchronized void delete(FindConfig deleteConfig) throws ApplicationException {
-    super.dao = getProxyDao();
-    super.delete(deleteConfig);
+    HttpSession session = getThreadLocalRequest().getSession();
+    if(JepOption.<String>getValue(deleteConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)) != null){
+      super.dao = getProxyDao(JepOption.<String>getValue(deleteConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE)));
+      super.delete(deleteConfig);
+    } else if ((String)session.getAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE) != null){
+      super.dao = getProxyDao((String)session.getAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE));
+      session.removeAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE);
+      super.delete(deleteConfig);
+    } else {
+      throw new ApplicationException("Не установлен DataSource!", new ApplicationException());
+    }
+
   }
 
   @Override
@@ -181,6 +212,7 @@ public class DataSourceServiceImpl<D extends JepDataStandard> extends JepDataSer
       session.setAttribute(CURRENT_DATA_SOURCE_ATTRIBUTE, dataSource);
     }
   }
+
   
   public static final String CURRENT_DATA_SOURCE_ATTRIBUTE = "SCHEDULER_DATA_SOURCE";
 }

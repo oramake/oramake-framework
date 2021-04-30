@@ -50,15 +50,15 @@ public class SchedulerClientFactoryImpl extends MainClientFactoryImpl<MainEventB
 
   private SchedulerClientFactoryImpl() {
     super(
-        DETAILEDLOG_MODULE_ID
-        , BATCH_MODULE_ID
+         BATCH_MODULE_ID
         , SCHEDULE_MODULE_ID
         , ROOTLOG_MODULE_ID
-        , VALUE_MODULE_ID
         , MODULEROLEPRIVILEGE_MODULE_ID
         , BATCHROLE_MODULE_ID
         , OPTION_MODULE_ID
+        , VALUE_MODULE_ID
         , INTERVAL_MODULE_ID
+        , DETAILEDLOG_MODULE_ID
     );
   }
 

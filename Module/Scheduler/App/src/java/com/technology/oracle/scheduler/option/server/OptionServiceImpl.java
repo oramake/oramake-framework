@@ -2,6 +2,7 @@ package com.technology.oracle.scheduler.option.server;
 
 import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT;
 
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNames.*;
 
 import java.util.List;
@@ -30,10 +31,10 @@ public class OptionServiceImpl extends SchedulerServiceImpl<Option> implements O
     super(OptionRecordDefinition.instance, new OptionDao());
   }
 
-  public List<JepOption> getValueType() throws ApplicationException {
+  public List<JepOption> getValueType(String currentDataSource) throws ApplicationException {
     List<JepOption> result = null;
     try {
-      result = getProxyDao().getValueType();
+      result = getProxyDao(currentDataSource).getValueType();
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
@@ -49,7 +50,7 @@ public class OptionServiceImpl extends SchedulerServiceImpl<Option> implements O
 
     prepareFileFields(record);
 
-    getProxyDao().update(record, getOperatorId());
+    getProxyDao(JepOption.<String>getValue(updateConfig.getTemplateRecord().get(CURRENT_DATA_SOURCE))).update(updateConfig.getTemplateRecord(), getOperatorId());
     updateLobFields(record);
     //resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(record));
     resultRecord.set(BATCH_ID, record.get(BATCH_ID));

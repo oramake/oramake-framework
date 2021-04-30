@@ -25,15 +25,15 @@ public class SchedulerMainModulePresenter<E extends MainEventBus, S extends JepM
 
   public SchedulerMainModulePresenter(MainClientFactory<E, S> clientFactory) {
     super(clientFactory);
-    addModuleProtection(BATCH_MODULE_ID, new ArrayList<String>() {{add("SchShowBatch");}});
-    addModuleProtection(SCHEDULE_MODULE_ID, new ArrayList<String>() {{add("SchShowSchedule");}});
-    addModuleProtection(INTERVAL_MODULE_ID, new ArrayList<String>() {{add("SchShowSchedule");}});
-    addModuleProtection(ROOTLOG_MODULE_ID, new ArrayList<String>() {{add("SchShowLog");}});
-    addModuleProtection(DETAILEDLOG_MODULE_ID, new ArrayList<String>() {{add("SchShowLog");}});
-    addModuleProtection(BATCHROLE_MODULE_ID, new ArrayList<String>() {{add("SchShowBatchRole");}});
-    addModuleProtection(OPTION_MODULE_ID, new ArrayList<String>() {{add("SchShowBatchOption");}});
-    addModuleProtection(VALUE_MODULE_ID, new ArrayList<String>() {{add("SchShowBatchOption");}});
-    addModuleProtection(MODULEROLEPRIVILEGE_MODULE_ID, new ArrayList<String>() {{add("SchShowModuleRolePrivilege");}});
+    addModuleProtection(BATCH_MODULE_ID, "SchShowBatch");
+    addModuleProtection(SCHEDULE_MODULE_ID, "SchShowSchedule");
+    addModuleProtection(INTERVAL_MODULE_ID, "SchShowSchedule");
+    addModuleProtection(ROOTLOG_MODULE_ID, "SchShowLog");
+    addModuleProtection(DETAILEDLOG_MODULE_ID, "SchShowLog");
+    addModuleProtection(BATCHROLE_MODULE_ID, "SchShowBatchRole");
+    addModuleProtection(OPTION_MODULE_ID, "SchShowBatchOption");
+    addModuleProtection(VALUE_MODULE_ID, "SchShowBatchOption");
+    addModuleProtection(MODULEROLEPRIVILEGE_MODULE_ID, "SchShowModuleRolePrivilege");
   }
 
   @Override

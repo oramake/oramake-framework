@@ -6,7 +6,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.technology.jep.jepria.shared.field.option.JepOption;
  
 public interface SchedulerServiceAsync extends DataSourceServiceAsync {
-  void getModule(AsyncCallback<List<JepOption>> callback);
-  void getPrivilege(AsyncCallback<List<JepOption>> callback);
-  void getRole(String roleName, AsyncCallback<List<JepOption>> callback);
+  void getModule(String currentDataSource, AsyncCallback<List<JepOption>> callback);
+  void getPrivilege(String currentDataSource, AsyncCallback<List<JepOption>> callback);
+  void getRole(String roleName, String currentDataSource, AsyncCallback<List<JepOption>> callback);
 }

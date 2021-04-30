@@ -17,10 +17,10 @@ public class SchedulerMainViewImpl extends MainViewImpl {
     ret.add(new ModuleConfiguration(BATCH_MODULE_ID, schedulerText.submodule_batch_title()));
     ret.add(new ModuleConfiguration(SCHEDULE_MODULE_ID, schedulerText.submodule_schedule_title()));
     ret.add(new ModuleConfiguration(ROOTLOG_MODULE_ID, schedulerText.submodule_rootlog_title()));
+    ret.add(new ModuleConfiguration(OPTION_MODULE_ID, schedulerText.submodule_option_title()));
     ret.add(new ModuleConfiguration(VALUE_MODULE_ID, schedulerText.submodule_value_title()));
     ret.add(new ModuleConfiguration(MODULEROLEPRIVILEGE_MODULE_ID, schedulerText.submodule_moduleroleprivilege_title()));
     ret.add(new ModuleConfiguration(BATCHROLE_MODULE_ID, schedulerText.submodule_batchrole_title()));
-    ret.add(new ModuleConfiguration(OPTION_MODULE_ID, schedulerText.submodule_option_title()));
     ret.add(new ModuleConfiguration(INTERVAL_MODULE_ID, schedulerText.submodule_interval_title()));
     return ret;
   }

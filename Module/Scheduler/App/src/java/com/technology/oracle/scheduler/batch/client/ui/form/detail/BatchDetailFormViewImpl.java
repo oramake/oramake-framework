@@ -4,6 +4,7 @@ import static com.technology.jep.jepria.shared.field.JepFieldNames.MAX_ROW_COUNT
 
 import static com.technology.oracle.scheduler.batch.client.BatchClientConstant.batchText;
 import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames.*;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -40,6 +41,7 @@ public class BatchDetailFormViewImpl
     JepNumberField retrialCountNumberField = new JepNumberField(batchText.batch_detail_retrial_count());
     JepTextField retrialTimeoutTextField = new JepTextField(batchText.batch_detail_retrial_timeout());
     JepIntegerField maxRowCountField = new JepIntegerField(batchText.batch_detail_row_count());
+    JepTextField currentDataSourceTextField = new JepTextField();
     maxRowCountField.setMaxLength(4);
     maxRowCountField.setFieldWidth(55);
  
@@ -66,6 +68,7 @@ public class BatchDetailFormViewImpl
     fields.put(RETRIAL_COUNT, retrialCountNumberField);
     fields.put(RETRIAL_TIMEOUT, retrialTimeoutTextField);
     fields.put(MAX_ROW_COUNT, maxRowCountField);
+    fields.put(CURRENT_DATA_SOURCE, currentDataSourceTextField);
   }
  
 }

@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.schedule.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- *   'D:/svn/Oracle/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/schedule/shared/text/ScheduleText.properties'.
+ * 	'C:/SVN/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/schedule/shared/text/ScheduleText.properties'.
  */
 public interface ScheduleText extends com.google.gwt.i18n.client.Constants {
   

@@ -1,16 +1,21 @@
 package com.technology.oracle.scheduler.batch.server;
  
 import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames.BATCH_ID;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.technology.jep.jepria.shared.exceptions.ApplicationException;
+import com.technology.jep.jepria.shared.load.PagingConfig;
+import com.technology.jep.jepria.shared.load.PagingResult;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.oracle.scheduler.batch.server.dao.Batch;
 import com.technology.oracle.scheduler.batch.server.dao.BatchDao;
 import com.technology.oracle.scheduler.batch.shared.record.BatchRecordDefinition;
 import com.technology.oracle.scheduler.batch.shared.service.BatchService;
 import com.technology.oracle.scheduler.main.server.SchedulerServiceImpl;
- 
+
+import java.util.List;
+
 @RemoteServiceRelativePath("BatchService")
 public class BatchServiceImpl extends SchedulerServiceImpl<Batch> implements BatchService  {
  
@@ -21,83 +26,88 @@ public class BatchServiceImpl extends SchedulerServiceImpl<Batch> implements Bat
   }
   
   @Override
-  public JepRecord activateBatch (Integer batchId) throws ApplicationException {
+  public JepRecord activateBatch (Integer batchId, String dataSource) throws ApplicationException {
     
-    JepRecord resultRecord = null;
+    PagingResult<JepRecord> resultRecord = null;
 
     try {
 
-      getProxyDao().activateBatch(batchId, getOperatorId());
-      
+      getProxyDao(dataSource).activateBatch(batchId, getOperatorId());
+
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
-      resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(tmp));
-      
+      tmp.set(CURRENT_DATA_SOURCE, dataSource);
+      resultRecord = find(new PagingConfig(tmp));
+
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
-    
-    return resultRecord;
+
+    return resultRecord.getData().get(0);
   }
 
 
   @Override
-  public JepRecord deactivateBatch(Integer batchId) throws ApplicationException {
+  public JepRecord deactivateBatch(Integer batchId, String dataSource) throws ApplicationException {
     
-    JepRecord resultRecord = null;
+    PagingResult<JepRecord> resultRecord = null;
     
     try {
       
-      getProxyDao().deactivateBatch(batchId, getOperatorId());
+      getProxyDao(dataSource).deactivateBatch(batchId, getOperatorId());
       
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
-      resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(tmp));
+      tmp.set(CURRENT_DATA_SOURCE, dataSource);
+
+      resultRecord = find(new PagingConfig(tmp));
       
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
     
-    return resultRecord;
+    return resultRecord.getData().get(0);
   }
 
   @Override
-  public JepRecord executeBatch(Integer batchId) throws ApplicationException {
+  public JepRecord executeBatch(Integer batchId, String dataSource) throws ApplicationException {
     
-    JepRecord resultRecord = null;
-    
+    PagingResult<JepRecord> resultRecord = null;
+
     try {
       
-      getProxyDao().executeBatch(batchId, getOperatorId());
-      
+      getProxyDao(dataSource).executeBatch(batchId, getOperatorId());
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
-      resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(tmp));
+      tmp.set(CURRENT_DATA_SOURCE, dataSource);
+      resultRecord = find(new PagingConfig(tmp));
       
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
-    
-    return resultRecord;
+
+    return resultRecord.getData().get(0);
   }
 
   @Override
-  public JepRecord abortBatch(Integer batchId) throws ApplicationException {
+  public JepRecord abortBatch(Integer batchId, String dataSource) throws ApplicationException {
 
-    JepRecord resultRecord = null;
+    PagingResult<JepRecord> resultRecord = null;
     
     try {
       
-      getProxyDao().abortBatch(batchId, getOperatorId());
-      
+      getProxyDao(dataSource).abortBatch(batchId, getOperatorId());
+
       JepRecord tmp = new JepRecord();
       tmp.set(BATCH_ID, batchId);
-      resultRecord = findByPrimaryKey(recordDefinition.buildPrimaryKeyMap(tmp));
-      
+      tmp.set(CURRENT_DATA_SOURCE, dataSource);
+
+      resultRecord = find(new PagingConfig(tmp));
+
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
-    
-    return resultRecord;
+
+    return resultRecord.getData().get(0);
   }
 }

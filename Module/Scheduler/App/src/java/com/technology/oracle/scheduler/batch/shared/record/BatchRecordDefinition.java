@@ -2,9 +2,15 @@ package com.technology.oracle.scheduler.batch.shared.record;
 
 import static com.technology.oracle.scheduler.batch.shared.field.BatchFieldNames.*;
 import static com.technology.jep.jepria.shared.field.JepTypeEnum.*;
+
+import com.google.gwt.storage.client.Storage;
+import com.google.gwt.user.client.Window;
 import com.technology.jep.jepria.shared.field.JepTypeEnum;
 import static com.technology.jep.jepria.shared.field.JepLikeEnum.*;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
+
 import com.technology.jep.jepria.shared.field.JepLikeEnum;
+import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.record.JepRecordDefinition;
  
 import java.util.HashMap;
@@ -22,6 +28,7 @@ public class BatchRecordDefinition extends JepRecordDefinition {
   }
  
   private static Map<String, JepTypeEnum> buildTypeMap() {
+
     Map<String, JepTypeEnum> typeMap = new HashMap<String, JepTypeEnum>();
     typeMap.put(BATCH_ID, INTEGER);
     typeMap.put(BATCH_SHORT_NAME, STRING);
@@ -55,6 +62,7 @@ public class BatchRecordDefinition extends JepRecordDefinition {
     typeMap.put(ERROR_COUNT, INTEGER);
     typeMap.put(WARNING_COUNT, INTEGER);
     typeMap.put(DURATION_SECOND, INTEGER);
+    typeMap.put(CURRENT_DATA_SOURCE, STRING);
     return typeMap;
   }
  
@@ -64,4 +72,5 @@ public class BatchRecordDefinition extends JepRecordDefinition {
     likeMap.put(BATCH_NAME, FIRST);
     return likeMap;
   }
+
 }

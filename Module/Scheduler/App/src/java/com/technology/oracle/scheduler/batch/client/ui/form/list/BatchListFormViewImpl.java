@@ -110,4 +110,5 @@ public class BatchListFormViewImpl extends ListFormViewImpl<GridManager> {
   private String getGridId() {
     return this.getClass().toString().replace("class ", "");
   }
+
 }

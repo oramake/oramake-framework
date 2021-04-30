@@ -16,20 +16,20 @@ public class SchedulerServiceImpl<D extends Scheduler> extends DataSourceService
 
   private static final long serialVersionUID = 1L;
     
-  public List<JepOption> getPrivilege() throws ApplicationException {
+  public List<JepOption> getPrivilege(String currentDataSource) throws ApplicationException {
     List<JepOption> result = null;
     try {
-      result = getProxyDao().getPrivilege();
+      result = getProxyDao(currentDataSource).getPrivilege();
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
     return result;
   }
  
-  public List<JepOption> getRole(String roleName) throws ApplicationException {
+  public List<JepOption> getRole(String roleName, String currentDataSource) throws ApplicationException {
     List<JepOption> result = null;
     try {
-      result = getProxyDao().getRole(roleName);
+      result = getProxyDao(currentDataSource).getRole(roleName);
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
@@ -37,14 +37,16 @@ public class SchedulerServiceImpl<D extends Scheduler> extends DataSourceService
   }
   
    
-  public List<JepOption> getModule() throws ApplicationException {
+  public List<JepOption> getModule(String currentDataSource) throws ApplicationException {
     List<JepOption> result = null;
     try {
-      result = getProxyDao().getModule();
+      result = getProxyDao(currentDataSource).getModule();
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }
     return result;
   }
+
+
 }
 

@@ -7,5 +7,5 @@ import com.technology.jep.jepria.shared.field.option.JepOption;
 import com.technology.oracle.scheduler.main.shared.service.SchedulerServiceAsync;
  
 public interface OptionServiceAsync extends SchedulerServiceAsync {
-  void getValueType(AsyncCallback<List<JepOption>> callback);
+  void getValueType(String currentDataSource, AsyncCallback<List<JepOption>> callback);
 }

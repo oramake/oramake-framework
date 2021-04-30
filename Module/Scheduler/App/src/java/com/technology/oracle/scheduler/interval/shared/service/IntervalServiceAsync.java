@@ -7,5 +7,5 @@ import com.technology.jep.jepria.shared.field.option.JepOption;
 import com.technology.oracle.scheduler.main.shared.service.SchedulerServiceAsync;
  
 public interface IntervalServiceAsync extends SchedulerServiceAsync {
-  void getIntervalType(AsyncCallback<List<JepOption>> callback);
+  void getIntervalType(String currentDataSource, AsyncCallback<List<JepOption>> callback);
 }

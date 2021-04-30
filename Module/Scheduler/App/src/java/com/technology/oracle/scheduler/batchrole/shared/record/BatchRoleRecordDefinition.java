@@ -13,6 +13,7 @@ import static com.technology.oracle.scheduler.batchrole.shared.field.BatchRoleFi
 import static com.technology.oracle.scheduler.batchrole.shared.field.BatchRoleFieldNames.ROLE_ID;
 import static com.technology.oracle.scheduler.batchrole.shared.field.BatchRoleFieldNames.ROLE_NAME;
 import static com.technology.oracle.scheduler.batchrole.shared.field.BatchRoleFieldNames.ROLE_SHORT_NAME;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class BatchRoleRecordDefinition extends JepRecordDefinition {
  
   private BatchRoleRecordDefinition() {
     super(buildTypeMap()
-      , new String[]{BATCH_ROLE_ID}
+      , new String[]{BATCH_ROLE_ID, CURRENT_DATA_SOURCE}
     );
   }
  
@@ -42,6 +43,7 @@ public class BatchRoleRecordDefinition extends JepRecordDefinition {
     typeMap.put(DATE_INS, DATE);
     typeMap.put(OPERATOR_ID, INTEGER);
     typeMap.put(OPERATOR_NAME, STRING);
+    typeMap.put(CURRENT_DATA_SOURCE, STRING);
     return typeMap;
   }
 }

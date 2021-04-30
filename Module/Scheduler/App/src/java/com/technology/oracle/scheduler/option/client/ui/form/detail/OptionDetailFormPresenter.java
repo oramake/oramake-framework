@@ -4,6 +4,7 @@ import static com.technology.jep.jepria.client.ui.WorkstateEnum.CREATE;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.EDIT;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.SEARCH;
 import static com.technology.jep.jepria.client.ui.WorkstateEnum.VIEW_DETAILS;
+import static com.technology.oracle.scheduler.main.shared.SchedulerConstant.CURRENT_DATA_SOURCE;
 import static com.technology.oracle.scheduler.option.client.OptionClientConstant.scopeModuleIds;
 import static com.technology.oracle.scheduler.option.shared.OptionConstant.DATE_VALUE_TYPE_CODE;
 import static com.technology.oracle.scheduler.option.shared.OptionConstant.NUMBER_VALUE_TYPE_CODE;
@@ -28,10 +29,13 @@ import static com.technology.oracle.scheduler.option.shared.field.OptionFieldNam
 import java.util.List;
 
 import com.google.gwt.place.shared.Place;
+import com.google.gwt.storage.client.Storage;
 import com.technology.jep.jepria.client.async.FirstTimeUseAsyncCallback;
+import com.technology.jep.jepria.client.async.JepAsyncCallback;
 import com.technology.jep.jepria.client.history.place.JepViewListPlace;
 import com.technology.jep.jepria.client.ui.WorkstateEnum;
 import com.technology.jep.jepria.client.ui.eventbus.plain.PlainEventBus;
+import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoDeleteEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.DoGetRecordEvent;
 import com.technology.jep.jepria.client.ui.eventbus.plain.event.SearchEvent;
 import com.technology.jep.jepria.client.ui.form.detail.DetailFormPresenter;
@@ -43,11 +47,15 @@ import com.technology.jep.jepria.shared.load.PagingConfig;
 import com.technology.jep.jepria.shared.record.JepRecord;
 import com.technology.jep.jepria.shared.util.JepRiaUtil;
 import com.technology.oracle.scheduler.batch.client.history.scope.BatchScope;
+import com.technology.oracle.scheduler.main.client.ui.form.detail.SchedulerMainDetailFormPresenter;
 import com.technology.oracle.scheduler.option.client.history.scope.OptionScope;
 import com.technology.oracle.scheduler.option.shared.service.OptionServiceAsync;
+import com.technology.oracle.scheduler.schedule.client.ui.form.detail.ScheduleDetailFormPresenter;
 
 public class OptionDetailFormPresenter<E extends PlainEventBus, S extends OptionServiceAsync>
-    extends DetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> {
+    extends SchedulerMainDetailFormPresenter<DetailFormView, E, S, StandardClientFactory<E, S>> {
+
+  private Storage storage = Storage.getSessionStorageIfSupported();
 
   public OptionDetailFormPresenter(Place place, StandardClientFactory<E, S> clientFactory) {
     super(scopeModuleIds, place, clientFactory);
@@ -57,7 +65,7 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
     super.bind();
     // Здесь размещается код связывания presenter-а и view
 
-    fields.addFieldListener(VALUE_TYPE_CODE, JepEventType.FIRST_TIME_USE_EVENT, event -> service.getValueType(new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
+    fields.addFieldListener(VALUE_TYPE_CODE, JepEventType.FIRST_TIME_USE_EVENT, event -> service.getValueType(storage.getItem(CURRENT_DATA_SOURCE), new FirstTimeUseAsyncCallback<List<JepOption>>(event) {
       public void onSuccessLoad(List<JepOption> result) {
         fields.setFieldOptions(VALUE_TYPE_CODE, result);
       }
@@ -84,6 +92,7 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
   @Override
   public void onSearch(SearchEvent event) {
     // Проинициализируем поисковый шаблон (независимо откуда был осуществлен переход: с формы поиска или с главной формы на подчиненную).
+    event.getPagingConfig().getTemplateRecord().set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
     searchTemplate = event.getPagingConfig().getTemplateRecord();
     Integer batchIdsc = BatchScope.instance.getBatchId();
     Integer batchId = searchTemplate.<Integer>get(BATCH_ID);
@@ -141,6 +150,37 @@ public class OptionDetailFormPresenter<E extends PlainEventBus, S extends Option
   public void onDoGetRecord(DoGetRecordEvent event) {
     event.getPagingConfig().getTemplateRecord().set(BATCH_ID, BatchScope.instance.getBatchId());
     super.onDoGetRecord(event);
+  }
+
+  @Override
+  protected void saveOnEdit(JepRecord currentRecord) {
+    service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    super.saveOnEdit(currentRecord);
+  }
+
+  @Override
+  protected void saveOnCreate(JepRecord currentRecord) {
+    service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    currentRecord.set(CURRENT_DATA_SOURCE, storage.getItem(CURRENT_DATA_SOURCE));
+    super.saveOnCreate(currentRecord);
+  }
+
+  public void onDoDelete(DoDeleteEvent event){
+    service.setCurrentDataSource(storage.getItem(CURRENT_DATA_SOURCE), new JepAsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+      }
+    });
+    super.onDoDelete(event);
   }
 
   protected void adjustToWorkstate(WorkstateEnum workstate) {

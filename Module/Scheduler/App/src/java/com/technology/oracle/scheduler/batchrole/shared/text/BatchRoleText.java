@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.batchrole.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- *   'D:/svn/Oracle/Module/Scheduler/Branch/Scheduler/App/src/java/com/technology/oracle/scheduler/batchrole/shared/text/BatchRoleText.properties'.
+ * 	'C:/SVN/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/batchrole/shared/text/BatchRoleText.properties'.
  */
 public interface BatchRoleText extends com.google.gwt.i18n.client.Constants {
   

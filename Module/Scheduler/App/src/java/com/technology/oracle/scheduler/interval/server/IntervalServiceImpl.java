@@ -20,10 +20,10 @@ public class IntervalServiceImpl extends SchedulerServiceImpl<Interval> implemen
     super(IntervalRecordDefinition.instance, new IntervalDao());
   }
  
-  public List<JepOption> getIntervalType() throws ApplicationException {
+  public List<JepOption> getIntervalType(String currentDataSource) throws ApplicationException {
     List<JepOption> result = null;
     try {
-      result = getProxyDao().getIntervalType();
+      result = getProxyDao(currentDataSource).getIntervalType();
     } catch (Throwable th) {
       throw new ApplicationException(th.getLocalizedMessage(), th);
     }

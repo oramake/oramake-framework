@@ -2,7 +2,7 @@ package com.technology.oracle.scheduler.option.shared.text;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'C:/work/workspace/OraMake/git/Module/Scheduler/App/src/java/com/technology/oracle/scheduler/option/shared/text/OptionText.properties'.
+ * 	'C:/SVN/Module/Scheduler/Trunk/App/src/java/com/technology/oracle/scheduler/option/shared/text/OptionText.properties'.
  */
 public interface OptionText extends com.google.gwt.i18n.client.Constants {
   
