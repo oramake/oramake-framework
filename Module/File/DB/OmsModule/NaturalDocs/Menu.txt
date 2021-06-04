@@ -178,6 +178,7 @@ Group: Скрипты  {
             File: grant-common-java-privs  (no auto-title, Install/Grant/Last/grant-common-java-privs.sql)
             File: grant-edtFTPj  (no auto-title, Install/Grant/Last/grant-edtFTPj.sql)
             File: grant-HttpClient  (no auto-title, Install/Grant/Last/grant-HttpClient.sql)
+            File: internal-table  (no auto-title, Install/Grant/Last/internal-table.sql)
             File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
