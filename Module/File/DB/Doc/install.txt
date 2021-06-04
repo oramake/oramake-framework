@@ -28,6 +28,185 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+
+group: 3.3.1
+(<Версии::3.3.1 ( 2019-09-11)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.3.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
+group: 3.3.0
+(<Версии::3.3.0 ( 2017-08-14)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+Замечание:
+
+- после установки остаются инвалидированные объекты вида, которые не влияют на работу
+  модуля ( планируется удалить из jar):
+(code)
+com/enterprisedt/net/ftp/test/*
+java/security/*
+javax/crypto/*
+org/apache/http/impl/auth/win/*
+org/apache/http/impl/client/WinHttpClients
+(end code)
+
+
+group: 3.2.0.0.3
+(<Версии::3.2.0.0.3 ( 2017-07-06)>)
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.2.0.0.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
+group: 3.2.0.0.1
+(<Версии::3.2.0.0.1 ( 2016-08-05)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.2.0.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
+group: 3.2.0
+(<Версии::3.2.0 ( 2014-11-24)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+$ make install INSTALL_VERSION=3.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+- выдача дополнительных прав на уровне Java;
+
+(code)
+
+$ make grant INSTALL_VERSION=3.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/??? TO_USERNAME=??? GRANT_SCRIPT=sys-privs.sql
+
+(end code)
+
+( в LOAD_USERID указывается привилегированный пользователь либо иной
+  пользователь, который может выдать права в Java, в TO_USERNAME указывается
+  пользователь, в схему которого было установлено обновление на первом шаге
+  установки)
+
+Замечания:
+- установку обновления нужно выполнять из локального каталога ( т.к. при
+  загрузке jar-файла по сетевому пути вероятно возникнет ошибка);
+- для получения данных по HTTP из Интернет необходимо после установки модуля
+  либо задать имя и пароль пользователя для авторизации на прокси-сервере (
+  настроечные параметры модуля "ProxyUsername" и "ProxyPassword" , можно задать
+  через RusFinanceInfo в разделе "Администрирование" -> "Справочник" ->
+  "Параметр") либо обеспечить открытие доступа к определенным хостам в Интернет
+  без авторизации на прокси-сервере и добавить адреса этих хостов к значению
+  параметра модуля "ProxySkipAddressList";
+
+
+
+group: 3.1.0
+(<Версии::3.1.0 ( 2013-08-23)>)
+
+Предварительные требования:
+
+- установка модуля Scheduler версии 4.0.0;
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+make install INSTALL_VERSION=3.1.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(end code)
+
+
+
+group: 3.0.3
+(<Версии::3.0.3 ( 2013-08-20)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+make install INSTALL_VERSION=3.0.3 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(end code)
+
+
+
+group: 3.0.2
+(<Версии::3.0.2 ( 2012-11-28)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+make install INSTALL_VERSION=3.0.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(end code)
+
+
+
+group: 3.0.0.1
+(<Версии::3.0.0.1 ( 2012-11-07)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+make install INSTALL_VERSION=3.0.0.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(end code)
+
+
+
+group: 3.0.0
+(<Версии::3.0.0 ( 2012-09-28)>)
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+make install INSTALL_VERSION=3.0.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+(end code)
+
+
+
+
 group: Первоначальная установка
 
 Предварительные требования: в БД должна быть настроена поддержка Java.
