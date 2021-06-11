@@ -2,20 +2,13 @@
 <map>
   <map_version>1.3</map_version>
   <name>AccessOperator</name>
-  <description>Модуль авторизации и разгарничения полномочий пользователей</description>
+  <description>Модуль авторизации и разграничения полномочий пользователей</description>
   <version>4.1.0</version>
   <prefix>op</prefix>
   <team>
-    <programmerDB>Сытин К.</programmerDB>
-    <programmerDB>Киргеев В.</programmerDB>
-    <programmerAPP>Гришаев А.</programmerAPP>
-    <analyst>Талышев В.</analyst>
+    <programmerAPP></programmerAPP>
+    <analyst></analyst>
   </team>
-  <request>
-    <msp>P040.T0609</msp>
-  </request>
-  <path>RusFinanceInfo/Module/AccessOperator</path>
-  <initialPath>RusFinanceInfo/Module/AccessOperator@20</initialPath>
   <db>
     <database>
       <instance>RFINFO</instance>
@@ -35,7 +28,7 @@
   </app>
   <batchSpec></batchSpec>
   <diagram>
-    <database>RusFinanceInfo/Operator</database>
+    <database></database>
     <process></process>
     <infrastructure></infrastructure>
   </diagram>
