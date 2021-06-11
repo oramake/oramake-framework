@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TextCreate
-SubTitle: Версия 1.3.1
+SubTitle: Версия 1.4.0
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -52,6 +52,7 @@ Group: О модуле  {
    File: Ошибки  (Doc/bugs.txt)
    File: Доработки  (Doc/todo.txt)
    File: Сборка  (Makefile)
+   File: Тестирование  (Doc/test.txt)
    File: Версии  (Doc/version.txt)
    }  # Group: О модуле
 
@@ -67,6 +68,16 @@ Group: Пакеты  {
 
       File: Спецификация  (no auto-title, pkg_TextCreateJava.pks)
       }  # Group: pkg_TextCreateJava
+
+   Group: Test  {
+
+      Group: pkg_TextCreateTest  {
+
+         File: Спецификация  (no auto-title, Test/pkg_TextCreateTest.pks)
+         File: Реализация  (no auto-title, Test/pkg_TextCreateTest.pkb)
+         }  # Group: pkg_TextCreateTest
+
+      }  # Group: Test
 
    }  # Group: Пакеты
 
@@ -87,6 +98,18 @@ Group: Скрипты  {
 
    Group: Install  {
 
+      Group: Config  {
+
+         File: after-action  (no auto-title, Install/Config/after-action.sql)
+         File: before-action  (no auto-title, Install/Config/before-action.sql)
+         File: compile_all_invalid  (no auto-title, Install/Config/compile_all_invalid.sql)
+         File: get-saved-value  (no auto-title, Install/Config/get-saved-value.sql)
+         File: resume-all-batch  (no auto-title, Install/Config/resume-all-batch.sql)
+         File: resume-job  (no auto-title, Install/Config/resume-job.sql)
+         File: stop-all-batch  (no auto-title, Install/Config/stop-all-batch.sql)
+         File: stop-job  (no auto-title, Install/Config/stop-job.sql)
+         }  # Group: Config
+
       Group: Grant  {
 
          Group: Last  {
@@ -98,9 +121,25 @@ Group: Скрипты  {
 
       }  # Group: Install
 
+   Group: Test  {
+
+      File: run  (no auto-title, Test/run.sql)
+      File: compare-method-performance  (no auto-title, Test/compare-method-performance.sql)
+      File: get-zip  (no auto-title, Test/get-zip.sql)
+      File: test-base  (no auto-title, Test/test-base.sql)
+      File: test-base64conversion  (no auto-title, Test/test-base64conversion.sql)
+      File: test-converrsion  (no auto-title, Test/test-converrsion.sql)
+      File: test-table  (no auto-title, Test/test-table.tab)
+      }  # Group: Test
+
    }  # Group: Скрипты
 
 Group: Индекс  {
+
+   Group: Объекты БД  {
+
+      Database Table Index: Таблицы
+      }  # Group: Объекты БД
 
    Group: Открытые объявления  {
 

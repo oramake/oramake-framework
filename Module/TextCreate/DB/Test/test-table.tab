@@ -1,0 +1,11 @@
+begin
+  execute immediate 'drop table t';
+exception when others then 
+  pkg_Common.OutputMessage( sqlerrm || ': OK');  
+end;
+/
+-- table: test-table
+-- Тестовая таблица для формирования clob
+create table t( a clob);
+insert into t select null from dual;
+commit;

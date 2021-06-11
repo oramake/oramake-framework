@@ -5,10 +5,27 @@ create or replace package pkg_TextCreate is
   SVN root: Oracle/Module/TextCreate
 */
 
+/* group: Константы */
+
+/* group: Общие */
+
 /* const: Module_Name
   Название модуля, к которому относится пакет.
 */
 Module_Name constant varchar2(30) := 'TextCreate';
+
+
+/* group: Кодировки */
+
+/* const: UTF8_CharsetName
+  Наименование кодировки UTF-8
+*/
+UTF8_CharsetName constant varchar2(30) := 'UTF8';
+
+/* const: Windows1251_CharsetName
+  Наименование кодировки Windows 1251
+*/
+Windows1251_CharsetName constant varchar2(30) := 'CL8MSWIN1251';
 
 
 /* group: Функции */
@@ -114,20 +131,24 @@ procedure append(
 );
 
 /* pfunc: getZip
-  Получает сформированный zip-архив
+  Получает сформированный zip-архив. С возможностью выбора кодировки.
 
   Параметры:
     filename                 - название файла внутри архива
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
 
   Возврат:
-    - blob с zip-архивом
+    destinationBlob          - blob с zip-архивом
 
   Замечание:
       Вызывает GetClob, т.е. предварительно выполняются все действия.
 
   ( <body::getZip>)
 */
-function getZip(filename varchar2)
+function getZip(
+  filename      varchar2
+  , charsetName varchar2 default null
+)
 return blob;
 
 
@@ -136,31 +157,75 @@ return blob;
 
 /* pfunc: convertToClob
   Преобразование BLOB ( большого объекта двоичных данных) в CLOB ( большого
-  объекта текстовых данных). Предполагается, что данные в кодировке БД.
+  объекта текстовых данных). С возможностью выбора кодировки.
 
   Параметры:
-  binaryData                  - двоичные данные для преобразования
+    binaryData               - двоичные данные для преобразования
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
+
+  Возврат:
+    resultText               - преобразованные текстовые данные
 
   ( <body::convertToClob>)
 */
 function convertToClob(
-  binaryData blob
+  binaryData    blob
+  , charsetName varchar2 default null
 )
 return clob;
 
 /* pfunc: convertToBlob
   Преобразование СLOB ( большого объекта текстовых данных) в BLOB ( большого
-  объекта двоичных данных). Предполагается, что данные в кодировке БД.
+  объекта двоичных данных). С возможностью выбора кодировки.
 
   Параметры:
-  textData                    - текстовые данные для преобразования
+    textData                 - текстовые данные для преобразования
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
+
+  Возврат:
+    resultBlob               - преобразованные двоичные данные
 
   ( <body::convertToBlob>)
 */
 function convertToBlob(
-  textData clob
+  textData      clob
+  , charsetName varchar2 default null
 )
 return blob;
+
+/* pfunc: base64Decode
+  Преобразование Base64 ( большого объекта текстовых данных в кодировке
+  Base64) в BLOB ( большого объекта двоичных данных).
+
+  Входные параметры:
+    textData                                  - Данные в Base64
+
+  Возврат:
+    resultBlob                                - Результирующий blob
+
+  ( <body::base64Decode>)
+*/
+function base64Decode(
+  textData      clob
+)
+return blob;
+
+/* pfunc: base64Encode
+  Преобразование BLOB ( большого объекта двоичных данных)
+  в Base64 ( большого объекта текстовых данных в кодировке Base64).
+
+  Входные параметры:
+    binaryData                                - Двоичные данные для преобразования
+
+  Возврат:
+    resultClob                                - Результирующий clob
+
+  ( <body::base64Encode>)
+*/
+function base64Encode(
+  binaryData    blob
+)
+return clob;
 
 end pkg_TextCreate;
 /

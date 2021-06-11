@@ -1,0 +1,465 @@
+create or replace type body txc_text_t is
+
+/*  txc_text_t
+  Создает объект текстовых данных 
+  ( <body::txc_text_t>).
+*/
+constructor function txc_text_t(
+  initMaxClobLength integer := null
+)
+return self as result
+is 
+begin
+  logger := lg_logger_t.GetLogger(
+    moduleName => pkg_TextCreate.Module_Name
+    , objectName => 'txc_text_t'
+  ); 
+  logger.Debug( 'txc_text_t: create');
+                                       -- Инициализируем логер
+  self.clobTable := txc_clob_table_t();  
+  self.maxClobLength := initMaxClobLength;
+  self.currentClobLength := null;
+  return; 
+end txc_text_t;
+
+/*  txc_text_t(destinationClob)
+  Создает объект текстовых данных 
+  ( <body::txc_text_t>).
+*/
+constructor function txc_text_t(
+  destinationClob in out nocopy clob
+  , initMaxClobLength integer := null
+)
+return self as result
+is 
+begin
+  self := txc_text_t( 
+    initMaxClobLength => initMaxClobLength
+  );
+  AddClob( newClob => destinationClob);
+  return;
+end txc_text_t;
+
+/* : AddClob 
+  Добавляет и инициализирует
+  новый элемент в коллекции <clobTable>
+*/ 
+member procedure AddClob
+is
+  usedClob clob;
+begin
+  dbms_lob.createtemporary( usedClob, true);
+  AddClob( usedClob);
+end AddClob;
+
+/* : AddClob(newClob)
+  Добавляет и инициализирует
+  новый элемент в коллекции <clobTable>
+  
+  Параметры:
+    newClob                    - clob, который используется
+                               для добавления вместо 
+                               временного
+*/ 
+member procedure AddClob(
+  newClob in out nocopy clob
+)   
+is
+                                       -- Максимальная длина строки
+  Max_Varchar2_Length integer := 32767;
+begin
+  logger.Debug( 'AddClob: start');
+                                       -- Закрываем предыдущий clob
+  CloseClob;
+                                       -- Вычисляем размер буфера
+                                       -- для добавления
+  maxBufferLength := 
+    Max_Varchar2_Length
+    - mod( Max_Varchar2_Length, dbms_lob.getChunkSize( newClob));
+  logger.Debug( 'maxBufferLength=' || to_char( maxBufferLength));  
+  if dbms_lob.isopen( newClob) = 0 then
+    dbms_lob.open( newClob, dbms_lob.lob_readwrite);
+  end if;  
+                                       -- Добавляем элемент 
+                                       -- в коллекцию                           
+  clobTable.extend;
+  clobTable( clobTable.last) := newClob;  
+  currentClobLength := 0;
+  logger.Debug( 'AddClob: end');
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка добавления нового clob в коллекцию'
+      )
+    , true
+  );
+end AddClob;
+
+/* : CloseClob
+  Закрывает последний clob в коллекции, если есть
+*/
+member procedure CloseClob
+is
+                                       -- Последний элемент массива
+  lastClob clob;
+begin
+                                       -- Закрываем предыдущий clob
+                                       -- если есть
+  if clobTable.last > 0 then
+    lastClob := clobTable( clobTable.last);
+    if dbms_lob.isopen( lastClob) = 1 then
+      logger.Debug( 'CloseClob');
+      dbms_lob.close( lastClob);
+    end if;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка закрытия clob'
+      )
+    , true
+  );  
+end CloseClob;  
+
+/* : Finalize( destClob)
+  Завершение формирования текста.
+  Вызывается также в <GetClob>, <GetClobTable>
+  
+  Параметры:
+    destClob                           - результирующий clob
+*/
+member procedure Finalize( 
+  destClob in out nocopy clob
+)
+is
+begin
+  self.Append( str => '', destClob => destClob);
+  if dbms_lob.isopen( destClob) = 1 then
+    dbms_lob.close( destClob);
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка завершения формирования текста'
+      )
+    , true
+  );  
+end Finalize; 
+
+/*  GetClob
+  Возвращает сформированный текст в виде clob ( <body::GetClob>)
+  
+  Возврат:
+  - текст в виде clob
+  
+  Замечание: 
+  -  Ecли превышена заданная максимальная длина
+  ( <maxClobLength>), то генерируется исключение.
+  По умолчанию длина ограничена только реализацией Oracle
+*/ 
+member function GetClob( self in out txc_text_t) 
+return clob
+is
+begin
+                                       -- Очищает буфер
+  self.Append( '');
+                                       -- Закрываем последний clob
+  CloseClob;
+  if clobTable.count = 1  then
+    return clobTable(1);
+  else
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Количество clob в коллекции не равно 1 ('
+        || 'clobTable.count=' || to_char( clobTable.count)
+        || ', maxClobLength=' || to_char( maxClobLength)
+        || ', currentClobLength=' || to_char( currentClobLength)
+        || ')'
+    );  
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка получения clob'
+      )
+    , true
+  );  
+end GetClob;
+
+/*  GetClobTable
+  Возвращает сформированный текст
+  в виде массива clob <txt_clob_table_t>.
+  
+  Возврат:
+  - текст в виде массива clob
+  ( <body::GetClobTable>)
+*/
+member function GetClobTable( self in out txc_text_t) 
+return txc_clob_table_t  
+is
+begin
+  self.Append( '');
+  CloseClob;
+  return
+    clobTable;
+end GetClobTable;
+  
+/*  Append
+  Добавляет строку в формируемый текст
+  
+  Параметры:
+    str                      - добавляемая строка
+*/ 
+member procedure Append( 
+  str varchar2
+)
+is
+begin
+  if Append(
+    str => str
+  ) = false 
+  then
+                                       -- Если длина clob превышена
+                                       -- добавляем новый элемент
+                                       -- и пробуем ещё раз
+    AddClob;                                       
+    if Append( 
+      str => str
+    ) = false 
+    then
+      raise_application_error(
+        pkg_Error.ProcessError
+        , logger.ErrorStack( 
+            'Не удалось добавить строку в новый clob' 
+          ) 
+      );
+    end if;
+  end if;  
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка процедуры добавления строки'
+      )  
+    , true
+  );  
+end Append;
+
+/*  Append(clob)
+  Добавляет строку в формируемый текст
+  ( <body::Append(clob)>)
+*/ 
+member procedure Append( 
+  str varchar2
+  , destClob in out nocopy clob
+)
+is
+begin
+  if Append(
+    str => str
+    , destClob => destClob
+  ) = false 
+  then
+    raise_application_error(
+      pkg_Error.ProcessError
+      , logger.ErrorStack( 
+          'Превышена длина clob'
+        )  
+    );
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка процедуры добавления строки'
+      )  
+    , true
+  );  
+end Append;
+
+/* Append
+  Добавляет строку в формируемый текст
+  если длина текущего clob 
+  не превышает <maxClobLength> и возращает true,
+  иначе возвращает false
+  
+  Параметры:
+    str                      - добавляемая строка
+  
+  Вовзрат:
+    - удалось ли добавить строку в коллекцию clob,
+  без превышения максимума <maxClobLength>  
+*/ 
+member function Append( 
+  self in out txc_text_t
+  , str varchar2
+)
+return boolean
+is
+begin
+  if currentClobLength is null then 
+    return false;
+  else
+    return self.Append( 
+      str => str
+      , destClob => clobTable( clobTable.last)
+    );
+  end if;  
+exception when others then   
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка функции добавления строки'
+      )
+    , true
+  );  
+end Append;
+
+/*  Append(func,clob)
+  Добавляет строку в формируемый текст
+  если длина текущего clob 
+  не превышает <maxClobLength> и возращает true,
+  иначе возвращает false
+  
+  Вовзрат:
+    - удалось ли добавить строку в коллекцию clob,
+  без превышения максимума <maxClobLength>  
+  ( <body::Append(func,clob)>)
+*/ 
+member function Append( 
+  self in out txc_text_t
+  , str varchar2
+  , destClob in out nocopy clob
+) return boolean
+is
+                                       -- Длина добавляемой строки
+  strLength integer := coalesce( length( str), 0);
+
+  procedure AppendBuffer
+  is
+                                       -- Текущая длина буфера
+    currentBufferLength integer := coalesce(  length( buffer), 0);
+                                       -- Количество циклов добавлений
+                                       -- в lob
+    cycleCount integer := 
+      trunc(( strLength + currentBufferLength)/ maxBufferLength); 
+  -- Буферизованное добавление строки  
+  begin
+    logger.Trace( 'AppendBuffer: start');
+    if maxBufferLength is null then
+      raise_application_error(
+        pkg_Error.ErrorStackInfo
+        , logger.ErrorStack( 'Внутренняя ошибка:' 
+            || ' не задана максимальная длина буфера'
+          )
+      );   
+    end if;
+    if str is null and currentBufferLength > 0 then
+                                       -- Если явно был вызван 
+      dbms_lob.writeappend( 
+        destClob
+        , currentBufferLength
+        , buffer 
+      );        
+      currentClobLength := currentClobLength + currentBufferLength;
+      buffer := null;
+    else    
+                                       -- Цикл по кускам buffer || str
+                                       -- размера maxBufferLength
+      for i in 1..cycleCount
+      loop
+                                       -- На первой итерации 
+                                       -- учитываем буфер
+        if i = 1 and currentBufferLength > 0 then
+          dbms_lob.writeappend( 
+            destClob
+            , maxBufferLength
+            , buffer 
+                || substr( str, 1, maxBufferLength - currentBufferLength)
+          );        
+        else 
+          dbms_lob.writeappend( 
+            destClob
+            , maxBufferLength
+            , substr( 
+                str
+                , maxBufferLength*(i-1) - currentBufferLength + 1, maxBufferLength
+              )
+          );         
+        end if;
+      end loop;  
+      currentClobLength := currentClobLength + maxBufferLength *cycleCount;
+      if cycleCount = 0 then
+        self.buffer := buffer || str;
+      else
+                                       -- В качестве буфера 
+                                       -- инициализируем часть строки 
+        buffer := substr( str
+          , cycleCount * maxBufferLength - currentBufferLength + 1
+        );
+      end if;
+    end if;
+    logger.Trace( 'AppendBuffer: end');
+  exception when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.ErrorStack(
+          'Ошибка добавления строки в буфер('
+          || 'currentBufferLength=' || to_char( currentBufferLength)
+          || ')'
+        )
+      , true
+    );
+  end AppendBuffer;
+
+begin
+  logger.Trace( 'Append function: start');
+                                       -- Если места в clob не хватает
+  if currentClobLength is null 
+  or strLength + currentClobLength > maxClobLength then
+    return false;
+  else
+    AppendBuffer;
+    return true;
+  end if;
+  logger.Trace( 'Append function: end');
+exception when others then   
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка функции добавления строки('
+        || 'maxClobLength=' || to_char( maxClobLength)
+        || ', currentClobLength=' || to_char( currentClobLength)
+        || ', strLength=' || to_char( strLength)
+        || ', str="' || substr( str, 1, 1000) || '"(...)'
+        || ')'
+      )
+    , true
+  );   
+end Append;
+
+/*  Clear 
+  Очищает сформированный текст
+*/ 
+member procedure Clear
+is
+begin
+  clobTable.delete;
+  buffer := null;
+  currentClobLength := null;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка очистки текста'
+      )
+    , true
+  );  
+end Clear;
+
+end;
+/

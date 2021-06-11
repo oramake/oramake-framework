@@ -1,0 +1,30 @@
+title: Тестирование
+
+Параметры установки:
+LOAD_USERID                   - основной пользователь для установки в БД
+                                ( формат: username/password@dbName)
+
+
+Тестовые скрипты:
+  - базовый тест <Test/test-base.sql>
+  - сравнение методов формирования clob <Test/compare-method-performance.sql>
+  - тест конвертации CLOB в BLOB, и обратно <Test/test-converrsion.sql>;
+  - создание zip-архива <Test/get-zip.sql>;
+
+Замечание:
+  - для выполнения скриптов, следует установить тестовые объекты ( см. ниже)
+
+group: Установка тестовых объектов
+
+(code)
+make install-test LOAD_USERID=???/???@???
+(end)
+
+Удаление тестовых объектов:
+
+(code)
+make uninstall-test LOAD_USERID=???/???@???
+(end)
+
+Для тестирования модуля используйте цель <test>;
+

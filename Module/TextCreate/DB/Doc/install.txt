@@ -12,25 +12,105 @@ LOAD_OPERATORID               - логин и пароль оператора, выполняющего установку
                                 ( формат: login/password)
 LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
+LOAD_USERID2                  - Пользователь для запуска/отключения батчей
+                                ( формат: username/password@dbName)
 
+
+
+
+group: 1.4.0
+(<Версии::1.4.0 ( 2019-08-16)>)
+
+Версия устанавливается в любую целевую БД.
+
+Порядок установки:
+
+- установка в основную схему ( устанавливается под основным пользователем,
+  который должен иметь права на выполнение опции *alter system*)
+> make install INSTALL_VERSION=1.4.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+
+group: 1.3.2
+(<Версии::1.3.2 ( 2018-05-04)>)
+
+Версия устанавливается в любую целевую БД.
+
+Порядок установки:
+
+- Отключение job, необходимое для корректной установки модуля, устанавливается под основным пользователем,
+  в схему которого установлен модуль *TextCreate* и пользователь имеет права на выполнение опции *alter system*
+> make install-before INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+- установка в основную схему
+> make install INSTALL_VERSION=1.3.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+- Включение job, отключенных командой выше, для корректной установки модуля
+> make install-after INSTALL_VERSION=Last LOAD_USERID2=???/???@??? LOAD_OPERATORID=???/???
+
+
+group: 1.3.1
+(<Версии::1.3.1 ( 2015-07-07)>)
+
+Версия устанавливается в любую целевую БД.
+
+Порядок установки:
+
+- установка в основную схему
+> make install INSTALL_VERSION=1.3.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+group: 1.3.0
+(<Версии::1.3.0 ( 2015-02-13)>)
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=1.3.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+group: 1.2.2
+(<Версии::1.2.2 ( 2014-04-09)>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+> make install INSTALL_VERSION=1.2.2 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+group: 1.2.1
+(<Версии::1.2.1 ( 2013-12-20)>)
+
+Команда для установки:
+
+> make install INSTALL_VERSION=1.2.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+
+group: 1.2.0
+(<Версии::1.2.0>)
+
+Последовательность установки:
+
+- изменения в основной схеме
+> make install LOAD_USERID=login/password@dbName LOAD_OPERATORID=operatorLogin/operatorPassword
+
+
+group: 1.1.0
+
+Последовательность установки:
+
+- выдача прав на объекты модуля всем пользователям и создание PUBLIC-синонима
+> make grant LOAD_USERID=login/password@dbName GRANT_SCRIPT=all-to-public
 
 
 group: Первоначальная установка
 
 Последовательность установки:
 
-- установка в основную схему;
-
-(code)
-
-$ make install INSTALL_VERSION=Last LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
-
-(end)
+- проливка в основную схему
+> make install INSTALL_VERSION=Last LOAD_USERID=login/password@dbName LOAD_OPERATORID=operatorLogin/operatorPassword
 
 - выдача прав на объекты модуля всем пользователям и создание PUBLIC-синонима;
-
-(code)
-
-$ make grant LOAD_USERID=???/???@??? GRANT_SCRIPT=all-to-public TO_USERNAME=public LOAD_OPERATORID=???/???
-
-(end)
+> make grant LOAD_USERID=login/password@dbName GRANT_SCRIPT=all-to-public TO_USERNAME=public LOAD_OPERATORID=operatorLogin/operatorPassword

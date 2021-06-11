@@ -465,6 +465,9 @@ installBeforeTarget =                          \
     $(installBeforeOmsAction)                  \
   )                                            \
   $(addsuffix .$(ru2),                        \
+    $(if $(INSTALL_VERSION), \
+      $(wildcard Install/Config/Local/before-action.sql)      \
+      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/before-action.sql),) \
     $(installBeforeOmsAction)                  \
   )                                            \
   $(addsuffix .$(ru3),                        \
@@ -669,6 +672,9 @@ installAfterTarget =                          \
   )                                            \
   $(addsuffix .$(ru2),                        \
     $(installAfterOmsAction)                  \
+    $(wildcard Install/Config/Local/after-action.sql)      \
+    $(if $(INSTALL_VERSION), \
+      $(wildcard Install/Config/$(INSTALL_VERSION)/Local/$(LOCAL_SCHEMA_DIR2)/after-action.sql),) \
   )                                            \
   $(addsuffix .$(ru3),                        \
     $(installAfterOmsAction)                  \

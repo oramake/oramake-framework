@@ -3,37 +3,38 @@
   <map_version>1.3</map_version>
   <name>TextCreate</name>
   <description>Модуль утилит для формирования текстовых данных</description>
-  <version>1.3.1</version>
+  <version>1.4.0</version>
   <prefix>tsc</prefix>
   <team>
-    <programmerDB></programmerDB>
-    <programmerAPP></programmerAPP>
-    <analyst></analyst>
+    <programmerDB>Лысёнок Е.</programmerDB>
+    <programmerDB>Адамчук И.Ю.</programmerDB>
+    <programmerAPP/>
+    <analyst>Полевой А.</analyst>
   </team>
   <request>
-    <msp></msp>
+    <msp/>
   </request>
-  <path></path>
+  <path/>
   <initialPath>Oracle/Module/TextCreate@451</initialPath>
   <db>
     <database>
-      <instance></instance>
-      <table></table>
+      <instance/>
+      <table/>
       <package>pkg_TextCreate</package>
     </database>
   </db>
   <app>
   </app>
-  <batchSpec></batchSpec>
+  <batchSpec/>
   <diagram>
-    <database></database>
-    <process></process>
-    <infrastructure></infrastructure>
+    <database/>
+    <process/>
+    <infrastructure/>
   </diagram>
   <depend>
     <module>Oracle/Module/Common</module>
     <module>Oracle/Module/Logging</module>
-    <link></link>
+    <link/>
   </depend>
-  <image></image>
+  <image/>
 </map>

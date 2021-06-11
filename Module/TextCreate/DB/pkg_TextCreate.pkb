@@ -205,25 +205,31 @@ end append;
 function getClob
 return clob
 is
+
+-- getClob
 begin
+
   Append( '');
+
   if dbms_lob.isopen( destinationClob ) = 1 then
     dbms_lob.close( destinationClob);
   end if;
-  return
-    destinationClob;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка получения clob ('
-        || 'currentClobLength=' || to_char( currentClobLength)
-        || ', maxBufferLength=' || to_char( maxBufferLength)
-        || ', buffer.length=' || to_char( length( buffer),0)
-        || ')'
-      )
-    , true
-  );
+
+  return destinationClob;
+
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.ErrorStack(
+          'Ошибка получения clob ( '
+          || 'currentClobLength=' || to_char( currentClobLength)
+          || ', maxBufferLength=' || to_char( maxBufferLength)
+          || ', buffer.length=' || to_char( length( buffer), 0)
+          || ')'
+        )
+      , true
+    );
 end getClob;
 
 /* proc: append ( destClob )
@@ -331,149 +337,283 @@ exception when others then
   );
 end append;
 
+
 /* func: getZip
-  Получает сформированный zip-архив
+  Получает сформированный zip-архив. С возможностью выбора кодировки.
 
   Параметры:
     filename                 - название файла внутри архива
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
 
   Возврат:
-    - blob с zip-архивом
+    destinationBlob          - blob с zip-архивом
 
   Замечание:
       Вызывает GetClob, т.е. предварительно выполняются все действия.
 */
-function getZip(filename varchar2)
+function getZip(
+  filename      varchar2
+  , charsetName varchar2 default null
+)
 return blob
 is
-  destinationBlob blob     := null;
-  sourceClob      clob     := null;
-  vin             integer  := 1;
-  vout            integer  := 1;
-  lang            integer  := dbms_lob.default_lang_ctx;
-  warning         integer  := dbms_lob.no_warning;
+
+  destinationBlob blob    := null;
+  sourceClob      clob    := null;
+
+-- getZip
 begin
+
   sourceClob := getClob();
+
   if sourceClob is not null then
     destinationBlob :=
       pkg_TextCreateJava.blobCompress(
-        sourceBlob  => convertToBlob( sourceClob)
+        sourceBlob       =>
+          convertToBlob(
+            sourceClob
+            , charsetName
+          )
         , sourceFileName => fileName
-      );
-   end if;
-  return destinationBlob;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.ErrorStack(
-        'Ошибка получения zip.'
       )
-    , true
-  );
-end getZip;
+    ;
+  end if;
 
+  return destinationBlob;
+
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.ErrorStack( 'Ошибка получения zip.')
+      , true
+    );
+end getZip;
 
 
 /* group: Преобразование текстовых данных */
 
 /* func: convertToClob
   Преобразование BLOB ( большого объекта двоичных данных) в CLOB ( большого
-  объекта текстовых данных). Предполагается, что данные в кодировке БД.
+  объекта текстовых данных). С возможностью выбора кодировки.
 
   Параметры:
-  binaryData                  - двоичные данные для преобразования
+    binaryData               - двоичные данные для преобразования
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
+
+  Возврат:
+    resultText               - преобразованные текстовые данные
 */
 function convertToClob(
-  binaryData blob
+  binaryData    blob
+  , charsetName varchar2 default null
 )
 return clob
 is
 
   -- Параметры convertToClob
-  destOffset integer := 1;
-  srcOffset integer := 1;
-  warning number;
-  langContext number := dbms_lob.default_lang_ctx;
-  resultText clob;
+  destOffset    integer := 1;
+  srcOffset     integer := 1;
+  warning       integer := dbms_lob.no_warning;
+  langContext   integer := dbms_lob.default_lang_ctx;
+  blobCharsetId integer :=
+    nvl(
+      nls_charset_id( charsetName)
+      , dbms_lob.default_csid
+    )
+  ;
+  resultText    clob;
 
 -- convertToClob
 begin
+
   dbms_lob.createTemporary( resultText, true);
+
   dbms_lob.convertToClob(
-    dest_lob => resultText
-    , src_blob => binaryData
-    , amount => dbms_lob.lobmaxsize
-    , dest_offset => destOffset
-    , src_offset => srcOffset
-    , blob_csid => dbms_lob.default_csid
+    dest_lob       => resultText
+    , src_blob     => binaryData
+    , amount       => dbms_lob.lobmaxsize
+    , dest_offset  => destOffset
+    , src_offset   => srcOffset
+    , blob_csid    => blobCharsetId
     , lang_context => langContext
-    , warning => warning
+    , warning      => warning
   );
+
   if warning = dbms_lob.warn_inconvertible_char then
     logger.warn( 'При конвертации обнаружились неопределённые символы ( заменены на "?")');
   end if;
-  return
-    resultText
-  ;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка преобразования BLOB в CLOB'
-      )
-    , true
-  );
+
+  return resultText;
+
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack( 'Ошибка преобразования BLOB в CLOB')
+      , true
+    );
 end convertToClob;
+
 
 /* func: convertToBlob
   Преобразование СLOB ( большого объекта текстовых данных) в BLOB ( большого
-  объекта двоичных данных). Предполагается, что данные в кодировке БД.
+  объекта двоичных данных). С возможностью выбора кодировки.
 
   Параметры:
-  textData                    - текстовые данные для преобразования
+    textData                 - текстовые данные для преобразования
+    charsetName              - наименование кодировки ( по-умолчанию кодировка БД)
+
+  Возврат:
+    resultBlob               - преобразованные двоичные данные
 */
 function convertToBlob(
-  textData clob
+  textData      clob
+  , charsetName varchar2 default null
 )
 return blob
 is
-    -- Параметры convertToBlob
-  destOffset integer := 1;
-  srcOffset integer := 1;
-  warning number;
-  langContext number := dbms_lob.default_lang_ctx;
+
+  -- Параметры convertToBlob
+  destOffset    integer := 1;
+  srcOffset     integer := 1;
+  warning       integer := dbms_lob.no_warning;
+  langContext   integer := dbms_lob.default_lang_ctx;
+  blobCharsetId integer :=
+    nvl(
+      nls_charset_id( charsetName)
+      , dbms_lob.default_csid
+    )
+  ;
 
   -- Результирующий бинарный объект
   resultBlob blob;
 
 -- convertToBlob
 begin
+
   dbms_lob.createTemporary( resultBlob, true);
+
   dbms_lob.convertToBlob(
-    dest_lob => resultBlob
-    , src_clob => textData
-    , amount => dbms_lob.lobmaxsize
-    , dest_offset => destOffset
-    , src_offset => srcOffset
-    , blob_csid => dbms_lob.default_csid
+    dest_lob       => resultBlob
+    , src_clob     => textData
+    , amount       => dbms_lob.lobmaxsize
+    , dest_offset  => destOffset
+    , src_offset   => srcOffset
+    , blob_csid    => blobCharsetId
     , lang_context => langContext
-    , warning => warning
+    , warning      => warning
   );
+
   if warning = dbms_lob.warn_inconvertible_char then
     logger.warn( 'При конвертации обнаружились неопределённые символы ( заменены на "?")');
   end if;
+
   return
     resultBlob
   ;
-exception when others then
-  raise_application_error(
-    pkg_Error.ErrorStackInfo
-    , logger.errorStack(
-        'Ошибка преобразования CLOB в BLOB'
-      )
-    , true
-  );
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.errorStack( 'Ошибка преобразования CLOB в BLOB')
+      , true
+    );
 end convertToBlob;
+
+/* func: base64Decode
+  Преобразование Base64 ( большого объекта текстовых данных в кодировке
+  Base64) в BLOB ( большого объекта двоичных данных).
+
+  Входные параметры:
+    textData                                  - Данные в Base64
+
+  Возврат:
+    resultBlob                                - Результирующий blob
+*/
+function base64Decode(
+  textData      clob
+)
+return blob
+is
+  offset        integer := 1;
+  bufferSize    binary_integer := 48;
+  bufferVarchar varchar2(48);
+  bufferRaw     raw(48);
+
+  -- Результирующий бинарный объект
+  resultBlob blob;
+
+-- base64Decode
+begin
+  dbms_lob.createTemporary( resultBlob, true);
+
+  for i in 1..ceil( coalesce( dbms_lob.getlength( textData), 0) / bufferSize) loop
+    dbms_lob.read( textData, bufferSize, offset, bufferVarchar);
+    bufferRaw := utl_encode.base64_decode( utl_raw.cast_to_raw( bufferVarchar));
+    dbms_lob.writeappend( resultBlob, utl_raw.length( bufferRaw), bufferRaw);
+    offset := offset + bufferSize;
+  end loop;
+
+  return resultBlob;
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.ErrorStack(
+          'Во время декодирования Base64 произошла ошибка.'
+        )
+      , true
+    );
+end base64Decode;
+
+/* func: base64Encode
+  Преобразование BLOB ( большого объекта двоичных данных)
+  в Base64 ( большого объекта текстовых данных в кодировке Base64).
+
+  Входные параметры:
+    binaryData                                - Двоичные данные для преобразования
+
+  Возврат:
+    resultClob                                - Результирующий clob
+*/
+function base64Encode(
+  binaryData    blob
+)
+return clob
+is
+  amount         integer := 23826;
+  offset         integer := 1;
+  bufferRaw      raw(32767);
+  bufferVarchar  varchar2(32767);
+  fileLength     integer := dbms_lob.getlength( binaryData);
+
+  -- Результирующий clob объект
+  resultClob clob;
+
+-- base64Encode
+begin
+  dbms_lob.createtemporary( resultClob, true);
+
+  while offset <= fileLength loop
+    dbms_lob.read( binaryData, amount, offset, bufferRaw);
+    offset := offset + amount;
+    bufferVarchar := utl_raw.cast_to_varchar2( utl_encode.base64_encode( bufferRaw));
+    bufferVarchar := replace( bufferVarchar, chr( 13) || chr( 10));
+    dbms_lob.writeappend( resultClob, length( bufferVarchar), bufferVarchar);
+  end loop;
+
+  return resultClob;
+exception
+  when others then
+    raise_application_error(
+      pkg_Error.ErrorStackInfo
+      , logger.ErrorStack(
+          'Во время шифрования в Base64 произошла ошибка.'
+        )
+      , true
+    );
+end base64Encode;
 
 end pkg_TextCreate;
 /
