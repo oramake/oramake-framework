@@ -14,7 +14,7 @@ subtype TMaxVarchar2 is varchar2(32767);
 /* itype: TName
    Тип для именования объектов (имена колонок, стилей, типов данных и т.п.)
 */
-subtype TName is varchar2(30);
+subtype TName is varchar2(128);
 
 /* itype: TColDocumentColumn
    Тип для формирования списка колонок в документе

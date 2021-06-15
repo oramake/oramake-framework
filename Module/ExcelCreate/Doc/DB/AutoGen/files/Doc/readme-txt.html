@@ -82,12 +82,12 @@ end loop;</pre></blockquote><h4 class=CHeading>9) Перенос сформированных строк н
 
 pkg_ExcelCreate.prepareDocument();
 
-update test_table t
+update srp_report_task t
    set t.file_body =
          pkg_ExcelCreate.getArchivedDocument(
-           fileName =&gt; '123.xls'
+           fileName =&gt; task.task_type_name || '.xls'
            )
- where t.id = 1
+ where t.task_id = taskId
 ;
 
 ...</pre></blockquote></div></div></div>

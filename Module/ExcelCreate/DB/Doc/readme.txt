@@ -278,12 +278,12 @@ pkg_ExcelCreate.addWorksheet(
 
 pkg_ExcelCreate.prepareDocument();
 
-update test_table t
+update srp_report_task t
    set t.file_body =
          pkg_ExcelCreate.getArchivedDocument(
-           fileName => '123.xls'
+           fileName => task.task_type_name || '.xls'
            )
- where t.id = 1
+ where t.task_id = taskId
 ;
 
 ...

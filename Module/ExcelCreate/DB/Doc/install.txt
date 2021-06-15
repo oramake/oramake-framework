@@ -14,6 +14,16 @@ LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
 
 
+group: 1.0.11
+
+Update command:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.11 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
 group: 1.0.10
 
 Update command:
@@ -27,10 +37,138 @@ $ make install INSTALL_VERSION=1.0.10 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORI
 
 group: Первоначальная установка
 
-Предварительные требования:
-  - установка версии не ниже *1.2.2* модуля *TextCreate*
+Версия устанавливается в любую целевую БД.
 
-Команды для установки:
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.9 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.8
+(<Версии::1.0.8 ( 2014-04-09 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Предварительные требования:
+  - установка версии *1.2.2* модуля *TextCreate* (_Oracle/Module/TextCreate_)
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.8 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.7
+(<Версии::1.0.7 ( 2014-04-03 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+(code)
+
+$ make grant INSTALL_VERSION=Last LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/??? TO_USERNAME=public
+
+(end)
+
+
+
+group: 1.0.6
+(<Версии::1.0.6 ( 2014-01-31 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.6 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.5
+(<Версии::1.0.5 ( 2013-08-06 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.5 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.4
+(<Версии::1.0.4 ( 2013-05-24 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.4 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.3
+(<Версии::1.0.3 ( 2013-03-04 )>)
+
+Версия устанавливается в любую целевую БД.
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.3 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.2
+(<Версии::1.0.2 ( 2012-03-26 )>)
+
+Команда для установки:
+
+(code)
+
+$ make install INSTALL_VERSION=1.0.2 LOAD_USERID=???/???@<DbTns> LOAD_OPERATORID=???/???
+
+(end)
+
+
+
+group: 1.0.1
+(<Версии::1.0.1 ( 2012-02-13 )>)
+
+Установка полностью аналогична установке версии 1.0.0 (см. <1.0.0>)
+
+
+
+group: 1.0.0
+(<Версии::1.0.0 ( 2011-11-22 )>)
+
+Предварительные требования:
+  - установка версии *1.2.0* модуля *TextCreate* (_Oracle/Module/TextCreate_)
+
+Команда для установки:
 
 (code)
 
