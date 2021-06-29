@@ -47,16 +47,17 @@ declare
         from
           user_scheduler_jobs jb
         where
-          jb.job_name = a.job_name
+          jb.job_name = a.job_name_str
         )
         as job_exists_flag
+      , '"' || a.job_name_str || '"' as job_name
     from
       (
       select
         uc.table_name
         , uc.constraint_name
-        , moduleName || ':install:validate constraint: ' || uc.constraint_name
-          as job_name
+        , moduleName || '_install_validate_' || uc.constraint_name
+          as job_name_str
       from
         user_constraints uc
       where
@@ -102,7 +103,7 @@ begin
   for rec in curConstraint loop
     if rec.job_exists_flag = 0 then
       dbms_scheduler.create_job(
-        job_name      => '"' || rec.job_name || '"'
+        job_name      => rec.job_name
         , job_type    => 'PLSQL_BLOCK'
         , job_action  =>
             replace( replace( replace(
