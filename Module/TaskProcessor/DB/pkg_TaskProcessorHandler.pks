@@ -65,8 +65,10 @@ procedure checkExecCommandParsed(
                                 ( только для заданий обработки файла)
   resultCode                  - код результата ( модификация, по умолчанию
                                 <pkg_TaskProcessorBase.True_ResultCode>)
-  execResult                  - результат выполнения ( модификация, по умолчанию
-                                null)
+  execResult                  - результат выполнения в виде числа
+                                ( модификация, по умолчанию null)
+  execResultString            - результат выполнения в виде строки
+                                ( модификация, по умолчанию null)
   errorCode                   - код ошибки ( модификация, по умолчанию null)
   errorMessage                - текст ошибки ( модификация, по умолчанию null)
 

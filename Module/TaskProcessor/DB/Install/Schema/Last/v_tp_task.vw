@@ -22,6 +22,7 @@ select
     as duration_second
   , ts.result_code
   , ts.exec_result
+  , ts.exec_result_string
   , ts.error_code
   , ts.error_message
   , ts.manage_date
@@ -71,7 +72,10 @@ comment on column v_tp_task.result_code is
   'Код результата выполнения'
 ;
 comment on column v_tp_task.exec_result is
-  'Результат выполнения, возвращенный прикладным обработчиком'
+  'Результат выполнения в виде числа, возвращенный прикладным обработчиком'
+;
+comment on column v_tp_task.exec_result_string is
+  'Результат выполнения в виде строки, возвращенный прикладным обработчиком'
 ;
 comment on column v_tp_task.error_code is
   'Код ошибки выполнения'

@@ -113,6 +113,7 @@ declare
   nextStartDate tp_task.next_start_date%type := null;
   resultCode tp_task.result_code%type := pkg_TaskProcessorBase.True_ResultCode;
   execResult tp_task.exec_result%type := null;
+  execResultString tp_task.exec_result_string%type := null;
   errorCode tp_task.error_code%type := null;
   errorMessage tp_task.error_message%type := null;'
   || case when isProcessFile then
@@ -133,6 +134,7 @@ begin'
 '  :nextStartDate := nextStartDate;
   :resultCode := resultCode;
   :execResult := execResult;
+  :execResultString := execResultString;
   :errorCode := errorCode;
   :errorMessage := errorMessage;'
   ) || '
@@ -211,8 +213,10 @@ end checkExecCommandParsed;
                                 ( только для заданий обработки файла)
   resultCode                  - код результата ( модификация, по умолчанию
                                 <pkg_TaskProcessorBase.True_ResultCode>)
-  execResult                  - результат выполнения ( модификация, по умолчанию
-                                null)
+  execResult                  - результат выполнения в виде числа
+                                ( модификация, по умолчанию null)
+  execResultString            - результат выполнения в виде строки
+                                ( модификация, по умолчанию null)
   errorCode                   - код ошибки ( модификация, по умолчанию null)
   errorMessage                - текст ошибки ( модификация, по умолчанию null)
 
@@ -593,6 +597,7 @@ is
     , finishDate date
     , resultCode varchar2
     , execResult integer
+    , execResultString varchar2
     , errorCode integer
     , errorMessage varchar2
   )
@@ -610,6 +615,7 @@ is
     task.finish_date              := finishDate;
     task.result_code              := resultCode;
     task.exec_result              := execResult;
+    task.exec_result_string       := execResultString;
     task.error_code               := errorCode;
     task.error_message            := errorMessage;
 
@@ -626,6 +632,7 @@ is
       , ts.finish_date            = task.finish_date
       , ts.result_code            = task.result_code
       , ts.exec_result            = task.exec_result
+      , ts.exec_result_string     = task.exec_result_string
       , ts.error_code             = task.error_code
       , ts.error_message          = task.error_message
     where
@@ -843,6 +850,7 @@ is
         , out task.next_start_date
         , out task.result_code
         , out task.exec_result
+        , out task.exec_result_string
         , out task.error_code
         , out task.error_message
       ;
@@ -853,6 +861,7 @@ is
       task.next_start_date := null;
       task.result_code     := pkg_TaskProcessorBase.Error_ResultCode;
       task.exec_result     := null;
+      task.exec_result_string := null;
       task.error_code      := SQLCODE;
       task.error_message   := substr( pkg_Logging.getErrorStack(), 1, 4000);
     end;
@@ -877,6 +886,9 @@ is
             'Выполнение задания завершено ('
             || ' resultCode="' || task.result_code || '"'
             || ', execResult=' || task.exec_result
+            || case when task.exec_result_string is not null then
+                ', execResultString="' || task.exec_result_string || '"'
+              end
             || ').'
         , messageLabel          => task.result_code
         , messageValue          => task.exec_result
@@ -926,6 +938,7 @@ is
       , finishDate            => null
       , resultCode            => null
       , execResult            => null
+      , execResultString      => null
       , errorCode             => null
       , errorMessage          => null
     );
@@ -962,6 +975,7 @@ is
       , finishDate            => sysdate
       , resultCode            => task.result_code
       , execResult            => task.exec_result
+      , execResultString      => task.exec_result_string
       , errorCode             => task.error_code
       , errorMessage          => task.error_message
     );
@@ -1005,6 +1019,7 @@ is
       , finishDate            => sysdate
       , resultCode            => pkg_TaskProcessorBase.Abort_ResultCode
       , execResult            => null
+      , execResultString      => null
       , errorCode             => null
       , errorMessage          => null
     );

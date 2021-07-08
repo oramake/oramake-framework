@@ -1055,6 +1055,7 @@ end deleteTask;
   result_code                 - код результата обработки
   result_name                 - название результата обработки
   exec_result                 - числовой результат обработки
+  exec_result_string          - строковый результат обработки
   error_message               - сообщение об ошибке при обработке
   file_date_ins               - дата добавления файла
   file_operator_id            - Id оператора, добавившего файл
@@ -1100,6 +1101,7 @@ from
     , ts.result_code
     , rs.result_name_rus as result_name
     , ts.exec_result
+    , ts.exec_result_string
     , ts.error_message
     , t.date_ins as file_date_ins
     , t.operator_id as file_operator_id

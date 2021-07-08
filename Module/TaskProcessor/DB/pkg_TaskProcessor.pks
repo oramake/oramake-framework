@@ -364,6 +364,7 @@ procedure deleteTask(
   result_code                 - код результата обработки
   result_name                 - название результата обработки
   exec_result                 - числовой результат обработки
+  exec_result_string          - строковый результат обработки
   error_message               - сообщение об ошибке при обработке
   file_date_ins               - дата добавления файла
   file_operator_id            - Id оператора, добавившего файл
