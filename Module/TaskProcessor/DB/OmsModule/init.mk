@@ -8,7 +8,7 @@
 
 # build var: OMS_VERSION
 # Версия OMS-файлов, входящих в состав модуля.
-OMS_VERSION=2.2.0
+OMS_VERSION=2.4.0
 
 
 
@@ -23,6 +23,10 @@ empty :=
 # build var: comma
 # Запятая.
 comma := ,
+
+# build var: sharp
+# Знак решетки (#).
+sharp := \#
 
 # build var: space
 # Пробел.
@@ -42,14 +46,47 @@ tab := $(empty)	$(empty)
 # group: Общие параметры
 #
 
+# build var: OMS_INSTALL_PREFIX
+# Общий префикс для инсталляционных каталогов.
+ifeq ($(OMS_INSTALL_PREFIX),)
+  binDir := $(dir $(shell echo $$(type -p oms)))
+  override OMS_INSTALL_PREFIX := $(if $(filter %/bin/,$(binDir)) \
+    ,$(patsubst %/bin/,%,$(binDir)),/usr/local)
+  undefine binDir
+endif
+export OMS_INSTALL_PREFIX
+
 # build var: OMS_INSTALL_SHARE_DIR
 # Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_SHARE_DIR = /usr/local/share/oms
+ifeq ($(OMS_INSTALL_SHARE_DIR),)
+  override OMS_INSTALL_SHARE_DIR = $(OMS_INSTALL_PREFIX)/share/oms
+endif
+export OMS_INSTALL_SHARE_DIR
 
 # build var: OMS_INSTALL_CONFIG_DIR
 # Путь к каталогу с настройками OMS.
-export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
+ifeq ($(OMS_INSTALL_CONFIG_DIR),)
+  override OMS_INSTALL_CONFIG_DIR = $(OMS_INSTALL_PREFIX)/etc/oms
+endif
+export OMS_INSTALL_CONFIG_DIR
 
+# build var isWindows
+# Флаг выполнения в операционной системе Windows (1 да, 0 нет)
+isWindows = 0
+ifeq ($(OS),Windows_NT)
+  isWindows = 1
+endif
+
+
+
+# build var: exportOmsInstallDir
+# Текст команды export для экспорта в shell путей к каталогам, в которые
+# установлен OMS (для использования в функции $(shell ...) перед вызовом
+# OMS-скриптов).
+exportOmsInstallDir = export \
+  OMS_INSTALL_PREFIX="$(OMS_INSTALL_PREFIX)" \
+  OMS_INSTALL_CONFIG_DIR="$(OMS_INSTALL_CONFIG_DIR)" \
+  OMS_INSTALL_SHARE_DIR="$(OMS_INSTALL_SHARE_DIR)"
 
 
 
@@ -64,7 +101,7 @@ export OMS_INSTALL_CONFIG_DIR = /usr/local/etc/oms
 #
 getRevisionFromKeyword = $(strip $(shell \
     keyString='$(1)'; \
-    echo "$${keyString:12:$${\#keyString}-13}" \
+    echo "$${keyString:12:$${$(sharp)keyString}-13}" \
   ))
 
 
@@ -469,10 +506,10 @@ getProductionDbName = $(call \
 getProductionDbNameInternal = $(strip $(if $(1), \
   $(call nullif,$(call translateWord,$(1), \
       $(cspGetProductionDbName_TestDbList) \
-				$(cspGetProductionDbName_AliasDbList) \
+        $(cspGetProductionDbName_AliasDbList) \
         $(call lower,$(getProductionDbName_AllProdList)), \
       $(cspGetProductionDbName_ProdDbList) \
-      	$(cspGetProductionDbName_MainDbList) \
+        $(cspGetProductionDbName_MainDbList) \
         $(getProductionDbName_AllProdList) \
     ),$(1)) \
   ,))
