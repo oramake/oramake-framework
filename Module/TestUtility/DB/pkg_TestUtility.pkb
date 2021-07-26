@@ -487,6 +487,12 @@ begin
 end;'
   ;
   if pkg_TestUtility.parallelExecution then
+    -- Проверка синтаксиса
+    execute immediate
+      'declare job_name varchar2(100) := :a; begin return;' || jobSqlText || 'end;'
+    using
+      createTestJob.jobName
+    ;
     createOracleJob();
   else
     logger.debug('Parralel tests packages not started: executing in the same session');
