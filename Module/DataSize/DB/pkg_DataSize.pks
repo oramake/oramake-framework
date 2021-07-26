@@ -11,9 +11,14 @@ create or replace package pkg_DataSize is
 Module_Name constant varchar2(30) := 'DataSize';
 
 
+
+/* group: Функции */
+
 /* pfunc: GetNextHeaderId
   Получение следующего id заголовка
   (<body::GetNextHeaderId>)
+
+  ( <body::GetNextHeaderId>)
 */
 function GetNextHeaderId
 return integer;
@@ -21,6 +26,8 @@ return integer;
 /* pfunc: GetNextSegmentId
   Получение следующего id для <dsz_segment>
   (<body::GetNextSegmentId>)
+
+  ( <body::GetNextSegmentId>)
 */
 function GetNextSegmentId
 return integer;
@@ -28,22 +35,51 @@ return integer;
 /* pproc: SaveDataSize
   Сохранение текущего состояния dba_segment
   в таблицы <dsz_header>, <dsz_segment>.
-  (<body::SaveDataSize>)
+
+  ( <body::SaveDataSize>)
 */
 procedure SaveDataSize;
 
-/* pproc:GetMaxHeaderDate
-  Возвращает дату последнего добавленного заголовка
-  (<body::GetLastHeaderDate>)
+/* pfunc: GetMaxHeaderDate
+  Возвращает дату последнего добавленного
+  заголовка
+
+  Возврат:
+    - дата последнего добавленного
+  заголовка
+
+  ( <body::GetMaxHeaderDate>)
 */
 function GetMaxHeaderDate
+return date;
+
+/* pfunc: GetHeaderDate
+  Возвращает дату заголовка
+
+  Параметры:
+    headerId - id заголовка
+
+  Возврат:
+    - дата заголовка
+
+  ( <body::GetHeaderDate>)
+*/
+function GetHeaderDate( headerId integer )
 return date;
 
 /* pfunc: CreateReport(header)
   Создание отчёта по изменению
   использованного пространства по
   dba_segments.
-  (<body::CreateReport(header)>)
+
+  Параметры:
+    fromHeaderId - id начального заголовка для сравнения
+    toHeaderId - id конечного заголовка для сравнения
+
+  Возврат:
+    - текст отчёта
+
+  ( <body::CreateReport(header)>)
 */
 function CreateReport(
   fromHeaderId integer
@@ -51,11 +87,56 @@ function CreateReport(
 )
 return clob;
 
+/* pfunc: getReport
+  Создание отчёта по изменению использованного пространства по dba_segments.
+
+  Параметры:
+    dateFrom                   - дата начала для отчёта. Если не задана,
+  используется последний созданный заголовок.
+    recipient                  - получатель ( список ) письма с отчётом
+  По-умолчанию используется pkg_Common.GetMailAddressDestination
+    dataTo                     - дата окончания для отчёта. По-умолчанию
+  берётся текущая дата.
+    saveDataSize               - сохранять ли текущее значение. По-умолчанию
+  сохранять
+
+  Примечания:
+    - в качестве заголовков для сравнения берутся заголовки
+  с максимальной датой до заданной. Например, в качестве первого
+  заголовка берётся заголовок с максимальной датой до dateFrom.
+
+  Возврат:
+  - отчёт в виде clob;
+
+  ( <body::getReport>)
+*/
+function getReport(
+  dateFrom date := null
+  , recipient varchar2 := null
+  , dateTo date := null
+  , toSaveDataSize boolean := null
+)
+return clob;
+
 /* pproc: CreateReport
-  Создание отчёта по изменению
-  использованного пространства по
-  dba_segments.
-  (<body::CreateReport>)
+  Создание отчёта по изменению использованного пространства по dba_segments.
+
+  Параметры:
+    dateFrom                   - дата начала для отчёта. Если не задана,
+  используется последний созданный заголовок.
+    recipient                  - получатель ( список ) письма с отчётом
+  По-умолчанию используется pkg_Common.GetMailAddressDestination
+    dataTo                     - дата окончания для отчёта. По-умолчанию
+  берётся текущая дата.
+    saveDataSize               - сохранять ли текущее значение. По-умолчанию
+  сохранять
+
+  Примечания:
+    - в качестве заголовков для сравнения берутся заголовки
+  с максимальной датой до заданной. Например, в качестве первого
+  заголовка берётся заголовок с максимальной датой до dateFrom.
+
+  ( <body::CreateReport>)
 */
 procedure CreateReport(
   dateFrom date := null

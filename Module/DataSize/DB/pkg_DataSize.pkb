@@ -9,7 +9,11 @@ create or replace package body pkg_DataSize is
     , objectName => 'pkg_DataSize'
   );
 
-/* pfunc: GetNextHeaderId
+
+
+/* group: Функции */
+
+/* func: GetNextHeaderId
   Получение следующего id заголовка
   (<body::GetNextHeaderId>)
 */
@@ -29,7 +33,7 @@ begin
   return tmpHeaderId;
 end GetNextHeaderId;
 
-/* pfunc: GetNextSegmentId
+/* func: GetNextSegmentId
   Получение следующего id для <dsz_segment>
   (<body::GetNextSegmentId>)
 */
@@ -60,14 +64,14 @@ is
 
   procedure CreateHeader
   is
-  -- Создание заголовка
+  -- Создание заголовк
   -- и запись id в переменную headerId
   begin
     insert into dsz_header(
       header_id
     )
     values(
-      GetNextHeaderId
+      pkg_DataSize.getNextHeaderId()
     )
     returning
       header_id
@@ -558,10 +562,8 @@ exception when others then
   );
 end CreateReport;
 
-/* proc: CreateReport
-  Создание отчёта по изменению
-  использованного пространства по
-  dba_segments.
+/* func: getReport
+  Создание отчёта по изменению использованного пространства по dba_segments.
 
   Параметры:
     dateFrom                   - дата начала для отчёта. Если не задана,
@@ -577,20 +579,18 @@ end CreateReport;
     - в качестве заголовков для сравнения берутся заголовки
   с максимальной датой до заданной. Например, в качестве первого
   заголовка берётся заголовок с максимальной датой до dateFrom.
+
+  Возврат:
+  - отчёт в виде clob;
 */
-procedure CreateReport(
+function getReport(
   dateFrom date := null
   , recipient varchar2 := null
   , dateTo date := null
   , toSaveDataSize boolean := null
 )
+return clob
 is
-                                       -- Получатель письма
-  usedRecipient varchar2( 100 ) :=
-    coalesce(
-      recipient
-      , pkg_Common.GetMailAddressDestination
-    );
                                        -- Используемые даты для отчёта
   usedDateTo date;
   usedDateFrom date;
@@ -633,8 +633,8 @@ is
 
 begin
                                        -- Сохраняем заголовок
-  usedDateFrom := coalesce( dateFrom, GetMaxHeaderDate );
-  if coalesce( CreateReport.toSaveDataSize, true ) then
+  usedDateFrom := coalesce(dateFrom, GetMaxHeaderDate );
+  if coalesce(getReport.toSaveDataSize, true ) then
     SaveDataSize;
   end if;
                                        -- Актуализируем дату
@@ -657,7 +657,65 @@ begin
   );
   fromHeaderId := GetHeaderId ( forDate => usedDateFrom );
   toHeaderId := GetHeaderId ( forDate => usedDateTo );
-                                       -- Отправляем письмо
+  return
+    createReport(
+      fromHeaderId => fromHeaderId
+      , toheaderId => toHeaderId
+    );
+  pkg_TaskHandler.SetAction( '' );
+exception when others then
+  pkg_TaskHandler.SetAction( '' );
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.ErrorStack(
+        'Ошибка создания отчёта изменений dba_segments'
+     )
+    , true
+  );
+end getReport;
+
+/* proc: CreateReport
+  Создание отчёта по изменению использованного пространства по dba_segments.
+
+  Параметры:
+    dateFrom                   - дата начала для отчёта. Если не задана,
+  используется последний созданный заголовок.
+    recipient                  - получатель ( список ) письма с отчётом
+  По-умолчанию используется pkg_Common.GetMailAddressDestination
+    dataTo                     - дата окончания для отчёта. По-умолчанию
+  берётся текущая дата.
+    saveDataSize               - сохранять ли текущее значение. По-умолчанию
+  сохранять
+
+  Примечания:
+    - в качестве заголовков для сравнения берутся заголовки
+  с максимальной датой до заданной. Например, в качестве первого
+  заголовка берётся заголовок с максимальной датой до dateFrom.
+*/
+procedure CreateReport(
+  dateFrom date := null
+  , recipient varchar2 := null
+  , dateTo date := null
+  , toSaveDataSize boolean := null
+)
+is
+  -- Получатель письма
+  usedRecipient varchar2( 100 ) :=
+    coalesce(
+      recipient
+      , pkg_Common.GetMailAddressDestination
+    );
+
+  -- Текст отчёта
+  reportText clob;
+
+begin
+  reportText := getReport(
+    dateFrom => dateFrom
+  , dateTo => dateTo
+  , toSaveDataSize => toSaveDataSize
+  );
+  -- Отправляем письмо
   logger.Debug(
     'message_id = '
     || to_char(
@@ -665,10 +723,7 @@ begin
     sender => pkg_Common.GetMailAddressSource
     , recipient => usedRecipient
     , subject => 'Отчёт по использованному пространству на диске'
-    , messageText => CreateReport(
-        fromHeaderId => fromHeaderId
-        , toheaderId => toHeaderId
-      )
+    , messageText => reportText
   )
        )
   );
