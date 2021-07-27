@@ -311,19 +311,23 @@ order by
     select
       coalesce( e2.segment_id, e1.segment_id ) as segment_id
       , coalesce( e2.owner, e1.owner ) as owner
-                                       -- Все системные сегменты
-                                       -- приравниваем к одному
+      -- Все системные сегменты приравниваем к одному
       ,
       case when
-        coalesce( e2.segment_name, e1.segment_name ) like '_SYS%'
+        coalesce(e2.segment_name, e1.segment_name) like '_SYS%'
       then
         '_SYS'
       else
-        coalesce( e2.segment_name, e1.segment_name )
+        coalesce(e2.segment_name, e1.segment_name)
       end as segment_name
       , coalesce( e2.tablespace_name, e2.tablespace_name ) as tablespace_name
       , coalesce( e2.partition_name, e1.partition_name ) as partition_name
-      , coalesce( e2.segment_type, e1.segment_type ) as segment_type
+      , coalesce(e2.segment_type, e1.segment_type)
+        ||
+        case when l.table_name is not null then
+          ',' || l.owner || '.' || l.table_name || '.' || l.column_name
+        end
+        as segment_type
       , e1.bytes as old_bytes
       , e2.bytes as new_bytes
       , coalesce( e2.bytes, 0 )  - coalesce( e1.bytes, 0 ) as delta
@@ -353,7 +357,12 @@ order by
       and
       ( e2.partition_name = e1.partition_name
         or coalesce(  e2.partition_name, e1.partition_name ) is null
-      );
+      )
+    left join
+      dba_lobs l
+    on
+      l.segment_name = coalesce(e2.segment_name, e1.segment_name)
+    ;
   exception when others then
     raise_application_error(
       pkg_Error.ErrorStackInfo

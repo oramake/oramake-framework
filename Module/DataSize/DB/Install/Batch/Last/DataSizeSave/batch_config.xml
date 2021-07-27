@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch_config short_name="DataSizeSave">
+  <retry_count>4</retry_count>
+  <retry_interval>30</retry_interval>
+  <schedule>
+    <name>every day at 00.28 </name>
+    <interval type="hh24">
+      <value>0</value>
+    </interval>
+    <interval type="mi">
+      <value>28</value>
+    </interval>
+  </schedule>
+</batch_config>
