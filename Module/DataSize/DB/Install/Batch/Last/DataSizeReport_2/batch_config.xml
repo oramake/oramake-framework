@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1251"?>
+<batch_config short_name="DataSizeReport_2">
+  <retry_count>4</retry_count>
+  <retry_interval>30</retry_interval>
+  <schedule>
+    <name>every Sunday at 03.28</name>
+    <interval type="dw">
+      <value>7</value>
+    </interval>
+    <interval type="hh24">
+      <value>3</value>
+    </interval>
+    <interval type="mi">
+      <value>28</value>
+    </interval>
+  </schedule>
+  <option short_name="DayCount" type="number" name="Количество дней от текущей даты">
+    <value>7</value>
+  </option>
+  <option short_name="Recipient" type="string" name="Список получателей отчета">
+    <value></value>
+  </option>
+</batch_config>
