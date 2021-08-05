@@ -6,8 +6,8 @@ create table dsz_segment(
   segment_id 			integer not null,
   header_id			      integer not null,
   owner           		varchar2(30),
-  segment_name    		varchar2(81),
-  partition_name  		varchar2(30),
+  segment_name    		varchar2(1000),
+  partition_name  		varchar2(1000),
   segment_type    		varchar2(18),
   tablespace_name 		varchar2(30),
   header_file     		number,
@@ -25,17 +25,17 @@ create table dsz_segment(
   relative_fno    		number,
   buffer_pool     		varchar2(7),
   date_ins				date default sysdate not null,
-  constraint dsz_segment_pk primary key( 
+  constraint dsz_segment_pk primary key(
     segment_id
   )
-  using index tablespace &indexTablespace   
+  using index tablespace &indexTablespace
 )
 /
 -- index: dsz_segment_ix_header
 -- Индекс для доступа по заголовку
 create index dsz_segment_ix_header on dsz_segment(
   header_id
-  , owner 
+  , owner
   , segment_name
   , tablespace_name
   , partition_name
