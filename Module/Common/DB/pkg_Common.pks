@@ -91,7 +91,28 @@ return number;
 function getIpAddress
 return varchar2;
 
+/* pfunc: toNumber
+  Преобразование строки в число с учетом десятичного разделителя сессии.
+  
+ Параметры:
+   valueString  - строка, содеражщая число
+   decimalChar  - десятичный разделитель, используемый в строке
+                  если не указан - берется из строки '.,'
 
+  Возврат:
+    преобразованное число
+    
+  Замечания:
+  - расчитывается, что будет передан один символ в качестве разделителя,
+    не допускается передача цифр в параметр decimalChar;
+   
+  ( <body::toNumber>)
+*/
+function toNumber
+  ( valueString varchar2
+  , decimalChar varchar2 := null
+  )
+return number;
 
 /* group: Нотификация по e-mail */
 

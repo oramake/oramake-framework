@@ -30,6 +30,17 @@ TO_USERNAME                   - имя пользователя, которому выдаются права
 > make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
+group: 3.2.0
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=3.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end)
 
 group: 3.1.1
 

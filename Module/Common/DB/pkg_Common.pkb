@@ -312,7 +312,59 @@ exception when others then
   );
 end getIpAddress;
 
+/* pfunc: toNumber
+  ѕреобразование строки в число с учетом дес€тичного разделител€ сессии.
+  
+ ѕараметры:
+   valueString  - строка, содеражща€ число
+   decimalChar  - дес€тичный разделитель, используемый в строке
+                  если не указан - беретс€ из строки '.,'
 
+  ¬озврат:
+    преобразованное число
+    
+  «амечани€:
+  - расчитываетс€, что будет передан один символ в качестве разделител€,
+    не допускаетс€ передача цифр в параметр decimalChar;
+   
+*/
+function toNumber
+  ( valueString varchar2
+  , decimalChar varchar2 := null
+  )
+return number
+is 
+ --преобразованное значение разделител€ дл€ использовани€ в регул€рном выражении
+   decimalCharNew      varchar2(2 char);
+ --toNumber
+begin
+  if length(decimalChar) > 1 or regexp_like(decimalChar,'\d')  then
+  
+      raise_application_error(
+      pkg_Error.IllegalArgument,
+        'Ќеверное значение дес€тичного разделител€ ('
+        || ' decimalChar="' || decimalChar || '"'
+        || ').'
+    , true
+    );
+  
+  end if;
+  
+  decimalCharNew      := replace(decimalChar,'.','\.');
+  
+  return to_number(regexp_replace(valueString, coalesce(decimalCharNew,'\.|,'), to_char(0, 'fmd')));
+  
+exception 
+  when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo,
+        'ќшибка при конвертации строки в число ('
+        || ' valueString="' || valueString || '"'
+        || ', decimalChar="' || decimalChar || '"'
+        || ').'
+    , true
+  );
+end toNumber;
 
 /* group: Ќотификаци€ по e-mail */
 
