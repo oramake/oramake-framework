@@ -2,14 +2,11 @@
 
 # Ниже указана версия OMS-шаблона, на основе которого был создан файл.
 #
-# SVN Version Information:
+# OMS Version Information:
 # OMS root: Oracle/Module/OraMakeSystem
-# $Revision: 2133 $
-# $LastChangedDate:: 2014-07-09 10:34:20 +0400 #$
+# $Revision:: 26901522 $
+# $Date:: 2021-02-23 14:42:16 +0000 #$
 #
-
-# Версия OMS-шаблона
-OMS_VERSION=1.7.3
 
 
 
@@ -133,10 +130,6 @@ endif
 #
 export OMS_DEBUG_LEVEL = 0
 
-# build var: OMS_INSTALL_DATA_DIR
-# Путь к каталогу с установленными файлами OMS.
-export OMS_INSTALL_DATA_DIR = /usr/local/share/oms
-
 # build var: OMS_SAVE_FILE_INSTALL_INFO
 # Флаг сохранения информации в БД об устанавливаемых файлах.
 # Информация сохраняется в случае загрузки файлов скриптом <oms-load> с помощью
@@ -188,7 +181,8 @@ ifeq ($(MODULE_VERSION),)
       ifeq ($(call compareVersion,$(INSTALL_VERSION),$(moduleVersion)),1)
 
         moduleVersionNew := $(shell \
-          oms-module set-version --directory .. \
+          $(exportOmsInstallDir); \
+          oms set-version --directory .. \
             --used-only --quiet "$(INSTALL_VERSION)" \
           && echo \
             "OMS: module version changed using INSTALL_VERSION: $(INSTALL_VERSION) ( please, run \"make gendoc\")" >&2 \
@@ -256,7 +250,10 @@ export OMS_PROCESS_START_TIME := $(firstword $(processStartTimeId))
 
 export OMS_PLSQL_WARNINGS := $(PLSQL_WARNINGS)
 
-getSvnInfo := $(shell oms-module --directory .. show-svn-info --quiet)
+getSvnInfo := $(shell \
+  $(exportOmsInstallDir); \
+  oms show-svn-info --directory .. --quiet)
+
 export OMS_SVN_FILE_PATH := $(wordlist 2,999,$(getSvnInfo))
 export OMS_SVN_VERSION_INFO := $(firstword $(getSvnInfo))
 
@@ -268,7 +265,7 @@ export OMS_ACTION_GOALS = $(MAKECMDGOALS)
 # Устанавливает номер текущей версии модуля.
 
 set-version.oms:
-	@oms-module set-version --directory .. "$(MODULE_VERSION)"
+	@oms set-version --directory .. "$(MODULE_VERSION)"
 
 
 
@@ -277,20 +274,14 @@ set-version.oms:
 #
 
 # Номер ревизии файла в OMS
-omsRevisionValue    := \$$Revision:: 2133                     $$
+omsRevisionKeyword    := \$$Revision:: 26901522 $$
 
-omsRevision          := $(strip $(shell           \
-  omsRevisionValue='$(omsRevisionValue)';         \
-  echo "$${omsRevisionValue:12:25}"               \
-  ))
+omsRevision := $(call getRevisionFromKeyword,$(omsRevisionKeyword))
 
 # Дата последнего изменения файла в OMS
-omsChangeDateValue  := \$$Date:: 2014-07-09 10:34:20 +0400 #$$
+omsChangeDateKeyword  := \$$Date:: 2021-02-23 14:42:16 +0000 #$$
 
-omsChangeDate      := $(strip $(shell             \
-  omsChangeDateValue='$(omsChangeDateValue)';     \
-  echo "$${omsChangeDateValue:8:11}"              \
-  ))
+omsChangeDate := $(call getDateFromKeyword,$(omsChangeDateKeyword))
 
 
 
@@ -353,7 +344,7 @@ gendoc-menu.oms:
 #
 
 # Каталог со стандартными SQL-скриптами
-omsSqlScriptDir  = $(OMS_INSTALL_DATA_DIR)/SqlScript
+omsSqlScriptDir  = $(OMS_INSTALL_SHARE_DIR)/SqlScript
 
 # Каталог с файлами, создаваемыми при загрузке в БД.
 loadDir           = $(omsModuleDir)/Load
@@ -493,7 +484,7 @@ checkFileMaskScript = \
 				isNeedProcess=1; break; ;; \
 			esac; \
 		done; \
-  fi;
+	fi;
 
 # Исключает из списка файлы, которые подпадают под маски игнорируемых файлов из
 # переменной SKIP_FILE_MASK и не подпадают под маски FILE_MASK в случае
@@ -513,13 +504,19 @@ filterOutFileMask = \
    done; \
   )),$1)
 
+# Получает флаг выгрузки / деинсталляции файла из $@ (1, либо пусто)
+getRevertFlag = $(if $(filter $(<F).revert.%,$(@F)),1,)
+
 # Выделяет пользователя ( без пароля) при загрузке из $@ и $<.
 # Может вызываться только из правил.
 # Предполагает, что зависимость $< представляет собой загружаемый в БД скрипт
 # ( пример: Do/run.sql), а цель $@ представляет собой тот же скрипт с
 # добавлением через точку имени пользователя и БД ( userName@dbName) и
 # произвольного расширения ( пример: Do/run.sql.userName@dbName.load).
-getLoadUser  = $(patsubst $(<F).%,%,$(basename $(@F)))
+# Также возможно использование после скрипта расширения .revert, указывающего
+# на деинсталляцию файла вместо установки
+# ( пример: Java/test.jar.revert.userName@dbName.run)
+getLoadUser  = $(patsubst $(<F)$(if $(call getRevertFlag),.revert).%,%,$(basename $(@F)))
 
 # Выделяет пользователя с паролем при загрузке из loadUserIdList с
 # использованием функции getLoadUser.
@@ -550,6 +547,7 @@ runFunction  = \
 		echo "$$loadFile: -> $$loadUser ..."; \
 		oms-load \
 			--file-module-part "$(firstword $(call getFileModulePart,$<) $(getLoadModulePart))" \
+			$(if $(call getRevertFlag),--revert) \
 			$(if $(call isMakeFlag,i),--force) \
 			$(if $(FILE_MASK),--file-mask "$(subst $(comma),$(space),$(strip $(FILE_MASK)))") \
 			$(if $(SKIP_FILE_MASK),--skip-file-mask "$(subst $(comma),$(space),$(strip $(SKIP_FILE_MASK)))") \
@@ -560,6 +558,7 @@ runFunction  = \
 			$(if $(subst 0,,$(UPDATE_SCHEDULE)), --update-schedule,) \
 			--userid "$${loadUserId:-$$loadUser}" \
 			--operatorid "$$loadOperatorId" \
+			$(if $(COMMON_SCHEMA),--common-schema $(COMMON_SCHEMA)) \
 			--log-path-prefix "$(loadLogDir)/$$loadUser" \
 			"$$loadFile" $(getLoadArgument); \
 		} $(copyToLoadLogCmd); \
@@ -633,7 +632,7 @@ checkLoadFileMaskScript = \
 filterLoadFileTarget = \
   $(if $(strip $(LOAD_FILE_MASK) $(SKIP_FILE_MASK) $(FILE_MASK)),$(strip $(shell \
     loadFileTargetList="$(strip $(1))"; \
-	  $(call checkFileTargetScript, $(checkLoadFileMaskScript)) \
+    $(call checkFileTargetScript, $(checkLoadFileMaskScript)) \
   )),$1)
 
 # Проверяет присутствие загружаемого файла в списке загрузки для цели load.
@@ -671,7 +670,7 @@ loadFunction  =  \
 #
 # Переменные:
 # loadFile                    - имя проверяемого файла предполагается, что
-#								директория файла совпадает с именем батча
+#                               директория файла совпадает с именем батча
 # isNeedLoad                  - результат проверки ( 1 если подпадает под
 #                               маску, иначе 0)
 #
@@ -763,6 +762,7 @@ loadOperatorId    := $(LOAD_OPERATORID)
 ifneq ($(loadOperatorId),)
   ifeq ($(patsubst %/,%@,$(loadOperatorId)),$(subst /,@,$(loadOperatorId)))
     loadOperatorId    := $(shell            \
+      $(exportOmsInstallDir);               \
       oms-connect-info                      \
         --operatorid "$(loadOperatorId)"    \
         --out-operatorid                    \
@@ -781,6 +781,7 @@ loadOperatorName  := $(firstword $(subst /, ,$(loadOperatorId)))
 # (2)     - имя БД по умолчанию ( используется, если в (1) БД не указана)
 #
 getConnectInfo = $(shell                \
+  $(exportOmsInstallDir);               \
   oms-connect-info                      \
     --userid '$(1)'                     \
     --default-db '$(2)'                 \
@@ -807,6 +808,9 @@ ifneq ($(LOAD_DB)$(LOAD_USERID),)
   ru                  := $(loadUser)$(runExt)
   lu                  := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -829,6 +833,9 @@ ifneq ($(LOAD_DB2)$(LOAD_USERID2),)
   loadUserIdList      += $(loadUserId)
   ru2                 := $(loadUser)$(runExt)
   lu2                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -853,6 +860,9 @@ ifneq ($(LOAD_DB3)$(LOAD_USERID3),)
   ru3                 := $(loadUser)$(runExt)
   lu3                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -875,6 +885,9 @@ ifneq ($(LOAD_DB4)$(LOAD_USERID4),)
   loadUserIdList      += $(loadUserId)
   ru4                 := $(loadUser)$(runExt)
   lu4                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -899,6 +912,9 @@ ifneq ($(LOAD_DB5)$(LOAD_USERID5),)
   ru5                 := $(loadUser)$(runExt)
   lu5                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -921,6 +937,9 @@ ifneq ($(LOAD_DB6)$(LOAD_USERID6),)
   loadUserIdList      += $(loadUserId)
   ru6                 := $(loadUser)$(runExt)
   lu6                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -945,6 +964,9 @@ ifneq ($(LOAD_DB7)$(LOAD_USERID7),)
   ru7                 := $(loadUser)$(runExt)
   lu7                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -968,6 +990,9 @@ ifneq ($(LOAD_DB8)$(LOAD_USERID8),)
   ru8                 := $(loadUser)$(runExt)
   lu8                 := $(loadUser)$(loadExt)
 
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
+
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
 
@@ -990,6 +1015,9 @@ ifneq ($(LOAD_DB9)$(LOAD_USERID9),)
   loadUserIdList      += $(loadUserId)
   ru9                 := $(loadUser)$(runExt)
   lu9                 := $(loadUser)$(loadExt)
+
+  %.revert.$(loadUser)$(runExt): %
+		@$(runFunction)
 
   %.$(loadUser)$(runExt): %
 		@$(runFunction)
@@ -1054,12 +1082,19 @@ endif
 ifeq ($(loadFileLog),)
   toLoadLogCmd     =
   copyToLoadLogCmd =
-else
-  toLoadLogCmd     = 2>&1 | unix2dos >> "$(loadFileLog)"
+else ifeq ($(isWindows),1)
+  toLoadLogCmd     = 2>&1 | sed -e "s/\x0D//g" -e "s/$$/\x0D/" >> "$(loadFileLog)"
   copyToLoadLogCmd = \
 		2>&1 | gawk '{ \
 			print; fflush(); \
 			printf( "%s\r\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
+			}'
+else
+  toLoadLogCmd     = 2>&1 >> "$(loadFileLog)"
+  copyToLoadLogCmd = \
+		2>&1 | gawk '{ \
+			print; fflush(); \
+			printf( "%s\n", $$0) >> "$(loadFileLog)"; fflush( "$(loadFileLog)"); \
 			}'
 endif
 
@@ -1090,7 +1125,7 @@ load-start-log.oms:
 				&& usedOmsRevision=$${omsLoadVersion#*File revision*: } \
 				&& usedOmsRevision=$${usedOmsRevision%% *} \
 				&& usedOmsChangeDate=$${omsLoadVersion#*File change date*: } \
-				&& usedOmsChangeDate=$${usedOmsChangeDate:0:10} \
+				&& usedOmsChangeDate=$${usedOmsChangeDate:0:25} \
 				&& echo "installed OMS version : $$usedOmsVersion ( rev. $$usedOmsRevision, $$usedOmsChangeDate)" \
 				; } \
 			&& echo "" \
@@ -1103,8 +1138,11 @@ load-start-log.oms:
 			   echo "MODULE_VERSION      : $(MODULE_VERSION)"; \
 			   fi \
 			&& echo "INSTALL_VERSION     : $(INSTALL_VERSION)" \
-			&& echo "loadUserList        :$(loadUserList)" \
+			&& echo "loadUserList        : $(loadUserList)" \
 			&& echo "loadOperator        : $(loadOperatorName)" \
+			&& if [[ -n "$(COMMON_SCHEMA)" ]]; then \
+			   echo "COMMON_SCHEMA       : $(COMMON_SCHEMA)"; \
+			   fi \
 			&& if [[ -n "$(grantGoals)" ]]; then \
 			   echo "GRANT_SCRIPT        : $(GRANT_SCRIPT)" \
 			&& echo "TO_USERNAME         : $(TO_USERNAME)"; \
@@ -1142,8 +1180,11 @@ load-start-log.oms:
 			&& if [[ "$(OMS_DEBUG_LEVEL)" != "0" ]]; then \
 			   echo "OMS_DEBUG_LEVEL     : $(OMS_DEBUG_LEVEL)"; \
 			   fi \
-			&& if [[ "$(OMS_INSTALL_DATA_DIR)" != "/usr/local/share/oms" ]]; then \
-			   echo "OMS_INSTALL_DATA_DIR: $(OMS_INSTALL_DATA_DIR)"; \
+			&& if [[ "$(OMS_INSTALL_SHARE_DIR)" != "/usr/local/share/oms" ]]; then \
+			   echo "OMS_INSTALL_SHARE_DIR: $(OMS_INSTALL_SHARE_DIR)"; \
+			   fi \
+			&& if [[ "$(OMS_INSTALL_CONFIG_DIR)" != "/usr/local/etc/oms" ]]; then \
+			   echo "OMS_INSTALL_CONFIG_DIR: $(OMS_INSTALL_CONFIG_DIR)"; \
 			   fi \
 			&& if [[ "$(OMS_SAVE_FILE_INSTALL_INFO)" != "1" ]]; then \
 			   echo "OMS_SAVE_FILE_INSTALL_INFO: $(OMS_SAVE_FILE_INSTALL_INFO)"; \
@@ -1215,6 +1256,98 @@ load-clean.oms:
 # group: Установка модуля в БД
 #
 
+
+
+#
+# Проверка возможности установки в БД версии модуля и сохранение информации об
+# установке версии (подцели %-save-info, %-save-info.oms).
+#
+
+# Возвращает 1 если проверки устанавливаемой версии модуля должна выполняться
+# при текущем запуске make.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+
+# Не выполняем проверки возможности установки версии если не была указана
+# устанавливаемая версия модуля ( кроме цели grant, для которой в этом случае
+# по-умолчанию используется Last)
+#
+isCheckVersionNeed = $(if $(call filterGoals, \
+  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
+    $(1) $(1).oms $(1)-before $(1)-before.oms) \
+),1)
+
+# Возвращает имя цели для сохранения информации о действии по установке в
+# случае, если оно должно выполняться при текущем запуске make.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+
+# Не выполняем сохранение информации о действиях по основым целям ( например,
+# install и uninstall, кроме grant) в случае, если не была указана
+# устанавливаемая версия модуля ( для цели grant в этом случае по-умолчанию
+# используется Last)
+#
+getSaveInfoGoal = $(if $(call filterGoals, \
+  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
+    $(1) $(1).oms) \
+  $(1)-save-info $(1)-save-info.oms \
+),$(1)-save-info.oms)
+
+# Возвращает выполняемые файлы для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+getCheckVersionTarget = \
+  $(addprefix oms-check-$(1)-version.sql, \
+    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
+
+getSaveInfoTarget = \
+  $(addprefix oms-save-$(1)-info.sql, \
+    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
+
+# Возвращает реально выполняемые файлы для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+#
+getCheckVersionTargetReal = \
+  $(sort $(filter-out %.-$(runExt),$(call getCheckVersionTarget,$(1))))
+
+getSaveInfoTargetReal = \
+  $(sort $(filter-out %.-$(runExt),$(call getSaveInfoTarget,$(1))))
+
+
+# Аргументы выполнения файлов для проверки/сохранения версии модуля.
+#
+# Параметры:
+# (1)                         - имя основной цели
+# (2)                         - дополнительные аргументы ( передаются скрипту
+#                               начиная со второй позиции)
+#
+getCheckVersionArgumentList = \
+  $(foreach f,$(call getCheckVersionTargetReal,$(1)), \
+    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
+        $(call wordPosition,$(f),$(call getCheckVersionTarget,$(1))) \
+      ))"$(if $(2), $(2))))
+
+getSaveInfoArgumentList = \
+  $(foreach f,$(call getSaveInfoTargetReal,$(1)), \
+    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
+        $(call wordPosition,$(f),$(call getSaveInfoTarget,$(1))) \
+      ))"$(if $(2), $(2))))
+
+
+
+# Передача параметров для проверки устанавливаемой версии
+ifneq ($(call isCheckVersionNeed,install),)
+  loadArgumentList += $(call getCheckVersionArgumentList,install)
+endif
+
 # Настройка передачи параметров скрипту проверки блокировок oms-check-load.sql.
 # Файлы для проверки берутся из installCheckLockTarget ( за исключением файлов,
 # не загружаемых из-за FILE_MASK, LOAD_FILE_MASK и SKIP_FILE_MASK) и
@@ -1270,6 +1403,8 @@ installBeforeTargetReal = $(strip \
 
 install-before.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,install), \
+    $(call getCheckVersionTargetReal,install)) \
   $(installBeforeTargetReal)
 
 
@@ -1331,73 +1466,16 @@ install-after.oms: \
 
 
 
-#
-# Сохранение в БД информации о действиях по установке ( подцели %-save-info)
-#
-
-# Возвращает имя цели для сохранения информации о действии по установке в
-# случае, если оно должно выполняться при текущем запуске make.
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-
-# Не выполняем сохранение информации о действиях по основым целям ( например,
-# install и uninstall, кроме grant) в случае, если не была указана
-# устанавливаемая версия модуля ( для цели grant в этом случае по-умолчанию
-# используется Last)
-#
-getSaveInfoGoal = $(if $(call filterGoals, \
-  $(if $(if $(call nullif,grant,$(1)),$(OMS_MODULE_INSTALL_VERSION),1), \
-    $(1) $(1).oms) \
-  $(1)-save-info $(1)-save-info.oms \
-),$(1)-save-info.oms)
-
-# Возвращает выполняемые файлы для цели %-save-info.
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-getSaveInfoTarget = \
-  $(addprefix oms-save-$(1)-info.sql, \
-    $(addprefix .,$(addsuffix $(runExt),$(loadUserList))))
-
-# Возвращает реально выполняемые файлы для цели %-save-info
-#
-# Параметры:
-# (1)                         - имя основной цели
-#
-getSaveInfoTargetReal = \
-  $(sort $(filter-out %.-$(runExt),$(call getSaveInfoTarget,$(1))))
-
-# Аргументы выполнения файлов для цели %-save-info
-#
-# Параметры:
-# (1)                         - имя основной цели
-# (2)                         - дополнительные аргументы ( передаются скрипту
-#                               начиная со второй позиции)
-#
-getSaveInfoArgumentList = \
-  $(foreach f,$(call getSaveInfoTargetReal,$(1)), \
-    $(call getArgumentDefine,$(f),"$(subst $(space),:,$(strip \
-        $(call wordPosition,$(f),$(call getSaveInfoTarget,$(1))) \
-      ))"$(if $(2), $(2))))
-
-
-
 # target: install-save-info.oms
 # Сохраняет в БД информацию об установке модуля.
-
-ifneq ($(call getSaveInfoGoal,install),)
-
-  loadArgumentList += \
-    $(call getSaveInfoArgumentList,install)
-
-endif
 
 install-save-info.oms: \
   load-start-log.oms \
   $(call getSaveInfoTargetReal,install)
+
+ifneq ($(call getSaveInfoGoal,install),)
+  loadArgumentList += $(call getSaveInfoArgumentList,install)
+endif
 
 
 
@@ -1441,6 +1519,12 @@ test.oms: \
 #
 # group: Отмена установки модуля в БД
 #
+
+ifneq ($(call isCheckVersionNeed,uninstall),)
+  loadArgumentList += \
+    $(call getCheckVersionArgumentList,uninstall,"$(UNINSTALL_RESULT_VERSION)")
+endif
+
 
 # Реально загружаемые файлы при отмене установки.
 uninstallLoadTargetReal := \
@@ -1502,6 +1586,8 @@ uninstallBeforeTargetReal = $(strip \
 
 uninstall-before.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,uninstall), \
+    $(call getCheckVersionTargetReal,uninstall)) \
   $(uninstallBeforeTargetReal)
 
 
@@ -1542,6 +1628,14 @@ uninstall-after.oms: \
 
 
 
+# target: uninstall-clean.oms
+# Удаляет временные файлы, созданные при загрузке в БД.
+
+uninstall-clean.oms:
+	-@rm -rf $(loadDir)/State/*
+
+
+
 # target: uninstall-save-info.oms
 # Сохраняет в БД информацию об отмене установки модуля.
 
@@ -1568,6 +1662,7 @@ uninstall.oms:                            \
     uninstall-load.oms                    \
     uninstall-data.oms                    \
     uninstall-after.oms                   \
+    uninstall-clean.oms                   \
     $(call getSaveInfoGoal,uninstall)     \
 
 	@echo -e "\nuninstall: finished" $(toLoadLogCmd)
@@ -1619,12 +1714,19 @@ grant-save-info.oms: \
   $(call getSaveInfoTargetReal,grant)
 
 
+ifneq ($(call isCheckVersionNeed,grant),)
+  loadArgumentList += \
+    $(call getCheckVersionArgumentList,grant,"$(call getInstallVersion,$(grantVersion))" "$(call getIsFullInstall,$(grantVersion))" "$(grantScript)" "$(TO_USERNAME)")
+endif
+
 
 # target: grant.oms
 # Выдает права пользователю БД.
 
 grant.oms: \
   load-start-log.oms \
+  $(if $(call isCheckVersionNeed,grant), \
+    $(call getCheckVersionTargetReal,grant)) \
   grant-exec.oms \
   $(call getSaveInfoGoal,grant) \
 
