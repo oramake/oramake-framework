@@ -53,7 +53,7 @@ Group: О модуле  {
    File: Установка  (Doc/install.txt)
    File: Ошибки  (Doc/bugs.txt)
    File: Доработки  (Doc/todo.txt)
-   File: РЎР±РѕСЂРєР°  (Makefile)
+   File: Сборка  (Makefile)
    File: Версии  (Doc/version.txt)
    }  # Group: О модуле
 
