@@ -52,11 +52,11 @@ begin
   return tmpSegmentId;
 end GetNextSegmentId;
 
-/* proc: SaveDataSize
+/* proc: saveDataSize
   Сохранение текущего состояния dba_segment
   в таблицы <dsz_header>, <dsz_segment>.
 */
-procedure SaveDataSize
+procedure saveDataSize
 is
                                        -- Id заголовка
 
@@ -152,7 +152,7 @@ begin
   logger.Info('Создан заголовок ( header_id='
     || to_char( headerId ) || ')'
   );
-  SaveDbaSegments;
+  saveDbaSegments();
   pkg_TaskHandler.CleanTask;
 exception when others then
   pkg_TaskHandler.CleanTask;
@@ -161,7 +161,7 @@ exception when others then
     , logger.ErrorStack( 'Ошибка сохранения dba_segments' )
     , true
   );
-end SaveDataSize;
+end saveDataSize;
 
 /* func: GetMaxHeaderDate
   Возвращает дату последнего добавленного

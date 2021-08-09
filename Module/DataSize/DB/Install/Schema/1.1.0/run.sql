@@ -9,3 +9,4 @@
 @oms-set-indexTablespace.sql
 
 @oms-run dsz_segment.sql
+@oms-run dsz_segment_group_tmp.sql
