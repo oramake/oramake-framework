@@ -683,7 +683,7 @@ exception when others then
   );
 end getReport;
 
-/* proc: CreateReport
+/* proc: createReport
   Создание отчёта по изменению использованного пространства по dba_segments.
 
   Параметры:
@@ -701,7 +701,7 @@ end getReport;
   с максимальной датой до заданной. Например, в качестве первого
   заголовка берётся заголовок с максимальной датой до dateFrom.
 */
-procedure CreateReport(
+procedure createReport(
   dateFrom date := null
   , recipient varchar2 := null
   , dateTo date := null
@@ -746,7 +746,7 @@ exception when others then
      )
     , true
   );
-end CreateReport;
+end createReport;
 
 end pkg_DataSize;
 /

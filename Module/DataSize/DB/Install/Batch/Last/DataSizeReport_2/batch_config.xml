@@ -3,9 +3,9 @@
   <retry_count>4</retry_count>
   <retry_interval>30</retry_interval>
   <schedule>
-    <name>every Sunday at 03.28</name>
-    <interval type="dw">
-      <value>7</value>
+    <name>every first day of month</name>
+    <interval type="dd">
+      <value>1</value>
     </interval>
     <interval type="hh24">
       <value>3</value>
@@ -15,7 +15,7 @@
     </interval>
   </schedule>
   <option short_name="DayCount" type="number" name="Количество дней от текущей даты">
-    <value>7</value>
+    <value>30</value>
   </option>
   <option short_name="Recipient" type="string" name="Список получателей отчета">
     <value></value>

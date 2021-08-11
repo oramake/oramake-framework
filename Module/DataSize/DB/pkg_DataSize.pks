@@ -32,13 +32,13 @@ return integer;
 function GetNextSegmentId
 return integer;
 
-/* pproc: SaveDataSize
+/* pproc: saveDataSize
   Сохранение текущего состояния dba_segment
   в таблицы <dsz_header>, <dsz_segment>.
 
-  ( <body::SaveDataSize>)
+  ( <body::saveDataSize>)
 */
-procedure SaveDataSize;
+procedure saveDataSize;
 
 /* pfunc: GetMaxHeaderDate
   Возвращает дату последнего добавленного
@@ -118,7 +118,7 @@ function getReport(
 )
 return clob;
 
-/* pproc: CreateReport
+/* pproc: createReport
   Создание отчёта по изменению использованного пространства по dba_segments.
 
   Параметры:
@@ -136,9 +136,9 @@ return clob;
   с максимальной датой до заданной. Например, в качестве первого
   заголовка берётся заголовок с максимальной датой до dateFrom.
 
-  ( <body::CreateReport>)
+  ( <body::createReport>)
 */
-procedure CreateReport(
+procedure createReport(
   dateFrom date := null
   , recipient varchar2 := null
   , dateTo date := null
