@@ -2716,6 +2716,19 @@ is
 
     opt.setString(
       optionShortName     => 'InfoString'
+      , prodValueFlag     => 0
+        -- должно работать без учета регистра
+      , instanceName      => 'nOne'
+      , stringValue       => 'Test info (4-1)'
+    );
+    checkOptionValue(
+      optionShortName     => 'InfoString'
+      , instanceName      => 'none'
+      , testStringValue   => 'Test info (4-1)'
+    );
+
+    opt.setString(
+      optionShortName     => 'InfoString'
       , prodValueFlag     => isProduction
       , instanceName      => pkg_Common.getInstanceName()
       , stringValue         => 'Usage info (4)'

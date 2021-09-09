@@ -3,7 +3,7 @@
   <map_version>1.3</map_version>
   <name>Option</name>
   <description>Обеспечивает хранение и изменение настроечных параметров прикладных модулей</description>
-  <version>3.5.0</version>
+  <version>3.5.1</version>
   <prefix>opt</prefix>
   <team>
     <programmerDB></programmerDB>

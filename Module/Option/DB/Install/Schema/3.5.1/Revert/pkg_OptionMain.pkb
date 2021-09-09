@@ -2965,7 +2965,7 @@ begin
     and (
       instanceName is null
         and d.instance_name is null
-      or d.instance_name = upper( instanceName)
+      or d.instance_name = instanceName
     )
     and (
       usedOperatorId is null

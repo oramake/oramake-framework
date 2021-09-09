@@ -52,6 +52,21 @@ make install-after LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
 
 
 
+group: 3.5.1
+
+Порядок установки:
+
+- установка в основную схему
+
+> make install INSTALL_VERSION=3.5.1 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+Замечания:
+- в случае необходимости отмены установки нужно выполнить аналогичную команду,
+  заменив "install" на "uninstall" (при этом необходимо использовать
+  OraMakeSystem версии не ниже 2.4.0);
+
+
+
 group: 3.5.0
 
 Порядок установки:
