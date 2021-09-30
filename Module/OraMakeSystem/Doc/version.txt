@@ -4,6 +4,8 @@ title: Версии
 
 group: ?.?.?
 
+[*] Support long identifiers (more than 30 characters) in <oms-drop-type.sql>.
+
 [*] Run "oms gen-schema-revert" during "make update-oms-version" if
     Install/Schema/Last/revert.sql does not exists.
 

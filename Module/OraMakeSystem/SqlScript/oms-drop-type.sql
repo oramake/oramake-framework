@@ -23,7 +23,7 @@ define typeName = "&1"
 
 declare
 
-  typeName varchar2(30) := '&typeName';
+  typeName varchar2(128) := '&typeName';
 
 begin
   dbms_output.put_line( 'drop type: ' || typeName);
