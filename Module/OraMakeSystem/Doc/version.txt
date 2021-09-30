@@ -2,7 +2,7 @@ title: Версии
 
 
 
-group: ?.?.?
+group: 2.4.1 ( 2021-09-30)
 
 [*] Support long identifiers (more than 30 characters) in <oms-drop-type.sql>.
 
