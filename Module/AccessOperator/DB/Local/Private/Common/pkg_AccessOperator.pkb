@@ -971,9 +971,7 @@ exception
   when no_data_found then
     raise_application_error(
       pkg_Error.ErrorStackInfo
-      , '”казанный оператор не найден ('
-        || 'operatorId="' || to_char( operatorId ) || '"'
-        || ').'
+      , 'ќператор не найден'
     );
   when others then
     raise_application_error(

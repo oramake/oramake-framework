@@ -1226,7 +1226,7 @@ begin
     if coalesce( currentPasswordHash != passwordHash, true) then
       raise_application_error(
         pkg_Error.IllegalArgument
-        , 'Текущий пароль указан неверно.'
+        , 'Текущий пароль указан неверно'
       );
 
     -- Проверяем длину пароля
@@ -1235,13 +1235,13 @@ begin
         pkg_Error.WrongPasswordLength
         , 'Новый пароль не может быть короче '
           || Password_MinLength
-          || ' символов.'
+          || ' символов'
       );
     -- Новый пароль должен отличаться от текущего
     elsif currentPasswordHash = newPasswordHash then
       raise_application_error(
         pkg_Error.IllegalArgument
-        , 'Новый пароль совпадает с текущим.'
+        , 'Новый пароль совпадает с текущим'
       );
     -- Проверяем множество символов
     elsif length( newPassword) =
@@ -1268,7 +1268,6 @@ begin
              then
                ',[!%:*()@#$^&-_+,.<>/?\{}]'
              end
-          || '.'
         , true
       );
     -- Проверяем совпадение новых паролей
@@ -1279,7 +1278,7 @@ begin
     then
       raise_application_error(
         pkg_Error.IllegalArgument
-        , 'Новый пароль не совпадает с подтверждением.'
+        , 'Новый пароль не совпадает с подтверждением'
       );
     -- Проверяем, что в новом пароле не содержится логин/фамилия/имя
     elsif instr( upper( newPassword), upper( trim( operatorLogin))) > 0
@@ -1307,7 +1306,7 @@ begin
     then
       raise_application_error(
         pkg_Error.IllegalArgument
-        , 'Пароль не может содержать в себе фамилию, имя или логин пользователя.'
+        , 'Пароль не может содержать в себе фамилию, имя или логин пользователя'
       );
 
     -- Проверяем повторение паролей
@@ -1322,7 +1321,7 @@ exception
   when no_data_found then
     raise_application_error(
       pkg_Error.RowNotFound
-      , 'Оператор не найден.'
+      , 'Оператор не найден'
     );
 end checkPassword;
 
@@ -1436,7 +1435,7 @@ begin
     for update of password nowait;
 
     exception when NO_DATA_FOUND then     --Уточняем сообщение об ошибке
-        raise_application_error(  pkg_Error.RowNotFound , 'Оператор не найден.');
+        raise_application_error(  pkg_Error.RowNotFound , 'Оператор не найден');
   end;
 
   if operatorIDIns is not null
@@ -1450,7 +1449,7 @@ begin
     then
 
       raise_application_error(pkg_Error.IllegalArgument
-        , 'Текущий пароль указан неверно.' );
+        , 'Текущий пароль указан неверно' );
 
     end if;
 
@@ -1500,7 +1499,7 @@ begin
         )
     then
         raise_application_error(pkg_Error.IllegalArgument
-           ,'Новый пароль не совпадает с подтверждением.' );
+           ,'Новый пароль не совпадает с подтверждением' );
     end if;
 
   end if;
