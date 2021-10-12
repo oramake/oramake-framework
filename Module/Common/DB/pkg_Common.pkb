@@ -312,56 +312,73 @@ exception when others then
   );
 end getIpAddress;
 
-/* pfunc: toNumber
-  ѕреобразование строки в число с учетом дес€тичного разделител€ сессии.
-  
- ѕараметры:
-   valueString  - строка, содеражща€ число
-   decimalChar  - дес€тичный разделитель, используемый в строке
-                  если не указан - беретс€ из строки '.,'
+/* func: toNumber
+  ѕреобразует строку в число (вне зависимости от текущего дес€тичного
+  разделител€ сессии).
+
+  ѕараметры:
+  valueString                 - —трока, содеражща€ число
+  decimalChar                 - ƒес€тичный разделитель, используемый в строке
+                                (по умолчанию и точка и зап€та€ считаютс€
+                                дес€тичным разделителем)
 
   ¬озврат:
-    преобразованное число
-    
+  преобразованное число.
+
   «амечани€:
-  - расчитываетс€, что будет передан один символ в качестве разделител€,
-    не допускаетс€ передача цифр в параметр decimalChar;
-   
+  - ожидаетс€ что будет передан один символ в качестве разделител€, не
+    допускаетс€ передача цифр в параметр decimalChar;
 */
-function toNumber
-  ( valueString varchar2
+function toNumber(
+  valueString varchar2
   , decimalChar varchar2 := null
-  )
+)
 return number
-is 
- --преобразованное значение разделител€ дл€ использовани€ в регул€рном выражении
-   decimalCharNew      varchar2(2 char);
- --toNumber
+is
+
+  -- “екущий дес€тичный разделитель в сессии
+  sessionDecimalChar varchar2(1 char);
+
 begin
-  if length(decimalChar) > 1 or regexp_like(decimalChar,'\d')  then
-  
-      raise_application_error(
+  sessionDecimalChar := to_char( 0, 'fmd');
+  if length(decimalChar) > 1
+        or decimalChar in ( '0','1','2','3','4','5','6','7','8', '9')
+      then
+    raise_application_error(
       pkg_Error.IllegalArgument,
         'Ќеверное значение дес€тичного разделител€ ('
         || ' decimalChar="' || decimalChar || '"'
         || ').'
-    , true
+      , true
     );
-  
   end if;
-  
-  decimalCharNew      := replace(decimalChar,'.','\.');
-  
-  return to_number(regexp_replace(valueString, coalesce(decimalCharNew,'\.|,'), to_char(0, 'fmd')));
-  
-exception 
-  when others then
+  return
+    to_number(
+      case
+        when decimalChar = sessionDecimalChar then
+          valueString
+        when decimalChar != sessionDecimalChar then
+          replace( valueString, decimalChar, sessionDecimalChar)
+        when sessionDecimalChar = '.' then
+          replace( valueString, ',', sessionDecimalChar)
+        when sessionDecimalChar = ',' then
+          replace( valueString, '.', sessionDecimalChar)
+        else
+          replace( replace(
+            valueString
+            , '.', sessionDecimalChar)
+            , ',', sessionDecimalChar)
+      end
+    )
+  ;
+exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo,
-        'ќшибка при конвертации строки в число ('
-        || ' valueString="' || valueString || '"'
-        || ', decimalChar="' || decimalChar || '"'
-        || ').'
+      'ќшибка при преобразовании строки в число ('
+      || ' valueString="' || valueString || '"'
+      || ', decimalChar="' || decimalChar || '"'
+      || ', sessionDecimalChar="' || sessionDecimalChar || '"'
+      || ').'
     , true
   );
 end toNumber;
