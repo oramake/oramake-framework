@@ -80,7 +80,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
-            File: sys-privs.sql  (Install/Grant/Last/sys-privs.sql)
+            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
          }  # Group: Grant
