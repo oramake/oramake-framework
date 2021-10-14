@@ -2,6 +2,13 @@ title: Версии
 
 
 
+group: 2.0.1 ( 2021-10-14)
+(<Установка::2.0.1>)
+
+[-] Remove static dependency from pkg_Operator.
+
+
+
 group: 2.0.0 ( 2021-03-18)
 (<Установка::2.0.0>)
 
