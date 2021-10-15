@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: TestUtility
-SubTitle: Версия 2.0.0
+SubTitle: Версия 2.0.1
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -80,7 +80,7 @@ Group: Скрипты  {
          Group: Last  {
 
             File: run  (no auto-title, Install/Grant/Last/run.sql)
-            File: sys-privs.sql  (Install/Grant/Last/sys-privs.sql)
+            File: sys-privs  (no auto-title, Install/Grant/Last/sys-privs.sql)
             }  # Group: Last
 
          }  # Group: Grant

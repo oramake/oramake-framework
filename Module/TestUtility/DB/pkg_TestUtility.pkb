@@ -453,7 +453,7 @@ begin
    '
    ||
    case when operatorId is not null then
-     'pkg_Operator.setCurrentUserId(' || to_char(pkg_Operator.getCurrentUserId()) || ');'
+     'pkg_Operator.setCurrentUserId(' || to_char(operatorId) || ');'
    end
    || rtrim(trim(replace(replace(sqlText, chr(10), ''), chr(13), '')), ';')
    || ';
