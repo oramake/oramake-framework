@@ -411,7 +411,10 @@ exception when others then
       || ' svnRoot="' || svnRoot || '"'
       || ', initialSvnPath="' || initialSvnPath || '"'
       || case when isCreate is not null then
-          ', isCreate=' || isCreate
+          ', isCreate=' || to_char(isCreate)
+        end
+      || case when operatorId is not null then
+          ', operatorId=' || to_char(operatorId)
         end
       || ').'
     , true
