@@ -45,6 +45,36 @@ MView_RefreshMethodCode constant varchar2(1) := 'm';
 
 
 
+/* group: Обновление материализованных представлений */
+
+/* pproc: refreshMView
+  Процедура выполняет обновление материализованных представлений по списку,
+  либо всех в указанной схеме (в зависимости от переданных параметров)
+
+  Входные параметры:
+    list                 - список материализованных представлений для обновления (разделитель - запятая);
+    method               - список методов обновления представлений (? - force, F - fast, C - complete) (строкой без разделителей);
+    ownerName            - список схем (разделитель - запятая);
+    isFastMethod         - обновлять только м-представления с методом
+                           обновления FAST ( true только FAST,
+                           false кроме FAST, null без учета метода)
+    isRefreshAfterErrors - обновлять остальные материализованные представления в случае ошибки;
+    isAtomicRefresh      - обновлять все материализованные представления в одной транзакции;
+    isNestedRefresh      - обновлять зависимые материализованные представления;
+
+  ( <body::refreshMView>)
+*/
+procedure refreshMView(
+  list in varchar2 := null
+  , method in varchar2 := null
+  , ownerName in varchar2 := null
+  , isFastMethod in boolean := null
+  , isRefreshAfterErrors in boolean := null
+  , isAtomicRefresh in boolean := null
+  , isNestedRefresh in boolean := null
+);
+
+
 /* group: Догрузка по первичному ключу */
 
 /* pfunc: appendData

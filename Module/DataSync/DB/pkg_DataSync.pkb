@@ -612,6 +612,177 @@ end parseConfigString;
 
 
 
+/* group: Обновление материализованных представлений */
+
+/* proc: refreshMView
+  Процедура выполняет обновление материализованных представлений по списку, либо всех
+  всех в указанной схеме (в зависимости от переданных параметров). Список материализованных
+  представлений обязательно должен содержать имя схемы.
+
+  Для обновления материализованных представлений по списку требуется указать параметры
+  list и method. Если method не указан, то обновление будет происходить с методом по умолчанию
+  (обычно это force).
+
+  Для обновления всех материализованных представлений в указанных схемах нужно задать параметр ownerName,
+  причем параметры list и method указывать не требуется. В параметре ownerName можно указывать список схем
+  с разделителем запятая.
+
+  В случае, если указано значение параметра isFastMethod, то для обновления
+  будут выбираться только представления с соответствующим значением метода
+  обновления ( метод FAST при значении параметра true, и остальные методы
+  при значении параметра false).
+
+  В случае указания и параметра list, и параметров ownerName, isFastMethod,
+  обновление будет осуществляться по параметру list, а значение параметров
+  ownerName и isFastMethod будет проигнорировано.
+
+  Входные параметры:
+    list                 - список материализованных представлений для обновления (разделитель - запятая);
+    method               - список методов обновления представлений (? - force, F - fast, C - complete) (строкой без разделителей);
+    ownerName            - список схем (разделитель - запятая);
+    isFastMethod         - обновлять только м-представления с методом
+                           обновления FAST ( true только FAST,
+                           false кроме FAST, null без учета метода)
+    isRefreshAfterErrors - обновлять остальные материализованные представления в случае ошибки;
+    isAtomicRefresh      - обновлять все материализованные представления в одной транзакции;
+    isNestedRefresh      - обновлять зависимые материализованные представления;
+*/
+procedure refreshMView(
+  list in varchar2 := null
+  , method in varchar2 := null
+  , ownerName in varchar2 := null
+  , isFastMethod in boolean := null
+  , isRefreshAfterErrors in boolean := null
+  , isAtomicRefresh in boolean := null
+  , isNestedRefresh in boolean := null
+)
+is
+  -- Список материализованных представлений
+  vList       varchar2(8000) := list;
+  -- Список методов обновления материализованных представлений
+  vMethod     varchar2(500)  := method;
+  -- Из переданной строки со списком схем исключаем пробелы,
+  -- символы перевода строки, новой строки и табуляции
+  vOwnerName  varchar2(8000) :=
+    translate(
+      ownerName
+      , 'A ' || chr(9) || chr(10) || chr(13)
+      , 'A'
+    )
+  ;
+  -- Обновлять материализованные представления после ошибок
+  vIsRefreshAfterErrors boolean;
+  -- Обновлять материализованные представления в одной транзакции
+  vIsAtomicRefresh      boolean;
+  -- Обновлять зависимые материализованные представления
+  vIsNestedRefresh      boolean;
+  -- Список материализованных представлений в виде таблицы
+  vTable                dbms_utility.uncl_array;
+  -- Количество материализованных представлений для обновления
+  vCount                integer := 0;
+  -- Признак обновления по Fast
+  vFastMethod           integer :=
+    case isFastMethod 
+      when true then 1
+      else 0
+    end
+  ;
+
+-- refreshMView
+begin
+  -- Обновлять материализованные представления после ошибок (по умолчанию - истина)
+  vIsRefreshAfterErrors := coalesce( isRefreshAfterErrors, true);
+  -- Обновлять материализованные представления в одной транзакции (по умолчанию - ложь)
+  vIsAtomicRefresh      := coalesce( isAtomicRefresh, false);
+  -- Обновлять зависимые материализованные представления
+  vIsNestedRefresh      := coalesce( isNestedRefresh, false);
+
+  -- Если список материализованных представлений не указан
+  if vList is null then
+
+    -- Если схема не указана
+    if vOwnerName is null then
+      raise_application_error(
+        pkg_error.IllegalArgument
+        , 'Требуется обязательно заполнить список материализованных представлений или схему'
+      );
+    end if;
+
+    -- Формирование списка всех материализованных представлений в указанных схемах,
+    -- а также методов обновления (?) одной строкой
+    -- в списке материализованных представлений разделитель - "запятая"
+    -- в списке методов - без разделителя
+
+    -- Методы обновления
+    vMethod := null;
+      
+    for vName in (
+      select 
+        b.owner || '.' || b.mview_name as m_name  
+      from 
+        (
+        select
+          am.owner
+          , am.mview_name
+        from
+          all_mviews am
+        where
+          am.owner in (
+            select /*+ cardinaliy( sp, 1)*/
+              trim( sp.column_value)
+            from
+              table( 
+                pkg_Common.split( vOwnerName, ',')
+              ) sp
+          )
+          and decode( am.refresh_method, 'FAST', 1, 0) = vFastMethod
+        order by
+          1, 2
+        ) b
+      )
+    loop  
+      vCount := vCount + 1;
+      vTable( vCount) := vName.m_name;
+      vMethod := vMethod || nvl( substr( method, 1, 1), '?');
+    end loop;
+      
+    if vCount > 0 then 
+      vTable( vCount + 1):= null;
+      -- Вызываем стандартную процедуру для обновления материализованных представлений по табличному списку 
+      dbms_mview.refresh(
+        tab                    => vTable
+        , method               => vMethod
+        , refresh_after_errors => vIsRefreshAfterErrors
+        , atomic_refresh       => vIsAtomicRefresh
+        , nested               => vIsNestedRefresh
+      );
+    end if;
+  else
+    -- Вызываем стандартную процедуру для обновления материализованных представлений по списку
+    dbms_mview.refresh(
+      list                   => vList
+      , method               => vMethod
+      , refresh_after_errors => vIsRefreshAfterErrors
+      , atomic_refresh       => vIsAtomicRefresh
+      , nested               => vIsNestedRefresh
+    );  
+  end if;
+
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка при обновлении материализованных представлений ('
+        || ' list="'       || list      || '"'
+        || ', method="'    || method    || '"'
+        || ', ownerName="' || ownerName || '"'
+        || ').'
+      )
+    , true
+  );
+end refreshMView;
+
+
 /* group: Догрузка по первичному ключу */
 
 /* func: appendData
