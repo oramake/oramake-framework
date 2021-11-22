@@ -43,8 +43,6 @@ MView_RefreshMethodCode constant varchar2(1) := 'm';
 
 /* group: Функции */
 
-
-
 /* group: Обновление материализованных представлений */
 
 /* pproc: refreshMView
@@ -236,6 +234,15 @@ return integer;
                                 регистра)
                                 ( по умолчанию пустой, т.е. обновляются все
                                   колонки таблицы)
+  keyColumnList               - список колонок таблицы, определяющий уникальность
+                                записей ( с разделителем запятая, без учета
+                                регистра)
+                                ( если пустой, то используются колонки
+                                  первичного ключа таблицы)
+  disableRecordDeleteFlag     - запрет на удаление записей
+                                (0 - разрешение удаления записей,
+                                 1 - запрет на удаление записей)
+                                (по умолчанию 0)  
 
   Замечания:
   - у таблицы должен быть первичный ключ;
@@ -255,6 +262,8 @@ procedure refreshByCompare(
   , dataSource varchar2
   , tempTableName varchar2 := null
   , excludeColumnList varchar2 := null
+  , keyColumnList varchar2 := null
+  , disableRecordDeleteFlag integer := 0
 );
 
 
