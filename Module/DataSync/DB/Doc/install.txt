@@ -21,6 +21,20 @@ TO_USERNAME                   - имя пользователя, которому выдаются права
 
 
 
+group: 1.3.6
+
+Порядок установки:
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.3.6 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 1.3.5
 
 Команда для установки:
