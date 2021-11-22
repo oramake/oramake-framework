@@ -83,6 +83,17 @@ MLog_CommentTail constant varchar2(100) := ' [ SVN Root: $(moduleSvnRoot)]';
 */
 ExcludeColumnList_OptName constant NameT := 'excludeColumnList';
 
+/* iconst: KeyColumnList_OptName
+  Имя дополнительной опции "Список колонок первичного ключа (через
+  запятую, без учета регистра)".
+*/
+KeyColumnList_OptName constant NameT := 'keyColumnList';
+
+/* iconst: DisableRecordDeleteFlag_OptName
+  Имя дополнительной опции "Запрет на удаление записей
+  (1 - запрет на удаление записей)".
+*/
+DisableRecordDeleteFlag_OName constant NameT := 'disableRecordDeleteFlag';
 
 
 /* group: Переменные */
@@ -185,7 +196,7 @@ end getLocalFullName;
                                 получения списка колонок (без учета регистра)
   columnTableName             - имя таблицы (представления) для получения
                                 списка колонок (без учета регистра)
-  keyTableName                - имя владельца таблицы для определения колонок
+  keyTableOwner               - имя владельца таблицы для определения колонок
                                 первичного ключа (без учета регистра)
                                 (по умолчанию columnTableOwner)
   keyTableName                - имя таблицы для определения колонок
@@ -210,6 +221,7 @@ procedure getColumnInfo(
   , columnTableName varchar2
   , keyTableOwner varchar2 := null
   , keyTableName varchar2 := null
+  , keyColumnList varchar2 := null
   , excludeColumnList varchar2 := null
   , fillEqualWhereSqlFlag pls_integer := null
   , raiseKeyNotFoundFlag pls_integer := null
@@ -219,7 +231,24 @@ is
   cursor columnCur is
     select
       lower( tc.column_name) as column_name
-      , case when b.column_name is not null then 1 else 0 end
+      , case
+          when keyColumnList is not null then
+            case
+              when instr(
+                    ',' || lower( keyColumnList) || ','
+                    , ',' || lower( tc.column_name) || ','
+                  )
+                  > 0
+              then 1
+              else 0
+            end
+          else
+            case
+              when b.column_name is not null
+              then 1
+              else 0
+            end
+        end
         as key_column_flag
       , case when
             excludeColumnList is not null
@@ -609,7 +638,6 @@ exception when others then
     , true
   );
 end parseConfigString;
-
 
 
 /* group: Обновление материализованных представлений */
@@ -1644,6 +1672,15 @@ end appendData;
                                 регистра)
                                 ( по умолчанию пустой, т.е. обновляются все
                                   колонки таблицы)
+  keyColumnList               - список колонок таблицы, определяющий уникальность
+                                записей ( с разделителем запятая, без учета
+                                регистра)
+                                ( если пустой, то используются колонки
+                                  первичного ключа таблицы)
+  disableRecordDeleteFlag     - запрет на удаление записей
+                                (0 - разрешение удаления записей,
+                                 1 - запрет на удаление записей)
+                                (по умолчанию 0)
 
   Замечания:
   - у таблицы должен быть первичный ключ;
@@ -1661,6 +1698,8 @@ procedure refreshByCompare(
   , dataSource varchar2
   , tempTableName varchar2 := null
   , excludeColumnList varchar2 := null
+  , keyColumnList varchar2 := null
+  , disableRecordDeleteFlag integer := 0
 )
 is
 
@@ -1710,6 +1749,7 @@ is
           then
             substr( targetTable, 1, instr( targetTable, '@') - 1)
           end
+      , keyColumnList       => keyColumnList
       , excludeColumnList   => excludeColumnList
     );
   end fillColumn;
@@ -1914,9 +1954,13 @@ begin
   if tempTableName is not null then
     loadTempTable();
   end if;
-  deleteExcessRecord(
-    recordSource => coalesce( tempTableName, dataSource)
-  );
+  if coalesce(disableRecordDeleteFlag, 0) = 0 then
+    deleteExcessRecord(
+      recordSource => coalesce( tempTableName, dataSource)
+    );
+  else
+    logger.debug('Удаление записей заблокировано');
+  end if;
   mergeChangedRecord(
     recordSource => coalesce( tempTableName, dataSource)
   );
@@ -3115,6 +3159,8 @@ begin
     , optionNameList  =>
         cmn_string_table_t(
           ExcludeColumnList_OptName
+          , KeyColumnList_OptName
+          , DisableRecordDeleteFlag_OName
         )
   );
 
@@ -3166,6 +3212,8 @@ begin
     || ':' || sourceView
     || ':' || tempTableName
     || ':' || optionList( ExcludeColumnList_OptName)
+    || ':' || optionList( KeyColumnList_OptName)
+    || ':' || optionList( DisableRecordDeleteFlag_OName)
   ;
 exception when others then
   raise_application_error(
@@ -3298,6 +3346,14 @@ is
               f.config_string, List_Separator, 5
             ))
             as exclude_column_list
+          , trim( pkg_Common.getStringByDelimiter(
+              f.config_string, List_Separator, 6
+            ))
+            as key_column_list
+          , trim( pkg_Common.getStringByDelimiter(
+              f.config_string, List_Separator, 7
+            ))
+            as disable_record_delete_flag
         from
           (
           select
@@ -3334,10 +3390,12 @@ begin
               )
             then
           refreshByCompare(
-            targetTable             => rec.table_name
-            , dataSource            => rec.source_view
-            , tempTableName         => rec.temp_table_name
-            , excludeColumnList     => rec.exclude_column_list
+            targetTable               => rec.table_name
+            , dataSource              => rec.source_view
+            , tempTableName           => rec.temp_table_name
+            , excludeColumnList       => rec.exclude_column_list
+            , keyColumnList           => rec.key_column_list
+            , disableRecordDeleteFlag => rec.disable_record_delete_flag
           );
           commit;
         when rec.refresh_method = MView_RefreshMethodCode then
@@ -3526,6 +3584,7 @@ begin
       , 'Нет удалось определить таблицу для обработки.'
     );
   end if;
+
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
