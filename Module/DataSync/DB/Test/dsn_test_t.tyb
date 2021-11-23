@@ -24,7 +24,7 @@ begin
                   , date_ins
             '
           -- метод сравнения с использованием временной таблицы
-          , 'dsn_test_cmptemp:t'
+          , 'dsn_test_cmptemp:t::keyColumnList=owner,table_name'
           , 'dsn_test_cmptemp_ext:t:v_dsn_test_cmptemp:dsn_test_cmptemp_tmp
                 : excludeColumnList = date_ins'
           -- с помощью м-представления

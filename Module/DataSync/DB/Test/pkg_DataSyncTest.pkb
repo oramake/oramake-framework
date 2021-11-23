@@ -106,29 +106,29 @@ is
     checkCase(
       'minimal'
       , 'dst_table'
-      , 'dst_table:d:v_dst_table::'
+      , 'dst_table:d:v_dst_table::::'
     );
     checkCase(
       'minimal for temp'
       , 'dst_table : t'
-      , 'dst_table:t:v_dst_table:dst_table_tmp:'
+      , 'dst_table:t:v_dst_table:dst_table_tmp:::'
     );
     checkCase(
       'minimal for mview'
       , ' dst_table : m '
-      , 'dst_table:m:v_dst_table::'
+      , 'dst_table:m:v_dst_table::::'
     );
 
     checkCase(
       'minimal with option'
       , 'dst_table:excludeColumnList=Date_Ins'
-      , 'dst_table:d:v_dst_table::date_ins'
+      , 'dst_table:d:v_dst_table::date_ins::'
     );
 
     checkCase(
       'with sourceSchema'
       , 'dst_table'
-      , 'dst_table:d:tst_user.v_dst_table::'
+      , 'dst_table:d:tst_user.v_dst_table::::'
       , sourceSchema => 'tst_user'
     );
 
@@ -137,7 +137,7 @@ is
       , 'dst_table : t : tst_user.v_dst_special : src.dst_table_new_tmp :
           excludeColumnList = Change_Number  , change_date, date_ins
         '
-      , 'dst_table:t:tst_user.v_dst_special:src.dst_table_new_tmp:change_number,change_date,date_ins'
+      , 'dst_table:t:tst_user.v_dst_special:src.dst_table_new_tmp:change_number,change_date,date_ins::'
     );
 
     checkCase(
