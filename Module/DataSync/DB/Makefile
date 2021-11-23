@@ -698,6 +698,7 @@ install: install.oms
 # Скрипты для загрузки в БД объектов для тестирования
 installTestTarget = \
   $(addsuffix .$(lu), \
+    $(wildcard Test/Schema/run.sql)      \
     $(wildcard \
       $(addprefix Test/, \
         *.typ *.pks *.tyb *.pkb *.prc \
