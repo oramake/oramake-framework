@@ -1918,7 +1918,7 @@ where
         regexp_replace(
           ci.keyColumn
           , ',([^,]+)'
-          , chr(10) || '  and a.\1 is not null'
+          , chr(10) || '  and d.\1 is not null'
         )
         , 8
       ) || '
