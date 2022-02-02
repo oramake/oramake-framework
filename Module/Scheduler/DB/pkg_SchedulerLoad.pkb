@@ -3678,9 +3678,13 @@ end deleteBatch;
 
   Параметры:
   batchShortName              - короткое наименование батча
+  activatedFlag               - флаг удаления активированных батчей
+                                ( 1 - удалить активированный батч
+                                  0 - удалять неактивированный батч)
 */
 procedure deleteBatch(
   batchShortName varchar2
+  , activatedFlag number := 0
 )
 is
 
@@ -3689,7 +3693,24 @@ is
 
 begin
   pkg_SchedulerMain.getBatch( btr, batchShortName => batchShortName);
-  deleteBatch( batchId => btr.batch_id);
+  if activatedFlag = 0 and btr.activated_flag = 1 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Пакет ' || batchShortName || ' активирован и не может быть удален.'
+    );
+  elsif ( activatedFlag = 0 or activatedFlag = 1) and btr.activated_flag = 0 then
+    deleteBatch(
+      batchId => btr.batch_id
+    );
+  elsif activatedFlag = 1 and btr.activated_flag = 1 then
+    pkg_Scheduler.deactivateBatch(
+      batchId => btr.batch_id
+      , operatorId => pkg_operator.getCurrentUserId()
+    );
+    deleteBatch(
+      batchId => btr.batch_id
+    );
+  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -3701,6 +3722,61 @@ exception when others then
     , true
   );
 end deleteBatch;
+
+/* pproc deleteModuleBatch
+  Удаление всех батчей, принадлежащих модулю
+  Предназначен для удаления батчей, принадлежащих модулю при его деинсталляции
+  
+  Параметры:
+  moduleName                  - наименование модуля
+*/
+procedure deleteModuleBatch(
+  moduleName varchar2 
+)
+is
+  -- id модуля
+  moduleId integer;
+begin
+  moduleId := pkg_ModuleInfo.getModuleId(
+    moduleName            => moduleName
+    , raiseExceptionFlag  => 1
+  );
+  for curBatch in (
+select
+  b.batch_id
+  , b.batch_short_name
+  , b.activated_flag
+from
+  sch_batch b
+where
+  b.module_id = moduleId
+  )
+  loop
+    if curBatch.activated_flag = 1 then
+      pkg_Scheduler.deactivateBatch(
+        batchId      => curBatch.Batch_Id
+        , operatorId => pkg_operator.getCurrentUserId()
+      );
+    end if;
+    deleteBatch(
+      batchId         => curBatch.batch_id
+    );
+    dbms_output.put_line(
+      rpad( 'Пакет ' || curBatch.Batch_Short_Name, 30)
+      || ' - removed'
+    );
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка удаления батча ('
+        || ' moduleName="' || moduleName || '"'
+        || ')'
+      )
+    , true
+  );
+end deleteModuleBatch;
 
 
 
