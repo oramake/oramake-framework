@@ -35,13 +35,34 @@ is
   procedure csvTest(
     fileText clob
     , testName varchar2
-    , value12 varchar2
-    , value22 varchar2
+    , value12 clob
+    , value22 clob
     , noEnclosedCharFlag number := null
+    , useGetClob boolean := false
   )
   is
+    comparedValue clob;
+
+    /*
+      Получение строки.
+    */
+    function getString
+    return varchar2
+    is
+    begin
+      return
+        case when
+          useGetClob
+        then
+          substr(csvIterator.getClob(2), 1, 32767)
+        else
+          csvIterator.getString(2)
+        end
+      ;
+    end getString;
+
   begin
-    pkg_TestUtility.beginTest( testName);
+    pkg_TestUtility.beginTest(testName);
     csvIterator := tpr_csv_iterator_t(
       fileText
       , noEnclosedCharFlag => noEnclosedCharFlag
@@ -52,34 +73,50 @@ is
     if not csvIterator.next() then
       pkg_TestUtility.failTest( 'next returned false: 1');
     end if;
+    testOk := true;
     begin
-      testOk := testOk
-        and pkg_TestUtility.compareChar(
-          failMessageText => '1'
-          , actualString => csvIterator.getString(1)
-          , expectedString => '1'
-        )
-        and pkg_TestUtility.compareChar(
-          failMessageText => '2'
-          , actualString => csvIterator.getString(2)
-          , expectedString => value12
-        )
-      ;
-      if not csvIterator.next() then
-        pkg_TestUtility.failTest( 'next returned false: 2');
-      end if;
-      testOk := testOk
-        and pkg_TestUtility.compareChar(
-          failMessageText => '3'
-          , actualString => csvIterator.getString(1)
-          , expectedString => '3'
-        )
-        and pkg_TestUtility.compareChar(
-          failMessageText => '4'
-          , actualString => csvIterator.getString(2)
-          , expectedString => value22
-        )
-      ;
+      for i in 1..2 loop
+        comparedValue :=
+          case when
+            i = 1
+          then
+            value12
+          else
+            value22
+          end
+        ;
+        if i = 1 then
+          testOk := testOk
+            and
+            pkg_TestUtility.compareChar(
+              failMessageText => '1'
+              , actualString => csvIterator.getString(1)
+              , expectedString => '1'
+            );
+        end if;
+        testOk := testOk
+          and pkg_TestUtility.compareChar(
+            failMessageText => '2'
+            , actualString => substr(getString(), 1, 30000)
+            , expectedString => substr(comparedValue, 1, 30000)
+          );
+        testOk := testOk
+          and (
+            not useGetClob
+            or
+            pkg_TestUtility.compareChar(
+              failMessageText => '2'
+              , actualString => substr(csvIterator.getClob(2), 30001, 30000)
+              , expectedString => substr(comparedValue, 30001, 30000)
+            )
+          )
+        ;
+        if i = 1 then
+          if not csvIterator.next() then
+            pkg_TestUtility.failTest( 'next returned false: 2');
+          end if;
+        end if;
+      end loop;
     exception when others then
       pkg_TestUtility.failTest(
         'exception: "' || pkg_Logging.getErrorStack() || '"'
@@ -138,8 +175,6 @@ is
     );
   end testRecordCount;
 
-
-
   /*
     Тест получения значения поля, указанного в виде процентов ( числа с
     добавленым после него символом "%", возможно с дополнительными пробелами).
@@ -182,8 +217,6 @@ is
       , true
     );
   end getPercentTest;
-
-
 
 -- testCsvIterator
 begin
@@ -248,6 +281,14 @@ begin
 Прибыль;100 000;5
 '
     , decimalCharacter => '.'
+  );
+  csvTest(
+'1;2
+3;' || lpad('0', 30000, '0') || lpad('1', 30000, '1')
+    , 'long lines'
+    , '2'
+    , lpad('0', 30000, '0') || lpad('1', 30000, '1')
+    , useGetClob => true
   );
 exception when others then
   raise_application_error(
