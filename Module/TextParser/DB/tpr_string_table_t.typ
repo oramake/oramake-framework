@@ -4,5 +4,5 @@
 -- dbtype: tpr_string_table_t
 -- Таблица строк для использования в объекте <tpr_csv_iterator_t>.
 create or replace type tpr_string_table_t
-as table of varchar2(4000)
+as table of varchar2(32767)
 /

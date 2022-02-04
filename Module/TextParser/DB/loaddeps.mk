@@ -32,7 +32,8 @@ pkg_TextParserBase.pkb.$(lu): \
 	pkg_TextParserBase.pks.$(lu)
 
 tpr_csv_iterator_t.typ.$(lu): \
-  tpr_string_table_t.typ.$(lu)
+  tpr_string_table_t.typ.$(lu) \
+	tpr_clob_table_t.typ.$(lu)
 
 tpr_csv_iterator_t.tyb.$(lu):  \
   tpr_csv_iterator_t.typ.$(lu) \

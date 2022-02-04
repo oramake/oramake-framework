@@ -9,21 +9,25 @@ create or replace type body tpr_csv_iterator_t is
 
 /* group: Закрытые объявления */
 
-/* func: getFieldValue
+/* proc: getFieldValue
   Возвращает значение поля с указанным номером.
   В случае некорректного номера выбрасывается исключение с информацией по
   ошибке.
 
   Параметры:
+  fieldValue                  - значение поля в виде строки
+  fieldValueClob              - значниие поля в виде CLOB (если значение не
+                                влезает в строку)
   fieldNumber                 - номер поля ( начиная с 1)
 
   Возврат:
   - значение поля
 */
-member function getFieldValue(
-  fieldNumber integer
+member procedure getFieldValue(
+  fieldValue out varchar2
+, fieldValueClob out clob
+, fieldNumber integer
 )
-return varchar2
 is
 begin
   if colValue is null then
@@ -38,19 +42,26 @@ begin
     );
   end if;
 
-  return
+  if
     -- Если в записи с данными меньше полей, чем было указано в записи
     -- с именами полей, то значения отсутствующих полей считаются равными
     -- null
-    case when recordNumber = parsedRecordCount
-        and fieldNumber between 1 and fieldNameCount
-        and fieldNumber > colValue.count
-        then
-      null
+    recordNumber = parsedRecordCount
+    and fieldNumber between 1 and fieldNameCount
+    and fieldNumber > colValue.count
+  then
+    fieldValue := null;
+    fieldValueClob := null;
+  else
+    fieldValue := colValue(fieldNumber);
+    if colValueClob is null then
+      fieldValueClob := null;
+    elsif fieldNumber > colValueClob.count then
+      fieldValueClob := null;
     else
-      colValue( fieldNumber)
-    end
-  ;
+      fieldValueClob := colValueClob(fieldNumber);
+    end if;
+  end if;
 exception when SUBSCRIPT_BEYOND_COUNT then
   if fieldNumber < 1 or fieldNumber > colValue.count() then
     raise_application_error(
@@ -283,15 +294,23 @@ is
           -- Игнорируем опциональный префикс разделителя строки
           if bufferOffset < iCopyEnd then
             if substr( buffer, iCopyEnd - 1, 1) = Line_SeparatorPrefix
-                then
+            then
               iCopyEnd := iCopyEnd - 1;
             end if;
           elsif iField = colValue.count
-              and substr( colValue( iField), -1, 1) = Line_SeparatorPrefix
-              then
-            colValue( iField) :=
-              substr( colValue( iField), 1, length( colValue( iField)) - 1)
+            and substr(colValue(iField), -1, 1) = Line_SeparatorPrefix
+          then
+            colValue(iField) :=
+              substr(colValue(iField), 1, length(colValue(iField)) - 1)
             ;
+          elsif colValueClob is not null then
+            if iField = colValueClob.count
+              and substr(colValueClob(iField), -1, 1) = Line_SeparatorPrefix
+            then
+              colValueClob(iField) :=
+                substr(colValueClob(iField), 1, length(colValueClob(iField)) - 1)
+              ;
+            end if;
           end if;
 
         -- Данные ограничены разделителем полей
@@ -366,6 +385,9 @@ is
   -- parseLine
   begin
     colValue.delete;
+    if colValueClob is not null then
+      colValueClob.delete;
+    end if;
     if
       bufferOffset > bufferLength and dataOffset > dataLength
     then
@@ -398,13 +420,26 @@ is
         -- Копируем данные поля
         if coalesce( isSaveValue, true) then
           if iField > colValue.count then
-            colValue.extend( 1);
+            colValue.extend(1);
           end if;
           if iCopyEnd >= bufferOffset and iCopyEnd <= bufferLength + 1 then
             if iCopyEnd > bufferOffset then
-              colValue( iField) := colValue( iField)
-                || substr( buffer, bufferOffset, iCopyEnd - bufferOffset)
-              ;
+              -- Переполнение. Используем colValueClob вместо colValue
+              if length(colValue(iField)) + iCopyEnd - bufferOffset > 32767 then
+                if colValueClob is null then
+                  colValueClob := tpr_clob_table_t();
+                end if;
+                colValueClob.extend(colValue.count - colValueClob.count);
+                if colValue(iField) is not null then
+                  colValueClob(iField) := colValue(iField);
+                  colValue(iField) := null;
+                end if;
+                colValueClob(iField) := colValueClob(iField)
+                  || substr(buffer, bufferOffset, iCopyEnd - bufferOffset);
+              else
+                colValue(iField) := colValue(iField)
+                  || substr(buffer, bufferOffset, iCopyEnd - bufferOffset);
+              end if;
             end if;
             iCopyEnd := null;
           elsif iCopyEnd is not null then
@@ -704,12 +739,26 @@ end getProcessedCount;
   - значение поля в виде строки
 */
 member function getString(
-  fieldNumber integer
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
 )
 return varchar2
 is
+  fieldValue varchar2(32767);
+  fieldValueClob clob;
 begin
-  return getFieldValue( fieldNumber);
+  getFieldValue(
+    fieldValue => fieldValue
+  , fieldValueClob => fieldValueClob
+  , fieldNumber => fieldNumber
+  );
+  if fieldValueClob is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Длина строки превосходит максимальную. Используйте getClob.'
+    );
+  end if;
+  return fieldValue;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -734,8 +783,9 @@ end getString;
   - значение поля в виде строки
 */
 member function getString(
-  fieldName varchar2
-  , isNotFoundRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, isNotFoundRaised integer := null
 )
 return varchar2
 is
@@ -782,14 +832,17 @@ end getString;
   - значение поля в виде числа
 */
 member function getNumber(
-  fieldNumber integer
-  , decimalCharacter varchar2 := null
-  , isValueErrorRaised integer := null
-  , isTrimPercent integer := null
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+, decimalCharacter varchar2 := null
+, isValueErrorRaised integer := null
+, isTrimPercent integer := null
 )
 return number
 is
 
+  fieldValueString varchar2(32767);
+  fieldValueClob clob;
   -- Числовое значение поля
   fieldValue number;
 
@@ -879,7 +932,18 @@ is
 
 -- getNumber
 begin
-  if getFieldValue( fieldNumber) is not null then
+  getFieldValue(
+    fieldValue     => fieldValueString
+  , fieldValueClob => fieldValueClob
+  , fieldNumber    => fieldNumber
+  );
+  if fieldValueClob is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Длина строки превосходит максимальную. Используйте getClob'
+    );
+  end if;
+  if fieldValueString is not null then
 
     -- Определяем необходимость изменения разделителя
     if decimalCharacter is not null then
@@ -891,7 +955,7 @@ begin
 
     -- Конвертируем в число
     fieldValue := toNumber(
-      stringValue => getFieldValue( fieldNumber)
+      stringValue => fieldValueString
     );
   end if;
   return fieldValue;
@@ -930,11 +994,12 @@ end getNumber;
   - значение поля в виде числа
 */
 member function getNumber(
-  fieldName varchar2
-  , decimalCharacter varchar2 := null
-  , isValueErrorRaised integer := null
-  , isNotFoundRaised integer := null
-  , isTrimPercent integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, decimalCharacter varchar2 := null
+, isValueErrorRaised integer := null
+, isNotFoundRaised integer := null
+, isTrimPercent integer := null
 )
 return number
 is
@@ -982,14 +1047,15 @@ end getNumber;
   - значение поля в виде даты
 */
 member function getDate(
-  fieldNumber integer
-  , format varchar2
-  , isValueErrorRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+, format varchar2
+, isValueErrorRaised integer := null
 )
 return date
 is
-
-
+  fieldValueString varchar2(32767);
+  fieldValueClob clob;
 
   /*
     Конвертация строки в дату с учётом параметра isValueErrorRaised.
@@ -1015,13 +1081,22 @@ is
     end if;
   end toDate;
 
-
-
 -- getDate
 begin
+  getFieldValue(
+    fieldValue     => fieldValueString
+  , fieldValueClob => fieldValueClob
+  , fieldNumber    => fieldNumber
+  );
+  if fieldValueClob is not null then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Длина строки превосходит максимальную. Используйте getClob'
+    );
+  end if;
   return
     toDate(
-      stringValue => getFieldValue( fieldNumber)
+      stringValue => fieldValueString
     );
 exception when others then
   raise_application_error(
@@ -1029,6 +1104,7 @@ exception when others then
     , 'Ошибка при получении значения поля в виде даты ('
       || ' recordNumber=' || recordNumber
       || ', fieldNumber=' || fieldNumber
+      || ', fieldValueString="' || fieldValueString || '"'
       || ', format="' || format || '"'
       || ', isValueErrorRaised=' || isValueErrorRaised
       || ').'
@@ -1053,10 +1129,11 @@ end getDate;
   - значение поля в виде даты
 */
 member function getDate(
-  fieldName varchar2
-  , format varchar2
-  , isValueErrorRaised integer := null
-  , isNotFoundRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, format varchar2
+, isValueErrorRaised integer := null
+, isNotFoundRaised integer := null
 )
 return date
 is
@@ -1088,6 +1165,89 @@ exception when others then
     , true
   );
 end getDate;
+
+/* func: getClob
+  Возвращает значение поля с указанным номером в виде CLOB.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+
+  Возврат:
+  - значение поля в виде CLOB
+*/
+member function getClob(
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+)
+return clob
+is
+  fieldValue varchar2(32767);
+  fieldValueClob clob;
+begin
+  getFieldValue(
+    fieldValue => fieldValue
+  , fieldValueClob => fieldValueClob
+  , fieldNumber => fieldNumber
+  );
+  if fieldValue is not null then
+    return to_clob(fieldValue);
+  else
+    return fieldValueClob;
+  end if;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении строкового значения поля ('
+      || ' recordNumber=' || recordNumber
+      || ', fieldNumber=' || fieldNumber
+      || ').'
+    , true
+  );
+end getClob;
+
+/* func: getClob( NAME)
+  Возвращает значение поля с указанным именем в виде строки.
+
+  Параметры:
+  fieldName                   - название поля
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  - значение поля в виде строки
+*/
+member function getClob(
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, isNotFoundRaised integer := null
+)
+return clob
+is
+
+  -- Номер поля ( начиная с 1)
+  fieldNumber integer;
+
+begin
+  fieldNumber := getFieldNumber(
+    fieldName           => fieldName
+    , isNotFoundRaised  => isNotFoundRaised
+  );
+  return
+    case when fieldNumber is not null then
+      getClob( fieldNumber => fieldNumber)
+    end
+  ;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , 'Ошибка при получении строкового значения поля по имени ('
+      || ' fieldName="' || fieldName || '"'
+      || ', isNotFoundRaised=' || isNotFoundRaised
+      || ').'
+    , true
+  );
+end getClob;
 
 end;
 /

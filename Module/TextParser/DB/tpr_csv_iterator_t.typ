@@ -93,6 +93,11 @@ bufferOffset integer,
 */
 colValue tpr_string_table_t,
 
+/* ivar: colValue
+  Значения полей текущей строки в виде CLOB.
+*/
+colValueClob tpr_clob_table_t,
+
 /* ivar: fieldNameCount
   Число имен полей.
 */
@@ -111,12 +116,15 @@ fieldNameList varchar2(3100),
 
 /* group: Закрытые объявления */
 
-/* pfunc: getFieldValue
+/* pproc: getFieldValue
   Возвращает значение поля с указанным номером.
   В случае некорректного номера выбрасывается исключение с информацией по
   ошибке.
 
   Параметры:
+  fieldValue                  - значение поля в виде строки
+  fieldValueClob              - значниие поля в виде CLOB (если значение не
+                                влезает в строку)
   fieldNumber                 - номер поля ( начиная с 1)
 
   Возврат:
@@ -124,10 +132,11 @@ fieldNameList varchar2(3100),
 
   ( <body::getFieldValue>)
 */
-member function getFieldValue(
-  fieldNumber integer
-)
-return varchar2,
+member procedure getFieldValue(
+  fieldValue out varchar2
+, fieldValueClob out clob
+, fieldNumber integer
+),
 
 
 
@@ -145,7 +154,7 @@ return varchar2,
   fieldSeparator              - символ-разделитель полей записи
                                 ( по умолчанию ";")
   noEnclosedCharFlag          - флаг отсутствия в файле специального символа
-                                органичителя строк ( '"', по-умолчанию
+                                органичителя строк ( например, '"', по-умолчанию
                                 считается, что символ может быть)
 
   Замечания:
@@ -281,7 +290,8 @@ return integer,
   ( <body::getString>)
 */
 member function getString(
-  fieldNumber integer
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
 )
 return varchar2,
 
@@ -300,8 +310,9 @@ return varchar2,
   ( <body::getString( NAME)>)
 */
 member function getString(
-  fieldName varchar2
-  , isNotFoundRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, isNotFoundRaised integer := null
 )
 return varchar2,
 
@@ -325,10 +336,11 @@ return varchar2,
   ( <body::getNumber>)
 */
 member function getNumber(
-  fieldNumber integer
-  , decimalCharacter varchar2 := null
-  , isValueErrorRaised integer := null
-  , isTrimPercent integer := null
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+, decimalCharacter varchar2 := null
+, isValueErrorRaised integer := null
+, isTrimPercent integer := null
 )
 return number,
 
@@ -355,11 +367,12 @@ return number,
   ( <body::getNumber( NAME)>)
 */
 member function getNumber(
-  fieldName varchar2
-  , decimalCharacter varchar2 := null
-  , isValueErrorRaised integer := null
-  , isNotFoundRaised integer := null
-  , isTrimPercent integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, decimalCharacter varchar2 := null
+, isValueErrorRaised integer := null
+, isNotFoundRaised integer := null
+, isTrimPercent integer := null
 )
 return number,
 
@@ -379,9 +392,10 @@ return number,
   ( <body::getDate>)
 */
 member function getDate(
-  fieldNumber integer
-  , format varchar2
-  , isValueErrorRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+, format varchar2
+, isValueErrorRaised integer := null
 )
 return date,
 
@@ -404,12 +418,51 @@ return date,
   ( <body::getDate( NAME)>)
 */
 member function getDate(
-  fieldName varchar2
-  , format varchar2
-  , isValueErrorRaised integer := null
-  , isNotFoundRaised integer := null
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, format varchar2
+, isValueErrorRaised integer := null
+, isNotFoundRaised integer := null
 )
-return date
+return date,
+
+/* pfunc: getClob
+  Возвращает значение поля с указанным номером в виде CLOB.
+
+  Параметры:
+  fieldNumber                 - номер поля ( начиная с 1)
+
+  Возврат:
+  - значение поля в виде CLOB
+
+  ( <body::getClob>)
+*/
+member function getClob(
+  self in out tpr_csv_iterator_t
+, fieldNumber integer
+)
+return clob,
+
+/* pfunc: getClob( NAME)
+  Возвращает значение поля с указанным именем в виде строки.
+
+  Параметры:
+  fieldName                   - название поля
+  isNotFoundRaised            - генерировать ли исключение в случае
+                                отсутствия поля с указанным именем
+                                ( 1 да ( по умолчанию), 0 нет)
+
+  Возврат:
+  - значение поля в виде строки
+
+  ( <body::getClob( NAME)>)
+*/
+member function getClob(
+  self in out tpr_csv_iterator_t
+, fieldName varchar2
+, isNotFoundRaised integer := null
+)
+return clob
 
 )
 /
