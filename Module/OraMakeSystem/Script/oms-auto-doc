@@ -97,7 +97,7 @@
 # var: OMS_VERSION
 # Версия программы
 #
-OMS_VERSION=2.4.1
+OMS_VERSION=2.4.2
 
 #
 # Информация о версии файла из SVN
