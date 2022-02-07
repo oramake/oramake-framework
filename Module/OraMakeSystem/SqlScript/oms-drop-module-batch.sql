@@ -1,8 +1,8 @@
 -- script: oms-drop-module-batch.sql
--- Удаляет пакетные задания (Батчи) по названию модуля
+-- РЈРґР°Р»СЏРµС‚ РїР°РєРµС‚РЅС‹Рµ Р·Р°РґР°РЅРёСЏ (Р‘Р°С‚С‡Рё) РїРѕ РЅР°Р·РІР°РЅРёСЋ РјРѕРґСѓР»СЏ
 --
--- Параметры:
--- moduleName                  - имя модуля у которго удаляются батчи
+-- РџР°СЂР°РјРµС‚СЂС‹:
+-- moduleName                  - РёРјСЏ РјРѕРґСѓР»СЏ Сѓ РєРѕС‚РѕСЂРіРѕ СѓРґР°Р»СЏСЋС‚СЃСЏ Р±Р°С‚С‡Рё
 --
 
 define moduleName = &1
@@ -10,9 +10,9 @@ define moduleName = &1
 prompt Dropping batches by module name &moduleName ...
 
 declare
-  -- Название модуля
+  -- РќР°Р·РІР°РЅРёРµ РјРѕРґСѓР»СЏ
   moduleName varchar2(100):= '&moduleName';
-  -- Id оператора, выполняющего удаление
+  -- Id РѕРїРµСЂР°С‚РѕСЂР°, РІС‹РїРѕР»РЅСЏСЋС‰РµРіРѕ СѓРґР°Р»РµРЅРёРµ
   operatorId constant integer := pkg_Operator.GetCurrentUserId();
 begin
   pkg_SchedulerLoad.deleteModuleBatch(
