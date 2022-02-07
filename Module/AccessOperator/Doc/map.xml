@@ -9,9 +9,10 @@
     <programmerAPP></programmerAPP>
     <analyst></analyst>
   </team>
+  <path>Oracle/Module/AccessOperator</path>
+  <initialPath>Oracle/Module/AccessOperator@1</initialPath>
   <db>
     <database>
-      <instance>RFINFO</instance>
       <table>OP_OPERATOR</table>
       <table>OP_GROUP</table>
       <table>OP_OPERATOR_ROLE</table>
