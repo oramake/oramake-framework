@@ -3543,6 +3543,7 @@ procedure deleteBatch(
   batchId integer
 )
 is
+  batchShortName varchar2(30);
   /*
     Удаление расписания.
   */
@@ -3655,12 +3656,21 @@ is
 
 -- deleteBatch
 begin
+  select batch_short_name
+  into batchShortName
+  from sch_batch
+  where batch_id = batchId
+  ;
   deleteSchedule( batchId);
   deleteBatchRole( batchId);
   deleteContent( batchId);
   sch_batch_option_t( batchId => batchId).deleteAll();
   deleteBatch( batchId);
   deleteUnusedJob();
+  outputInfo(
+    rpad( 'Batch ' || batchShortName, 30)
+    || ' - removed'
+  );
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -3678,9 +3688,13 @@ end deleteBatch;
 
   Параметры:
   batchShortName              - короткое наименование батча
+  activatedFlag               - флаг удаления активированных батчей ( 1 удалить
+                                активированный батч, 0 удалять только если батч
+                                не активирован, по-умолчанию 0)
 */
 procedure deleteBatch(
   batchShortName varchar2
+  , activatedFlag number := null
 )
 is
 
@@ -3689,7 +3703,24 @@ is
 
 begin
   pkg_SchedulerMain.getBatch( btr, batchShortName => batchShortName);
-  deleteBatch( batchId => btr.batch_id);
+  if coalesce( activatedFlag, 0) = 0 and btr.activated_flag = 1 then
+    raise_application_error(
+      pkg_Error.IllegalArgument
+      , 'Пакет ' || batchShortName || ' активирован и не может быть удален.'
+    );
+  elsif btr.activated_flag = 0 then
+    deleteBatch(
+      batchId => btr.batch_id
+    );
+  elsif activatedFlag = 1 and btr.activated_flag = 1 then
+    pkg_Scheduler.deactivateBatch(
+      batchId => btr.batch_id
+      , operatorId => pkg_operator.getCurrentUserId()
+    );
+    deleteBatch(
+      batchId => btr.batch_id
+    );
+  end if;
 exception when others then
   raise_application_error(
     pkg_Error.ErrorStackInfo
@@ -3701,6 +3732,57 @@ exception when others then
     , true
   );
 end deleteBatch;
+
+/* proc: deleteModuleBatch
+  Удаление всех батчей, принадлежащих модулю
+  Предназначен для удаления батчей, принадлежащих модулю при его деинсталляции
+  
+  Параметры:
+  moduleName                  - наименование модуля
+*/
+procedure deleteModuleBatch(
+  moduleName varchar2 
+)
+is
+  -- id модуля
+  moduleId integer;
+begin
+  moduleId := pkg_ModuleInfo.getModuleId(
+    moduleName            => moduleName
+    , raiseExceptionFlag  => 1
+  );
+  for curBatch in (
+select
+  b.batch_id
+  , b.batch_short_name
+  , b.activated_flag
+from
+  sch_batch b
+where
+  b.module_id = moduleId
+  )
+  loop
+    if curBatch.activated_flag = 1 then
+      pkg_Scheduler.deactivateBatch(
+        batchId      => curBatch.batch_id
+        , operatorId => pkg_operator.getCurrentUserId()
+      );
+    end if;
+    deleteBatch(
+      batchId         => curBatch.batch_id
+    );
+  end loop;
+exception when others then
+  raise_application_error(
+    pkg_Error.ErrorStackInfo
+    , logger.errorStack(
+        'Ошибка удаления батча ('
+        || ' moduleName="' || moduleName || '"'
+        || ')'
+      )
+    , true
+  );
+end deleteModuleBatch;
 
 
 

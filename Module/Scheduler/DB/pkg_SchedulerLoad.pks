@@ -411,11 +411,24 @@ procedure deleteBatch(
 
   Параметры:
   batchShortName              - короткое наименование батча
-
-  ( <body::deleteBatch>)
+  activatedFlag               - флаг удаления активированных батчей ( 1 удалить
+                                активированный батч, 0 удалять только если батч
+                                не активирован, по-умолчанию 0)
 */
 procedure deleteBatch(
   batchShortName varchar2
+  , activatedFlag number := null
+);
+
+/* pproc: deleteModuleBatch
+  Удаление всех батчей, принадлежащих модулю
+  Предназначен для удаления батчей, принадлежащих модулю при его деинсталляции
+  
+  Параметры:
+  moduleName                  - наименование модуля
+*/
+procedure deleteModuleBatch(
+  moduleName varchar2 
 );
 
 
