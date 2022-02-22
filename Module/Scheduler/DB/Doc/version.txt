@@ -6,12 +6,12 @@ group: 5.3.1 ( 2021-12-29)
 
 [+] Добавлена процедура:
     - для удаления всех пакетных заданий по названию модуля
-      ( <pkg_SchedulerLoad.deleteModuleBatch>)
+    ( <pkg_SchedulerLoad.deleteModuleBatch>)
 
 [*] Изменена процедура:
     - для удаления пакетного задания по его названию:
-      добавлено удаление активированных пакетных заданий
-      ( <pkg_SchedulerLoad.deleteBatch>)
+    добавлено удаление активированных пакетных заданий
+    ( <pkg_SchedulerLoad.deleteBatch>)
 
 
 
