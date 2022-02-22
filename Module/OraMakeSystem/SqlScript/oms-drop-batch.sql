@@ -1,11 +1,11 @@
--- script: oms-drop-batch.sql
+-- script: oms-drop-batch
 -- Удаляет пакетные задания, реализованные с помощью модуля Scheduler.
 --
 -- Параметры:
--- batchShortName                - маска для имени пакетов ( batch_short_name)
--- activatedFlag                 - флаг удаления активированных батчей
---                                 ( 1 - удалить активированный батч
---                                   0 - удалять неактивированный батч)
+-- batchShortName              - короткое наименование батча
+-- activatedFlag               - флаг удаления активированных батчей ( 1 удалить
+--                               активированный батч, 0 удалять только если батч
+--                               не активирован, по-умолчанию 0)
 --
 --Примеры:
 --
@@ -13,7 +13,7 @@
 --
 -- (code)
 --
--- @oms-dкщз-batch.sql ClearOldLog 0
+-- @oms-drop-batch.sql BatchName 0
 --
 -- (end)
 --
@@ -21,16 +21,14 @@
 --
 -- (code)
 --
--- @oms-dкщз-batch.sql ClearOldLog 1
+-- @oms-drop-batch.sql BatchName 1
 --
 -- (end)
 --
 
-define batchShortName = &1
+define batchShortName = "&1"
 
-define activatedFlag = &2
-
-prompt Dropping batches by module name &batchShortName ...
+define activatedFlag = "&2"
 
 declare
   -- Название пкетного названия
@@ -44,14 +42,6 @@ begin
     batchShortName  => batchShortName
 	, activatedFlag => activatedFlag
   );
-  dbms_output.put_line(
-    rpad( batchShortName, 30)
-    || ' - removed');
-exception
-  when others
-    then
-      dbms_output.put_line( 'Exception: [' || sqlerrm || ']' );
-
 end;
 /
 

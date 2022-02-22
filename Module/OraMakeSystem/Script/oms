@@ -711,13 +711,10 @@ gen-schema-revert_file()
 END
   local headerFlag=0
   local fileName="$rootDir/Doc/map.xml"
-  local nameModule=`grep -oPm1 "(?<=<name>)[^<]+" "$fileName"`
-  #moduleName := grep --ignore-case --quiet \
-  #          "group:[[:space:]]*${moduleVersion//./\\.}[[:space:]]" \
-  #          "$checkFile"; \
+  local moduleName=`grep -oPm1 "(?<=<name>)[^<]+" "$rootDir/Doc/map.xml"`
   
   local batchPath="$rootDir/DB/Install/Batch/Last"
-  if [[ -d "$batchPath" ]]
+  if [[ -d "$rootDir/DB/Install/Batch/Last" ]]
   then
     if (( headerFlag == 0)); then
       cat<<END
@@ -728,7 +725,7 @@ END
 END
       headerFlag=1
     fi;
-    echo "@oms-drop-module-batch" $nameModule
+    echo "@oms-drop-module-batch" $moduleName
   fi
   headerFlag=0
   for packageFileName in \
