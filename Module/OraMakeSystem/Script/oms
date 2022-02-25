@@ -38,7 +38,7 @@
 
 # var: OMS_VERSION
 # Версия программы
-OMS_VERSION=2.4.1
+OMS_VERSION=2.4.2
 
 # var: fileRevisionValue
 # Строка с номером последней правки, в которой был изменен файл
@@ -710,6 +710,24 @@ gen-schema-revert_file()
 -- Отменяет установку модуля, удаляя созданные объекты схемы.
 END
   local headerFlag=0
+  local fileName="$rootDir/Doc/map.xml"
+  local moduleName=`grep -oPm1 "(?<=<name>)[^<]+" "$rootDir/Doc/map.xml"`
+  
+  local batchPath="$rootDir/DB/Install/Batch/Last"
+  if [[ -d "$rootDir/DB/Install/Batch/Last" ]]
+  then
+    if (( headerFlag == 0)); then
+      cat<<END
+
+
+-- Батчи
+
+END
+      headerFlag=1
+    fi;
+    echo "@oms-drop-module-batch" $moduleName
+  fi
+  headerFlag=0
   for packageFileName in \
     $(find "$rootDir/DB/"* -maxdepth 0 -name pkg*.pks -exec basename {} \; | sort); do
     if (( headerFlag == 0)); then

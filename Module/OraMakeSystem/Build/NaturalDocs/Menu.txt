@@ -2,7 +2,7 @@ Format: 1.5
 
 
 Title: OraMakeSystem
-SubTitle: Версия 2.4.1
+SubTitle: Версия 2.4.2
 
 # You can add a footer to your documentation like this:
 # Footer: [text]
@@ -124,7 +124,9 @@ Group: SQL-скрипты  {
       File: oms-deactivate-batch  (no auto-title, SqlScript/oms-deactivate-batch.sql)
       File: oms-default  (no auto-title, SqlScript/oms-default.sql)
       File: oms-default-with-test  (no auto-title, SqlScript/oms-default-with-test.sql)
+      File: oms-drop-batch  (no auto-title, SqlScript/oms-drop-batch.sql)
       File: oms-drop-foreign-key  (SqlScript/oms-drop-foreign-key.sql)
+      File: oms-drop-module-batch  (no auto-title, SqlScript/oms-drop-module-batch.sql)
       File: oms-drop-mview  (no auto-title, SqlScript/oms-drop-mview.sql)
       File: oms-drop-type  (no auto-title, SqlScript/oms-drop-type.sql)
       File: oms-gather-stats  (no auto-title, SqlScript/oms-gather-stats.sql)
