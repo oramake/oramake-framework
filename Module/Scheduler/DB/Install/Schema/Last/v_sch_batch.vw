@@ -31,20 +31,20 @@ select
   , d.sid
   , d.serial#
   , d.session_status
-  , d.log_data.root_log_id as root_log_id
-  , d.log_data.min_log_date as last_start_date
-  , d.log_data.max_log_date as last_log_date
-  , d.log_data.batch_result_id as batch_result_id
-  , d.log_data.error_job_count as error_job_count
-  , d.log_data.error_count as error_count
-  , d.log_data.warning_count as warning_count
+  , d.root_log_id as root_log_id
+  , d.min_log_date as last_start_date
+  , d.max_log_date as last_log_date
+  , d.batch_result_id as batch_result_id
+  , d.error_job_count as error_job_count
+  , d.error_count as error_count
+  , d.warning_count as warning_count
   , case when d.sid is not null then
       extract( SECOND   from d.elapsed_time)
       + extract( MINUTE from d.elapsed_time) * 60
       + extract( HOUR   from d.elapsed_time) * 60 * 60
       + extract( DAY    from d.elapsed_time) * 60 * 60 * 24
     else
-      (d.log_data.max_log_date - d.log_data.min_log_date)
+      (d.max_log_date - d.min_log_date)
       * 86400
     end as duration_second
   -- TODO: for backward compatability
@@ -56,42 +56,127 @@ select
 from
   (
   select
-    d.*
-    , pkg_SchedulerMain.getBatchLogInfo(d.batch_id) as log_data
+    b.*
+    , to_char(b.batch_id) as job
+    , j.last_start_date as last_date
+    , systimestamp - ss.elapsed_time as this_date
+    , ss.elapsed_time
+    , j.next_run_date as next_date
+    , j.failure_count as failures
+    , ss.sid as sid
+    , ss.serial# as serial#
+    , ss.session_status
+    -- pkg_SchedulerMain.getBatchLogInfo(d.batch_id)
+    , o.root_log_id
+    , o.min_log_date
+    , o.max_log_date
+    , o.batch_result_id
+    , o.error_job_count
+    , o.error_count
+    , o.warning_count
   from
-    (
-    select
-      b.*
-      , to_char(b.batch_id) as job
-      , j.last_start_date as last_date
-      , systimestamp - ss.elapsed_time as this_date
-      , ss.elapsed_time
-      , j.next_run_date as next_date
-      , j.failure_count as failures
-      , ss.sid as sid
-      , ss.serial# as serial#
-      , ss.session_status
-    from
-      sch_batch b
-      left outer join user_scheduler_jobs j
-        -- pkg_Scheduler.getOracleJobName
-        on j.job_name = 'SCHEDULER_' || to_char(batch_id)
-      left outer join
+    sch_batch b
+    left outer join user_scheduler_jobs j
+      -- pkg_Scheduler.getOracleJobName
+      on j.job_name = 'SCHEDULER_' || to_char(batch_id)
+    left outer join
+      (
+      select /*+ordered*/
+        jr.job_name
+        , jr.elapsed_time
+        , ss.sid
+        , ss.serial#
+        , ss.status as session_status
+      from
+        user_scheduler_running_jobs jr
+        inner join v$session ss
+          on jr.session_id = ss.sid
+      ) ss
+      -- pkg_Scheduler.getOracleJobName
+      on ss.job_name = 'SCHEDULER_' || to_char(batch_id)
+    -- pkg_SchedulerMain.getBatchLogInfo(d.batch_id) 
+    left join
+      (
+      select
+        a.batch_id
+        , max( a.start_log_id) as root_log_id
+        , min( lg.date_ins) as min_log_date
+        , max( lg.date_ins) as max_log_date
+        , max( a.batch_result_id) as batch_result_id
+        , sum(
+            case when
+                lg.context_type_id =  
+                  (
+                    -- jobContextTypeId = 2   
+                    select
+                      max( ct.context_type_id)
+                    from
+                      v_mod_module md
+                      inner join lg_context_type ct
+                        on ct.module_id = md.module_id
+                    where
+                      md.svn_root = 'Oracle/Module/Scheduler' -- Module_SvnRoot
+                      and ct.context_type_short_name = 'JOB'  -- Job_CtxTpSName
+                  )
+                and lg.open_context_flag = 0
+                and lg.message_value in ( 3, 4)
+              then 1
+              else 0
+            end
+          )
+          as error_job_count
+        , sum(
+            case when
+                lg.level_code in (
+                  'FATAL'   -- pkg_Logging.Fatal_LevelCode
+                  , 'ERROR' -- pkg_Logging.Error_LevelCode
+                )
+              then 1
+              else 0
+            end
+          )
+          as error_count
+        , sum(
+            case when
+                lg.level_code = 'WARN' -- pkg_Logging.Warn_LevelCode
+              then 1
+              else 0
+            end
+          )
+          as warning_count
+      from
         (
-        select /*+ordered*/
-          jr.job_name
-          , jr.elapsed_time
-          , ss.sid
-          , ss.serial#
-          , ss.status as session_status
+        select
+          bo.batch_id
+          , max( bo.sessionid)
+              keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+            as sessionid
+          , max( bo.start_log_id)
+              keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+            as start_log_id
+          , max( bo.finish_log_id)
+              keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+            as finish_log_id
+          , max( bo.result_id)
+              keep( dense_rank last order by bo.start_time_utc, bo.start_log_id)
+            as batch_result_id
         from
-          user_scheduler_running_jobs jr
-          inner join v$session ss
-            on jr.session_id = ss.sid
-        ) ss
-        -- pkg_Scheduler.getOracleJobName
-        on ss.job_name = 'SCHEDULER_' || to_char(batch_id)
-    ) d
+          v_sch_batch_operation bo
+        where
+          bo.batch_operation_label = 'EXEC' --Exec_BatchMsgLabel
+          and bo.execution_level = 1
+        group by
+          bo.batch_id
+        ) a
+      inner join lg_log lg
+        on lg.sessionid = a.sessionid
+        and lg.log_id >= a.start_log_id
+        and lg.log_id <= coalesce( a.finish_log_id, lg.log_id)
+      group by
+        a.batch_id
+      ) o
+      on
+        o.batch_id = b.batch_id
   ) d
 /
 
