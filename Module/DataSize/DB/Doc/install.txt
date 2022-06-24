@@ -14,6 +14,29 @@ LOAD_USERID                   - основной пользователь для установки в БД
                                 ( формат: username/password@dbName)
 
 
+group: 1.2.0
+(<Версии::1.2.0 ( 2022-06-24)>)
+
+Порядок установки:
+
+- выдача системных привилегий;
+
+(code)
+
+make grant LOAD_USERID=sys/???@??? GRANT_SCRIPT=sys-privs TO_USERNAME=???
+
+(end code)
+
+- установка в основную схему;
+
+(code)
+
+make install INSTALL_VERSION=1.2.0 LOAD_USERID=???/???@??? LOAD_OPERATORID=???/???
+
+(end code)
+
+
+
 group: 1.1.0
 (<Версии::1.1.0 ( 2021-07-27)>)
 

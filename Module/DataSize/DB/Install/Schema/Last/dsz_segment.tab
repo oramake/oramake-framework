@@ -8,7 +8,7 @@ create table dsz_segment(
   owner           		varchar2(30),
   segment_name    		varchar2(1000),
   partition_name  		varchar2(1000),
-  segment_type    		varchar2(18),
+  segment_type    		varchar2(100),
   tablespace_name 		varchar2(30),
   header_file     		number,
   header_block    		number,

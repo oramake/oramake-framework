@@ -322,11 +322,15 @@ order by
       end as segment_name
       , coalesce( e2.tablespace_name, e2.tablespace_name ) as tablespace_name
       , coalesce( e2.partition_name, e1.partition_name ) as partition_name
-      , coalesce(e2.segment_type, e1.segment_type)
-        ||
-        case when l.table_name is not null then
-          ',' || l.owner || '.' || l.table_name || '.' || l.column_name
-        end
+      , substr( 
+          coalesce(e2.segment_type, e1.segment_type)
+          ||
+          case when l.table_name is not null then
+            ',' || l.owner || '.' || l.table_name || '.' || l.column_name
+          end
+          , 1
+          , 100 
+        )
         as segment_type
       , e1.bytes as old_bytes
       , e2.bytes as new_bytes
