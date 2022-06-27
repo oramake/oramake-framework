@@ -83,6 +83,11 @@ Group: Скрипты  {
             File: dsz_segment_group_tmp  (no auto-title, Install/Schema/Last/dsz_segment_group_tmp.tab)
             }  # Group: Last
 
+         Group: 1.2.0  {
+
+            File: run  (no auto-title, Install/Schema/1.2.0/run.sql)
+            }  # Group: 1.2.0
+
          Group: 1.1.0  {
 
             File: run  (no auto-title, Install/Schema/1.1.0/run.sql)

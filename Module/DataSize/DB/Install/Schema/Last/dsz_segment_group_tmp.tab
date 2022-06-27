@@ -7,7 +7,7 @@ create global temporary table dsz_segment_group_tmp(
   owner           		varchar2(30),
   segment_name    		varchar2(1000),
   partition_name  		varchar2(1000),
-  segment_type    		varchar2(18),
+  segment_type    		varchar2(100),
   tablespace_name 		varchar2(30),
   old_bytes				number,
   new_bytes				number,

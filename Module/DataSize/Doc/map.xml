@@ -3,7 +3,7 @@
   <map_version>1.2</map_version>
   <name>DataSize</name>
   <description>Модуль для анализа использования пространства на диске</description>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <prefix>dsz</prefix>
   <team>
     <programmerDB></programmerDB>
